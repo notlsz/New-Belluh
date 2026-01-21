@@ -402,14 +402,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                           <Fingerprint size={24} className="text-slate-900"/>
                       </div>
                       
-                      <h3 className="text-3xl md:text-4xl font-serif font-semibold text-slate-900 mb-4 tracking-tight">It learns you.</h3>
+                      <h3 className="text-3xl md:text-4xl font-serif font-semibold text-slate-900 mb-4 tracking-tight">Resolve one thing per week.</h3>
                       <p className="text-lg text-slate-500 leading-relaxed mb-8">
-                          From "Hemingway" brevity to "Woolf" introspection. The AI adapts its voice to match yours.
+                          Every week, you get one clear insight + one action to try.
                       </p>
                       
                       <div className="flex gap-2 flex-wrap">
-                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">Kafka Mode</span>
-                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">Fitzgerald Mode</span>
+                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">Immediate Insight</span>
+                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">Immediate Next Step</span>
                       </div>
                  </div>
             </div>
