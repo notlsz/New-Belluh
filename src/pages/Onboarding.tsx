@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Lock, ArrowRight, Heart, Mail, UserPlus, CheckCircle2, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
@@ -122,7 +123,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       {/* Step 0: Welcome & Trust */}
       {step === 0 && (
         <div className="text-center animate-fade-in max-w-lg mx-auto">
-          <div className="w-24 h-24 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-8 shadow-float">
+          <div className="w-24 h-24 rounded-full bg-white border border-slate-100 flex items-center justify-center mx-auto mb-8 shadow-float">
             <Lock size={36} className="text-belluh-300" />
           </div>
           
@@ -157,7 +158,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
              value={partnerName}
              onChange={(e) => setPartnerName(e.target.value)}
              placeholder="Name or nickname..."
-             className="w-full bg-transparent border-b-2 border-slate-200 py-4 text-center text-3xl font-serif placeholder:text-slate-300 focus:outline-none focus:border-belluh-300 transition-colors"
+             className="w-full bg-transparent border-b-2 border-slate-200 py-4 text-center text-3xl font-serif text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-belluh-300 transition-colors"
            />
            <button 
              type="submit" 
@@ -187,7 +188,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                  onChange={(e) => setEntry(e.target.value)}
                  placeholder={PLACEHOLDERS[placeholderIndex]}
                  rows={3}
-                 className="w-full bg-slate-50 p-6 rounded-3xl text-xl font-serif placeholder:text-slate-300 focus:outline-none resize-none"
+                 className="w-full bg-slate-50 p-6 rounded-3xl text-xl font-serif text-slate-900 placeholder:text-slate-300 focus:outline-none resize-none"
                />
                <button 
                    type="button"

@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, ArrowRight, Activity, TrendingUp, Lock, Fingerprint, Menu, X, Heart } from 'lucide-react';
 import { ORGANIZATIONS } from '../constants';
@@ -44,7 +43,7 @@ const LogoMarquee = () => (
   <div className="w-full py-20 overflow-hidden relative z-20 bg-[#F8FDFF]/80 backdrop-blur-md border-y border-[#CDE9F2]">
     <div className="text-center mb-10 px-4">
       <span className="text-[10px] md:text-xs font-bold text-slate-400 tracking-[0.2em] md:tracking-[0.3em] uppercase md:border-b md:border-[#CDE9F2] md:pb-3">
-        Used independently by couples at selective companies and schools
+        Used by couples at
       </span>
     </div>
     
@@ -62,7 +61,7 @@ const LogoMarquee = () => (
 
     <div className="text-center mt-8">
       <span className="text-[10px] text-slate-300 font-medium tracking-wide uppercase">
-        * Not affiliated with or endorsed by these organizations
+        * Used independently by individuals
       </span>
     </div>
   </div>
@@ -196,11 +195,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
              
              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/80 border border-white rounded-full shadow-sm mb-8 animate-fade-in hover:shadow-md transition-shadow cursor-default backdrop-blur-sm">
                  <div className="w-1.5 h-1.5 bg-[#f0addd] rounded-full animate-pulse"></div>
-                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">The World's First Intelligent Love Journal</span>
+                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">PRIVATE BY DEFAULT. ENCRYPTED.</span>
              </div>
              
              <h1 className="text-5xl md:text-7xl font-serif font-medium leading-[1.1] mb-8 text-slate-900 tracking-tight drop-shadow-sm">
-                 <span className="text-[#f0addd]">Love,</span> <span className="italic font-serif text-[#9bbecb]">understood.</span>
+                 <span className="text-[#9bbecb]">The AI journal</span> <br/> <span className="text-[#f0addd] italic">for couples.</span>
              </h1>
              
              <p className="text-xl md:text-2xl text-slate-500 font-light leading-relaxed max-w-2xl mx-auto mb-12">
@@ -360,7 +359,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                              Your safe <br/> <span className="text-cyan-700">haven.</span>
                          </h2>
                          <p className="text-xl md:text-2xl text-cyan-900/80 leading-relaxed font-light">
-                             AES-256 encryption. Zero knowledge architecture. What happens in Belluh, stays in Belluh.
+                             Your journal is encrypted. Only you and your partner can access it.
                          </p>
                      </div>
                      
@@ -421,7 +420,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       {/* Infinite Marquee Section */}
       <section id="stories" className="relative z-10 py-24 overflow-hidden bg-white/50 backdrop-blur-sm border-t border-slate-50">
         <div className="max-w-7xl mx-auto px-6 mb-16 text-center">
-            <h2 className="text-4xl md:text-6xl font-serif font-semibold text-slate-900 mb-6 tracking-tighter">Every moment counts.</h2>
+            <h2 className="text-4xl md:text-6xl font-serif font-semibold text-slate-900 mb-6 tracking-tighter">Real stories.</h2>
             <p className="text-slate-500 text-lg max-w-2xl mx-auto leading-relaxed">
                 From the big milestones to the quiet Sunday mornings, Belluh keeps your story alive.
             </p>

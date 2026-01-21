@@ -11,6 +11,7 @@ import About from './pages/About';
 import AdminMetrics from './pages/AdminMetrics';
 import LegalModal from './components/LegalModal';
 import ArtifactModal from './components/ArtifactModal';
+import IntroGuide from './components/IntroGuide'; // Import the new guide
 import { CURRENT_USER, MOCK_INSIGHTS, THEMES } from './constants';
 import { JournalEntry, EntryType, Mood, User, CircleType, CircleStatus, ColorTheme } from './types';
 import { Sparkles, X, CheckCircle2, AlertCircle, Info } from 'lucide-react';
@@ -94,6 +95,9 @@ const App: React.FC = () => {
   const [composePrompt, setComposePrompt] = useState<string | undefined>(undefined);
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [streak, setStreak] = useState(0);
+  
+  // Intro Guide State
+  const [showIntro, setShowIntro] = useState(false);
   
   // Pending Invites State
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
@@ -470,7 +474,12 @@ const App: React.FC = () => {
             relationshipFacts: relationshipFacts
         }));
         
-        setIsOnboarding(false);
+        if (!displayPartnerName && !primaryPartner) {
+           setIsOnboarding(true);
+        } else {
+            setIsOnboarding(false);
+        }
+        
         setIsAuthenticated(true);
       } catch (err) {
           console.error("Failed to load user data", err);
@@ -533,8 +542,11 @@ const App: React.FC = () => {
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser) return;
     
+    // 1. Update Profile
     await supabase.from('profiles').update({ partner_name: partnerName }).eq('id', currentUser.id);
-    await supabase.from('journal_entries').insert([{
+    
+    // 2. Insert Entry
+    const { data: entryData } = await supabase.from('journal_entries').insert([{
         user_id: currentUser.id,
         content: firstEntry,
         type: 'Freeform', 
@@ -542,11 +554,33 @@ const App: React.FC = () => {
         is_favorite: false,
         tags: ['onboarding', 'first_magic_moment', 'circle:c1'], 
         date: new Date().toISOString()
-    }]);
+    }]).select().single();
     
+    // 3. Update Local State
     setUser(prev => ({ ...prev, partnerName, hasCompletedOnboarding: true }));
+    
+    if (entryData) {
+        const newEntry: JournalEntry = {
+            id: entryData.id,
+            userId: currentUser.id,
+            authorName: user.name,
+            authorAvatar: user.avatar,
+            content: firstEntry,
+            timestamp: new Date(entryData.created_at),
+            type: EntryType.Freeform,
+            mood: undefined,
+            prompt: undefined,
+            isPrivate: true,
+            circleId: 'c1',
+            likes: 0,
+            isLiked: false
+        };
+        setEntries(prev => [newEntry, ...prev]);
+    }
+
     setIsOnboarding(false);
-    loadUserData(currentUser);
+    setShowIntro(true); 
+    // loadUserData(currentUser) call removed to prevent state race condition
   };
 
   const handleUpdateUser = async (updates: Partial<User>) => {
@@ -873,6 +907,8 @@ const App: React.FC = () => {
       <TabBar currentTab={currentTab} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); setCurrentTab(tab); }} onCompose={() => handleCompose()} />
       {isComposeOpen && <div className="fixed inset-0 z-[60] bg-paper animate-slide-up"><button onClick={() => setIsComposeOpen(false)} className="absolute top-6 right-6 w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 z-50 transition-colors"><X size={20} /></button><Journal onAddEntry={handleAddEntry} partnerName={user.partnerName || 'Partner'} onTriggerPremium={handleTriggerPremium} initialPrompt={composePrompt} userName={user.name} partnerHasEntry={partnerHasEntry} /></div>}
       
+      {showIntro && <IntroGuide onClose={() => setShowIntro(false)} />}
+
       {legalModalOpen && <LegalModal type={legalModalOpen} onClose={() => setLegalModalOpen(null)} />}
       
       {artifactModalOpen && <ArtifactModal type={artifactModalOpen} onClose={() => setArtifactModalOpen(null)} entries={entries} currentUserId={user.id} userName={user.name} partnerName={user.partnerName || 'Partner'} />}
