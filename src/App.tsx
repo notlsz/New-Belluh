@@ -87,7 +87,13 @@ const App: React.FC = () => {
   const [isOnboarding, setIsOnboarding] = useState(false);
   
   // View State for Unauthenticated Users ('landing' | 'auth' | 'about' | 'careers')
-  const [authView, setAuthView] = useState<'landing' | 'auth' | 'about' | 'careers'>('landing');
+  const getInitialAuthView = () => {
+    const path = window.location.pathname;
+    if (path.startsWith('/careers')) return 'careers';
+    if (path === '/about') return 'about';
+    return 'landing';
+  };
+  const [authView, setAuthView] = useState<'landing' | 'auth' | 'about' | 'careers'>(getInitialAuthView());
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
   
   // App State
@@ -154,6 +160,25 @@ const App: React.FC = () => {
     root.style.setProperty('--color-belluh-300-rgb', `${r}, ${g}, ${b}`);
 
   }, [user.settings.colorTheme]);
+
+  // Sync authView with URL
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      if (path.startsWith('/careers')) setAuthView('careers');
+      else if (path === '/about') setAuthView('about');
+      else setAuthView('landing');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (authView === 'landing' && path !== '/') window.history.pushState({}, '', '/');
+    else if (authView === 'about' && path !== '/about') window.history.pushState({}, '', '/about');
+    else if (authView === 'careers' && !path.startsWith('/careers')) window.history.pushState({}, '', '/careers');
+  }, [authView]);
 
   // --- Auth Helpers ---
 

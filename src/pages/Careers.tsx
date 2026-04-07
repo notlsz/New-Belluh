@@ -12,8 +12,31 @@ interface CareersProps {
 const Careers: React.FC<CareersProps> = ({ onBack, onGetStarted, onLogin, onShowLegal, onGoToAbout }) => {
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string | null>(
+    window.location.pathname === '/careers/fellows' ? 'fellow' : null
+  );
   const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (window.location.pathname === '/careers/fellows') {
+        setSelectedRole('fellow');
+      } else {
+        setSelectedRole(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (selectedRole === 'fellow' && path !== '/careers/fellows') {
+      window.history.pushState({}, '', '/careers/fellows');
+    } else if (selectedRole === null && path === '/careers/fellows') {
+      window.history.pushState({}, '', '/careers');
+    }
+  }, [selectedRole]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -140,6 +163,14 @@ const Careers: React.FC<CareersProps> = ({ onBack, onGetStarted, onLogin, onShow
                   <h1 className="text-5xl md:text-6xl font-serif font-medium leading-[1.1] mb-6 text-slate-900 tracking-tight">
                       Belluh Fellow
                   </h1>
+                  <div className="flex flex-wrap gap-3">
+                      <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-500 flex items-center gap-1.5 shadow-sm">
+                          <Globe size={14} /> Hybrid
+                      </span>
+                      <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-500 flex items-center gap-1.5 shadow-sm">
+                          <Zap size={14} /> Full-time
+                      </span>
+                  </div>
               </div>
 
               <div className="prose prose-lg prose-slate max-w-none font-light leading-relaxed">
@@ -225,16 +256,16 @@ const Careers: React.FC<CareersProps> = ({ onBack, onGetStarted, onLogin, onShow
                           <p className="text-slate-500 font-light">We want to see spikes regardless of what you do.</p>
                       </div>
 
-                      <div className="relative z-10 flex items-center gap-4">
+                      <div className="relative z-10 flex items-center justify-between md:justify-end gap-4 w-full md:w-auto mt-4 md:mt-0">
                           <div className="flex gap-2">
                               <span className="px-3 py-1 bg-slate-50 border border-slate-100 rounded-full text-xs font-bold text-slate-500 flex items-center gap-1.5">
-                                  <Globe size={14} /> Remote
+                                  <Globe size={14} /> Hybrid
                               </span>
                               <span className="px-3 py-1 bg-slate-50 border border-slate-100 rounded-full text-xs font-bold text-slate-500 flex items-center gap-1.5">
                                   <Zap size={14} /> Full-time
                               </span>
                           </div>
-                          <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                          <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white transition-colors shrink-0">
                               <ArrowRight size={18} />
                           </div>
                       </div>
