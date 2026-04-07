@@ -190,8 +190,12 @@ const Careers: React.FC<CareersProps> = ({ onBack, onGetStarted, onLogin, onShow
                       No hard criteria. If you have spikes, you'll know.
                   </p>
 
-                  <p className="mb-12">
-                      Path to receive invitations to insane missions country-wide. Insanely different? We want to meet you.
+                  <p className="mb-6">
+                      We provide grants for fellows up to $50K, sending you on epic missions nationwide. For top performers, there is a direct path to a full-time role with a $200K salary.
+                  </p>
+
+                  <p className="mb-12 font-medium text-slate-900">
+                      Insanely different? We want to meet you.
                   </p>
 
                   <div className="p-8 bg-white rounded-3xl border border-slate-100 shadow-sm">
