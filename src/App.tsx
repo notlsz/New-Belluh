@@ -8,6 +8,7 @@ import Onboarding from './pages/Onboarding';
 import Auth from './pages/Auth';
 import LandingPage from './pages/LandingPage';
 import About from './pages/About';
+import Careers from './pages/Careers';
 import AdminMetrics from './pages/AdminMetrics';
 import LegalModal from './components/LegalModal';
 import ArtifactModal from './components/ArtifactModal';
@@ -85,8 +86,8 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true); // Added loading state to prevent flash
   const [isOnboarding, setIsOnboarding] = useState(false);
   
-  // View State for Unauthenticated Users ('landing' | 'auth' | 'about')
-  const [authView, setAuthView] = useState<'landing' | 'auth' | 'about'>('landing');
+  // View State for Unauthenticated Users ('landing' | 'auth' | 'about' | 'careers')
+  const [authView, setAuthView] = useState<'landing' | 'auth' | 'about' | 'careers'>('landing');
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
   
   // App State
@@ -863,6 +864,7 @@ const App: React.FC = () => {
                     onLogin={() => { setAuthMode('login'); setAuthView('auth'); }} 
                     onShowLegal={(type) => setLegalModalOpen(type)} 
                     onGoToAbout={() => setAuthView('about')} 
+                    onGoToCareers={() => setAuthView('careers')}
                 />
                 {legalModalOpen && <LegalModal type={legalModalOpen} onClose={() => setLegalModalOpen(null)} />}
                 {notification && <Toast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
@@ -876,6 +878,18 @@ const App: React.FC = () => {
                 onBack={() => setAuthView('landing')} 
                 onGetStarted={() => { setAuthMode('signup'); setAuthView('auth'); }} 
                 onLogin={() => { setAuthMode('login'); setAuthView('auth'); }} 
+            />
+          );
+      }
+
+      if (authView === 'careers') {
+          return (
+            <Careers 
+                onBack={() => setAuthView('landing')} 
+                onGetStarted={() => { setAuthMode('signup'); setAuthView('auth'); }} 
+                onLogin={() => { setAuthMode('login'); setAuthView('auth'); }} 
+                onShowLegal={(type) => setLegalModalOpen(type)}
+                onGoToAbout={() => setAuthView('about')}
             />
           );
       }

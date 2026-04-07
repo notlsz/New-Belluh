@@ -8,12 +8,13 @@ interface LandingPageProps {
   onLogin: () => void;
   onShowLegal: (type: 'tos' | 'privacy') => void;
   onGoToAbout: () => void;
+  onGoToCareers: () => void;
 }
 
 const LogoItem = ({ org }: { org: typeof ORGANIZATIONS[0] }) => {
-  const [error, setError] = useState(false);
+  const [errorLevel, setErrorLevel] = useState(0);
 
-  if (error) {
+  if (errorLevel >= 2) {
     return (
       <span className="text-sm font-bold text-slate-300 uppercase tracking-widest whitespace-nowrap px-4 font-sans opacity-60 hover:opacity-100 transition-opacity">
         {org.name}
@@ -21,19 +22,15 @@ const LogoItem = ({ org }: { org: typeof ORGANIZATIONS[0] }) => {
     );
   }
 
+  const src = errorLevel === 0 
+    ? `https://logo.clearbit.com/${org.domain}`
+    : `https://www.google.com/s2/favicons?domain=${org.domain}&sz=128`;
+
   return (
     <img 
-      src={org.logo || `https://logo.clearbit.com/${org.domain}`} 
+      src={src} 
       alt={org.name} 
-      onError={(e) => {
-          const target = e.currentTarget;
-          // Try clearbit if custom logo failed
-          if (org.logo && !target.src.includes('clearbit')) {
-             target.src = `https://logo.clearbit.com/${org.domain}`;
-          } else {
-             setError(true);
-          }
-      }}
+      onError={() => setErrorLevel(prev => prev + 1)}
       className="max-h-12 max-w-full w-auto opacity-40 hover:opacity-100 hover:scale-110 transition-all duration-500 grayscale hover:grayscale-0 object-contain" 
     />
   );
@@ -67,7 +64,7 @@ const LogoMarquee = () => (
   </div>
 );
 
-const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShowLegal, onGoToAbout }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShowLegal, onGoToAbout, onGoToCareers }) => {
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const lastScrollY = useRef(0);
@@ -115,7 +112,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       { label: 'Features', action: () => scrollToSection('features') },
       { label: 'Privacy', action: () => { toggleMenu(); onShowLegal('privacy'); } },
       { label: 'Stories', action: () => scrollToSection('stories') },
-      { label: 'Our Why', action: () => { toggleMenu(); onGoToAbout(); } }
+      { label: 'Our Why', action: () => { toggleMenu(); onGoToAbout(); } },
+      { label: 'Careers', action: () => { toggleMenu(); onGoToCareers(); } }
   ];
 
   return (
@@ -485,6 +483,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                </button>
 
                <div className="flex gap-8 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                   <button onClick={onGoToCareers} className="hover:text-slate-600 transition-colors">Careers</button>
                    <button onClick={() => onShowLegal('tos')} className="hover:text-slate-600 transition-colors">Terms</button>
                    <button onClick={() => onShowLegal('privacy')} className="hover:text-slate-600 transition-colors">Privacy</button>
                </div>
