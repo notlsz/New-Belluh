@@ -217,11 +217,6 @@ const Careers: React.FC<CareersProps> = ({ onBack, onGetStarted, onLogin, onShow
           <section className="relative z-10 pt-44 pb-20 md:pt-56 md:pb-32 px-6">
              <div className="max-w-4xl mx-auto text-center animate-slide-up">
                  
-                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/80 border border-white rounded-full shadow-sm mb-8 animate-fade-in hover:shadow-md transition-shadow cursor-default backdrop-blur-sm">
-                     <div className="w-1.5 h-1.5 bg-[#f0addd] rounded-full animate-pulse"></div>
-                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">WE'RE HIRING</span>
-                 </div>
-                 
                  <h1 className="text-5xl md:text-7xl font-serif font-medium leading-[1.1] mb-8 text-slate-900 tracking-tight drop-shadow-sm">
                      <span className="text-[#9bbecb]">Build the future of</span> <br/> <span className="text-[#f0addd] italic">intimacy.</span>
                  </h1>
