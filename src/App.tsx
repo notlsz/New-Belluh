@@ -21,6 +21,7 @@ import { useAdminAccess } from './hooks/useAdminAccess';
 import { trackEvent } from './services/analytics';
 
 import Acquisition from './pages/Acquisition';
+import Report from './pages/Report';
 
 // Toast Component
 const Toast = ({ message, type, onClose }: { message: string, type: 'success' | 'error' | 'info', onClose: () => void }) => {
@@ -88,15 +89,16 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true); // Added loading state to prevent flash
   const [isOnboarding, setIsOnboarding] = useState(false);
   
-  // View State for Unauthenticated Users ('landing' | 'auth' | 'about' | 'careers' | 'acquisition')
+  // View State for Unauthenticated Users ('landing' | 'auth' | 'about' | 'careers' | 'acquisition' | 'report')
   const getInitialAuthView = () => {
     const path = window.location.pathname;
+    if (path.startsWith('/report')) return 'report';
     if (path.startsWith('/we-have-been-acquired')) return 'acquisition';
     if (path.startsWith('/careers')) return 'careers';
     if (path === '/about') return 'about';
     return 'landing';
   };
-  const [authView, setAuthView] = useState<'landing' | 'auth' | 'about' | 'careers' | 'acquisition'>(getInitialAuthView());
+  const [authView, setAuthView] = useState<'landing' | 'auth' | 'about' | 'careers' | 'acquisition' | 'report'>(getInitialAuthView());
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
   
   // App State
@@ -183,6 +185,7 @@ const App: React.FC = () => {
     else if (authView === 'about' && path !== '/about') window.history.pushState({}, '', '/about');
     else if (authView === 'careers' && !path.startsWith('/careers')) window.history.pushState({}, '', '/careers');
     else if (authView === 'acquisition' && !path.startsWith('/we-have-been-acquired')) window.history.pushState({}, '', '/we-have-been-acquired');
+    else if (authView === 'report' && !path.startsWith('/report')) window.history.pushState({}, '', '/report');
   }, [authView]);
 
   // --- Auth Helpers ---
@@ -926,6 +929,10 @@ const App: React.FC = () => {
 
       if (authView === 'acquisition') {
           return <Acquisition />;
+      }
+      
+      if (authView === 'report') {
+          return <Report />;
       }
 
       // 'auth' view
