@@ -15,7 +15,7 @@ const Acquisition: React.FC = () => {
                         <span className="relative inline-block whitespace-nowrap">
                             <svg 
                                 viewBox="0 0 100 120" 
-                                className="absolute bottom-[86%] left-[0%] h-[0.85em] w-auto pointer-events-none z-10 text-[#111111]"
+                                className="absolute bottom-[83%] md:bottom-[86%] left-[0%] h-[0.85em] w-auto pointer-events-none z-10 text-[#111111]"
                                 fill="currentColor"
                                 aria-hidden="true"
                             >
