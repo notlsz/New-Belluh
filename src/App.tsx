@@ -20,6 +20,8 @@ import { supabase } from './lib/supabaseClient';
 import { useAdminAccess } from './hooks/useAdminAccess';
 import { trackEvent } from './services/analytics';
 
+import Acquisition from './pages/Acquisition';
+
 // Toast Component
 const Toast = ({ message, type, onClose }: { message: string, type: 'success' | 'error' | 'info', onClose: () => void }) => {
   useEffect(() => {
@@ -86,14 +88,15 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true); // Added loading state to prevent flash
   const [isOnboarding, setIsOnboarding] = useState(false);
   
-  // View State for Unauthenticated Users ('landing' | 'auth' | 'about' | 'careers')
+  // View State for Unauthenticated Users ('landing' | 'auth' | 'about' | 'careers' | 'acquisition')
   const getInitialAuthView = () => {
     const path = window.location.pathname;
+    if (path.startsWith('/we-have-been-acquired')) return 'acquisition';
     if (path.startsWith('/careers')) return 'careers';
     if (path === '/about') return 'about';
     return 'landing';
   };
-  const [authView, setAuthView] = useState<'landing' | 'auth' | 'about' | 'careers'>(getInitialAuthView());
+  const [authView, setAuthView] = useState<'landing' | 'auth' | 'about' | 'careers' | 'acquisition'>(getInitialAuthView());
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
   
   // App State
@@ -165,7 +168,8 @@ const App: React.FC = () => {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
-      if (path.startsWith('/careers')) setAuthView('careers');
+      if (path.startsWith('/we-have-been-acquired')) setAuthView('acquisition');
+      else if (path.startsWith('/careers')) setAuthView('careers');
       else if (path === '/about') setAuthView('about');
       else setAuthView('landing');
     };
@@ -178,6 +182,7 @@ const App: React.FC = () => {
     if (authView === 'landing' && path !== '/') window.history.pushState({}, '', '/');
     else if (authView === 'about' && path !== '/about') window.history.pushState({}, '', '/about');
     else if (authView === 'careers' && !path.startsWith('/careers')) window.history.pushState({}, '', '/careers');
+    else if (authView === 'acquisition' && !path.startsWith('/we-have-been-acquired')) window.history.pushState({}, '', '/we-have-been-acquired');
   }, [authView]);
 
   // --- Auth Helpers ---
@@ -917,6 +922,10 @@ const App: React.FC = () => {
                 onGoToAbout={() => setAuthView('about')}
             />
           );
+      }
+
+      if (authView === 'acquisition') {
+          return <Acquisition />;
       }
 
       // 'auth' view
