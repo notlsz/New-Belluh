@@ -5,6 +5,7 @@ import { Settings, Heart, Plus, X, Trash2, Shield, ChevronRight, Users, Check, S
 import { supabase } from '../lib/supabaseClient';
 import { generateRelationshipReceipt } from '../services/geminiService';
 import { THEMES } from '../constants';
+import WhatsAppDates from '../components/WhatsAppDates';
 
 interface ProfileProps {
   user: User;
@@ -484,6 +485,8 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                               )}
                           </div>
                       )}
+
+                      <WhatsAppDates onShowToast={onShowToast} />
                       
                       {/* Artifact Grid */}
                       <div className="grid grid-cols-2 gap-4">

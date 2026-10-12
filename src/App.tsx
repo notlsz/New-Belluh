@@ -439,12 +439,14 @@ const App: React.FC = () => {
         }
 
         const contentEntries = dbEntries ? dbEntries.filter((e: any) => 
-            !e.tags || (
+            // Never show another person's private entries
+            (e.user_id === sessionUser.id || e.is_shared) &&
+            (!e.tags || (
                 !e.tags.includes('system_circle_def') && 
                 !e.tags.includes('system_circle_member') &&
                 !e.tags.includes('system_facts') &&
                 !e.tags.includes('system_circle_metadata')
-            )
+            ))
         ) : [];
         
         const mappedEntries: JournalEntry[] = contentEntries.map((e: any) => {
