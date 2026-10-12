@@ -5,9 +5,10 @@ interface TabBarProps {
   currentTab: string;
   onTabChange: (tab: string) => void;
   onCompose: () => void;
+  badges?: Record<string, boolean>;
 }
 
-const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose }) => {
+const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose, badges = {} }) => {
   const tabs = [
     { id: 'timeline', icon: BookHeart, label: 'Story' }, // Main Home
     { id: 'compose', icon: Plus, label: 'Capture', isAction: true },
@@ -46,6 +47,9 @@ const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose }) =
               <Icon size={24} strokeWidth={isActive ? 2.5 : 2} className={`transition-all duration-300 ${isActive ? 'scale-110' : 'scale-100'}`} />
               {isActive && (
                 <span className="absolute -bottom-2 w-1 h-1 bg-belluh-300 rounded-full animate-scale-in" />
+              )}
+              {badges[tab.id] && !isActive && (
+                <span aria-label="New note" className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#f0addd] rounded-full ring-2 ring-white" />
               )}
             </button>
           );

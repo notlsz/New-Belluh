@@ -19,6 +19,7 @@ import { Sparkles, X, CheckCircle2, AlertCircle, Info } from 'lucide-react';
 import { supabase } from './lib/supabaseClient';
 import { useAdminAccess } from './hooks/useAdminAccess';
 import { trackEvent } from './services/analytics';
+import { belluhAgent } from './services/belluhAgent';
 
 import Acquisition from './pages/Acquisition';
 import Report from './pages/Report';
@@ -116,6 +117,17 @@ const App: React.FC = () => {
   
   // Notification State
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
+
+  // Belluh's short reply after you write, and notes from your partner waiting in the Belluh tab
+  const [belluhReply, setBelluhReply] = useState<string | null>(null);
+  const [unreadNotes, setUnreadNotes] = useState(0);
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const check = () => belluhAgent.unreadNotes().then(setUnreadNotes);
+    check();
+    const t = setInterval(check, 60_000);
+    return () => clearInterval(t);
+  }, [isAuthenticated]);
 
   const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setNotification({ message, type });
@@ -848,6 +860,8 @@ const App: React.FC = () => {
         setIsComposeOpen(false); 
         setComposePrompt(undefined);
         showNotification('Memory captured!', 'success');
+        // Belluh may have something to add. Quietly skipped if it doesn't, or if the agent isn't deployed.
+        belluhAgent.react(data.id).then(res => { if (res?.message?.body) setBelluhReply(res.message.body); });
     } else {
         showNotification('Failed to save.', 'error');
     }
@@ -957,11 +971,24 @@ const App: React.FC = () => {
   return (
     <div className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in">
       {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} />}
-      {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={entries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} />}
+      {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={entries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} />}
       {currentTab === 'profile' && <Profile user={user} entries={entries} streak={streak} onCircleChange={handleCircleChange} onCreateCircle={handleCreateCircle} onArchiveCircle={handleArchiveCircle} onRenameCircle={handleRenameCircle} onLogout={handleLogout} onUpdateUser={handleUpdateUser} onShowLegal={(type) => setLegalModalOpen(type)} onViewArtifact={(type) => setArtifactModalOpen(type)} onShowToast={showNotification} pendingInvites={pendingInvites} onAcceptInvite={handleAcceptInvite} onDeclineInvite={handleDeclineInvite} />}
       
       {notification && <Toast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
-      <TabBar currentTab={currentTab} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); setCurrentTab(tab); }} onCompose={() => handleCompose()} />
+      {belluhReply && currentTab !== 'ai-coach' && !isComposeOpen && (
+        <div className="fixed bottom-28 left-0 right-0 px-6 z-[55] flex justify-center animate-slide-up">
+          <div className="max-w-[360px] w-full bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-900/10 border border-white p-4 flex gap-3">
+            <div className="w-8 h-8 rounded-full bg-belluh-600 flex items-center justify-center text-white shrink-0"><Sparkles size={14} /></div>
+            <button className="text-left flex-1" onClick={() => { setBelluhReply(null); setCurrentTab('ai-coach'); }}>
+              <p className="text-xs font-bold text-slate-400">Belluh</p>
+              <p className="font-serif text-[15px] leading-snug text-slate-800 line-clamp-3">{belluhReply}</p>
+              <p className="text-xs font-bold text-belluh-500 mt-1.5">Reply</p>
+            </button>
+            <button aria-label="Dismiss" onClick={() => setBelluhReply(null)} className="text-slate-300 hover:text-slate-500 self-start"><X size={16} /></button>
+          </div>
+        </div>
+      )}
+      <TabBar currentTab={currentTab} badges={{ 'ai-coach': unreadNotes > 0 }} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); if (tab === 'ai-coach') { setUnreadNotes(0); setBelluhReply(null); } setCurrentTab(tab); }} onCompose={() => handleCompose()} />
       {isComposeOpen && <div className="fixed inset-0 z-[60] bg-paper animate-slide-up"><button onClick={() => setIsComposeOpen(false)} className="absolute top-6 right-6 w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 z-50 transition-colors"><X size={20} /></button><Journal onAddEntry={handleAddEntry} partnerName={user.partnerName || 'Partner'} onTriggerPremium={handleTriggerPremium} initialPrompt={composePrompt} userName={user.name} partnerHasEntry={partnerHasEntry} /></div>}
       
       {showIntro && <IntroGuide onClose={() => setShowIntro(false)} />}
