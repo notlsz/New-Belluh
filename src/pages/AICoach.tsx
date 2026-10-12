@@ -26,6 +26,18 @@ const BelluhAvatar = () => (
 const NoteDraft: React.FC<{ msg: AgentMessage; onSend: (id: string, text: string) => Promise<void>; onDiscard: (id: string) => Promise<void> }> = ({ msg, onSend, onDiscard }) => {
   const [text, setText] = useState(msg.body);
   const [busy, setBusy] = useState(false);
+  const boxRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const fit = () => {
+      const el = boxRef.current;
+      if (el) { el.style.height = 'auto'; el.style.height = `${el.scrollHeight + 2}px`; }
+    };
+    fit();
+    // Re-measure once the serif font has loaded, or the last line gets clipped
+    (document as any).fonts?.ready?.then(fit);
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, [text]);
   const status = msg.meta?.status ?? 'draft';
   const to = msg.meta?.to_name || 'your partner';
 
@@ -44,10 +56,11 @@ const NoteDraft: React.FC<{ msg: AgentMessage; onSend: (id: string, text: string
     <div className="ml-12 max-w-[85%] rounded-3xl border border-belluh-200 bg-white shadow-sm p-5">
       <p className="text-xs font-bold text-slate-400 mb-2">Note to {to}</p>
       <textarea
+        ref={boxRef}
         value={text}
         onChange={e => setText(e.target.value)}
-        rows={Math.min(8, Math.max(3, Math.ceil(text.length / 48)))}
-        className="w-full resize-none bg-belluh-50/40 rounded-2xl p-4 font-serif text-[16px] leading-relaxed text-slate-800 focus:outline-none focus:ring-2 focus:ring-belluh-100"
+        rows={2}
+        className="w-full resize-none overflow-hidden bg-belluh-50/40 rounded-2xl p-4 font-serif text-[16px] leading-relaxed text-slate-800 focus:outline-none focus:ring-2 focus:ring-belluh-100"
       />
       <div className="mt-3 flex items-center gap-2">
         <button
@@ -119,8 +132,14 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
     return () => { cancelled = true; };
   }, [entryTexts]);
 
+  const didInitialScroll = useRef(false);
   useEffect(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      const behavior: ScrollBehavior = didInitialScroll.current ? 'smooth' : 'auto';
+      const go = () => messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
+      go();
+      // Fonts and auto-sized note boxes can change heights after the first scroll
+      (document as any).fonts?.ready?.then(() => setTimeout(go, 50));
+      if (agentMessages.length || messages.length) didInitialScroll.current = true;
   }, [messages, agentMessages, isTyping]);
 
   const calculateSentimentScore = (text: string) => {
@@ -223,7 +242,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
 
        {/* Chat Area */}
        <div className="flex-1 overflow-y-auto">
-           <div className="max-w-3xl mx-auto px-4 py-10 pb-48 space-y-8">
+           <div className="max-w-3xl mx-auto px-4 pt-10 pb-4 space-y-8">
 
                {mode === 'loading' && (
                  <div className="flex gap-4 md:gap-6 animate-fade-in"><BelluhAvatar /><div className="h-4 w-40 mt-3 rounded-full bg-slate-100 animate-pulse" /></div>
@@ -303,7 +322,8 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                         </div>
                     </div>
                 )}
-                <div ref={messagesEndRef} />
+                {/* Spacer the height of the input and tab bar, so the newest message is never hidden behind them */}
+                <div ref={messagesEndRef} aria-hidden="true" className="h-72" />
            </div>
        </div>
 
@@ -325,7 +345,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                        placeholder={isConflictMode ? "What happened? Be honest..." : partnerName && mode === 'agent' ? `Message Belluh about you and ${partnerName}...` : "Message Belluh..."}
+                        placeholder={isConflictMode ? "What happened? Be honest..." : "Message Belluh..."}
                         className="w-full bg-transparent border-none px-6 py-3 max-h-32 resize-none focus:outline-none text-slate-800 placeholder:text-slate-400 text-[16px] leading-relaxed self-center"
                         rows={1}
                         style={{ overflow: 'hidden' }}
