@@ -2,6 +2,8 @@
 // No Deno or Supabase imports, so it is unit-tested in Node.
 
 import { daysInMonth, formatMonthDay, nextOccurrence, daysBetween, type LocalDate } from './occasions.ts';
+import { readableFacts } from './facts.ts';
+import { formatOption, type PlanOption } from './plans.ts';
 
 export interface EntryRow {
   id: string;
@@ -54,7 +56,7 @@ export function hideUnansweredDaily(viewerId: string, entries: EntryRow[], now: 
 export function factsBlock(rows: EntryRow[], names: Record<string, string>): string | null {
   const facts = rows.filter(r => r.tags?.includes('system_facts') && r.content?.trim());
   if (!facts.length) return null;
-  return facts.map(f => `${names[f.user_id] ?? 'They'} wrote: ${String(f.content).replace(/\s+/g, ' ').slice(0, 1200)}`).join('\n');
+  return facts.map(f => `${names[f.user_id] ?? 'They'} wrote: ${readableFacts(String(f.content)).replace(/\s+/g, ' ').slice(0, 1200)}`).join('\n');
 }
 
 export interface NoteRow { from_user: string; to_user: string; body: string; created_at: string }
@@ -63,6 +65,27 @@ export function notesBlock(notes: NoteRow[], names: Record<string, string>): str
   return [...notes].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 6)
     .map(n => `- ${fmtDate(n.created_at)} ${names[n.from_user] ?? 'Partner'} to ${names[n.to_user] ?? 'Partner'}: ${n.body.replace(/\s+/g, ' ').slice(0, 300)}`)
     .join('\n');
+}
+
+export interface PlanRow {
+  id: string; created_by: string; partner_id: string; title: string; status: string;
+  options: PlanOption[]; chosen_option: string | null; partner_note: string | null; created_at: string;
+}
+/** Plans the couple made through Belluh: upcoming confirmed ones, open proposals, and recent "none of these work". */
+export function plansBlock(plans: PlanRow[], names: Record<string, string>, timeZone: string, now = new Date()): string | null {
+  const live = plans.filter(p => {
+    if (p.status === 'cancelled') return false;
+    const chosen = p.options.find(o => o.id === p.chosen_option);
+    if (p.status === 'confirmed') return chosen && new Date(chosen.starts_at).getTime() > now.getTime() - 86400000;
+    return now.getTime() - new Date(p.created_at).getTime() < 14 * 86400000;
+  }).slice(0, 6);
+  if (!live.length) return null;
+  return live.map(p => {
+    const by = names[p.created_by] ?? 'One of them', to = names[p.partner_id] ?? 'their partner';
+    if (p.status === 'confirmed') return `- Confirmed: "${p.title}" on ${formatOption(p.options.find(o => o.id === p.chosen_option)!, timeZone)}`;
+    if (p.status === 'declined') return `- ${to} couldn't make "${p.title}" at the times ${by} suggested${p.partner_note ? ` (they said: ${p.partner_note.slice(0, 200)})` : ''}`;
+    return `- ${by} proposed "${p.title}" to ${to}: ${p.options.map(o => formatOption(o, timeZone)).join(' or ')} (waiting for ${to} to pick)`;
+  }).join('\n');
 }
 
 export interface PastWeek { week_start: string; action: string; checkins: { name: string; status: string }[] }
@@ -114,6 +137,7 @@ export interface PersonContext {
   facts?: string | null;   // what the couple wrote about their relationship
   notes?: string | null;   // recent notes between them, sent through Belluh
   pastWeeks?: string | null; // what they tried in earlier weeks and how it went
+  plans?: string | null;     // plans they made together through Belluh
 }
 
 export function systemPrompt(c: PersonContext): string {
@@ -141,6 +165,7 @@ Actions (use the tools; don't just describe them)
 - forget_date: when they ask you to remove a saved date.
 - set_reminders: when they ask to pause or resume date reminders.
 - When they ask what dates you remember, list them from "Their saved dates", with when they told you.
+- plan_with_partner: when they want to plan something with ${partner} (a date night, a walk, a trip, a hard conversation). Offer one to three concrete times as start: "YYYY-MM-DDTHH:mm" in their local time, using what you know about their week. ${partner} gets the plan in Belluh and picks a time; once picked, it's in both calendars with reminders. If you don't know roughly when they're free, ask one short question first.
 - draft_note_to_partner: when they want to tell ${partner} something, or you've helped them find words they want to send. This only drafts it; ${c.myName} approves before anything is sent. Write it in ${c.myName}'s voice, first person.
 
 Safety
@@ -155,6 +180,9 @@ ${c.weekly ?? '(None yet. Belluh suggests one every Sunday.)'}
 
 Earlier weeks
 ${c.pastWeeks ?? '(This is their first week with Belluh.)'}
+
+Plans together
+${c.plans ?? '(None yet.)'}
 
 Recent notes between them, sent through Belluh
 ${c.notes ?? '(None yet.)'}
@@ -215,6 +243,30 @@ export const TOOL_DECLARATIONS = [
     parameters: { type: 'OBJECT', properties: { on: { type: 'BOOLEAN' } }, required: ['on'] },
   },
   {
+    name: 'plan_with_partner',
+    description: "Propose a plan to the user's partner with 1-3 times; the partner picks one in Belluh.",
+    parameters: {
+      type: 'OBJECT',
+      properties: {
+        title: { type: 'STRING', description: 'Short, e.g. "Dinner at Nopa"' },
+        details: { type: 'STRING', nullable: true },
+        options: {
+          type: 'ARRAY',
+          items: {
+            type: 'OBJECT',
+            properties: {
+              start: { type: 'STRING', description: 'Local start time, YYYY-MM-DDTHH:mm' },
+              minutes: { type: 'INTEGER', nullable: true },
+              label: { type: 'STRING', nullable: true },
+            },
+            required: ['start'],
+          },
+        },
+      },
+      required: ['title', 'options'],
+    },
+  },
+  {
     name: 'draft_note_to_partner',
     description: "Draft a note to the user's partner, in the user's voice. The user approves it before it is sent.",
     parameters: { type: 'OBJECT', properties: { text: { type: 'STRING' } }, required: ['text'] },
@@ -227,7 +279,8 @@ export type ToolCall =
   | { name: 'save_date'; label: string; month: number; day: number; year: number | null; repeats_yearly: boolean }
   | { name: 'draft_note_to_partner'; text: string }
   | { name: 'forget_date'; query: string }
-  | { name: 'set_reminders'; on: boolean };
+  | { name: 'set_reminders'; on: boolean }
+  | { name: 'plan_with_partner'; args: Record<string, unknown> };
 
 const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '');
 
@@ -239,6 +292,7 @@ export function validateToolCall(name: string, args: Record<string, unknown> | u
     case 'forget_memory': { const query = clean(a.query, 100); return query.length >= 2 ? { name, query } : null; }
     case 'forget_date': { const query = clean(a.query, 100); return query.length >= 2 ? { name, query } : null; }
     case 'set_reminders': return typeof a.on === 'boolean' ? { name, on: a.on } : null;
+    case 'plan_with_partner': return typeof a.title === 'string' && Array.isArray(a.options) ? { name, args: a } : null; // times are checked by validatePlan
     case 'draft_note_to_partner': {
       const text = typeof a.text === 'string' ? a.text.trim().slice(0, 1000) : '';
       return text ? { name, text } : null;

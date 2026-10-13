@@ -14,6 +14,7 @@ import {
 import { chatWithTools, jsonAnswer, type GeminiContent } from '../_shared/gemini.ts';
 import { db, loadCtx, buildSystem, addMessage, history, weekView, type Ctx } from '../_shared/agentdb.ts';
 import type { CheckinStatus } from '../_shared/weekly.ts';
+import { validatePlan, formatOption, localDateOf, type PlanOption } from '../_shared/plans.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -89,6 +90,18 @@ async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate') {
           await db.from('agent_settings').upsert({ user_id: ctx.userId, reminders_enabled: call.on, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
           await db.from('whatsapp_links').update({ reminders_enabled: call.on }).eq('user_id', ctx.userId);
           return { ok: true, reminders: call.on ? 'on' : 'paused' };
+        }
+        case 'plan_with_partner': {
+          if (!ctx.partnerId) return { ok: false, error: 'No partner is connected yet. Suggest inviting them from the Me tab.' };
+          const plan = validatePlan(call.args, ctx.timezone);
+          if (!plan) return { ok: false, error: 'Those times are not valid. Use future local times as YYYY-MM-DDTHH:mm, at most three.' };
+          const { data: row, error } = await db.from('plans').insert({
+            created_by: ctx.userId, partner_id: ctx.partnerId, title: plan.title, details: plan.details, options: plan.options, timezone: ctx.timezone,
+          }).select('id').single();
+          if (error || !row) return { ok: false, error: "Couldn't save the plan." };
+          created.push(await addMessage(ctx.userId, 'plan', plan.title, { plan_id: row.id }));
+          await addMessage(ctx.partnerId, 'plan', plan.title, { plan_id: row.id, from_name: ctx.myName });
+          return { ok: true, sent_to: ctx.partnerName, times: plan.options.map(o => formatOption(o, ctx.timezone)), note: `The plan is with ${ctx.partnerName} to pick a time. Tell the user briefly; you'll let them know when ${ctx.partnerName} answers.` };
         }
         case 'draft_note_to_partner': {
           if (!ctx.partnerId) return { ok: false, error: 'No partner is connected yet. Suggest inviting them from the Me tab.' };
@@ -179,6 +192,48 @@ const CHECKIN_REPLIES: Record<CheckinStatus, string> = {
 };
 
 /** One tap from the Sunday card or the Wednesday check-in: did you try this week's thing? */
+/** The partner picks a time (or says none work); the plan becomes a date for both, with reminders. */
+async function planRespond(ctx: Ctx, planId: string, optionId: string | null, note: string) {
+  const { data: p } = await db.from('plans').select('*').eq('id', planId).maybeSingle();
+  if (!p || p.partner_id !== ctx.userId) return json({ error: 'Plan not found' }, 404);
+  if (p.status !== 'proposed') return json({ error: 'This plan was already answered.' }, 409);
+  const opts = p.options as PlanOption[];
+  const chosen = optionId ? opts.find(o => o.id === optionId) : null;
+  if (optionId && !chosen) return json({ error: 'Unknown time' }, 400);
+  const status = chosen ? 'confirmed' : 'declined';
+  // Claim it, so two taps can't answer twice
+  const { data: claimed } = await db.from('plans').update({ status, chosen_option: chosen?.id ?? null, partner_note: note.trim().slice(0, 500) || null, updated_at: new Date().toISOString() })
+    .eq('id', planId).eq('status', 'proposed').select('id');
+  if (!claimed?.length) return json({ error: 'This plan was already answered.' }, 409);
+
+  const { data: creatorSettings } = await db.from('agent_settings').select('timezone').eq('user_id', p.created_by).maybeSingle();
+  const creatorTz = creatorSettings?.timezone ?? p.timezone;
+  const messages: unknown[] = [];
+  if (chosen) {
+    for (const [uid, tz] of [[p.created_by, creatorTz], [ctx.userId, ctx.timezone]] as const) {
+      const day = localDateOf(chosen.starts_at, tz);
+      await db.from('occasions').insert({ user_id: uid, label: p.title, kind: 'other', month: day.m, day: day.d, year: day.y, repeats_yearly: false, source: 'app', source_message: 'Planned together in Belluh' });
+    }
+    await addMessage(p.created_by, 'belluh', `${ctx.myName} picked ${formatOption(chosen, creatorTz)} for "${p.title}". It's in your dates, and you can add it to your calendar from the plan.${note.trim() ? ` ${ctx.myName} added: "${note.trim().slice(0, 300)}"` : ''}`, { kind: 'plan_confirmed', plan_id: planId });
+    messages.push(await addMessage(ctx.userId, 'belluh', `It's set: "${p.title}", ${formatOption(chosen, ctx.timezone)}. I'll remind you both.`, { kind: 'plan_confirmed', plan_id: planId }));
+  } else {
+    await addMessage(p.created_by, 'belluh', `${ctx.myName} can't make those times for "${p.title}".${note.trim() ? ` They said: "${note.trim().slice(0, 300)}"` : ''} Want me to suggest other times?`, { kind: 'plan_declined', plan_id: planId });
+    messages.push(await addMessage(ctx.userId, 'belluh', `Got it. I've let them know those times don't work.`, { kind: 'plan_declined', plan_id: planId }));
+  }
+  const { data: fresh } = await db.from('plans').select('*').eq('id', planId).single();
+  return json({ plan: fresh, messages });
+}
+
+async function planCancel(ctx: Ctx, planId: string) {
+  const { data: p } = await db.from('plans').select('*').eq('id', planId).maybeSingle();
+  if (!p || p.created_by !== ctx.userId) return json({ error: 'Plan not found' }, 404);
+  if (p.status === 'cancelled') return json({ plan: p });
+  await db.from('plans').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', planId);
+  await addMessage(p.partner_id, 'belluh', `${ctx.myName} called off "${p.title}".`, { kind: 'plan_cancelled', plan_id: planId });
+  const { data: fresh } = await db.from('plans').select('*').eq('id', planId).single();
+  return json({ plan: fresh });
+}
+
 async function checkin(ctx: Ctx, actionId: string, status: string) {
   if (!['done', 'not_yet', 'skipped'].includes(status)) return json({ error: 'Unknown status' }, 400);
   const s = status as CheckinStatus;
@@ -216,6 +271,8 @@ Deno.serve(async (req) => {
         return json({ messages: await history(user.id), partner_name: ctx.partnerName, week: await weekView(ctx).catch(() => null) });
       }
       case 'checkin': return await checkin(ctx, String(body.action_id ?? ''), String(body.status ?? ''));
+      case 'plan_respond': return await planRespond(ctx, String(body.plan_id ?? ''), body.option_id ? String(body.option_id) : null, String(body.note ?? ''));
+      case 'plan_cancel': return await planCancel(ctx, String(body.plan_id ?? ''));
       case 'chat': return json(await chat(ctx, String(body.message ?? ''), body.mode === 'mediate' ? 'mediate' : 'chat'));
       case 'react': return json(await react(ctx, String(body.entry_id ?? '')));
       case 'send_note': return await sendNote(ctx, String(body.draft_id ?? ''), typeof body.text === 'string' ? body.text : undefined);

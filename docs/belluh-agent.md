@@ -17,6 +17,7 @@ Belluh is the same Belluh tab, now with a memory and the ability to act. It is b
   - **The next Sunday:** the suggestion builds on how it went, and goes lighter if you skipped.
 
   The shared suggestion also sits at the top of the home feed. One tap answers it, and the card then folds to a single line showing where each of you is. There's nothing to set up: the app saves your time zone when it opens, and Belluh only writes to people who've journaled in the last two weeks.
+- **Plans things with your partner.** Ask "plan a dinner with Dan this week" and Belluh proposes up to three times (from what it knows: your entries, dates, and what's coming up), sends them to your partner as a card, and your partner picks one with a tap or says none work. The confirmed plan becomes a date for both of you with reminders, appears on Home, in **Our weeks**, and in your own calendar (one tap for Google, an .ics for Apple or Outlook, or a private subscription link in Me → Settings that keeps all plans and dates in sync). Belluh knows what you've planned next time either of you talks to it.
 - **Mediate Conflict** still works; it now helps find words and can turn them into a note to send.
 
 ## Privacy rules (enforced on the server, unit-tested)
@@ -36,9 +37,10 @@ It doesn't flirt, play a romantic role or try to replace the partner. Grok's com
 2. Set the `GEMINI_API_KEY` secret (optional `GEMINI_MODEL`, default `gemini-2.5-flash`).
 3. `supabase functions deploy belluh-agent` (keep JWT verification on).
 4. For the weekly loop: apply `20261012030000_weekly_loop.sql`, deploy `belluh-weekly --no-verify-jwt`, and schedule it hourly (see `docs/DEPLOY.md`).
+5. For plans and calendars: apply `20261013020000_plans_calendar.sql` and deploy `belluh-calendar --no-verify-jwt`.
 
 Until it is deployed, the Belluh tab falls back to the original chat. That chat also needs the `gemini-proxy` function (all AI now runs on the server), so deploy both together.
 
 ## Tests
 
-`npm test` covers the privacy filter, prompt, tool validation, date logic and the weekly loop's schedule and prompts. `tests/e2e` runs everything against real Postgres with the migrations applied (14 API scenarios, plus browser checks for the app and the weekly card). `tests/gemini_loop.deno.test.ts` checks that tool calls run and their results go back to the model (`deno test --allow-env`).
+`npm test` covers the privacy filter, prompt, tool validation, date logic and the weekly loop's schedule and prompts. `tests/e2e` runs everything against real Postgres with the migrations applied (25 API scenarios, plus browser checks for the app and the weekly card). `tests/gemini_loop.deno.test.ts` checks that tool calls run and their results go back to the model (`deno test --allow-env`).

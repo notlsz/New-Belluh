@@ -1,4 +1,4 @@
-// Pure logic shared by the WhatsApp webhook and the reminder job.
+// Pure logic shared by the WhatsApp and SMS webhooks and the reminder job.
 // No Deno or Supabase imports here, so it runs (and is tested) anywhere with Web Crypto.
 
 export const OCCASION_KINDS = [
@@ -165,7 +165,7 @@ export const EXTRACTION_SCHEMA = {
 
 export function buildExtractionPrompt(message: string, today: LocalDate): string {
   return [
-    'You extract dates a person wants remembered from one WhatsApp message to Belluh, a journal app for couples.',
+    'You extract dates a person wants remembered from one text message (WhatsApp or SMS) to Belluh, a journal app for couples.',
     `Today is ${isoDate(today)}. Resolve relative dates ("next Friday", "in two weeks") against today.`,
     'Return every specific calendar date in the message that names an occasion: birthdays, anniversaries, firsts, trips, holidays, plans.',
     'Birthdays, anniversaries and firsts repeat yearly. One-off plans and trips do not repeat and need a year.',
@@ -208,7 +208,10 @@ export const HELP_TEXT =
   'LIST shows everything I remember. FORGET <name> removes one. STOP pauses reminders.';
 
 export const NOT_LINKED_TEXT =
-  "Hi, I'm Belluh. To save dates here, open Belluh, go to Profile, tap Connect WhatsApp, and send me the code it gives you.";
+  "Hi, I'm Belluh. To save dates here, open Belluh, go to Me → Settings, and tap Connect WhatsApp. It opens WhatsApp with the code ready to send.";
+
+export const NOT_LINKED_SMS_TEXT =
+  "Hi, I'm Belluh. To save dates by text, open Belluh, go to Me → Settings, and tap Connect by text. It opens Messages with the code ready to send.";
 
 export const NO_DATE_TEXT =
   "I didn't find a date in that. Try something like \"Maya's birthday is May 12\" or \"our anniversary is June 3\".\n\n" +

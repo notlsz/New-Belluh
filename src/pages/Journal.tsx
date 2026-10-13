@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { EntryType, Mood } from '../types';
 import { DAILY_PROMPTS, MOOD_EMOJIS } from '../constants';
+import { questionForDay } from '../lib/daily';
 import { Mic, Image as ImageIcon, Send, X, Loader2, Music, CheckCircle2, Lock, Globe } from 'lucide-react';
 import { transcribeAudio } from '../services/geminiService';
 import { uploadPrivate } from '../services/media';
@@ -18,7 +19,9 @@ interface JournalProps {
 const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPremium, initialPrompt }) => {
   const [content, setContent] = useState('');
   const [selectedMood, setSelectedMood] = useState<Mood | undefined>(undefined);
-  const [dailyPrompt] = useState(initialPrompt || DAILY_PROMPTS[Math.floor(Math.random() * DAILY_PROMPTS.length)]);
+  // "+" opens a blank page; today's question is one tap away. Opening from the question card starts on it.
+  const todaysQuestion = questionForDay(DAILY_PROMPTS);
+  const [dailyPrompt, setDailyPrompt] = useState<string | null>(initialPrompt || null);
   const [isPrivate, setIsPrivate] = useState(false);
   const [step, setStep] = useState<'write' | 'mood' | 'success'>('write');
   
@@ -171,8 +174,8 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
        onAddEntry(
            content, 
            selectedMood, 
-           hasImage ? EntryType.Photo : (audioUrl ? EntryType.Voice : EntryType.Prompt), 
-           dailyPrompt, 
+           hasImage ? EntryType.Photo : (audioUrl ? EntryType.Voice : (dailyPrompt ? EntryType.Prompt : EntryType.Freeform)), 
+           dailyPrompt ?? undefined, 
            isPrivate, 
            audioUrl || undefined, 
            photoRef ?? (hasImage ? imagePreview || undefined : undefined)
@@ -197,15 +200,27 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
            </div>
            <h2 className="text-3xl font-serif text-slate-900 mb-3 text-center">Moment Captured</h2>
            <p className="text-slate-500 text-sm font-medium tracking-wide text-center max-w-xs leading-relaxed">
-               {!isPrivate ? `Belluh will remind ${partnerName} tonight.` : "Saved to your private vault."}
+               {!isPrivate ? `Shared with ${partnerName || 'your partner'}.` : "Saved just for you."}
            </p>
         </div>
       ) : (
         <div className="relative flex-1 flex flex-col">
             <div className={`transition-all duration-500 flex-1 flex flex-col ${step === 'write' ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
                 <div className="mb-8 mt-4">
-                    <p className="text-xs font-bold text-belluh-400 uppercase tracking-widest mb-3">Daily Ritual</p>
-                    <p className="text-2xl text-slate-800 font-serif leading-tight">{dailyPrompt}</p>
+                    {dailyPrompt ? (
+                        <>
+                            <div className="flex items-center justify-between mb-3">
+                                <p className="text-xs font-bold text-belluh-400 uppercase tracking-widest">{dailyPrompt === todaysQuestion ? "Today's question" : 'Prompt'}</p>
+                                <button type="button" onClick={() => setDailyPrompt(null)} className="text-xs font-bold text-slate-400 hover:text-slate-700">Write freely instead</button>
+                            </div>
+                            <p className="text-2xl text-slate-800 font-serif leading-tight">{dailyPrompt}</p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-2xl text-slate-800 font-serif leading-tight">What's on your mind?</p>
+                            <button type="button" onClick={() => setDailyPrompt(todaysQuestion)} className="mt-3 px-3.5 py-1.5 rounded-full bg-belluh-50 border border-belluh-100 text-xs font-bold text-belluh-900 hover:bg-belluh-100">Answer today's question instead</button>
+                        </>
+                    )}
                 </div>
                 <div className="space-y-4 mb-4">
                     {hasImage && imagePreview && (

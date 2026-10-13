@@ -1,6 +1,13 @@
-import { supabase } from '../lib/supabaseClient';
+import { supabase, supabaseUrl } from '../lib/supabaseClient';
+import type { PlanOption } from '../../supabase/functions/_shared/plans';
 
-export type AgentRole = 'user' | 'belluh' | 'partner_note' | 'note_draft';
+export type AgentRole = 'user' | 'belluh' | 'partner_note' | 'note_draft' | 'plan';
+
+export interface Plan {
+  id: string; created_by: string; partner_id: string; title: string; details: string | null;
+  options: PlanOption[]; status: 'proposed' | 'confirmed' | 'declined' | 'cancelled';
+  chosen_option: string | null; partner_note: string | null; created_at: string;
+}
 
 export interface AgentMessage {
   id: string;
@@ -48,6 +55,8 @@ async function call<T>(body: Record<string, unknown>): Promise<T | null> {
 
 export const belluhAgent = {
   history: () => call<{ messages: AgentMessage[]; partner_name: string | null; week: WeekView | null }>({ action: 'history' }),
+  planRespond: (planId: string, optionId: string | null, note = '') => call<{ plan: Plan; messages: AgentMessage[] }>({ action: 'plan_respond', plan_id: planId, option_id: optionId, note }),
+  planCancel: (planId: string) => call<{ plan: Plan }>({ action: 'plan_cancel', plan_id: planId }),
   checkin: (actionId: string, status: CheckinStatus) => call<{ messages: AgentMessage[]; week: WeekView | null }>({ action: 'checkin', action_id: actionId, status }),
   chat: (message: string, mode: 'chat' | 'mediate' = 'chat') => call<{ messages: AgentMessage[] }>({ action: 'chat', message, mode }),
   react: (entryId: string) => call<{ message: AgentMessage | null }>({ action: 'react', entry_id: entryId }),
@@ -80,6 +89,34 @@ export const belluhAgent = {
     const status = (id: string | null) => (id ? (cs ?? []).find(c => c.user_id === id)?.status ?? null : null) as CheckinStatus | null;
     return { id: a.id, action: a.action, why: a.why, week_start: a.week_start, mine: status(myId), partner: status(partnerId), partner_name: partnerId ? partnerName : null };
   },
+  async myId(): Promise<string | null> {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id ?? null;
+  },
+  async plan(id: string): Promise<Plan | null> {
+    const { data, error } = await supabase.from('plans').select('*').eq('id', id).maybeSingle();
+    return error ? null : (data as Plan | null);
+  },
+  /** Plans waiting for you to pick a time, and confirmed plans coming up, for the top of Home. */
+  async homePlans(): Promise<Plan[]> {
+    const me = await this.myId();
+    if (!me) return [];
+    const { data, error } = await supabase.from('plans').select('*').in('status', ['proposed', 'confirmed'])
+      .order('created_at', { ascending: false }).limit(10);
+    if (error || !data) return [];
+    const now = Date.now();
+    return (data as Plan[]).filter(p => p.status === 'proposed'
+      ? p.partner_id === me
+      : (() => { const o = p.options.find(x => x.id === p.chosen_option); return !!o && new Date(o.starts_at).getTime() > now && new Date(o.starts_at).getTime() - now < 14 * 86400000; })());
+  },
+  /** Your private calendar feed (Google, Apple, Outlook). Reset revokes the old link. */
+  async calendarFeed(reset = false): Promise<{ https: string; webcal: string; google: string } | null> {
+    const { data, error } = await supabase.rpc('my_calendar_token', { p_reset: reset });
+    if (error || !data) return null;
+    const https = `${supabaseUrl}/functions/v1/belluh-calendar?token=${data}`;
+    const webcal = https.replace(/^https?:/, 'webcal:');
+    return { https, webcal, google: `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}` };
+  },
   /** Belluh's latest word to you, for the top of Home. `live` is false before Belluh's server is set up. */
   async latest(): Promise<{ live: boolean; message: AgentMessage | null }> {
     const { data, error } = await supabase.from('agent_messages').select('id, role, body, meta, created_at')
@@ -92,7 +129,7 @@ export const belluhAgent = {
     let since = '';
     try { since = localStorage.getItem(SEEN_KEY) ?? ''; } catch { /* ignore */ }
     let q = supabase.from('agent_messages').select('id', { count: 'exact', head: true })
-      .eq('role', 'belluh').in('meta->>kind', ['weekly', 'checkin', 'reminder']);
+      .or('role.eq.plan,and(role.eq.belluh,meta->>kind.in.(weekly,checkin,reminder,plan_confirmed,plan_declined,plan_cancelled))');
     if (since) q = q.gt('created_at', since);
     const { count, error } = await q;
     return !error && (count ?? 0) > 0;

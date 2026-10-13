@@ -4,6 +4,7 @@ import { Insight, ChatMessage, RelationshipArchetype, UserPersona } from '../typ
 import { chatWithBelluh, generateDailyReflection, getRelationshipArchetype, softenConflictMessage, detectPersonaFromEntries } from '../services/geminiService';
 import { belluhAgent, AgentMessage, WeekView } from '../services/belluhAgent';
 import WeeklyCard from '../components/WeeklyCard';
+import PlanCard from '../components/PlanCard';
 import { Sparkles, Wand2, Activity, ArrowUp, Heart, Check, X, Brain, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { trackEvent } from '../services/analytics';
@@ -148,7 +149,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
       const first = initialRef.current;
       if (first.message) { first.done?.(); sendLegacyRef.current?.(first.message); }
     })();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; belluhAgent.markBelluhSeen(); };
   }, []);
 
   const didInitialScroll = useRef(false);
@@ -294,10 +295,16 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
 
                {/* Agent thread */}
                {mode === 'agent' && agentMessages.length === 0 && (
-                 <div className="flex gap-4 md:gap-6 animate-slide-up"><BelluhAvatar /><p className="font-serif text-lg leading-loose text-slate-900">{greeting}</p></div>
+                 <div className="flex gap-4 md:gap-6 animate-slide-up"><BelluhAvatar /><p className="font-serif text-lg leading-relaxed text-slate-900">{greeting}</p></div>
                )}
 
                {mode === 'agent' && agentMessages.map(msg => {
+                 if (msg.role === 'plan' && msg.meta?.plan_id) return (
+                   <div key={msg.id} className="animate-slide-up flex gap-4 md:gap-6">
+                     <BelluhAvatar />
+                     <div className="flex-1 min-w-0 max-w-[85%] md:max-w-[80%]"><PlanCard planId={msg.meta.plan_id} partnerName={partnerName} /></div>
+                   </div>
+                 );
                  if (msg.role === 'note_draft') return <NoteDraft key={msg.id} msg={msg} onSend={handleSendNote} onDiscard={handleDiscardNote} />;
                  if (msg.role === 'partner_note') return (
                    <div key={msg.id} className="animate-slide-up flex gap-4 md:gap-6">
@@ -321,7 +328,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                      <div className="max-w-[85%] md:max-w-[80%]">
                        {msg.meta?.entry_id && <p className="text-xs font-bold text-slate-300 mb-1">About your latest entry</p>}
                        {msg.meta?.kind === 'weekly' && <p className="text-xs font-bold text-slate-300 mb-1">Your week, from Belluh</p>}
-                       <p className="font-serif text-lg leading-loose text-slate-900 whitespace-pre-wrap">{msg.body}</p>
+                       <p className="font-serif text-lg leading-relaxed text-slate-900 whitespace-pre-wrap">{msg.body}</p>
                        {Array.isArray(msg.meta?.saved) && msg.meta.saved.length > 0 && (
                          <button onClick={openMemories} className="mt-2 flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-700 text-left">
                            <Brain size={12} /> Saved to memory: {msg.meta.saved.join(' · ')}
@@ -352,7 +359,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                            {msg.role === 'model' ? (
                                <div className="flex gap-4 md:gap-6">
                                    <BelluhAvatar />
-                                   <div className="prose prose-slate prose-p:font-serif prose-p:text-lg prose-p:leading-loose max-w-none whitespace-pre-wrap">
+                                   <div className="prose prose-slate prose-p:font-serif prose-p:text-lg prose-p:leading-relaxed max-w-none whitespace-pre-wrap">
                                        <p>{msg.text.replace(/[*#]/g, '')}</p>
                                    </div>
                                </div>
@@ -381,7 +388,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
        {/* Input Area */}
        <div className="fixed bottom-0 left-0 right-0 p-4 pb-28 bg-gradient-to-t from-white via-white to-transparent pt-12 z-40">
             <div className="max-w-2xl mx-auto relative flex flex-col">
-                <div className="flex items-center gap-2 mb-3 pl-1 overflow-x-auto no-scrollbar">
+                <div className="flex flex-wrap items-center gap-2 mb-3 pl-1">
                     {starters.map(t => (
                         <button key={t} onClick={() => sendNow(t)} disabled={isTyping}
                             className="shrink-0 py-1.5 px-4 rounded-full bg-white border border-belluh-100 text-xs font-bold text-belluh-900 hover:bg-belluh-50 disabled:opacity-50 shadow-sm">

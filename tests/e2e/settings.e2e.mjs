@@ -1,0 +1,42 @@
+// Settings: connect WhatsApp (real link → webhook round trip), connect by SMS, calendar subscription.
+import { chromium } from 'playwright';
+import crypto from 'node:crypto';
+const OUT = process.argv[2], APP = 'http://localhost:4175', API = 'http://127.0.0.1:3000', SECRET = 'belluh-local-test-secret-0123456789abcdef';
+const jwt = (sub, email, role = 'authenticated') => { const b = (o) => Buffer.from(JSON.stringify(o)).toString('base64url'); const h = b({ alg: 'HS256', typ: 'JWT' }), p = b({ role, ...(sub ? { sub, email } : {}), aud: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 }); return `${h}.${p}.${crypto.createHmac('sha256', SECRET).update(`${h}.${p}`).digest('base64url')}`; };
+const EVE = '11111111-1111-1111-1111-111111111111'; // Maya, after disconnecting her WhatsApp
+const session = JSON.stringify({ access_token: jwt(EVE, 'maya@test.com'), token_type: 'bearer', expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: 'local', user: { id: EVE, email: 'maya@test.com', aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {} } });
+const res = []; const check = (n, ok, d = '') => res.push(`${ok ? 'PASS' : 'FAIL'}  ${n}${d ? '  (' + d + ')' : ''}`);
+await fetch(`${API}/rest/v1/whatsapp_links?user_id=eq.${EVE}`, { method: 'DELETE', headers: { apikey: jwt('', '', 'anon'), authorization: `Bearer ${jwt(EVE, 'maya@test.com')}` } });
+const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+await ctx.addInitScript(([s]) => localStorage.setItem('sb-127-auth-token', s), [session]);
+const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+await p.goto(APP); await p.waitForTimeout(3000);
+await p.locator('nav button[aria-label="Me"]').click(); await p.waitForTimeout(2000);
+const me = await p.locator('body').innerText();
+check('Me page points to Settings for dates, WhatsApp & calendar', me.includes('Dates, WhatsApp & calendar') && !me.includes('Your calendar'));
+await p.getByText('Dates, WhatsApp & calendar').click(); await p.waitForTimeout(2500);
+const t = await p.locator('body').innerText();
+check('Settings has WhatsApp, text and calendar', t.includes('Connect WhatsApp') && t.includes('Connect by text') && t.includes('Add to my calendar'));
+await p.screenshot({ path: `${OUT}/settings.png` });
+const wa = await p.locator('a', { hasText: 'Connect WhatsApp' }).getAttribute('href');
+const sm = await p.locator('a', { hasText: 'Connect by text' }).getAttribute('href');
+check('WhatsApp button opens wa.me with LINK code typed in', /^https:\/\/wa\.me\/15550002222\?text=LINK%20[A-Z2-9]{6}$/.test(wa ?? ''), wa);
+check('Text button opens Messages with LINK code typed in', /^sms:\+15550001111\?&body=LINK%20[A-Z2-9]{6}$/.test(sm ?? ''), sm);
+// The user taps it and hits send: what Meta then delivers to Belluh
+const code = decodeURIComponent(wa.split('text=')[1]).split(' ')[1];
+await p.locator('a', { hasText: 'Connect WhatsApp' }).click({ modifiers: [] }).catch(() => {});
+await p.waitForTimeout(800);
+for (const pg of ctx.pages()) if (pg !== p) await pg.close();
+check('After tapping, it shows the code and waits', (await p.locator('body').innerText()).includes(`LINK ${code}`));
+const body = JSON.stringify({ entry: [{ changes: [{ value: { messages: [{ from: '15558880000', id: 'wamid.ui.' + Date.now(), timestamp: String(Math.floor(Date.now() / 1000)), type: 'text', text: { body: `LINK ${code}` } }] } }] }] });
+const sig = 'sha256=' + crypto.createHmac('sha256', 'wa-secret').update(body).digest('hex');
+const r = await fetch(`${API}/functions/v1/whatsapp-webhook`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-hub-signature-256': sig }, body });
+check('Meta delivers the message, Belluh links the number', r.status === 200);
+await p.waitForTimeout(5500);
+const t2 = await p.locator('body').innerText();
+check('Settings updates on its own: "Connected to +15558880000"', t2.includes('Connected to +15558880000'));
+await p.screenshot({ path: `${OUT}/settings-connected.png` });
+await p.getByRole('button', { name: /Add to my calendar/ }).click(); await p.waitForTimeout(1500);
+check('Calendar links appear in Settings', (await p.locator('body').innerText()).includes('Copy link for Outlook'));
+check('No JS errors', errs.length === 0, errs.join(';').slice(0, 150));
+await b.close(); console.log(res.join('\n'));

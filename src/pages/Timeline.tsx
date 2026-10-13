@@ -9,6 +9,8 @@ import { askBelluhAboutJournal, generateRelationshipForecast, detectPatterns } f
 import { trackEvent } from '../services/analytics';
 import { belluhAgent, type WeekView, type AgentMessage } from '../services/belluhAgent';
 import WeeklyCard from '../components/WeeklyCard';
+import PlanCard from '../components/PlanCard';
+import OurWeeks from '../components/OurWeeks';
 
 interface TimelineProps {
   entries: JournalEntry[];
@@ -68,6 +70,8 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
   // Belluh's latest word sits at the top of Home. Once Belluh is live, it replaces the older
   // one-off forecast and pattern cards, so there is one Belluh with one memory.
   const [belluhLive, setBelluhLive] = useState<boolean | null>(null);
+  const [homePlans, setHomePlans] = useState<{ id: string }[]>([]);
+  useEffect(() => { belluhAgent.homePlans().then(setHomePlans).catch(() => {}); }, [currentUserId]);
   const [latest, setLatest] = useState<AgentMessage | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -172,9 +176,12 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
 
   return (
     <div className="min-h-screen bg-white">
-       <div className="pb-32 pt-0 px-0 max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto">
+       <div className="pb-32 pt-0 px-0 max-w-2xl md:max-w-3xl mx-auto">
        {/* Weekly Report Modal Overlay */}
-       {showWeeklyReport && (
+       {showWeeklyReport && belluhLive && (
+           <OurWeeks onClose={() => setShowWeeklyReport(false)} partnerName={(partnerName || '').split(' ')[0] || null} />
+       )}
+       {showWeeklyReport && !belluhLive && (
            <WeeklyReport 
              onClose={() => setShowWeeklyReport(false)} 
              onTryRitual={(prompt) => {
@@ -352,7 +359,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
              </div>
 
              {/* Belluh's latest word to you */}
-             {belluhLive && latest && !isConstellation && !isArchived && showPatterns && (
+             {belluhLive && latest && !(latest.meta?.kind === 'weekly' && week) && !isConstellation && !isArchived && showPatterns && (
                  <button type="button" onClick={() => onOpenBelluh?.()} className="w-full text-left mb-6 animate-scale-in group">
                      <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-float flex items-start gap-4 relative overflow-hidden group-hover:shadow-lg transition-shadow">
                          <div className="absolute top-0 left-0 w-1 h-full bg-[#f0addd]"></div>
@@ -407,6 +414,14 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
        <div className="relative min-h-[400px]">
           {/* Timeline Stem */}
           <div className="absolute left-14 md:left-20 top-0 bottom-0 w-px bg-slate-100"></div>
+
+          {/* Plans: one waiting for you to pick a time, or one coming up */}
+          {homePlans.length > 0 && !isArchived && !isConstellation && (
+              <div className="relative pl-20 md:pl-24 pr-6 mb-10 animate-slide-up space-y-4">
+                  <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-[#f0addd] border-[2px] border-[#fcfcfc] rounded-full z-10 -translate-x-[3.5px]"></div>
+                  {homePlans.slice(0, 2).map(p => <PlanCard key={p.id} planId={p.id} partnerName={(partnerName || '').split(' ')[0] || null} />)}
+              </div>
+          )}
 
           {/* This week's thing to try together: one tap to check in */}
           {week && !isArchived && !isConstellation && (

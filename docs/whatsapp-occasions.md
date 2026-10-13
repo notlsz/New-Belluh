@@ -87,7 +87,22 @@ It runs every hour. Each user gets reminders from 9am in their own time zone; a 
 To test without waiting, call `.../occasion-reminders?force=1` with the `x-cron-secret` header.
 
 ### 7. App
-Set `VITE_BELLUH_WHATSAPP_NUMBER` in Vercel to Belluh's WhatsApp number (digits only, with country code). The Profile page then shows **Connect WhatsApp**, which gives the user a code and an "Open WhatsApp" button with `LINK <code>` pre-filled.
+Set `VITE_BELLUH_WHATSAPP_NUMBER` in Vercel to Belluh's WhatsApp number (digits only, with country code). Me → Settings then shows **Connect WhatsApp**, which gives the user a code and an "Open WhatsApp" button with `LINK <code>` pre-filled.
+
+## SMS (Twilio), the same thing by plain text
+
+Everything above also works by SMS: one-tap **Connect by text** (opens Messages with `LINK <code>` typed in), texting a date, LIST, FORGET, STOP/START, and reminders a week before and on the day. A person links one number; Belluh replies and reminds on whichever of WhatsApp or SMS they last texted from.
+
+1. Twilio: buy a number. For US numbers, register the brand and an A2P 10DLC campaign (use case "Account notifications"); unregistered US traffic is blocked. Creating a Messaging Service and putting the number in it is the simplest way.
+2. In the number's (or Messaging Service's) settings, set **A message comes in** to `https://<project-ref>.supabase.co/functions/v1/sms-webhook`, HTTP POST.
+3. GitHub secrets: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` (the number in E.164, or the Messaging Service SID starting with `MG`). The deploy workflow sets them and deploys `sms-webhook`.
+4. Vercel: `VITE_BELLUH_SMS_NUMBER` = the number, e.g. `+15551234567`.
+
+Every request is checked against Twilio's signature (`X-Twilio-Signature`) using the auth token. If the project is behind a custom domain, set the `SMS_WEBHOOK_URL` secret to the exact URL Twilio calls. Twilio's own STOP handling also applies to SMS.
+
+## Not possible: Snapchat, iMessage
+
+Snapchat has no API for reading or sending chats (Snap Kit only offers login, sharing and Bitmoji), so Belluh can't sync Snapchat. iMessage needs Apple Messages for Business through an approved messaging provider and only works when the user starts the chat from Apple's apps; SMS reaches iPhones today.
 
 ## Costs
 Meta charges per delivered template message, by country; reminders are always templates. Replies to a user's own message are free-form; check Meta's current rate card for whether those are charged in your markets.

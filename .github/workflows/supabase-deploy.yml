@@ -7,6 +7,8 @@
 #   GEMINI_API_KEY         Google AI Studio key
 # Optional, for WhatsApp dates and reminders (see docs/whatsapp-occasions.md):
 #   WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN
+# Optional, for the same by plain SMS (Twilio):
+#   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM (a Twilio number or a Messaging Service SID, MG...)
 # Optional repository variable SUPABASE_PROJECT_REF (defaults to the project the app points at).
 
 name: Deploy Supabase backend
@@ -35,6 +37,9 @@ jobs:
       WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
       WHATSAPP_APP_SECRET: ${{ secrets.WHATSAPP_APP_SECRET }}
       WHATSAPP_VERIFY_TOKEN: ${{ secrets.WHATSAPP_VERIFY_TOKEN }}
+      TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+      TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+      TWILIO_FROM: ${{ secrets.TWILIO_FROM }}
       PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || 'ctbsycrlakdanfzbaqmz' }}
     steps:
       - name: Check setup
@@ -105,17 +110,30 @@ jobs:
           supabase functions deploy gemini-proxy --project-ref "$PROJECT_REF"
           supabase functions deploy belluh-agent --project-ref "$PROJECT_REF"
           supabase functions deploy belluh-weekly --project-ref "$PROJECT_REF" --no-verify-jwt
+          supabase functions deploy belluh-calendar --project-ref "$PROJECT_REF" --no-verify-jwt
 
-      - name: WhatsApp dates and reminders
+      - name: Texting Belluh (WhatsApp and SMS) and reminders
         if: steps.setup.outputs.ready == 'true'
         run: |
-          if [ -z "$WHATSAPP_ACCESS_TOKEN" ] || [ -z "$WHATSAPP_PHONE_NUMBER_ID" ] || [ -z "$WHATSAPP_APP_SECRET" ] || [ -z "$WHATSAPP_VERIFY_TOKEN" ]; then
+          on=""
+          if [ -n "$WHATSAPP_ACCESS_TOKEN" ] && [ -n "$WHATSAPP_PHONE_NUMBER_ID" ] && [ -n "$WHATSAPP_APP_SECRET" ] && [ -n "$WHATSAPP_VERIFY_TOKEN" ]; then
+            supabase secrets set --project-ref "$PROJECT_REF" WHATSAPP_ACCESS_TOKEN="$WHATSAPP_ACCESS_TOKEN" WHATSAPP_PHONE_NUMBER_ID="$WHATSAPP_PHONE_NUMBER_ID" \
+              WHATSAPP_APP_SECRET="$WHATSAPP_APP_SECRET" WHATSAPP_VERIFY_TOKEN="$WHATSAPP_VERIFY_TOKEN"
+            supabase functions deploy whatsapp-webhook --project-ref "$PROJECT_REF" --no-verify-jwt
+            echo "WhatsApp is on. Webhook URL for Meta: https://${PROJECT_REF}.supabase.co/functions/v1/whatsapp-webhook"
+            on="yes"
+          else
             echo "::notice::WhatsApp is off: add the four WHATSAPP_* secrets to turn it on (docs/whatsapp-occasions.md)."
-            exit 0
           fi
-          supabase secrets set --project-ref "$PROJECT_REF" WHATSAPP_ACCESS_TOKEN="$WHATSAPP_ACCESS_TOKEN" WHATSAPP_PHONE_NUMBER_ID="$WHATSAPP_PHONE_NUMBER_ID" \
-            WHATSAPP_APP_SECRET="$WHATSAPP_APP_SECRET" WHATSAPP_VERIFY_TOKEN="$WHATSAPP_VERIFY_TOKEN"
-          supabase functions deploy whatsapp-webhook --project-ref "$PROJECT_REF" --no-verify-jwt
+          if [ -n "$TWILIO_ACCOUNT_SID" ] && [ -n "$TWILIO_AUTH_TOKEN" ] && [ -n "$TWILIO_FROM" ]; then
+            supabase secrets set --project-ref "$PROJECT_REF" TWILIO_ACCOUNT_SID="$TWILIO_ACCOUNT_SID" TWILIO_AUTH_TOKEN="$TWILIO_AUTH_TOKEN" TWILIO_FROM="$TWILIO_FROM"
+            supabase functions deploy sms-webhook --project-ref "$PROJECT_REF" --no-verify-jwt
+            echo "SMS is on. Twilio 'A message comes in' webhook (HTTP POST): https://${PROJECT_REF}.supabase.co/functions/v1/sms-webhook"
+            on="yes"
+          else
+            echo "::notice::SMS is off: add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_FROM to turn it on (docs/whatsapp-occasions.md)."
+          fi
+          [ -z "$on" ] && exit 0
           supabase functions deploy occasion-reminders --project-ref "$PROJECT_REF" --no-verify-jwt
           sql=$(cat <<SQL
           create extension if not exists pg_cron;
@@ -131,7 +149,6 @@ jobs:
           jq -n --arg q "$sql" '{query: $q}' | curl -sf -X POST \
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
             --data @- "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" > /dev/null
-          echo "WhatsApp is on. Webhook URL for Meta: https://${PROJECT_REF}.supabase.co/functions/v1/whatsapp-webhook"
 
       - name: Schedule the weekly loop (hourly)
         if: steps.setup.outputs.ready == 'true'
