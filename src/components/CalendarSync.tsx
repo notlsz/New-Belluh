@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
 import { CalendarDays, Copy, Check } from 'lucide-react';
 import { belluhAgent } from '../services/belluhAgent';
 
@@ -7,6 +8,9 @@ const CalendarSync: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' |
   const [feed, setFeed] = useState<{ https: string; webcal: string; google: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Hidden until the backend has calendars (the table answers, even if empty), so the button never fails
+  const [ready, setReady] = useState(false);
+  useEffect(() => { supabase.from('calendar_feeds').select('user_id').limit(1).then(({ error }) => setReady(!error)); }, []);
 
   const load = async (reset = false) => {
     setBusy(true);
@@ -20,6 +24,8 @@ const CalendarSync: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' |
     if (!feed) return;
     try { await navigator.clipboard.writeText(feed.https); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* the link is visible to select */ }
   };
+
+  if (!ready) return null;
 
   return (
     <div className="mb-12">

@@ -180,6 +180,9 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
   const [activeTab, setActiveTab] = useState<'us' | 'me'>('us');
   const [activeCircleId, setActiveCircleId] = useState(user.activeCircleId);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  // The Settings shortcut shows once the dates backend is deployed
+  const [datesReady, setDatesReady] = useState(false);
+  useEffect(() => { supabase.from('occasions').select('id').limit(1).then(({ error }) => setDatesReady(!error)); }, []);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editName, setEditName] = useState(user.name);
   const [editAvatar, setEditAvatar] = useState(user.avatar);
@@ -511,13 +514,13 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                           </div>
                       )}
 
-                      <button onClick={() => setShowSettingsModal(true)} className="w-full mb-12 bg-white rounded-[2rem] border border-slate-100 shadow-sm p-5 flex items-center justify-between text-left hover:border-slate-200 transition-colors">
+                      {datesReady && <button onClick={() => setShowSettingsModal(true)} className="w-full mb-12 bg-white rounded-[2rem] border border-slate-100 shadow-sm p-5 flex items-center justify-between text-left hover:border-slate-200 transition-colors">
                           <div>
                               <p className="font-serif text-lg text-slate-900">Dates, WhatsApp & calendar</p>
                               <p className="text-sm text-slate-500 mt-0.5">Text Belluh your dates and put your plans in your calendar. In Settings.</p>
                           </div>
                           <ChevronRight size={18} className="text-slate-300 shrink-0" />
-                      </button>
+                      </button>}
                       
                       {/* Artifact Grid */}
                       <div className="grid grid-cols-2 gap-4">
