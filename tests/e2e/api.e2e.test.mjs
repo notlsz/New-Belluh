@@ -385,3 +385,173 @@ test('21. everything WhatsApp does with dates also works inside Belluh', async (
   const { data: left } = await maya.from('occasions').select('label').eq('label', 'Lisbon trip');
   assert.equal(left.length, 0, 'FORGET works in the app too');
 });
+
+test('22. WhatsApp end to end: one-tap link, text a date, get the reply and the reminder', async () => {
+  const hook = async (text, from = '15551230000') => {
+    const body = JSON.stringify({ entry: [{ changes: [{ value: { messages: [{ from, id: 'wamid.in.' + Math.random(), timestamp: String(Math.floor(Date.now() / 1000)), type: 'text', text: { body: text } }] } }] }] });
+    const sig = 'sha256=' + crypto.createHmac('sha256', 'wa-secret').update(body).digest('hex');
+    return fetch(`${URL_}/functions/v1/whatsapp-webhook`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-hub-signature-256': sig }, body });
+  };
+  const sent = () => geminiRequests().filter(r => r.whatsapp).map(r => r.whatsapp);
+
+  // Meta's one-time webhook check
+  const v = await fetch(`${URL_}/functions/v1/whatsapp-webhook?hub.mode=subscribe&hub.verify_token=wa-verify&hub.challenge=42`);
+  assert.equal(await v.text(), '42');
+  // Forged messages are rejected
+  const forged = await fetch(`${URL_}/functions/v1/whatsapp-webhook`, { method: 'POST', headers: { 'x-hub-signature-256': 'sha256=' + '0'.repeat(64) }, body: '{}' });
+  assert.equal(forged.status, 401);
+
+  // The app makes a code; the Connect button opens WhatsApp with "LINK <code>" typed in
+  const { data: code } = await maya.rpc('request_whatsapp_link', { p_timezone: 'America/New_York' });
+  assert.match(code, /^[A-Z2-9]{6}$/);
+  assert.equal((await hook(`LINK ${code}`)).status, 200);
+  const { data: link } = await maya.from('whatsapp_links').select('phone_e164').single();
+  assert.equal(link.phone_e164, '+15551230000', 'linked with one message');
+  assert.match(sent().at(-1).text.body, /connected/);
+
+  await hook("Dan's birthday is October 20");
+  // Maya already told Belluh this date in the app (scenario 4), so WhatsApp recognizes it: one list, two ways in
+  assert.match(sent().at(-1).text.body, /Already saved: Dan's birthday \(you told me on/);
+  const { data: occ } = await maya.from('occasions').select('label');
+  assert.equal(occ.filter(o => o.label === "Dan's birthday").length, 1, 'no duplicate');
+
+  await hook('LIST');
+  assert.match(sent().at(-1).text.body, /Dan's birthday/);
+
+  // A date one week out gets the approved reminder template
+  const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })); d.setDate(d.getDate() + 7);
+  await service.from('occasions').insert({ user_id: MAYA, label: 'Paris trip', kind: 'trip', month: d.getMonth() + 1, day: d.getDate(), year: d.getFullYear(), repeats_yearly: false, source: 'whatsapp' });
+  const r = await fetch(`${URL_}/functions/v1/occasion-reminders?force=1`, { method: 'POST', headers: { 'x-cron-secret': 'cron-test' } });
+  const out = await r.json();
+  assert.ok(out.sent >= 1, JSON.stringify(out));
+  const tpl = sent().filter(m => m.type === 'template');
+  assert.ok(tpl.some(m => m.template.name === 'occasion_reminder' && m.template.components[0].parameters[0].text === 'Paris trip'));
+
+  // Someone else's number gets nothing
+  await hook('LIST', '15559999999');
+  assert.match(sent().at(-1).text.body, /isn't connected|not connected|Connect/i);
+});
+
+test('23. plan together: Belluh proposes times, the partner picks one, it lands in both calendars', async () => {
+  const { data: out } = await agent(maya, { action: 'chat', message: 'Can you plan a dinner with Dan this week?' });
+  assert.ok(out.messages.some(m => m.role === 'plan'), 'Maya sees the plan in her thread');
+  const { data: plans } = await maya.from('plans').select('*').eq('status', 'proposed');
+  assert.equal(plans.length, 1);
+  const plan = plans[0];
+  assert.equal(plan.partner_id, DAN);
+  assert.equal(plan.options.length, 2, 'a time in the past is dropped');
+  assert.ok(plan.options.every(o => new Date(o.starts_at) > new Date()));
+
+  // Dan sees it too; Eve does not; nobody can write plans directly
+  const { data: dh } = await agent(dan, { action: 'history' });
+  assert.ok(dh.messages.some(m => m.role === 'plan' && m.meta.plan_id === plan.id && m.meta.from_name === 'Maya'));
+  assert.equal((await eve.from('plans').select('id')).data.length, 0, 'strangers see no plans');
+  const { error: direct } = await dan.from('plans').update({ status: 'confirmed', chosen_option: 'a' }).eq('id', plan.id).select();
+  const { data: still } = await maya.from('plans').select('status').eq('id', plan.id).single();
+  assert.equal(still.status, 'proposed', 'only Belluh changes plans' + (direct ? '' : ''));
+
+  // Only the partner can answer; Maya can't pick for Dan
+  const { error: wrong } = await agent(maya, { action: 'plan_respond', plan_id: plan.id, option_id: 'a' });
+  assert.ok(wrong, 'the person who proposed it cannot answer it');
+
+  const { data: picked } = await agent(dan, { action: 'plan_respond', plan_id: plan.id, option_id: 'b', note: 'Saturday is perfect' });
+  assert.equal(picked.plan.status, 'confirmed');
+  assert.equal(picked.plan.chosen_option, 'b');
+  const { error: twice } = await agent(dan, { action: 'plan_respond', plan_id: plan.id, option_id: 'a' });
+  assert.ok(twice, 'answered once only');
+
+  // Both get it as a date with reminders, and Maya hears back
+  for (const c of [maya, dan]) {
+    const { data: occ } = await c.from('occasions').select('label, repeats_yearly').eq('label', 'Dinner at the Thai place');
+    assert.equal(occ.length, 1); assert.equal(occ[0].repeats_yearly, false);
+  }
+  const { data: mh } = await agent(maya, { action: 'history' });
+  assert.match(mh.messages.at(-1).body, /Dan picked .* for "Dinner at the Thai place".*Saturday is perfect/);
+
+  // Belluh knows about it next time either of them talks to it
+  await agent(dan, { action: 'chat', message: 'what are we up to this week?' });
+  const sys = geminiRequests().at(-1).body.systemInstruction.parts[0].text;
+  assert.match(sys, /Dinner at the Thai place/);
+
+  // Calendar feed: private link, confirmed plan as a timed event, dates as all-day events, no duplicate
+  const { data: tok } = await dan.rpc('my_calendar_token', { p_reset: false });
+  assert.match(tok, /^[A-Za-z0-9_-]{32}$/);
+  const ics = await (await fetch(`${URL_}/functions/v1/belluh-calendar?token=${tok}`)).text();
+  assert.match(ics, /BEGIN:VCALENDAR/);
+  assert.match(ics, /SUMMARY:Dinner at the Thai place\r\nDESCRIPTION:The one you both wrote about./);
+  assert.equal(ics.match(/SUMMARY:Dinner at the Thai place/g).length, 1, 'the plan is not repeated as an all-day date');
+  assert.equal((await fetch(`${URL_}/functions/v1/belluh-calendar?token=wrongwrongwrongwrongwrong`)).status, 404);
+  const { data: newTok } = await dan.rpc('my_calendar_token', { p_reset: true });
+  assert.notEqual(newTok, tok);
+  assert.equal((await fetch(`${URL_}/functions/v1/belluh-calendar?token=${tok}`)).status, 404, 'a reset link stops working');
+  assert.equal((await anon.rpc('my_calendar_token', { p_reset: false })).data, null, 'signed-out visitors get no link');
+
+  // "None of these work" and "call it off"
+  await agent(maya, { action: 'chat', message: 'plan a dinner again please' });
+  const { data: p2 } = await maya.from('plans').select('id').eq('status', 'proposed').single();
+  const { data: no } = await agent(dan, { action: 'plan_respond', plan_id: p2.id, option_id: null, note: 'Next week?' });
+  assert.equal(no.plan.status, 'declined');
+  const { data: mh2 } = await agent(maya, { action: 'history' });
+  assert.match(mh2.messages.at(-1).body, /can't make those times.*Next week\?/);
+  await agent(maya, { action: 'chat', message: 'plan a dinner one more time' });
+  const { data: p3 } = await maya.from('plans').select('id').eq('status', 'proposed').single();
+  assert.ok((await agent(dan, { action: 'plan_cancel', plan_id: p3.id })).error, 'only the person who proposed it can call it off');
+  const { data: off } = await agent(maya, { action: 'plan_cancel', plan_id: p3.id });
+  assert.equal(off.plan.status, 'cancelled');
+});
+
+test('24. SMS works exactly like WhatsApp: one-tap link, dates, STOP/START, reminders by text', async () => {
+  const SMS_URL = `${URL_}/functions/v1/sms-webhook`;
+  const sms = async (text, from = '+15557770000', sid = 'SM' + Math.random().toString(36).slice(2)) => {
+    const params = { From: from, To: '+15550001111', Body: text, MessageSid: sid, NumMedia: '0' };
+    const data = SMS_URL + Object.keys(params).sort().map(k => k + params[k]).join('');
+    const sig = crypto.createHmac('sha1', 'tw-token').update(data).digest('base64');
+    return fetch(SMS_URL, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'x-twilio-signature': sig }, body: new URLSearchParams(params) });
+  };
+  const texts = () => geminiRequests().filter(r => r.sms);
+
+  // Forged requests are rejected
+  const forged = await fetch(SMS_URL, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'x-twilio-signature': 'nope' }, body: 'From=%2B15557770000&Body=LIST&MessageSid=SMx' });
+  assert.equal(forged.status, 401);
+
+  // Not connected yet: Belluh says how, by text
+  await sms('hello');
+  assert.match(texts().at(-1).sms.Body, /Connect by text/);
+  assert.equal(texts().at(-1).sms.To, '+15557770000');
+  assert.match(texts().at(-1).auth, /^Basic /, 'sent through Twilio with the account credentials');
+
+  // One tap in the app opens Messages with "LINK <code>" typed in
+  const { data: code } = await dan.rpc('request_whatsapp_link', { p_timezone: 'America/Los_Angeles' });
+  const r = await sms(`LINK ${code}`);
+  assert.equal(r.status, 200);
+  assert.match(await r.text(), /<Response><\/Response>/);
+  const { data: link } = await dan.from('whatsapp_links').select('phone_e164, channel').single();
+  assert.deepEqual(link, { phone_e164: '+15557770000', channel: 'sms' });
+  assert.match(texts().at(-1).sms.Body, /connected/);
+
+  // Twilio retries are counted once
+  const sid = 'SMdup' + Date.now();
+  await sms("Maya's birthday is October 20", undefined, sid);
+  const before = texts().length;
+  await sms("Maya's birthday is October 20", undefined, sid);
+  assert.equal(texts().length, before, 'a retried delivery is not answered twice');
+  const { data: occ } = await dan.from('occasions').select('label, source').eq('source', 'sms');
+  assert.equal(occ.length, 1, 'the date is saved, marked as texted');
+  assert.match(texts().at(-1).sms.Body, /Saved/i);
+
+  await sms('STOP');
+  assert.equal((await dan.from('whatsapp_links').select('reminders_enabled').single()).data.reminders_enabled, false);
+  await sms('START');
+  assert.equal((await dan.from('whatsapp_links').select('reminders_enabled').single()).data.reminders_enabled, true);
+  await sms('LIST');
+  assert.match(texts().at(-1).sms.Body, /Dan's birthday/);
+
+  // Reminders arrive by SMS for people who linked by SMS
+  const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })); d.setDate(d.getDate() + 7);
+  await service.from('occasions').insert({ user_id: DAN, label: 'Tahoe weekend', kind: 'trip', month: d.getMonth() + 1, day: d.getDate(), year: d.getFullYear(), repeats_yearly: false, source: 'sms' });
+  const out = await (await fetch(`${URL_}/functions/v1/occasion-reminders?force=1`, { method: 'POST', headers: { 'x-cron-secret': 'cron-test' } })).json();
+  assert.ok(out.sent >= 1, JSON.stringify(out));
+  assert.ok(texts().some(t => /^Belluh reminder: Tahoe weekend is in one week, .*Reply STOP to pause reminders\.$/.test(t.sms.Body)));
+  // Maya, linked on WhatsApp, still gets the WhatsApp template
+  assert.equal((await maya.from('whatsapp_links').select('channel').single()).data.channel, 'whatsapp');
+});

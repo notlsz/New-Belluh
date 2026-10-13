@@ -1,6 +1,7 @@
 // Thin client for the WhatsApp Cloud API and Gemini. Reads secrets from the edge function environment.
 
-const GRAPH = 'https://graph.facebook.com/v21.0';
+// WHATSAPP_API_BASE points tests at a stand-in for Meta's servers
+const GRAPH = Deno.env.get('WHATSAPP_API_BASE') ?? 'https://graph.facebook.com/v21.0';
 
 function env(name: string): string {
   const v = Deno.env.get(name);

@@ -6,6 +6,8 @@ import { supabase } from '../lib/supabaseClient';
 import { generateRelationshipReceipt } from '../services/geminiService';
 import { THEMES } from '../constants';
 import WhatsAppDates from '../components/WhatsAppDates';
+import CalendarSync from '../components/CalendarSync';
+import { parseFactDate, ymdString } from '../../supabase/functions/_shared/facts';
 
 interface ProfileProps {
   user: User;
@@ -71,9 +73,17 @@ const CircleCard: React.FC<CircleCardProps> = ({ circle, isActive, onClick, onEd
     );
 };
 
-// ... (Helper functions omitted for brevity, logic remains same) ...
+const NO_DATE = () => new Date(NaN);
+const FROM_PROFILE = 'From your About us dates';
+const isSet = (d?: Date) => d instanceof Date && !isNaN(d.getTime());
+const toInput = (d: Date) => isSet(d) ? ymdString({ y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate() }) : '';
+const fromInput = (v: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : NO_DATE(); };
+const fromStored = (v: unknown) => { const x = parseFactDate(v); return x ? new Date(x.y, x.m - 1, x.d) : NO_DATE(); };
+/** Next time a yearly date comes round (for birthdays and anniversaries). */
+const nextYearly = (d: Date) => { const now = new Date(); now.setHours(0,0,0,0); const n = new Date(now.getFullYear(), d.getMonth(), d.getDate()); if (n < now) n.setFullYear(now.getFullYear() + 1); return n; };
 const getRelativeDisplay = (date: Date, type: 'past' | 'future' | 'auto') => {
-    if (!date || isNaN(date.getTime())) return '--';
+    if (!isSet(date)) return '--';
+    if (type === 'future') date = nextYearly(date);
     const now = new Date();
     const d1 = new Date(date); d1.setHours(0,0,0,0);
     const d2 = new Date(now); d2.setHours(0,0,0,0);
@@ -87,7 +97,7 @@ const getRelativeDisplay = (date: Date, type: 'past' | 'future' | 'auto') => {
 };
 
 // --- FactCard & StatCard Components (Unchanged) ---
-const FactCard = ({ id, label, date, setDate, isEditing, icon: Icon, theme, config, onToggleHidden, onCycleSize, mode = 'past' }: any) => {
+const FactCard = ({ id, label, date, setDate, isEditing, icon: Icon, theme, config, onToggleHidden, onCycleSize, mode = 'past', onAdd }: any) => {
     // ... (same as previous)
     const themes: any = {
         blue: "bg-blue-50 border-blue-100 text-blue-900 hover:shadow-blue-100/50",
@@ -119,13 +129,17 @@ const FactCard = ({ id, label, date, setDate, isEditing, icon: Icon, theme, conf
             <div className="relative z-10">
                 {isEditing ? (
                     <div className="bg-white/30 backdrop-blur-md p-2 rounded-xl border border-white/20 shadow-sm mt-2">
-                        <input type="date" value={date instanceof Date && !isNaN(date.getTime()) ? date.toISOString().split('T')[0] : ''} onChange={(e) => { if (e.target.value) { const newDate = new Date(e.target.value); if (!isNaN(newDate.getTime())) setDate(newDate); } }} className="w-full bg-transparent border-none text-lg font-bold outline-none text-inherit p-0 focus:ring-0 cursor-pointer font-serif"/>
+                        <input type="date" aria-label={label} value={toInput(date)} onChange={(e) => setDate(fromInput(e.target.value))} className="w-full bg-transparent border-none text-lg font-bold outline-none text-inherit p-0 focus:ring-0 cursor-pointer font-serif"/>
                     </div>
                 ) : (
+                    !isSet(date) ? (
+                        <button type="button" onClick={onAdd} className="text-lg font-serif font-medium opacity-60 hover:opacity-100 underline-offset-4 hover:underline">Add date</button>
+                    ) : (
                     <>
-                        <div className={`${config.size === 'big' || config.size === 'wide' ? 'text-4xl md:text-5xl' : 'text-3xl md:text-4xl'} font-serif font-medium tracking-tight leading-tight mb-1`}>{date instanceof Date ? getRelativeDisplay(date, mode) : '--'}</div>
-                        <div className="text-sm font-medium opacity-60">{date instanceof Date ? date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}</div>
+                        <div className={`${config.size === 'big' || config.size === 'wide' ? 'text-4xl md:text-5xl' : 'text-3xl md:text-4xl'} font-serif font-medium tracking-tight leading-tight mb-1`}>{getRelativeDisplay(date, mode)}</div>
+                        <div className="text-sm font-medium opacity-60">{date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
                     </>
+                    )
                 )}
             </div>
         </div>
@@ -181,7 +195,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
   const [editCircleName, setEditCircleName] = useState('');
 
   // Editable Facts State
-  const [facts, setFacts] = useState({ firstMet: new Date(), firstKiss: new Date(), firstDate: new Date(), partnerBday: new Date(), anniversary: new Date() });
+  const [facts, setFacts] = useState({ firstMet: NO_DATE(), firstKiss: NO_DATE(), firstDate: NO_DATE(), partnerBday: NO_DATE(), anniversary: NO_DATE() });
   const [factConfigs, setFactConfigs] = useState<Record<string, { size: 'standard' | 'wide' | 'tall' | 'big'; hidden: boolean }>>({
       timeTogether: { size: 'standard', hidden: false }, nextAnniversary: { size: 'standard', hidden: false }, firstMet: { size: 'standard', hidden: false }, firstKiss: { size: 'standard', hidden: false }, firstDate: { size: 'standard', hidden: false }, partnerBday: { size: 'standard', hidden: false }, anniversary: { size: 'standard', hidden: false }, 
   });
@@ -201,38 +215,27 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
   const activeCircles = user.circles.filter(c => c.status === CircleStatus.Active);
   const archivedCircles = user.circles.filter(c => c.status === CircleStatus.Archived);
 
-  const synergyScore = useMemo(() => {
-      if (entries.length === 0) return 85; 
-      const recentEntries = entries.slice(0, 15);
-      let score = 80;
-      recentEntries.forEach(e => {
-          if (e.mood === Mood.Romantic || e.mood === Mood.Amazing) score += 4;
-          if (e.mood === Mood.Good || e.mood === Mood.Grateful || e.mood === Mood.Playful) score += 2;
-          if (e.mood === Mood.Stressed || e.mood === Mood.Anxious) score -= 3;
-      });
-      return Math.min(100, Math.max(0, score));
-  }, [entries]);
 
   const totalMemoriesUs = entries.length;
   const totalMemoriesMe = entries.filter(e => e.userId === user.id).length;
-  const pulseStatus = synergyScore >= 80 ? { text: "Deeply Connected", color: "text-[#f0addd]" } : { text: "Steady Growth", color: "text-slate-600" };
+  const sharedThisMonth = useMemo(() => {
+      const now = new Date();
+      return entries.filter(e => { const d = new Date(e.timestamp as any); return !e.isPrivate && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); }).length;
+  }, [entries]);
 
   useEffect(() => {
     if (user.relationshipFacts) {
         try {
             const parsed = JSON.parse(user.relationshipFacts);
             setFacts({
-                firstMet: parsed.firstMet ? new Date(parsed.firstMet) : new Date(),
-                firstKiss: parsed.firstKiss ? new Date(parsed.firstKiss) : new Date(),
-                firstDate: parsed.firstDate ? new Date(parsed.firstDate) : new Date(),
-                partnerBday: parsed.partnerBday ? new Date(parsed.partnerBday) : new Date(),
-                anniversary: parsed.anniversary ? new Date(parsed.anniversary) : new Date(),
+                firstMet: fromStored(parsed.firstMet),
+                firstKiss: fromStored(parsed.firstKiss),
+                firstDate: fromStored(parsed.firstDate),
+                partnerBday: fromStored(parsed.partnerBday),
+                anniversary: fromStored(parsed.anniversary),
             });
             if (parsed.configs) setFactConfigs(prev => ({...prev, ...parsed.configs}));
         } catch (e) { console.error("Failed to parse relationship facts", e); }
-    } else if (activeCircle?.startDate) {
-        const start = new Date(activeCircle.startDate);
-        setFacts(prev => ({ ...prev, firstMet: start, anniversary: start }));
     }
   }, [user.relationshipFacts, activeCircle?.id]);
 
@@ -337,7 +340,8 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
 
   const saveFacts = async () => {
     setIsEditingFacts(false);
-    const payload = { firstMet: facts.firstMet.toISOString(), firstKiss: facts.firstKiss.toISOString(), firstDate: facts.firstDate.toISOString(), partnerBday: facts.partnerBday.toISOString(), anniversary: facts.anniversary.toISOString(), configs: factConfigs };
+    const keep = (d: Date) => (isSet(d) ? toInput(d) : null);
+    const payload = { firstMet: keep(facts.firstMet), firstKiss: keep(facts.firstKiss), firstDate: keep(facts.firstDate), partnerBday: keep(facts.partnerBday), anniversary: keep(facts.anniversary), configs: factConfigs };
     const factsText = JSON.stringify(payload);
     try {
         const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -346,8 +350,28 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
         if (existingFacts) await supabase.from('journal_entries').update({ content: factsText }).eq('id', existingFacts.id);
         else await supabase.from('journal_entries').insert({ user_id: currentUser.id, content: factsText, type: 'Milestone', tags: ['system_facts', `circle:${activeCircleId}`], is_shared: true, date: new Date().toISOString() });
         onUpdateUser({ relationshipFacts: factsText });
-        onShowToast("Relationship facts saved", "success");
+        await syncFactDates(currentUser.id);
+        onShowToast("Saved. Belluh will remind you before the big ones.", "success");
     } catch (e) { console.error("Error saving facts:", e); onShowToast("Failed to save facts", "error"); }
+  };
+
+  // The yearly ones become dates Belluh reminds you about (in the app and on WhatsApp), like any date you tell it.
+  const syncFactDates = async (uid: string) => {
+    const partnerFirst = (user.partnerName || activeMembers.find(m => m.id !== user.id)?.name || '').split(' ')[0];
+    const wanted: { kind: string; label: string; d: Date }[] = [
+      { kind: 'anniversary', label: 'Our anniversary', d: facts.anniversary },
+      { kind: 'birthday', label: partnerFirst ? `${partnerFirst}'s birthday` : "Partner's birthday", d: facts.partnerBday },
+      { kind: 'first_date', label: 'Our first date', d: facts.firstDate },
+    ];
+    try {
+      await supabase.from('occasions').delete().eq('user_id', uid).eq('source_message', FROM_PROFILE);
+      const rows = wanted.filter(w => isSet(w.d)).map(w => ({
+        user_id: uid, kind: w.kind, label: w.label, month: w.d.getMonth() + 1, day: w.d.getDate(), year: w.d.getFullYear(),
+        repeats_yearly: true, source: 'app', source_message: FROM_PROFILE,
+      }));
+      // one at a time, so a date already saved another way (same label and day) is simply skipped
+      for (const r of rows) await supabase.from('occasions').insert(r);
+    } catch (e) { console.error('Could not sync dates', e); }
   };
 
   const cycleSize = (id: string) => { setFactConfigs(prev => { const sizes: ('standard' | 'wide' | 'tall' | 'big')[] = ['standard', 'wide', 'tall', 'big']; const current = prev[id]?.size || 'standard'; const next = sizes[(sizes.indexOf(current) + 1) % sizes.length]; return { ...prev, [id]: { ...prev[id], size: next } }; }); };
@@ -449,15 +473,12 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                           </h2>
                           <div className="mt-8 flex flex-wrap justify-center gap-3">
                                 <div className="px-4 py-2 bg-white rounded-full shadow-sm border border-slate-100 flex items-center gap-2"><Flame size={14} className="text-orange-500 fill-orange-500" /><span className="text-xs font-bold">{streak} Day Streak</span></div>
-                                <div className="px-4 py-2 bg-white rounded-full shadow-sm border border-slate-100 flex items-center gap-2"><Activity size={14} className="text-[#f0addd]" /><span className="text-xs font-bold">{synergyScore}% Synergy</span></div>
+                                <div className="px-4 py-2 bg-white rounded-full shadow-sm border border-slate-100 flex items-center gap-2"><Activity size={14} className="text-[#f0addd]" /><span className="text-xs font-bold">{sharedThisMonth} shared this month</span></div>
                                 <div className="px-4 py-2 bg-white rounded-full shadow-sm border border-slate-100 flex items-center gap-2"><Trophy size={14} className="text-yellow-500" /><span className="text-xs font-bold">{totalMemoriesUs} Memories</span></div>
                           </div>
                       </div>
                       
-                      <div className="text-center mt-12 mb-12">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Current Resonance</p>
-                          <h3 className={`text-3xl font-serif ${pulseStatus.color}`}>{pulseStatus.text}</h3>
-                      </div>
+                      <div className="mb-12"></div>
 
                       {/* Relationship Facts Grid */}
                       {activeCircle && (
@@ -471,11 +492,11 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-auto">
                                   <StatCard id="timeTogether" label="Time Together" value={!isNaN(facts.firstMet.getTime()) ? `${Math.floor((new Date().getTime() - facts.firstMet.getTime()) / (1000 * 60 * 60 * 24))}d` : '--'} subtext="And counting" icon={Clock} theme="slate" config={factConfigs.timeTogether} onToggleHidden={toggleHidden} onCycleSize={cycleSize} isEditing={isEditingFacts} />
                                   <StatCard id="nextAnniversary" label="Next Anniversary" value={(() => { if (isNaN(facts.anniversary.getTime())) return '--'; const now = new Date(); const next = new Date(facts.anniversary); next.setFullYear(now.getFullYear()); if (next < now) next.setFullYear(now.getFullYear() + 1); return `${Math.ceil((next.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))}`; })()} subtext="Days Away" icon={Infinity} theme="white" config={factConfigs.nextAnniversary} onToggleHidden={toggleHidden} onCycleSize={cycleSize} isEditing={isEditingFacts} />
-                                  <FactCard id="firstMet" label="First Met" date={facts.firstMet} setDate={(d: Date) => setFacts({...facts, firstMet: d})} isEditing={isEditingFacts} icon={Users} theme="blue" config={factConfigs.firstMet} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
-                                  <FactCard id="firstKiss" label="First Kiss" date={facts.firstKiss} setDate={(d: Date) => setFacts({...facts, firstKiss: d})} isEditing={isEditingFacts} icon={Heart} theme="rose" config={factConfigs.firstKiss} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
-                                  <FactCard id="firstDate" label="First Date" date={facts.firstDate} setDate={(d: Date) => setFacts({...facts, firstDate: d})} isEditing={isEditingFacts} icon={Calendar} theme="purple" config={factConfigs.firstDate} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
-                                  <FactCard id="anniversary" label="Anniversary" date={facts.anniversary} setDate={(d: Date) => setFacts({...facts, anniversary: d})} isEditing={isEditingFacts} icon={Sparkles} theme="amber" config={factConfigs.anniversary} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="future" />
-                                  <FactCard id="partnerBday" label="Partner B-Day" date={facts.partnerBday} setDate={(d: Date) => setFacts({...facts, partnerBday: d})} isEditing={isEditingFacts} icon={Gift} theme="orange" config={factConfigs.partnerBday} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="future" />
+                                  <FactCard id="firstMet" onAdd={() => setIsEditingFacts(true)} label="First Met" date={facts.firstMet} setDate={(d: Date) => setFacts({...facts, firstMet: d})} isEditing={isEditingFacts} icon={Users} theme="blue" config={factConfigs.firstMet} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
+                                  <FactCard id="firstKiss" onAdd={() => setIsEditingFacts(true)} label="First Kiss" date={facts.firstKiss} setDate={(d: Date) => setFacts({...facts, firstKiss: d})} isEditing={isEditingFacts} icon={Heart} theme="rose" config={factConfigs.firstKiss} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
+                                  <FactCard id="firstDate" onAdd={() => setIsEditingFacts(true)} label="First Date" date={facts.firstDate} setDate={(d: Date) => setFacts({...facts, firstDate: d})} isEditing={isEditingFacts} icon={Calendar} theme="purple" config={factConfigs.firstDate} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
+                                  <FactCard id="anniversary" onAdd={() => setIsEditingFacts(true)} label="Anniversary" date={facts.anniversary} setDate={(d: Date) => setFacts({...facts, anniversary: d})} isEditing={isEditingFacts} icon={Sparkles} theme="amber" config={factConfigs.anniversary} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="future" />
+                                  <FactCard id="partnerBday" onAdd={() => setIsEditingFacts(true)} label="Partner B-Day" date={facts.partnerBday} setDate={(d: Date) => setFacts({...facts, partnerBday: d})} isEditing={isEditingFacts} icon={Gift} theme="orange" config={factConfigs.partnerBday} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="future" />
                               </div>
                               {isEditingFacts && Object.values(factConfigs).some((c: any) => c.hidden) && (
                                   <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
@@ -490,7 +511,13 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                           </div>
                       )}
 
-                      <WhatsAppDates onShowToast={onShowToast} />
+                      <button onClick={() => setShowSettingsModal(true)} className="w-full mb-12 bg-white rounded-[2rem] border border-slate-100 shadow-sm p-5 flex items-center justify-between text-left hover:border-slate-200 transition-colors">
+                          <div>
+                              <p className="font-serif text-lg text-slate-900">Dates, WhatsApp & calendar</p>
+                              <p className="text-sm text-slate-500 mt-0.5">Text Belluh your dates and put your plans in your calendar. In Settings.</p>
+                          </div>
+                          <ChevronRight size={18} className="text-slate-300 shrink-0" />
+                      </button>
                       
                       {/* Artifact Grid */}
                       <div className="grid grid-cols-2 gap-4">
@@ -638,9 +665,13 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
 
       {/* Settings Dialog Overlay */}
       {showSettingsModal && (
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6" onClick={() => setShowSettingsModal(false)}>
-              <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-end md:items-center justify-center md:p-6" onClick={() => setShowSettingsModal(false)}>
+              <div className="bg-[#fcfcfc] rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-8 w-full md:max-w-lg max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                   <h3 className="font-serif text-2xl mb-8 text-slate-900">Settings</h3>
+
+                  {/* Connected: texting Belluh and calendars */}
+                  <WhatsAppDates onShowToast={onShowToast} />
+                  <CalendarSync onShowToast={onShowToast} />
                   
                   {/* Theme Selector */}
                   <div className="mb-8">

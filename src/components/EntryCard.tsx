@@ -217,7 +217,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
                         title="Analyze pattern"
                    >
                        <Sparkles size={12} className="group-hover/sparkle:animate-spin" />
-                       <span className="text-[10px] font-bold uppercase tracking-wide">Ask Belluh</span>
+                       <span className="text-[10px] font-bold uppercase tracking-wide whitespace-nowrap">Ask Belluh</span>
                    </button>
                )}
 

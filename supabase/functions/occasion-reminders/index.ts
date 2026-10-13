@@ -1,4 +1,4 @@
-// Hourly job: from 9am in each user's own time zone (retrying hourly that day if a send fails), send WhatsApp reminders
+// Hourly job: from 9am in each user's own time zone (retrying hourly that day if a send fails), send WhatsApp or SMS reminders
 // a week before and on the day of every saved occasion.
 // Deploy with: supabase functions deploy occasion-reminders --no-verify-jwt
 // Called by pg_cron with the x-cron-secret header (see docs/whatsapp-occasions.md).
@@ -8,6 +8,7 @@ import {
   localDateParts, nextOccurrence, daysBetween, reminderStage, reminderParams, isoDate, type StoredOccasion,
 } from '../_shared/occasions.ts';
 import { sendTemplate } from '../_shared/whatsapp.ts';
+import { sendSms, smsReminder } from '../_shared/sms.ts';
 import { sameSecret } from '../_shared/secret.ts';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
@@ -26,7 +27,7 @@ Deno.serve(async (req) => {
   const now = new Date();
 
   const { data: links, error } = await db.from('whatsapp_links')
-    .select('user_id, phone_e164, timezone').not('phone_e164', 'is', null).eq('reminders_enabled', true);
+    .select('user_id, phone_e164, timezone, channel').not('phone_e164', 'is', null).eq('reminders_enabled', true);
   if (error) return new Response(error.message, { status: 500 });
 
   // One person's bad time zone must never stop everyone else's reminders
@@ -50,14 +51,16 @@ Deno.serve(async (req) => {
         .insert({ occasion_id: o.id, occurs_on: isoDate(next), stage });
       if (claimErr) continue; // already sent (or being sent)
 
-      const id = await sendTemplate(link.phone_e164, TEMPLATE, reminderParams(o, stage, link.timezone), TEMPLATE_LANG);
+      // Reminders go wherever they last texted Belluh from
+      const params = reminderParams(o, stage, link.timezone);
+      const id = link.channel === 'sms' ? await sendSms(link.phone_e164, smsReminder(params)) : await sendTemplate(link.phone_e164, TEMPLATE, params, TEMPLATE_LANG);
       if (id) {
         sent++;
         await db.from('reminders_sent').update({ wa_message_id: id })
           .eq('occasion_id', o.id).eq('occurs_on', isoDate(next)).eq('stage', stage);
         await db.from('whatsapp_messages').insert({
           user_id: link.user_id, direction: 'out', wa_message_id: id, phone_e164: link.phone_e164,
-          body: `[reminder] ${o.label} ${stage}`,
+          body: `[reminder] ${o.label} ${stage}`, channel: link.channel ?? 'whatsapp',
         });
       } else {
         failed++;

@@ -12,8 +12,8 @@ Secret used throughout: `JWT_SECRET=belluh-local-test-secret-0123456789abcdef`.
 ## Run
 
 1. Start Postgres, create a `belluh` database, apply `base.sql` then the migrations.
-2. Start PostgREST (port 3001), `gateway.mjs` (3000), `fake-gemini.mjs` (3002), and the three functions (8101, 8102, 8103).
-3. `node --test api.e2e.test.mjs` (needs `@supabase/supabase-js`): 21 scenarios, covering access rules, invites, shared vs private entries, the Belluh agent, the weekly loop, the security audit fixes, moving old media to private storage, and that a partner's private entry never reaches the model.
+2. Start PostgREST (port 3001), `gateway.mjs` (3000), `fake-gemini.mjs` (3002), and the functions: `belluh-agent` 8101, `gemini-proxy` 8102, `belluh-weekly` 8103, `whatsapp-webhook` 8104, `occasion-reminders` 8105, `belluh-calendar` 8106, `sms-webhook` 8107 (env: `CRON_SECRET=cron-test`, `WHATSAPP_API_BASE=http://127.0.0.1:3002/graph`, `WHATSAPP_APP_SECRET=wa-secret`, `WHATSAPP_VERIFY_TOKEN=wa-verify`, `WHATSAPP_ACCESS_TOKEN=wa-token`, `WHATSAPP_PHONE_NUMBER_ID=123`, `TWILIO_API_BASE=http://127.0.0.1:3002/twilio`, `TWILIO_ACCOUNT_SID=AC123`, `TWILIO_AUTH_TOKEN=tw-token`, `TWILIO_FROM=+15550001111`). `fake-gemini.mjs` also stands in for Meta's and Twilio's APIs.
+3. `node --test api.e2e.test.mjs` (needs `@supabase/supabase-js`): 25 scenarios, covering access rules, invites, shared vs private entries, the Belluh agent, the weekly loop, the security audit fixes, moving old media to private storage, that a partner's private entry never reaches the model, WhatsApp and SMS end to end, and planning together with the calendar feed.
 4. Build the app with `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:3000`, serve it on 4175, then `node app.e2e.mjs <screenshot dir>`: 18 checks in a real browser as Maya, Dan and Eve. Then `node weekly.e2e.mjs <screenshot dir>`: 11 checks of the weekly card and check-in.
 
-Last run, Oct 12, 2026: 21/21 API scenarios, 18/18 browser checks and 11/11 weekly checks passed.
+Last run, Oct 13, 2026: 25/25 API scenarios, 18/18 browser checks, 11/11 weekly checks, 19/19 plan, calendar and Me-page checks, and 5/5 relationship-date checks passed.

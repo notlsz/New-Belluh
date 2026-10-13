@@ -4,7 +4,7 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.45.4';
 import {
   visibleEntries, entriesBlock, occasionsBlock, systemPrompt, hideUnansweredDaily, factsBlock, notesBlock, weeksBlock,
-  type EntryRow, type OccasionRow, type NoteRow, type PastWeek,
+  plansBlock, type EntryRow, type OccasionRow, type NoteRow, type PastWeek, type PlanRow,
 } from './agent.ts';
 import { localDateParts, isoDate } from './occasions.ts';
 import { weekStart, pairOf, type CheckinStatus } from './weekly.ts';
@@ -79,7 +79,8 @@ export async function buildSystem(ctx: Ctx): Promise<string> {
   const { data: occ } = await db.from('occasions').select('label, month, day, year, repeats_yearly, mentioned_at, source').eq('user_id', ctx.userId);
   const wk = await weekAction(ctx).catch(() => ({ action: null, checkins: [] }));
   const words: Record<string, string> = { done: 'did it', not_yet: 'not yet', skipped: 'skipped' };
-  const [notes, pastWeeks] = await Promise.all([recentNotes(ctx), earlierWeeks(ctx, names, wk.action?.id ?? null)]);
+  const [notes, pastWeeks, plans] = await Promise.all([recentNotes(ctx), earlierWeeks(ctx, names, wk.action?.id ?? null), couplePlans(ctx)]);
+  const weekdayName = new Intl.DateTimeFormat('en-US', { timeZone: ctx.timezone, weekday: 'long' }).format(new Date());
   const weekly = wk.action
     ? `"${wk.action.action}"` + (wk.checkins.length ? ` (${wk.checkins.map(c => `${names[c.user_id] ?? 'Partner'}: ${words[c.status]}`).join(', ')})` : ' (no check-ins yet)')
     : null;
@@ -90,12 +91,22 @@ export async function buildSystem(ctx: Ctx): Promise<string> {
     memories: (mem ?? []).map(m => m.fact),
     entries: entriesBlock(entries, names, ctx.userId),
     dates: occasionsBlock((occ ?? []) as OccasionRow[], today),
-    today: isoDate(today),
+    today: `${isoDate(today)} (${weekdayName}, time zone ${ctx.timezone})`,
     weekly,
     facts,
     notes: notesBlock(notes, names),
+    plans: plansBlock(plans, names, ctx.timezone),
     pastWeeks: weeksBlock(pastWeeks),
   });
+}
+
+export async function couplePlans(ctx: Ctx): Promise<PlanRow[]> {
+  if (!ctx.partnerId) return [];
+  const me = ctx.userId, p = ctx.partnerId;
+  const { data } = await db.from('plans').select('id, created_by, partner_id, title, status, options, chosen_option, partner_note, created_at')
+    .or(`and(created_by.eq.${me},partner_id.eq.${p}),and(created_by.eq.${p},partner_id.eq.${me})`)
+    .order('created_at', { ascending: false }).limit(10);
+  return (data ?? []) as PlanRow[];
 }
 
 async function recentNotes(ctx: Ctx): Promise<NoteRow[]> {
