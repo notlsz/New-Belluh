@@ -336,3 +336,28 @@ test('19. analytics and conflict logs are private', async () => {
   const { data: own } = await maya.from('conflict_logs').select('original_input');
   assert.equal(own.length, 1);
 });
+
+test('20. old public photos and voice notes move to private storage, once', async () => {
+  const { execFileSync } = await import('node:child_process');
+  const pub = (p) => `${URL_}/storage/v1/object/public/journal-media/${p}`;
+  const put = (p, body) => fetch(`${URL_}/storage/v1/object/journal-media/${p}`, { method: 'POST', headers: { Authorization: `Bearer ${SERVICE}`, 'content-type': 'audio/webm' }, body });
+  await put('voice-notes/old1.webm', 'MAYA OLD VOICE');
+  await put('photos/old2.jpg', 'DAN OLD PHOTO');
+  await put('avatars/x-1.png', 'avatar');
+  const { data: [e1] } = await service.from('journal_entries').insert({ user_id: MAYA, content: 'old voice', is_shared: false, audio_url: pub('voice-notes/old1.webm') }).select('id');
+  const { data: [e2] } = await service.from('journal_entries').insert({ user_id: DAN, content: 'old photo', is_shared: true, photo_url: `${URL_}/storage/v1/object/sign/journal-media/photos/old2.jpg?token=abc` }).select('id');
+  assert.equal((await fetch(pub('voice-notes/old1.webm'))).status, 200, 'before: anyone with the link can open it');
+
+  const runIt = () => execFileSync(process.execPath, [new URL('../../scripts/migrate-legacy-media.mjs', import.meta.url).pathname], {
+    env: { ...process.env, SUPABASE_URL: URL_, SUPABASE_SERVICE_ROLE_KEY: SERVICE }, encoding: 'utf8' });
+  assert.match(runIt(), /2 found, 2 moved, 0 missing, 0 failed/);
+
+  const { data: rows } = await service.from('journal_entries').select('id, audio_url, photo_url').in('id', [e1.id, e2.id]).order('content', { ascending: false });
+  assert.equal(rows.find(r => r.id === e1.id).audio_url, `sb://journal-private/${MAYA}/voice/legacy-old1.webm`);
+  assert.equal(rows.find(r => r.id === e2.id).photo_url, `sb://journal-private/${DAN}/photos/legacy-old2.jpg`);
+  assert.equal((await fetch(pub('voice-notes/old1.webm'))).status, 404, 'after: the public link is dead');
+  const keys = await (await fetch(`${URL_}/__storage`)).json();
+  assert.ok(keys.includes(`journal-private/${MAYA}/voice/legacy-old1.webm`));
+  assert.ok(keys.includes('journal-media/avatars/x-1.png'), 'profile photos are left alone');
+  assert.match(runIt(), /0 found, 0 moved/, 'running again changes nothing');
+});

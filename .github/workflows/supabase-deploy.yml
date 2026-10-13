@@ -71,6 +71,19 @@ jobs:
         if: steps.setup.outputs.ready == 'true'
         run: supabase db push --password "$SUPABASE_DB_PASSWORD" --include-all
 
+      - name: Move old photos and voice notes to private storage
+        if: steps.setup.outputs.ready == 'true'
+        run: |
+          SERVICE_KEY=$(curl -sf -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            "https://api.supabase.com/v1/projects/$PROJECT_REF/api-keys?reveal=true" \
+            | jq -r '[.[] | select(.name == "service_role" or .type == "secret")][0].api_key // empty')
+          if [ -z "$SERVICE_KEY" ]; then
+            echo "::warning::Couldn't read the service key; old media was not moved. Re-run this workflow to retry."
+            exit 0
+          fi
+          echo "::add-mask::$SERVICE_KEY"
+          SUPABASE_URL="https://${PROJECT_REF}.supabase.co" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_KEY" node scripts/migrate-legacy-media.mjs
+
       - name: Set function secrets
         if: steps.setup.outputs.ready == 'true'
         run: |

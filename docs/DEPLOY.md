@@ -4,7 +4,7 @@ The website deploys from `main` on Vercel. The backend pieces below live in Supa
 
 ## Automatic (recommended)
 
-`.github/workflows/supabase-deploy.yml` does every step below on GitHub's servers whenever `supabase/` changes on `main`, using only Belluh's own Supabase token, so no other Supabase account is touched. One-time setup: add three repository secrets (Settings → Secrets and variables → Actions): `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `GEMINI_API_KEY`. Until they exist the workflow skips with a warning. Re-run it any time from the Actions tab.
+`.github/workflows/supabase-deploy.yml` does every step below on GitHub's servers whenever `supabase/` changes on `main`, using only Belluh's own Supabase token, so no other Supabase account is touched. One-time setup: add three repository secrets (Settings → Secrets and variables → Actions): `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `GEMINI_API_KEY`. It also moves old voice notes and photos from the public `journal-media` bucket into private storage (`scripts/migrate-legacy-media.mjs`, safe to re-run). Until the secrets exist the workflow skips with a warning. Re-run it any time from the Actions tab.
 
 ## Manual
 
