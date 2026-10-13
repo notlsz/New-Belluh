@@ -17,6 +17,7 @@ import {
 } from '../_shared/weekly.ts';
 import { sameSecret } from '../_shared/secret.ts';
 import { db, loadCtx, buildSystem, addMessage, weekAction, type Ctx, type WeekAction } from '../_shared/agentdb.ts';
+import { notify } from '../_shared/notify.ts';
 
 const ACTIVE_DAYS = 14; // only people who've written recently get a weekly insight
 
@@ -76,6 +77,7 @@ async function weekly(ctx: Ctx, ws: string) {
   const msg = await addMessage(ctx.userId, 'belluh', insight, {
     kind: 'weekly', week: ws, ...(action ? { action_id: action.id, action: action.action, why: action.why } : {}),
   });
+  if (msg) await notify(ctx.userId, action ? `${insight}\n\nThis week, together: "${action.action}"\nReply DID IT once you have.` : insight);
   return msg ? 'sent' : 'already';
 }
 
@@ -87,6 +89,7 @@ async function checkin(ctx: Ctx, ws: string) {
   const msg = await addMessage(ctx.userId, 'belluh', checkinMessage(action.action, ctx.partnerName), {
     kind: 'checkin', week: ws, action_id: action.id, action: action.action,
   });
+  if (msg) await notify(ctx.userId, `${checkinMessage(action.action, ctx.partnerName)}\nReply DID IT, NOT YET or SKIP.`);
   return msg ? 'sent' : 'already';
 }
 

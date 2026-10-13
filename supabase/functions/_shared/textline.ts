@@ -1,26 +1,23 @@
-// Belluh's date line, shared by WhatsApp and SMS: link with a code, text a date, LIST, FORGET, STOP/START.
-// Each webhook verifies its provider's signature, then hands every message here.
+// Belluh by text, shared by WhatsApp and SMS. After a one-tap link, texting Belluh is talking to the same Belluh as in the app
+// (same thread, memory and tools), plus short replies: SEND/DISCARD a note, 1-3/NONE for a plan, DID IT/NOT YET/SKIP,
+// LIST/FORGET dates, STOP/START. Each webhook verifies its provider's signature, then hands every message here.
 
-import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.45.4';
 import {
-  parseCommand, localDateParts, buildExtractionPrompt, normalizeExtracted, EXTRACTION_SCHEMA, savedReply, listReply,
-  HELP_TEXT, NOT_LINKED_TEXT, NOT_LINKED_SMS_TEXT, NO_DATE_TEXT, type StoredOccasion, type ExtractedOccasion,
+  parseCommand, localDateParts, listReply, HELP_TEXT, NOT_LINKED_TEXT, NOT_LINKED_SMS_TEXT, type StoredOccasion,
 } from './occasions.ts';
-import { sendText, geminiJson } from './whatsapp.ts';
+import { sendText } from './whatsapp.ts';
 import { sendSms } from './sms.ts';
+import { db, loadCtx, weekAction } from './agentdb.ts';
+import { chat, sendNote, planRespond, checkin } from './agentcore.ts';
 
 export type Channel = 'whatsapp' | 'sms';
 export interface Inbound { channel: Channel; id: string; phone: string; sentAt: string; text: string; kind: string }
-
-export const db: SupabaseClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
-  auth: { persistSession: false },
-});
 
 interface Link { user_id: string; timezone: string; reminders_enabled: boolean }
 
 const CONNECT_AGAIN: Record<Channel, string> = { whatsapp: 'Connect WhatsApp', sms: 'Connect by text' };
 
-async function reply(m: Inbound, userId: string | null, body: string) {
+async function reply_(m: Inbound, userId: string | null, body: string) {
   const id = m.channel === 'sms' ? await sendSms(m.phone, body) : await sendText(m.phone, body);
   await db.from('whatsapp_messages').insert({ user_id: userId, direction: 'out', wa_message_id: id, phone_e164: m.phone, body, channel: m.channel });
 }
@@ -28,7 +25,7 @@ async function reply(m: Inbound, userId: string | null, body: string) {
 async function handleLink(m: Inbound, code: string) {
   const { data: link } = await db.from('whatsapp_links').select('user_id, link_code_expires').eq('link_code', code).maybeSingle();
   if (!link || new Date(link.link_code_expires) < new Date()) {
-    return reply(m, null, `That code has expired or is wrong. Open Belluh, go to Me → Settings, and tap ${CONNECT_AGAIN[m.channel]} again.`);
+    return reply_(m, null, `That code has expired or is wrong. Open Belluh, go to Me → Settings, and tap ${CONNECT_AGAIN[m.channel]} again.`);
   }
   // A number belongs to one account: release it from any earlier one first
   await db.from('whatsapp_links').update({ phone_e164: null }).eq('phone_e164', m.phone).neq('user_id', link.user_id);
@@ -37,39 +34,67 @@ async function handleLink(m: Inbound, code: string) {
     link_code: null, link_code_expires: null,
   }).eq('user_id', link.user_id);
   await db.from('whatsapp_messages').update({ user_id: link.user_id }).eq('phone_e164', m.phone).is('user_id', null);
-  return reply(m, link.user_id, "You're connected ✓\n\n" + HELP_TEXT);
+  return reply_(m, link.user_id, "You're connected ✓\n\n" + HELP_TEXT);
 }
 
-async function handleCapture(m: Inbound, link: Link, text: string) {
-  const today = localDateParts(new Date(), link.timezone);
-  const found = normalizeExtracted(await geminiJson(buildExtractionPrompt(text, today), EXTRACTION_SCHEMA));
-  if (!found.length) return reply(m, link.user_id, NO_DATE_TEXT);
+/** Anything that isn't a short command is a message to Belluh: same thread, memory and tools as the app. */
+async function talk(m: Inbound, link: Link, text: string) {
+  const ctx = await loadCtx(link.user_id, link.timezone);
+  const { messages } = await chat(ctx, text, 'chat', m.channel) as { messages: any[] };
+  const reply = [...messages].reverse().find(x => x?.role === 'belluh')?.body ?? "I'm having trouble thinking right now. Try me again in a moment.";
+  const draft = messages.find(x => x?.role === 'note_draft');
+  const extra = draft ? `\n\nNote to ${ctx.partnerName ?? 'your partner'}:\n"${draft.body}"\n\nReply SEND to send it, or DISCARD.` : '';
+  return reply_(m, link.user_id, reply + extra);
+}
 
-  const { data: existing } = await db.from('occasions').select('label, month, day, mentioned_at').eq('user_id', link.user_id);
-  const saved: ExtractedOccasion[] = [];
-  const known: { label: string; mentioned_at: string }[] = [];
-  for (const o of found) {
-    const dup = existing?.find(e => e.month === o.month && e.day === o.day && e.label.toLowerCase() === o.label.toLowerCase());
-    if (dup) { known.push(dup); continue; }
-    const { error } = await db.from('occasions').insert({
-      user_id: link.user_id, ...o, source: m.channel, source_message: text.slice(0, 2000), mentioned_at: m.sentAt,
-    });
-    if (error) console.error('occasion insert failed', error.message);
-    else saved.push(o);
+/** SEND / DISCARD: the note Belluh just drafted. */
+async function noteAction(m: Inbound, link: Link, send: boolean) {
+  const { data: d } = await db.from('agent_messages').select('id, meta').eq('user_id', link.user_id).eq('role', 'note_draft')
+    .eq('meta->>status', 'draft').gte('created_at', new Date(Date.now() - 2 * 864e5).toISOString())
+    .order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (!d) return talk(m, link, m.text);
+  if (!send) {
+    await db.from('agent_messages').update({ meta: { ...(d.meta as object), status: 'discarded' } }).eq('id', d.id);
+    return reply_(m, link.user_id, "Okay, I won't send it.");
   }
-  return reply(m, link.user_id, savedReply(saved, known, link.timezone));
+  const ctx = await loadCtx(link.user_id, link.timezone);
+  const r = await sendNote(ctx, d.id);
+  return reply_(m, link.user_id, r.status === 200 ? `Sent to ${ctx.partnerName ?? 'your partner'} ✓` : (r.body?.error ?? "Couldn't send it. Try again in the app."));
+}
+
+/** 1 / 2 / 3 / NONE: answering the plan your partner sent. */
+async function planAnswer(m: Inbound, link: Link, option: number | null, note: string) {
+  const { data: p } = await db.from('plans').select('id, options').eq('partner_id', link.user_id).eq('status', 'proposed')
+    .order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (!p) return talk(m, link, m.text);
+  const opts = p.options as { id: string }[];
+  if (option !== null && !opts[option - 1]) return reply_(m, link.user_id, `Reply a number from 1 to ${opts.length}, or NONE.`);
+  const ctx = await loadCtx(link.user_id, link.timezone);
+  const r = await planRespond(ctx, p.id, option === null ? null : opts[option - 1].id, note);
+  const text = (r.body?.messages ?? []).map((x: any) => x?.body).filter(Boolean).join('\n') || r.body?.error || 'Done.';
+  return reply_(m, link.user_id, text);
+}
+
+/** DID IT / NOT YET / SKIP: this week's thing to try together. */
+async function weekAnswer(m: Inbound, link: Link, status: string) {
+  const ctx = await loadCtx(link.user_id, link.timezone);
+  const { action } = await weekAction(ctx).catch(() => ({ action: null }));
+  if (!action) return talk(m, link, m.text);
+  const r = await checkin(ctx, action.id, status);
+  const text = (r.body?.messages ?? []).map((x: any) => x?.body).filter(Boolean).join('\n') || 'Got it ✓';
+  return reply_(m, link.user_id, text);
 }
 
 async function handleForget(m: Inbound, link: Link, query: string) {
   const { data: matches } = await db.from('occasions')
     .select('id, label, month, day').eq('user_id', link.user_id).ilike('label', `%${query.replace(/[%_\\]/g, '')}%`);
-  if (!matches?.length) return reply(m, link.user_id, `I couldn't find "${query}". Text LIST to see everything I remember.`);
+  if (!matches?.length) return talk(m, link, m.text); // not a date: maybe a memory, which Belluh handles
   if (matches.length > 1) {
     const names = matches.slice(0, 10).map(x => `• ${x.label}`).join('\n');
-    return reply(m, link.user_id, `A few dates match "${query}":\n${names}\n\nSend FORGET with the full name of the one to remove.`);
+    return reply_(m, link.user_id, `A few dates match "${query}":\n${names}\n\nSend FORGET with the full name of the one to remove.`);
   }
   await db.from('occasions').delete().eq('id', matches[0].id);
-  return reply(m, link.user_id, `Forgotten: ${matches[0].label}.`);
+  return reply_(m, link.user_id, `Forgotten: ${matches[0].label}.`);
 }
 
 export async function handleInbound(m: Inbound) {
@@ -84,28 +109,33 @@ export async function handleInbound(m: Inbound) {
 
   const { data: link } = await db.from('whatsapp_links')
     .select('user_id, timezone, reminders_enabled').eq('phone_e164', m.phone).maybeSingle<Link>();
-  if (!link) return reply(m, null, m.channel === 'sms' ? NOT_LINKED_SMS_TEXT : NOT_LINKED_TEXT);
+  if (!link) return reply_(m, null, m.channel === 'sms' ? NOT_LINKED_SMS_TEXT : NOT_LINKED_TEXT);
 
   // Replies and reminders go to whichever app they texted from last
   await db.from('whatsapp_links').update({ last_inbound_at: new Date().toISOString(), channel: m.channel }).eq('user_id', link.user_id);
   await db.from('whatsapp_messages').update({ user_id: link.user_id }).eq('wa_message_id', m.id);
 
-  if (!m.text) return reply(m, link.user_id, 'I can only read text for now. Type the date and what it is, like "Maya\'s birthday is May 12".');
+  if (!m.text) return reply_(m, link.user_id, 'I can only read text for now. Type the date and what it is, like "Maya\'s birthday is May 12".');
 
   switch (cmd.type) {
-    case 'help': return reply(m, link.user_id, HELP_TEXT);
+    case 'help': return reply_(m, link.user_id, HELP_TEXT);
     case 'stop':
       await db.from('whatsapp_links').update({ reminders_enabled: false }).eq('user_id', link.user_id);
-      return reply(m, link.user_id, "Reminders paused. I'll still save dates you send. Text START to turn reminders back on.");
+      return reply_(m, link.user_id, "Paused. I won't message you first (reminders, plans, notes) until you text START. You can still text me anytime.");
     case 'start':
       await db.from('whatsapp_links').update({ reminders_enabled: true }).eq('user_id', link.user_id);
-      return reply(m, link.user_id, "Reminders are on. I'll message you a week before and on the day.");
+      return reply_(m, link.user_id, "I'm back on: reminders a week before and on the day, plus plans and notes from your partner.");
     case 'list': {
       const { data } = await db.from('occasions')
         .select('id, label, kind, month, day, year, repeats_yearly, mentioned_at').eq('user_id', link.user_id);
-      return reply(m, link.user_id, listReply((data ?? []) as StoredOccasion[], localDateParts(new Date(), link.timezone), link.timezone));
+      return reply_(m, link.user_id, listReply((data ?? []) as StoredOccasion[], localDateParts(new Date(), link.timezone), link.timezone));
     }
     case 'forget': return handleForget(m, link, cmd.query);
-    case 'capture': return handleCapture(m, link, cmd.text);
+    case 'send_note': return noteAction(m, link, true);
+    case 'discard_note': return noteAction(m, link, false);
+    case 'pick': return planAnswer(m, link, cmd.option, '');
+    case 'none': return planAnswer(m, link, null, cmd.note);
+    case 'checkin': return weekAnswer(m, link, cmd.status);
+    case 'capture': return talk(m, link, cmd.text);
   }
 }

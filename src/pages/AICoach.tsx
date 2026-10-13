@@ -319,6 +319,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                    <div key={msg.id} className="group animate-slide-up flex justify-end">
                      <div className={`max-w-[85%] md:max-w-[80%] rounded-3xl p-5 md:p-6 text-[16px] leading-relaxed ${msg.meta?.mode === 'mediate' ? 'bg-rose-50 text-slate-800' : 'bg-slate-100 text-slate-800'}`}>
                        <p className="font-medium whitespace-pre-wrap">{msg.body}</p>
+                       {(msg.meta as any)?.channel && <p className="mt-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">via {(msg.meta as any).channel === 'sms' ? 'text' : 'WhatsApp'}</p>}
                      </div>
                    </div>
                  );

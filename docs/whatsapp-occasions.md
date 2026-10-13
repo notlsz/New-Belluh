@@ -40,6 +40,14 @@ Apply the migration (SQL editor or `supabase db push`).
 
    Sample values for Meta's review: `Maya's birthday`, `in one week`, `May 12`, `Mar 3, 2026`.
 
+   And a second one (category **Utility**, name `belluh_update`), used when Belluh has something for the person more than 24 hours after they last texted (a plan their partner sent, a note, Sunday's suggestion):
+
+   > Belluh: {{1}}
+   >
+   > Reply here to answer, or open the Belluh app.
+
+   Sample value: `Maya wants to plan "Dinner at the Thai place" with you. Pick a time: 1) Fri, Oct 16 · 7:00 PM 2) Sat, Oct 17 · 7:00 PM. Reply 1, 2, or NONE.`
+
 ### 3. Secrets (Supabase → Edge Functions → Secrets)
 
 | Name | Value |
@@ -88,6 +96,18 @@ To test without waiting, call `.../occasion-reminders?force=1` with the `x-cron-
 
 ### 7. App
 Set `VITE_BELLUH_WHATSAPP_NUMBER` in Vercel to Belluh's WhatsApp number (digits only, with country code). Me → Settings then shows **Connect WhatsApp**, which gives the user a code and an "Open WhatsApp" button with `LINK <code>` pre-filled.
+
+## Belluh by text
+
+Once connected, texting Belluh is talking to Belluh: the same thread, memory and tools as the Belluh tab (a message sent from the phone shows in the app marked "via WhatsApp" or "via text"). Short replies do things directly:
+
+- **SEND** / **DISCARD**: the note Belluh just drafted to your partner
+- **1**, **2**, **3** / **NONE** (optionally with a note): answer a plan your partner sent
+- **DID IT** / **NOT YET** / **SKIP**: this week's thing to try together
+- **LIST**, **FORGET <name>**: your dates
+- **STOP** / **START**: pause or resume everything Belluh sends first (reminders, plans, notes, Sunday's suggestion). Replies to your own texts always come.
+
+Belluh messages you first when your partner sends a plan or a note, when they answer your plan, on Sunday (insight plus the week's suggestion) and Wednesday (check-in), and for date reminders.
 
 ## SMS (Twilio), the same thing by plain text
 

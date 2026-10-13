@@ -56,19 +56,34 @@ export type Command =
   | { type: 'stop' }
   | { type: 'start' }
   | { type: 'help' }
+  | { type: 'send_note' }
+  | { type: 'discard_note' }
+  | { type: 'pick'; option: number }
+  | { type: 'none'; note: string }
+  | { type: 'checkin'; status: 'done' | 'not_yet' | 'skipped' }
   | { type: 'capture'; text: string };
 
+/** Short replies people send from their phone. Anything else is a message to Belluh. */
 export function parseCommand(raw: string): Command {
   const text = raw.trim();
-  const lower = text.toLowerCase();
+  const lower = text.toLowerCase().replace(/[’]/g, "'");
   const link = /^link\s+([a-z0-9]{6})$/i.exec(text);
   if (link) return { type: 'link', code: link[1].toUpperCase() };
-  if (/^(list|dates|my dates|what do you remember\??)$/.test(lower)) return { type: 'list' };
+  if (/^(list|dates|my dates)$/.test(lower)) return { type: 'list' };
   const forget = /^(forget|delete|remove)\s+(.+)$/i.exec(text);
   if (forget) return { type: 'forget', query: forget[2].trim() };
   if (/^(stop|unsubscribe|stop reminders)$/.test(lower)) return { type: 'stop' };
   if (/^(start|resume|start reminders)$/.test(lower)) return { type: 'start' };
-  if (/^(help|\?|hi|hello|hey)$/.test(lower)) return { type: 'help' };
+  if (/^(help|\?|commands)$/.test(lower)) return { type: 'help' };
+  if (/^(send|send it|yes,? send( it)?|send the note)[.!]?$/.test(lower)) return { type: 'send_note' };
+  if (/^(discard|don'?t send( it)?|do not send( it)?)[.!]?$/.test(lower)) return { type: 'discard_note' };
+  const pick = /^(?:option\s*|#)?([1-3])[.)!]?$/.exec(lower);
+  if (pick) return { type: 'pick', option: Number(pick[1]) };
+  const none = /^none(?:\s+of\s+(?:these|them))?(?:\s+works?)?\b[\s,.:;!-]*(.*)$/is.exec(text);
+  if (none) return { type: 'none', note: none[1].trim() };
+  if (/^(did it|we did it|done)[.!]*$/.test(lower)) return { type: 'checkin', status: 'done' };
+  if (/^not yet[.!]*$/.test(lower)) return { type: 'checkin', status: 'not_yet' };
+  if (/^(skip|skipped|skip it)[.!]*$/.test(lower)) return { type: 'checkin', status: 'skipped' };
   return { type: 'capture', text };
 }
 
@@ -203,9 +218,9 @@ export function normalizeExtracted(raw: unknown): ExtractedOccasion[] {
 // ---------- Replies ----------
 
 export const HELP_TEXT =
-  "I'm Belluh. Text me any date you want remembered, like \"Maya's birthday is May 12\" or \"our anniversary is June 3\". " +
-  "I'll remind you a week before and on the day.\n\n" +
-  'LIST shows everything I remember. FORGET <name> removes one. STOP pauses reminders.';
+  "I'm Belluh, the same Belluh as in the app. Text me like you'd talk to me there: what's on your mind, a date to remember " +
+  "(\"Maya's birthday is May 12\"), or \"plan a dinner with Maya this week\". Notes and plans from your partner come here too.\n\n" +
+  'LIST shows your dates. FORGET <name> removes one. STOP pauses my messages, START turns them back on.';
 
 export const NOT_LINKED_TEXT =
   "Hi, I'm Belluh. To save dates here, open Belluh, go to Me → Settings, and tap Connect WhatsApp. It opens WhatsApp with the code ready to send.";
