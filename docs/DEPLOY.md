@@ -2,6 +2,12 @@
 
 The website deploys from `main` on Vercel. The backend pieces below live in Supabase and must be set up once Belluh's Supabase project is reachable again. Until then the site loads, but sign-in (and everything behind it) depends on the database.
 
+## Automatic (recommended)
+
+`.github/workflows/supabase-deploy.yml` does every step below on GitHub's servers whenever `supabase/` changes on `main`, using only Belluh's own Supabase token, so no other Supabase account is touched. One-time setup: add three repository secrets (Settings → Secrets and variables → Actions): `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `GEMINI_API_KEY`. Until they exist the workflow skips with a warning. Re-run it any time from the Actions tab.
+
+## Manual
+
 Do these in order.
 
 1. **Migrations** (Supabase SQL editor, or `supabase db push`), oldest first:
