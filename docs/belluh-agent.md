@@ -6,7 +6,9 @@ Belluh is the same Belluh tab, now with a memory and the ability to act. It is b
 
 - **One ongoing conversation per person.** It reads your entries and the entries your partner shares, plus your saved dates and what it remembers about you. Conversations persist across devices.
 - **Remembers, and forgets on request.** When you tell it something lasting ("Dan needs ten minutes after work"), it saves it. Tap **Memory** in the Belluh tab to see everything it keeps and delete any of it, or say "forget that".
-- **Saves dates** you mention, into the same list the WhatsApp feature uses, so reminders cover them.
+- **Dates, exactly like WhatsApp.** Tell Belluh a date in the app or text it on WhatsApp; both save to the same list. In the app you can also ask what it remembers (with when you told it), remove one, or pause reminders. Reminders arrive in the Belluh tab a week before and on the day, and on WhatsApp too if it's connected.
+- **Sees your photos.** When you add a photo to an entry, Belluh's reply can notice something in it.
+- **Front and center.** Belluh's latest word sits at the top of Home. Once Belluh is live it replaces the older one-off forecast and pattern cards, so there is one Belluh with one memory.
 - **Carries notes to your partner, with your approval.** Ask it to help you say something to your partner; it drafts the note in your voice and shows **Send to Dan / Don't send**. Nothing is sent until you tap Send. Your partner sees it in their Belluh tab as "From Maya, via Belluh", with a pink dot on the tab.
 - **Replies after you write, when it has something to add.** A small Belluh card appears after you save an entry, linking it to something earlier or asking one question. If it has nothing specific to say, it stays quiet.
 - **A weekly loop, the one proactive thing it does.**

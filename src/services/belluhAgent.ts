@@ -80,12 +80,19 @@ export const belluhAgent = {
     const status = (id: string | null) => (id ? (cs ?? []).find(c => c.user_id === id)?.status ?? null : null) as CheckinStatus | null;
     return { id: a.id, action: a.action, why: a.why, week_start: a.week_start, mine: status(myId), partner: status(partnerId), partner_name: partnerId ? partnerName : null };
   },
+  /** Belluh's latest word to you, for the top of Home. `live` is false before Belluh's server is set up. */
+  async latest(): Promise<{ live: boolean; message: AgentMessage | null }> {
+    const { data, error } = await supabase.from('agent_messages').select('id, role, body, meta, created_at')
+      .eq('role', 'belluh').order('created_at', { ascending: false }).limit(1);
+    if (error) return { live: false, message: null };
+    return { live: true, message: (data?.[0] as AgentMessage) ?? null };
+  },
   /** True when Belluh has posted a weekly insight or check-in since you last opened the Belluh tab. */
   async hasNewFromBelluh(): Promise<boolean> {
     let since = '';
     try { since = localStorage.getItem(SEEN_KEY) ?? ''; } catch { /* ignore */ }
     let q = supabase.from('agent_messages').select('id', { count: 'exact', head: true })
-      .eq('role', 'belluh').in('meta->>kind', ['weekly', 'checkin']);
+      .eq('role', 'belluh').in('meta->>kind', ['weekly', 'checkin', 'reminder']);
     if (since) q = q.gt('created_at', since);
     const { count, error } = await q;
     return !error && (count ?? 0) > 0;

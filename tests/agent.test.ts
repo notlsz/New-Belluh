@@ -108,3 +108,12 @@ test('the couple\'s story, notes and past weeks reach Belluh', () => {
   assert.match(p, /Their story, in their words\nTogether since 2021\./);
   assert.match(p, /Earlier weeks\n\(This is their first week/);
 });
+
+test('in-app Belluh can do everything WhatsApp can with dates', () => {
+  assert.deepEqual(validateToolCall('forget_date', { query: "  Dan's birthday " }), { name: 'forget_date', query: "Dan's birthday" });
+  assert.equal(validateToolCall('forget_date', { query: 'x' }), null);
+  assert.deepEqual(validateToolCall('set_reminders', { on: false }), { name: 'set_reminders', on: false });
+  assert.equal(validateToolCall('set_reminders', { on: 'no' }), null);
+  const block = occasionsBlock([{ label: "Dan's birthday", month: 10, day: 20, year: null, repeats_yearly: true, mentioned_at: '2026-03-03T10:00:00Z', source: 'whatsapp' }], { y: 2026, m: 10, d: 13 });
+  assert.match(block, /Dan's birthday: October 20 \(in 7 days; they first told you on 2026-03-03 on WhatsApp\)/);
+});

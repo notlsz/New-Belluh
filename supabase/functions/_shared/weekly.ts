@@ -98,6 +98,7 @@ export function personalInsightInstruction(action: string | null, lastWeek: Last
     "It's Sunday. Write this week's insight for them: two or three sentences naming one pattern you noticed across the past week, specific and kind.",
     action ? `End by pointing to this week's thing to try together: "${action}".` : 'End with one small thing they could try this week.',
     lastWeekLine(lastWeek),
+    'If one of their saved dates is within the next 10 days, mention it in one sentence with one small, specific idea.',
     'Return JSON: {"insight": string}. Plain text inside, no markdown.',
   ].join(' ');
 }

@@ -361,3 +361,27 @@ test('20. old public photos and voice notes move to private storage, once', asyn
   assert.ok(keys.includes('journal-media/avatars/x-1.png'), 'profile photos are left alone');
   assert.match(runIt(), /0 found, 0 moved/, 'running again changes nothing');
 });
+
+test('21. everything WhatsApp does with dates also works inside Belluh', async () => {
+  // A date one week out, in Maya's time zone
+  const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  d.setDate(d.getDate() + 7);
+  const { error } = await service.from('occasions').insert({ user_id: MAYA, label: 'Lisbon trip', kind: 'trip', month: d.getMonth() + 1, day: d.getDate(), year: d.getFullYear(), repeats_yearly: false, source: 'whatsapp', mentioned_at: '2026-03-03T15:00:00Z' });
+  assert.ifError(error);
+
+  const r1 = await runWeekly('reminders', MAYA);
+  assert.ok(r1.body.reminders_sent >= 1, 'a week before, Belluh reminds you in the app');
+  assert.equal((await runWeekly('reminders', MAYA)).body.reminders_sent, 0, 'and only once');
+  const { data: h } = await agent(maya, { action: 'history' });
+  const rem = h.messages.find(m => m.meta?.kind === 'reminder' && m.body.includes('Lisbon'));
+  assert.match(rem.body, /Lisbon trip is in one week, .* You first told me about it on Mar 3, 2026/);
+
+  await agent(maya, { action: 'chat', message: 'Please pause reminders for a while' });
+  const { data: st } = await maya.from('agent_settings').select('reminders_enabled').single();
+  assert.equal(st.reminders_enabled, false, 'pausing works like STOP');
+  assert.equal((await runWeekly('reminders', MAYA)).body.reminders_sent, undefined, 'paused means no reminders');
+
+  await agent(maya, { action: 'chat', message: 'Please remove the date Lisbon trip' });
+  const { data: left } = await maya.from('occasions').select('label').eq('label', 'Lisbon trip');
+  assert.equal(left.length, 0, 'FORGET works in the app too');
+});

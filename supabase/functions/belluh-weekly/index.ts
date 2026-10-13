@@ -10,7 +10,7 @@
 
 import { cleanReply, visibleEntries, factsBlock, type EntryRow } from '../_shared/agent.ts';
 import { jsonAnswer } from '../_shared/gemini.ts';
-import { localDateParts } from '../_shared/occasions.ts';
+import { localDateParts, nextOccurrence, daysBetween, reminderStage, reminderParams, isoDate, type StoredOccasion } from '../_shared/occasions.ts';
 import {
   weekStart, previousWeekStart, isWeeklyDue, isCheckinDue, pairOf, pairActionPrompt, personalInsightInstruction,
   validateAction, checkinMessage, ACTION_SCHEMA, INSIGHT_SCHEMA, type LastWeek, type CheckinStatus,
@@ -20,7 +20,7 @@ import { db, loadCtx, buildSystem, addMessage, weekAction, type Ctx, type WeekAc
 
 const ACTIVE_DAYS = 14; // only people who've written recently get a weekly insight
 
-async function alreadyPosted(userId: string, kind: 'weekly' | 'checkin', week: string) {
+async function alreadyPosted(userId: string, kind: 'weekly' | 'checkin' | 'reminder', week: string) {
   const { count } = await db.from('agent_messages').select('id', { count: 'exact', head: true })
     .eq('user_id', userId).eq('meta->>kind', kind).eq('meta->>week', week);
   return (count ?? 0) > 0;
@@ -90,6 +90,29 @@ async function checkin(ctx: Ctx, ws: string) {
   return msg ? 'sent' : 'already';
 }
 
+const REMINDER_HOUR = Number(Deno.env.get('REMINDER_LOCAL_HOUR') ?? 9);
+
+/** In-app date reminders, a week before and on the day: the same schedule and wording as WhatsApp. */
+async function reminders(ctx: Ctx, local: ReturnType<typeof localDateParts>): Promise<number> {
+  const { data: occ } = await db.from('occasions')
+    .select('id, label, kind, month, day, year, repeats_yearly, mentioned_at').eq('user_id', ctx.userId);
+  let sent = 0;
+  for (const o of (occ ?? []) as (StoredOccasion & { id: string })[]) {
+    const next = nextOccurrence(o, local);
+    if (!next) continue;
+    const stage = reminderStage(daysBetween(local, next));
+    if (!stage) continue;
+    const key = `${o.id}:${isoDate(next)}:${stage}`;
+    if (await alreadyPosted(ctx.userId, 'reminder', key)) continue;
+    const [label, when, date, told] = reminderParams(o, stage, ctx.timezone);
+    const body = stage === 'day_of'
+      ? `${label} is today. You first told me about it on ${told}. Want a hand with something small for it?`
+      : `${label} is ${when}, ${date}. You first told me about it on ${told}. Want a few ideas?`;
+    if (await addMessage(ctx.userId, 'belluh', body, { kind: 'reminder', week: key, occasion_id: o.id })) sent++;
+  }
+  return sent;
+}
+
 Deno.serve(async (req) => {
   if (!(await sameSecret(req.headers.get('x-cron-secret'), Deno.env.get('CRON_SECRET')))) return new Response('Forbidden', { status: 403 });
 
@@ -97,7 +120,7 @@ Deno.serve(async (req) => {
   const force = url.searchParams.get('force');
   const onlyUser = url.searchParams.get('user');
 
-  let q = db.from('agent_settings').select('user_id, timezone').eq('weekly_enabled', true);
+  let q = db.from('agent_settings').select('user_id, timezone, weekly_enabled, reminders_enabled');
   if (onlyUser) q = q.eq('user_id', onlyUser);
   const { data: people, error } = await q;
   if (error) return new Response(error.message, { status: 500 });
@@ -107,14 +130,19 @@ Deno.serve(async (req) => {
   for (const p of people ?? []) {
     let local;
     try { local = localDateParts(now, p.timezone); } catch { local = localDateParts(now, 'America/New_York'); }
-    const doWeekly = force === 'weekly' || (!force && isWeeklyDue(local));
-    const doCheckin = force === 'checkin' || (!force && isCheckinDue(local));
-    if (!doWeekly && !doCheckin) continue;
+    const weeklyOn = p.weekly_enabled !== false;
+    const doWeekly = weeklyOn && (force === 'weekly' || (!force && isWeeklyDue(local)));
+    const doCheckin = weeklyOn && (force === 'checkin' || (!force && isCheckinDue(local)));
+    const doReminders = p.reminders_enabled !== false && (force === 'reminders' || (!force && local.hour >= REMINDER_HOUR));
+    if (!doWeekly && !doCheckin && !doReminders) continue;
     try {
       const ctx = await loadCtx(p.user_id, p.timezone);
       const ws = weekStart(local);
-      const r = doWeekly ? `weekly_${await weekly(ctx, ws)}` : `checkin_${await checkin(ctx, ws)}`;
-      results[r] = (results[r] ?? 0) + 1;
+      if (doWeekly || doCheckin) {
+        const r = doWeekly ? `weekly_${await weekly(ctx, ws)}` : `checkin_${await checkin(ctx, ws)}`;
+        results[r] = (results[r] ?? 0) + 1;
+      }
+      if (doReminders) results.reminders_sent = (results.reminders_sent ?? 0) + await reminders(ctx, local);
     } catch (e) {
       console.error('belluh-weekly', p.user_id, e);
       results.error = (results.error ?? 0) + 1;
