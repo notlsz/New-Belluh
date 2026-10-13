@@ -299,7 +299,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
       const legacy = !!error && /could not find the function|PGRST202/i.test(`${error.message} ${(error as any).code ?? ''}`);
       if (!legacy && (error || !token)) { onShowToast("Couldn't create an invite link. Try again.", "error"); return; }
       const inviteUrl = `${window.location.origin}/?invite=${legacy ? user.id : token}`;
-      try { await navigator.clipboard.writeText(inviteUrl); onShowToast("Invite link copied! It works once, for 14 days.", "success"); } catch (err) { onShowToast("Failed to copy link.", "error"); }
+      try { await navigator.clipboard.writeText(inviteUrl); onShowToast(legacy ? "Invite link copied!" : "Invite link copied! It works once, for 14 days.", "success"); } catch (err) { onShowToast("Failed to copy link.", "error"); }
   };
 
   const handleInviteSubmit = async (e: React.FormEvent) => {

@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
   const raw = await req.text();
   if (raw.length > MAX_BODY_BYTES) return json({ error: 'Request too large' }, 413);
 
-  const { data: allowed } = await db.rpc('ai_take_call', { p_user: user.id, p_limit: HOURLY_LIMIT });
+  const { data: allowed } = await db.rpc('ai_take_call', { p_user: user.id, p_limit: HOURLY_LIMIT, p_kind: 'proxy' });
   if (allowed === false) return json({ error: 'RESOURCE_EXHAUSTED: hourly AI limit reached' }, 429);
 
   let parsed: unknown;

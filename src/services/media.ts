@@ -14,7 +14,9 @@ export async function uploadPrivate(kind: 'voice' | 'photos', file: Blob, ext: s
   const path = `${user.id}/${kind}/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext.replace(/[^a-z0-9]/gi, '') || 'bin'}`;
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType, upsert: false });
   if (!error) return PREFIX + path;
-  // Until the private bucket exists, keep using the original storage so nothing is lost
+  // Only before the private bucket exists: keep using the original storage so nothing is lost.
+  // Any other failure (a network blip) must never put private media in public storage.
+  if (!/bucket not found/i.test(error.message)) { console.error('Upload failed:', error.message); return null; }
   console.warn('Private upload failed, using legacy storage:', error.message);
   const legacyPath = `${kind === 'voice' ? 'voice-notes' : 'photos'}/${path.split('/').pop()}`;
   const { error: legacyError } = await supabase.storage.from('journal-media').upload(legacyPath, file, { contentType, upsert: false });

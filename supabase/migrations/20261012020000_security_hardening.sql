@@ -206,18 +206,21 @@ create policy jp_owner_delete on storage.objects for delete to authenticated
 
 create table if not exists public.ai_usage (
   user_id  uuid not null references auth.users(id) on delete cascade,
+  kind     text not null default 'proxy',
   hour     timestamptz not null,
   calls    integer not null default 0,
-  primary key (user_id, hour)
+  primary key (user_id, kind, hour)
 );
 alter table public.ai_usage enable row level security;
 revoke all on public.ai_usage from anon, authenticated;
 
 -- Counts a call and says whether the user is still under the hourly limit (service role only)
-create or replace function public.ai_take_call(p_user uuid, p_limit integer) returns boolean
+drop function if exists public.ai_take_call(uuid, integer);
+-- Separate hourly counters per feature ('proxy' for the app's AI features, 'agent' for Belluh conversations)
+create or replace function public.ai_take_call(p_user uuid, p_limit integer, p_kind text default 'proxy') returns boolean
 language sql security definer set search_path = public as $$
-  insert into public.ai_usage (user_id, hour, calls) values (p_user, date_trunc('hour', now()), 1)
-  on conflict (user_id, hour) do update set calls = public.ai_usage.calls + 1
+  insert into public.ai_usage (user_id, kind, hour, calls) values (p_user, p_kind, date_trunc('hour', now()), 1)
+  on conflict (user_id, kind, hour) do update set calls = public.ai_usage.calls + 1
   returning calls <= p_limit;
 $$;
-revoke all on function public.ai_take_call(uuid, integer) from public, anon, authenticated;
+revoke all on function public.ai_take_call(uuid, integer, text) from public, anon, authenticated;

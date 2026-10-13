@@ -87,11 +87,12 @@ async function history(userId: string, limit = 60) {
 async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate') {
   const text = message.trim().slice(0, 4000);
   if (!text) return { messages: [] };
-  if (!(await underLimit(ctx.userId))) {
-    return { messages: [await addMessage(ctx.userId, 'belluh', "Let's pause for a bit. You've reached this hour's limit for Belluh. Try again soon.")] };
-  }
   const userMsg = await addMessage(ctx.userId, 'user', text, mode === 'mediate' ? { mode } : {});
   const created: unknown[] = [userMsg];
+  if (!(await underLimit(ctx.userId))) {
+    created.push(await addMessage(ctx.userId, 'belluh', "Let's pause for a bit. You've reached this hour's limit for Belluh. Try again soon."));
+    return { messages: created };
+  }
 
   const past = (await history(ctx.userId, 24)).filter(m => m.role === 'user' || m.role === 'belluh' || m.role === 'partner_note');
   const contents: GeminiContent[] = past.map(m => ({
@@ -144,7 +145,7 @@ async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate') {
 }
 
 async function underLimit(userId: string): Promise<boolean> {
-  const { data, error } = await db.rpc('ai_take_call', { p_user: userId, p_limit: Number(Deno.env.get('AGENT_HOURLY_LIMIT') ?? 40) });
+  const { data, error } = await db.rpc('ai_take_call', { p_user: userId, p_limit: Number(Deno.env.get('AGENT_HOURLY_LIMIT') ?? 40), p_kind: 'agent' });
   return error ? true : data !== false;
 }
 
@@ -176,7 +177,11 @@ async function sendNote(ctx: Ctx, draftId: string, edited?: string) {
     .eq('id', draftId).eq('meta->>status', 'draft').select('id');
   if (!claimed?.length) return json({ error: 'Already sent' }, 409);
 
-  await db.from('partner_notes').insert({ from_user: ctx.userId, to_user: to, body });
+  const { error: noteError } = await db.from('partner_notes').insert({ from_user: ctx.userId, to_user: to, body });
+  if (noteError) {
+    await db.from('agent_messages').update({ meta: { ...(draft.meta as object), status: 'draft' } }).eq('id', draftId);
+    return json({ error: "Couldn't send the note. Try again." }, 500);
+  }
   await addMessage(to, 'partner_note', body, { from_user: ctx.userId, from_name: ctx.myName });
   await db.from('agent_messages').update({ body, meta: { ...(draft.meta as object), status: 'sent', sent_at: new Date().toISOString() } }).eq('id', draftId);
   return json({ ok: true });

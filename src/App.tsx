@@ -322,9 +322,10 @@ const App: React.FC = () => {
         const myFirstName = myProfile?.full_name?.trim().split(' ')[0] || sessionUser.email?.split('@')[0] || 'Me';
         
         const getCircleMetadata = (circleId: string) => {
-            const metaEntry = dbEntries?.find((e: any) => 
-                e.tags && e.tags.includes('system_circle_metadata') && e.tags.includes(`circle:${circleId}`)
-            );
+            const isMeta = (e: any) => e.tags && e.tags.includes('system_circle_metadata') && e.tags.includes(`circle:${circleId}`);
+            // Your own setting for this circle wins; otherwise use your partner's
+            const metaEntry = dbEntries?.find((e: any) => isMeta(e) && e.user_id === sessionUser.id)
+                ?? dbEntries?.find((e: any) => isMeta(e));
             return {
                 name: metaEntry?.title, // Overridden name
                 isArchived: metaEntry?.tags?.includes('status:archived') // Overridden status
@@ -1005,16 +1006,8 @@ const App: React.FC = () => {
       );
   }
 
-  if (isOnboarding) return <Onboarding onComplete={handleOnboardingComplete} />;
-
-  return (
-    <div className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in">
-      {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} />}
-      {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={entries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} />}
-      {currentTab === 'profile' && <Profile user={user} entries={entries} streak={streak} onCircleChange={handleCircleChange} onCreateCircle={handleCreateCircle} onArchiveCircle={handleArchiveCircle} onRenameCircle={handleRenameCircle} onLogout={handleLogout} onUpdateUser={handleUpdateUser} onShowLegal={(type) => setLegalModalOpen(type)} onViewArtifact={(type) => setArtifactModalOpen(type)} onShowToast={showNotification} pendingInvites={pendingInvites} onAcceptInvite={handleAcceptInvite} onDeclineInvite={handleDeclineInvite} />}
-      
-      {notification && <Toast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
-      {inviteOffer && (
+  // Shown over any screen, including onboarding, so someone who signs up from a link is asked right away
+  const inviteModal = inviteOffer ? (
         <div className="fixed inset-0 z-[150] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
           <div className="bg-white rounded-[2rem] max-w-sm w-full p-8 text-center shadow-2xl animate-scale-in">
             <div className="w-14 h-14 rounded-full bg-[#f7d8ee] flex items-center justify-center mx-auto mb-5"><Sparkles size={22} className="text-[#d46aa9]" /></div>
@@ -1024,7 +1017,18 @@ const App: React.FC = () => {
             <button disabled={inviteBusy} onClick={() => answerInvite(false)} className="w-full py-3 mt-2 text-sm font-bold text-slate-400 hover:text-slate-700">Not now</button>
           </div>
         </div>
-      )}
+      ) : null;
+
+  if (isOnboarding) return <>{inviteModal}<Onboarding onComplete={handleOnboardingComplete} /></>;
+
+  return (
+    <div className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in">
+      {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} />}
+      {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={entries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} />}
+      {currentTab === 'profile' && <Profile user={user} entries={entries} streak={streak} onCircleChange={handleCircleChange} onCreateCircle={handleCreateCircle} onArchiveCircle={handleArchiveCircle} onRenameCircle={handleRenameCircle} onLogout={handleLogout} onUpdateUser={handleUpdateUser} onShowLegal={(type) => setLegalModalOpen(type)} onViewArtifact={(type) => setArtifactModalOpen(type)} onShowToast={showNotification} pendingInvites={pendingInvites} onAcceptInvite={handleAcceptInvite} onDeclineInvite={handleDeclineInvite} />}
+      
+      {notification && <Toast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
+      {inviteModal}
       {belluhReply && currentTab !== 'ai-coach' && !isComposeOpen && (
         <div className="fixed bottom-28 left-0 right-0 px-6 z-[55] flex justify-center animate-slide-up">
           <div className="max-w-[360px] w-full bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-900/10 border border-white p-4 flex gap-3">
