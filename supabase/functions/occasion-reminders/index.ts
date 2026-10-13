@@ -8,6 +8,7 @@ import {
   localDateParts, nextOccurrence, daysBetween, reminderStage, reminderParams, isoDate, type StoredOccasion,
 } from '../_shared/occasions.ts';
 import { sendTemplate } from '../_shared/whatsapp.ts';
+import { sameSecret } from '../_shared/secret.ts';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
   auth: { persistSession: false },
@@ -18,8 +19,7 @@ const TEMPLATE = Deno.env.get('WHATSAPP_REMINDER_TEMPLATE') ?? 'occasion_reminde
 const TEMPLATE_LANG = Deno.env.get('WHATSAPP_TEMPLATE_LANGUAGE') ?? 'en_US';
 
 Deno.serve(async (req) => {
-  const secret = Deno.env.get('CRON_SECRET');
-  if (!secret || req.headers.get('x-cron-secret') !== secret) return new Response('Forbidden', { status: 403 });
+  if (!(await sameSecret(req.headers.get('x-cron-secret'), Deno.env.get('CRON_SECRET')))) return new Response('Forbidden', { status: 403 });
 
   // ?force=1 ignores the 9am check, for testing
   const force = new URL(req.url).searchParams.get('force') === '1';
@@ -29,11 +29,13 @@ Deno.serve(async (req) => {
     .select('user_id, phone_e164, timezone').not('phone_e164', 'is', null).eq('reminders_enabled', true);
   if (error) return new Response(error.message, { status: 500 });
 
-  const due = (links ?? []).filter(l => force || localDateParts(now, l.timezone).hour >= SEND_HOUR);
+  // One person's bad time zone must never stop everyone else's reminders
+  const localNow = (tz: string) => { try { return localDateParts(now, tz); } catch { return localDateParts(now, 'America/New_York'); } };
+  const due = (links ?? []).filter(l => force || localNow(l.timezone).hour >= SEND_HOUR);
   let sent = 0, failed = 0;
 
   for (const link of due) {
-    const today = localDateParts(now, link.timezone);
+    const today = localNow(link.timezone);
     const { data: occasions } = await db.from('occasions')
       .select('id, label, kind, month, day, year, repeats_yearly, mentioned_at').eq('user_id', link.user_id);
 

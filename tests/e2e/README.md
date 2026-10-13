@@ -13,7 +13,7 @@ Secret used throughout: `JWT_SECRET=belluh-local-test-secret-0123456789abcdef`.
 
 1. Start Postgres, create a `belluh` database, apply `base.sql` then the migrations.
 2. Start PostgREST (port 3001), `gateway.mjs` (3000), `fake-gemini.mjs` (3002), and the three functions (8101, 8102, 8103).
-3. `node --test api.e2e.test.mjs` (needs `@supabase/supabase-js`): 14 scenarios, covering access rules, invites, shared vs private entries, the Belluh agent, the weekly loop, and that a partner's private entry never reaches the model.
+3. `node --test api.e2e.test.mjs` (needs `@supabase/supabase-js`): 20 scenarios, covering access rules, invites, shared vs private entries, the Belluh agent, the weekly loop, the security audit fixes, and that a partner's private entry never reaches the model.
 4. Build the app with `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:3000`, serve it on 4175, then `node app.e2e.mjs <screenshot dir>`: 18 checks in a real browser as Maya, Dan and Eve. Then `node weekly.e2e.mjs <screenshot dir>`: 11 checks of the weekly card and check-in.
 
-Last run, Oct 12, 2026: 14/14 API scenarios, 18/18 browser checks and 11/11 weekly checks passed.
+Last run, Oct 12, 2026: 20/20 API scenarios, 18/18 browser checks and 11/11 weekly checks passed.

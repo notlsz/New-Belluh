@@ -15,6 +15,9 @@ on:
     paths: ['supabase/**', '.github/workflows/supabase-deploy.yml']
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: supabase-deploy
   cancel-in-progress: false
@@ -42,13 +45,13 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         if: steps.setup.outputs.ready == 'true'
 
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
         if: steps.setup.outputs.ready == 'true'
         with:
-          version: latest
+          version: 2.120.0
 
       - name: Check the project is reachable
         if: steps.setup.outputs.ready == 'true'

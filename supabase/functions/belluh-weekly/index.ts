@@ -15,6 +15,7 @@ import {
   weekStart, previousWeekStart, isWeeklyDue, isCheckinDue, pairOf, pairActionPrompt, personalInsightInstruction,
   validateAction, checkinMessage, ACTION_SCHEMA, INSIGHT_SCHEMA, type LastWeek, type CheckinStatus,
 } from '../_shared/weekly.ts';
+import { sameSecret } from '../_shared/secret.ts';
 import { db, loadCtx, buildSystem, addMessage, weekAction, type Ctx, type WeekAction } from '../_shared/agentdb.ts';
 
 const ACTIVE_DAYS = 14; // only people who've written recently get a weekly insight
@@ -86,8 +87,7 @@ async function checkin(ctx: Ctx, ws: string) {
 }
 
 Deno.serve(async (req) => {
-  const secret = Deno.env.get('CRON_SECRET');
-  if (!secret || req.headers.get('x-cron-secret') !== secret) return new Response('Forbidden', { status: 403 });
+  if (!(await sameSecret(req.headers.get('x-cron-secret'), Deno.env.get('CRON_SECRET')))) return new Response('Forbidden', { status: 403 });
 
   const url = new URL(req.url);
   const force = url.searchParams.get('force');
