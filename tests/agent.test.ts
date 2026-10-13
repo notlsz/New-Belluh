@@ -82,3 +82,29 @@ test('AI proxy: converts SDK-style requests and rejects anything else', () => {
   assert.ok('error' in buildGeminiBody({ contents: 'x'.repeat(70_000) }));
   assert.ok('error' in buildGeminiBody({ contents: 42 }));
 });
+
+import { hideUnansweredDaily, factsBlock, notesBlock, weeksBlock } from '../supabase/functions/_shared/agent.ts';
+
+test("Belluh can't give away today's answer before you've answered", () => {
+  const now = new Date('2026-10-13T15:00:00Z');
+  const q = 'What made you smile today?';
+  const rows: EntryRow[] = [
+    { id: 'a', user_id: 'd', content: 'DAN ANSWER', title: q, is_shared: true, created_at: '2026-10-13T12:00:00Z' },
+    { id: 'b', user_id: 'd', content: 'old answer', title: 'Old question', is_shared: true, created_at: '2026-10-01T12:00:00Z' },
+    { id: 'c', user_id: 'd', content: 'plain entry', is_shared: true, created_at: '2026-10-13T12:00:00Z' },
+  ];
+  assert.deepEqual(hideUnansweredDaily('m', rows, now).map(r => r.id), ['b', 'c']);
+  const mine: EntryRow = { id: 'm1', user_id: 'm', content: 'mine', title: q, is_shared: true, created_at: '2026-10-13T13:00:00Z' };
+  assert.deepEqual(hideUnansweredDaily('m', [...rows, mine], now).map(r => r.id).sort(), ['a', 'b', 'c', 'm1']);
+});
+
+test('the couple\'s story, notes and past weeks reach Belluh', () => {
+  const names = { m: 'Maya', d: 'Dan' };
+  assert.match(factsBlock([{ id: 'f', user_id: 'm', content: 'Together since 2021. Met at a climbing gym.', is_shared: true, tags: ['system_facts'], created_at: '2026-01-01T00:00:00Z' }], names)!, /Maya wrote: Together since 2021/);
+  assert.equal(factsBlock([], names), null);
+  assert.match(notesBlock([{ from_user: 'm', to_user: 'd', body: 'Miss you', created_at: '2026-10-12T10:00:00Z' }], names)!, /Maya to Dan: Miss you/);
+  assert.match(weeksBlock([{ week_start: '2026-10-04', action: 'Walk after dinner.', checkins: [{ name: 'Maya', status: 'done' }] }])!, /"Walk after dinner\." \(Maya did it\)/);
+  const p = systemPrompt({ myName: 'Maya', partnerName: 'Dan', memories: [], entries: '', dates: '', today: '2026-10-13', facts: 'Together since 2021.', notes: null, pastWeeks: null });
+  assert.match(p, /Their story, in their words\nTogether since 2021\./);
+  assert.match(p, /Earlier weeks\n\(This is their first week/);
+});

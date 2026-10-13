@@ -36,6 +36,40 @@ export function visibleEntries(viewerId: string, partnerIds: string[], rows: Ent
 
 const fmtDate = (iso: string) => new Date(iso).toISOString().slice(0, 10);
 
+/**
+ * The daily question works like the app: your partner's answer stays hidden until you've answered it too.
+ * Belluh follows the same rule, so it can never give an answer away. (Answers from the last 36 hours,
+ * which covers "today" in every time zone.)
+ */
+export function hideUnansweredDaily(viewerId: string, entries: EntryRow[], now: Date = new Date()): EntryRow[] {
+  const recent = (e: EntryRow) => now.getTime() - new Date(e.created_at).getTime() < 36 * 3600e3;
+  const answered = new Set(entries.filter(e => e.user_id === viewerId && e.title).map(e => e.title));
+  return entries.filter(e => e.user_id === viewerId || !e.title || !recent(e) || answered.has(e.title));
+}
+
+/** The couple's own "about us" notes (Profile → Relationship facts), from either of them. */
+export function factsBlock(rows: EntryRow[], names: Record<string, string>): string | null {
+  const facts = rows.filter(r => r.tags?.includes('system_facts') && r.content?.trim());
+  if (!facts.length) return null;
+  return facts.map(f => `${names[f.user_id] ?? 'They'} wrote: ${String(f.content).replace(/\s+/g, ' ').slice(0, 1200)}`).join('\n');
+}
+
+export interface NoteRow { from_user: string; to_user: string; body: string; created_at: string }
+export function notesBlock(notes: NoteRow[], names: Record<string, string>): string | null {
+  if (!notes.length) return null;
+  return [...notes].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 6)
+    .map(n => `- ${fmtDate(n.created_at)} ${names[n.from_user] ?? 'Partner'} to ${names[n.to_user] ?? 'Partner'}: ${n.body.replace(/\s+/g, ' ').slice(0, 300)}`)
+    .join('\n');
+}
+
+export interface PastWeek { week_start: string; action: string; checkins: { name: string; status: string }[] }
+export function weeksBlock(weeks: PastWeek[]): string | null {
+  if (!weeks.length) return null;
+  const words: Record<string, string> = { done: 'did it', not_yet: "hadn't yet", skipped: 'skipped' };
+  return weeks.slice(0, 4).map(w => `- Week of ${w.week_start}: "${w.action}" ` +
+    (w.checkins.length ? `(${w.checkins.map(c => `${c.name} ${words[c.status] ?? c.status}`).join(', ')})` : '(no check-ins)')).join('\n');
+}
+
 export function entriesBlock(entries: EntryRow[], names: Record<string, string>, viewerId: string, limit = 40): string {
   if (!entries.length) return '(No journal entries yet.)';
   return [...entries]
@@ -45,7 +79,8 @@ export function entriesBlock(entries: EntryRow[], names: Record<string, string>,
       const who = e.user_id === viewerId ? `${names[viewerId] ?? 'Me'} (you)` : names[e.user_id] ?? 'Partner';
       const privacy = e.user_id === viewerId && !e.is_shared ? ' [private: only you can see this]' : '';
       const mood = e.mood ? ` mood: ${e.mood}.` : '';
-      return `- ${fmtDate(e.created_at)} ${who}${privacy}:${mood} ${String(e.content).replace(/\s+/g, ' ').slice(0, 600)}`;
+      const answering = e.title ? ` answering "${String(e.title).slice(0, 140)}":` : '';
+      return `- ${fmtDate(e.created_at)} ${who}${privacy}:${mood}${answering} ${String(e.content).replace(/\s+/g, ' ').slice(0, 600)}`;
     })
     .join('\n');
 }
@@ -68,6 +103,9 @@ export interface PersonContext {
   dates: string;     // from occasionsBlock
   today: string;     // YYYY-MM-DD
   weekly?: string | null;  // this week's shared thing to try, and who has checked in
+  facts?: string | null;   // what the couple wrote about their relationship
+  notes?: string | null;   // recent notes between them, sent through Belluh
+  pastWeeks?: string | null; // what they tried in earlier weeks and how it went
 }
 
 export function systemPrompt(c: PersonContext): string {
@@ -77,7 +115,9 @@ export function systemPrompt(c: PersonContext): string {
 Who you are
 - The thoughtful friend who has read the journal: warm, specific, brief. Two to five sentences unless asked for more.
 - You point ${c.myName} back toward ${partner}. You are a voice in the room, never a third person in the relationship. Don't flirt, don't play a romantic role, and don't try to become the person they confide in instead of ${partner}.
+- You've been with this couple for a while: you know their story, what they've tried together, and the notes they've sent each other. Use that the way a friend who was there would, briefly and only when it helps.
 - Quote or refer to specific entries and dates when it helps. Never invent memories.
+- End with a question or a next step only when it moves things forward. Never end with a generic offer to help.
 - Don't take sides. When there's friction, name what each person seems to need.
 - Plain text only. No markdown, no asterisks, no headings, no lists unless asked.
 
@@ -96,8 +136,17 @@ Safety
 - If anyone describes being hurt, threatened, controlled or afraid of ${partner}, take it seriously, don't coach them to smooth it over, and encourage them to reach out to someone they trust or a domestic violence hotline (in the US, 1-800-799-7233).
 - If someone mentions wanting to harm themselves, respond with care and point them to the 988 Suicide & Crisis Lifeline (call or text 988 in the US).
 
+Their story, in their words
+${c.facts ?? '(They haven\'t written this yet.)'}
+
 This week's thing to try together
 ${c.weekly ?? '(None yet. Belluh suggests one every Sunday.)'}
+
+Earlier weeks
+${c.pastWeeks ?? '(This is their first week with Belluh.)'}
+
+Recent notes between them, sent through Belluh
+${c.notes ?? '(None yet.)'}
 
 What you remember about them
 ${c.memories.length ? c.memories.map(m => `- ${m}`).join('\n') : '(Nothing yet.)'}

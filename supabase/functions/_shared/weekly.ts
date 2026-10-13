@@ -65,6 +65,7 @@ export function pairActionPrompt(opts: {
   entries: EntryRow[];
   lastWeek: LastWeek | null;
   today: string;
+  facts?: string | null;
 }): string {
   const shared = opts.entries
     .filter(e => e.is_shared === true && e.content?.trim())
@@ -79,6 +80,7 @@ export function pairActionPrompt(opts: {
     'Write it as a short instruction to both of them, under 20 words, warm and plain. No therapy jargon, no markdown.',
     "Also give a one-sentence 'why' that points to what you noticed, without quoting anything word for word.",
     lastWeekLine(opts.lastWeek) + ' If it helped, build on it; if they skipped it, try something lighter.',
+    ...(opts.facts ? ['', 'Their story, in their words:', opts.facts] : []),
     '',
     'Shared entries (newest first):',
     shared,
