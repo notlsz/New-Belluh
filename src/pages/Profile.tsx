@@ -262,9 +262,9 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
       if (!file) return;
       setIsUploading(true);
       try {
-          const fileExt = file.name.split('.').pop();
+          const fileExt = (file.name.split('.').pop() || 'jpg').replace(/[^a-z0-9]/gi, '').slice(0, 5) || 'jpg';
           const fileName = `avatars/${user.id}-${Date.now()}.${fileExt}`;
-          const { error } = await supabase.storage.from('journal-media').upload(fileName, file, { upsert: true });
+          const { error } = await supabase.storage.from('journal-media').upload(fileName, file, { upsert: false });
           if (error) throw error;
           const { data } = supabase.storage.from('journal-media').getPublicUrl(fileName);
           const publicUrl = data.publicUrl + '?t=' + Date.now();

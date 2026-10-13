@@ -292,6 +292,11 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                        {msg.meta?.entry_id && <p className="text-xs font-bold text-slate-300 mb-1">About your latest entry</p>}
                        {msg.meta?.kind === 'weekly' && <p className="text-xs font-bold text-slate-300 mb-1">Your week, from Belluh</p>}
                        <p className="font-serif text-lg leading-loose text-slate-900 whitespace-pre-wrap">{msg.body}</p>
+                       {Array.isArray(msg.meta?.saved) && msg.meta.saved.length > 0 && (
+                         <button onClick={openMemories} className="mt-2 flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-700 text-left">
+                           <Brain size={12} /> Saved to memory: {msg.meta.saved.join(' · ')}
+                         </button>
+                       )}
                        {week && msg.id === weeklyCardOn && <div className="mt-4"><WeeklyCard week={week} onChange={onWeekChange} compact /></div>}
                      </div>
                    </div>

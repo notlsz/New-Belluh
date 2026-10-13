@@ -42,6 +42,9 @@ async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate') {
   if (mode === 'mediate') contents[contents.length - 1].parts.unshift({ text: MEDIATE_INSTRUCTION });
 
   const system = await buildSystem(ctx);
+  // Memory changes must come from the person, not from text Belluh is reading (a shared entry, a partner's note)
+  const askedToForget = /\b(forget|remove|delete|erase|don'?t remember|stop remembering)\b/i.test(text);
+  const saved: string[] = [];
   const reply = await chatWithTools({
     system, contents, tools: TOOL_DECLARATIONS,
     runTool: async (name, args) => {
@@ -50,10 +53,15 @@ async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate') {
       switch (call.name) {
         case 'remember_fact': {
           const { error } = await db.from('agent_memories').insert({ user_id: ctx.userId, fact: call.fact });
+          if (!error) saved.push(call.fact);
           return { ok: !error || error.code === '23505' };
         }
         case 'forget_memory': {
           const q = call.query.replace(/[%_\\]/g, '');
+          // Only when the person asked in their own words, and named the thing to forget
+          if (!askedToForget || !text.toLowerCase().includes(q.toLowerCase().trim())) {
+            return { ok: false, error: 'Only forget something when the person asks, in their own message, naming what to forget.' };
+          }
           if (q.length < 4) return { ok: false, error: 'Ask which memory they mean.' };
           const { data: matches } = await db.from('agent_memories').select('id, fact').eq('user_id', ctx.userId).ilike('fact', `%${q}%`);
           // Only forget when it's clearly one thing; otherwise ask, so a vague request can't wipe everything
@@ -78,13 +86,17 @@ async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate') {
   });
 
   const final = cleanReply(reply ?? '') || "I'm having trouble thinking right now. Try me again in a moment.";
-  created.push(await addMessage(ctx.userId, 'belluh', final));
+  // Every new memory is shown under the reply, so nothing is remembered silently
+  created.push(await addMessage(ctx.userId, 'belluh', final, saved.length ? { saved } : {}));
   return { messages: created };
 }
 
 async function underLimit(userId: string): Promise<boolean> {
-  const { data, error } = await db.rpc('ai_take_call', { p_user: userId, p_limit: Number(Deno.env.get('AGENT_HOURLY_LIMIT') ?? 40), p_kind: 'agent' });
-  return error ? true : data !== false;
+  const { data, error } = await db.rpc('ai_take_call', {
+    p_user: userId, p_limit: Number(Deno.env.get('AGENT_HOURLY_LIMIT') ?? 40), p_kind: 'agent',
+    p_global_limit: Number(Deno.env.get('AGENT_GLOBAL_HOURLY_LIMIT') ?? 2000),
+  });
+  return !error && data === true; // fail closed
 }
 
 async function react(ctx: Ctx, entryId: string) {

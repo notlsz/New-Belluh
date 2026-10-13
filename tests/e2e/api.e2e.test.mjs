@@ -265,3 +265,74 @@ test('13. next Sunday builds on what happened', async () => {
   assert.notEqual(h2.week.id, h.week.id, 'a new week, a new thing to try');
   assert.equal(h2.week.mine, null);
 });
+
+// ---------- security audit regressions (Oct 13) ----------
+
+test('14. a removed partner cannot reconnect with an old invite link', async () => {
+  const { data: t } = await maya.rpc('create_partner_invite');
+  const { error: e1 } = await eve.rpc('accept_partner_invite', { p_token: t });
+  assert.ifError(e1);
+  await maya.from('partner_connections').delete().eq('partner_id', EVE);
+  const { error: again } = await eve.rpc('accept_partner_invite', { p_token: t });
+  assert.ok(again, 'the old link no longer works');
+  const { data: seen } = await eve.from('journal_entries').select('id').eq('user_id', MAYA);
+  assert.equal(seen.length, 0);
+
+  // and a stranger can't wipe Maya's other links by sending and withdrawing a request
+  const { data: t2 } = await maya.rpc('create_partner_invite');
+  await eve.from('partner_connections').insert({ user_id: EVE, partner_id: MAYA, status: 'pending' });
+  await eve.from('partner_connections').delete().eq('user_id', EVE).eq('partner_id', MAYA);
+  const { data: who } = await dan.rpc('preview_partner_invite', { p_token: t2 });
+  assert.equal(who, 'Maya', "Maya's new link still works");
+});
+
+test('15. nobody can hand their entry to someone else', async () => {
+  const { data: mine } = await maya.from('journal_entries').select('id').eq('user_id', MAYA).limit(1);
+  const { error } = await maya.from('journal_entries').update({ user_id: DAN, content: 'forged', is_shared: true }).eq('id', mine[0].id);
+  assert.ok(error, 'changing the owner is refused');
+  const { data: danEntries } = await dan.from('journal_entries').select('content').eq('content', 'forged');
+  assert.equal(danEntries.length, 0);
+});
+
+test('16. profile emails follow the login; invites by email cannot be hijacked', async () => {
+  await eve.from('profiles').update({ email: 'newperson@test.com', full_name: 'Sam' }).eq('id', EVE);
+  const { data: eveRow } = await eve.from('profiles').select('email').eq('id', EVE).single();
+  assert.equal(eveRow.email, 'eve@test.com', 'the email snaps back to the login email');
+  const { data: found } = await maya.rpc('find_user_by_email', { p_email: 'newperson@test.com' });
+  assert.equal(found, null);
+});
+
+test('17. a stranger cannot read your profile by sending a request or tagging you', async () => {
+  await eve.from('partner_connections').insert({ user_id: EVE, partner_id: DAN, status: 'pending' });
+  await eve.from('journal_entries').insert({ user_id: EVE, content: 'circle', is_shared: false, tags: ['system_circle_member', `member:${MAYA}`] });
+  const { data: profs } = await eve.from('profiles').select('id').in('id', [MAYA, DAN]);
+  assert.equal(profs.length, 0, 'Eve still sees neither Maya nor Dan');
+  const { data: danSees } = await dan.from('profiles').select('full_name').eq('id', EVE);
+  assert.equal(danSees.length, 1, 'but Dan, who received the request, can see who sent it');
+  const { data: coupled } = await eve.rpc('are_partners', { a: MAYA, b: DAN });
+  assert.equal(coupled, false, 'and Eve cannot ask whether two other people are a couple');
+  const { data: ours } = await maya.rpc('are_partners', { a: MAYA, b: DAN });
+  assert.equal(ours, true);
+  await eve.from('partner_connections').delete().eq('user_id', EVE); // leave Eve unconnected for the browser checks
+});
+
+test('18. a bad time zone is ignored instead of breaking jobs', async () => {
+  await eve.from('agent_settings').upsert({ user_id: EVE, timezone: 'Not/AZone' }, { onConflict: 'user_id' });
+  const { data } = await eve.from('agent_settings').select('timezone').single();
+  assert.equal(data.timezone, 'America/New_York');
+  const { status } = await runWeekly('checkin');
+  assert.equal(status, 200);
+});
+
+test('19. analytics and conflict logs are private', async () => {
+  await maya.from('conflict_logs').insert({ user_id: MAYA, original_input: 'MAYA FIGHT TEXT', ai_suggestion: 'x' });
+  await maya.from('analytics_events').insert({ user_id: MAYA, event_name: 'entry_created', properties: { mood: 'Anxious' } });
+  const { data: logs } = await eve.from('conflict_logs').select('id');
+  assert.equal(logs.length, 0, 'Eve cannot read Maya\'s argument');
+  const { data: ev } = await eve.from('analytics_events').select('id');
+  assert.equal(ev.length, 0, 'only the admin reads analytics');
+  const { error: spoof } = await eve.from('conflict_logs').insert({ user_id: MAYA, original_input: 'fake' });
+  assert.ok(spoof);
+  const { data: own } = await maya.from('conflict_logs').select('original_input');
+  assert.equal(own.length, 1);
+});

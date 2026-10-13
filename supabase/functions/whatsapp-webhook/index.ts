@@ -9,6 +9,7 @@ import {
   type StoredOccasion, type ExtractedOccasion,
 } from '../_shared/occasions.ts';
 import { sendText, geminiJson } from '../_shared/whatsapp.ts';
+import { sameSecret } from '../_shared/secret.ts';
 
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
 
@@ -119,7 +120,7 @@ Deno.serve(async (req) => {
   // Meta's one-time verification handshake when you register the webhook
   if (req.method === 'GET') {
     const ok = url.searchParams.get('hub.mode') === 'subscribe'
-      && url.searchParams.get('hub.verify_token') === Deno.env.get('WHATSAPP_VERIFY_TOKEN');
+      && await sameSecret(url.searchParams.get('hub.verify_token'), Deno.env.get('WHATSAPP_VERIFY_TOKEN'));
     return ok ? new Response(url.searchParams.get('hub.challenge') ?? '', { status: 200 }) : new Response('Forbidden', { status: 403 });
   }
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });

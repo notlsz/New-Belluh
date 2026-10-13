@@ -15,6 +15,9 @@ on:
     paths: ['supabase/**', '.github/workflows/supabase-deploy.yml']
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: supabase-deploy
   cancel-in-progress: false
@@ -42,13 +45,13 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         if: steps.setup.outputs.ready == 'true'
 
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
         if: steps.setup.outputs.ready == 'true'
         with:
-          version: latest
+          version: 2.120.0
 
       - name: Check the project is reachable
         if: steps.setup.outputs.ready == 'true'
@@ -102,6 +105,19 @@ jobs:
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
             --data @- "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" > /dev/null
           echo "Weekly loop scheduled."
+
+      - name: Check storage rules
+        if: steps.setup.outputs.ready == 'true'
+        run: |
+          sql="select coalesce(string_agg(policyname, ', '), '') as p from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname not in ('jp_owner_insert', 'jp_owner_or_partner_read', 'jp_owner_delete', 'jm_avatar_insert', 'jm_avatar_delete')"
+          extra=$(jq -n --arg q "$sql" '{query: $q}' | curl -sf -X POST \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
+            --data @- "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" | jq -r '.[0].p // ""')
+          if [ -n "$extra" ]; then
+            echo "::error::Old storage rules are still active: $extra. Delete them in Supabase → Storage → Policies."
+            exit 1
+          fi
+          echo "Storage rules are the expected set."
 
       - name: Smoke test
         if: steps.setup.outputs.ready == 'true'

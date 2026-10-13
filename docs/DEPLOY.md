@@ -15,6 +15,7 @@ Do these in order.
    - `supabase/migrations/20261012010000_belluh_agent.sql`
    - `supabase/migrations/20261012020000_security_hardening.sql`
    - `supabase/migrations/20261012030000_weekly_loop.sql`
+   - `supabase/migrations/20261013000000_security_fixes.sql`
 
    The last one replaces the access rules on `journal_entries` and `partner_connections`, adds one-time invite links, and creates the private `journal-private` storage bucket.
 
