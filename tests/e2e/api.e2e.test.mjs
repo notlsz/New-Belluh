@@ -160,3 +160,108 @@ test('8. app AI features run through the server proxy', async () => {
   const r = await fetch(`${URL_}/functions/v1/gemini-proxy`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"contents":"hi"}' });
   assert.equal(r.status, 401, 'no login, no AI');
 });
+
+// ---------- weekly loop ----------
+const SERVICE = jwt('service_role');
+const service = createClient(URL_, SERVICE, { auth: { persistSession: false } });
+const runWeekly = async (force, user) => {
+  const r = await fetch(`${URL_}/functions/v1/belluh-weekly?force=${force}${user ? `&user=${user}` : ''}`, { method: 'POST', headers: { 'x-cron-secret': 'cron-test' } });
+  return { status: r.status, body: r.status === 200 ? await r.json() : null };
+};
+const agent = (c, body) => c.functions.invoke('belluh-agent', { body: { timezone: 'America/New_York', ...body } });
+const schemaReqs = (prop) => geminiRequests().filter(r => r.body?.generationConfig?.responseSchema?.properties?.[prop]);
+
+test('9. Sunday: one shared thing to try, a private insight each, posted once', async () => {
+  const bad = await fetch(`${URL_}/functions/v1/belluh-weekly?force=weekly`, { method: 'POST' });
+  assert.equal(bad.status, 403, 'the job only runs with the cron secret');
+
+  const { body } = await runWeekly('weekly');
+  assert.equal(body.weekly_sent, 2, 'Maya and Dan each got their Sunday message');
+  const again = await runWeekly('weekly');
+  assert.equal(again.body.weekly_already, 2, 'running twice never posts twice');
+
+  const { data: mh } = await agent(maya, { action: 'history' });
+  const { data: dh } = await agent(dan, { action: 'history' });
+  const mw = mh.messages.find(m => m.meta?.kind === 'weekly');
+  const dw = dh.messages.find(m => m.meta?.kind === 'weekly');
+  assert.match(mw.body, /Dinner came up/);
+  assert.equal(mw.meta.action_id, dw.meta.action_id, 'they share one action');
+  assert.equal(mh.week.action, 'Take a twenty-minute walk after dinner, phones at home.');
+  assert.equal(mh.week.partner_name, 'Dan');
+  const { data: eveSees } = await eve.from('weekly_actions').select('id');
+  assert.equal(eveSees.length, 0, 'nobody else can see it');
+  const { error: forge } = await maya.from('weekly_actions').insert({ user_a: MAYA, user_b: DAN, week_start: '2026-01-04', action: 'fake' });
+  assert.ok(forge, 'only Belluh writes actions');
+});
+
+test('10. privacy: the shared action uses shared entries only; no request mixes both private journals', () => {
+  const action = JSON.stringify(schemaReqs('action'));
+  assert.equal(schemaReqs('action').length, 1, 'the couple\'s action was written once');
+  assert.ok(!action.includes('PRIVATE'), 'no private entry from either person');
+  assert.ok(action.includes('Dan shared: brutal day') && action.includes('Maya shared'));
+  const insights = schemaReqs('insight').map(r => JSON.stringify(r));
+  assert.equal(insights.length, 2);
+  assert.ok(insights.every(t => !(t.includes('MAYA PRIVATE') && t.includes('DAN PRIVATE'))));
+  assert.ok(insights.some(t => t.includes('MAYA PRIVATE')) && insights.some(t => t.includes('DAN PRIVATE')), 'each insight is private to its reader');
+});
+
+test('11. one-tap check-in, visible to the partner, and only yours to change', async () => {
+  const { data: h } = await agent(maya, { action: 'history' });
+  const id = h.week.id;
+  const { data: r, error } = await agent(maya, { action: 'checkin', action_id: id, status: 'done' });
+  assert.ifError(error);
+  assert.equal(r.week.mine, 'done'); assert.equal(r.week.partner, null);
+  assert.match(r.messages[0].body, /build on it next Sunday/);
+  const { data: r2 } = await agent(maya, { action: 'checkin', action_id: id, status: 'done' });
+  assert.equal(r2.messages.length, 0, 'tapping twice does not repeat Belluh');
+
+  const { data: dv } = await agent(dan, { action: 'history' });
+  assert.equal(dv.week.partner, 'done', 'Dan sees that Maya did it');
+  const { error: eveTap } = await agent(eve, { action: 'checkin', action_id: id, status: 'skipped' });
+  assert.ok(eveTap, 'Eve cannot check in on their action');
+  const { error: eveInsert } = await eve.from('weekly_checkins').insert({ action_id: id, user_id: EVE, status: 'done' });
+  assert.ok(eveInsert);
+  const { data: changed } = await dan.from('weekly_checkins').update({ status: 'skipped' }).eq('user_id', MAYA).select('user_id');
+  assert.equal(changed.length, 0, 'Dan cannot change Maya\'s answer');
+  const { error: badStatus } = await agent(maya, { action: 'checkin', action_id: id, status: 'maybe' });
+  assert.ok(badStatus);
+});
+
+test('11b. the app saves your time zone with no setup, and only yours', async () => {
+  const { error } = await eve.from('agent_settings').upsert({ user_id: EVE, timezone: 'Europe/Paris' }, { onConflict: 'user_id' });
+  assert.ifError(error);
+  const { error: other } = await eve.from('agent_settings').upsert({ user_id: MAYA, timezone: 'Asia/Tokyo' }, { onConflict: 'user_id' });
+  assert.ok(other, 'Eve cannot change Maya\'s settings');
+  const { data } = await maya.from('agent_settings').select('timezone');
+  assert.deepEqual(data, [{ timezone: 'America/New_York' }]);
+});
+
+test('12. Wednesday: only the person who has not answered gets a check-in', async () => {
+  const { body } = await runWeekly('checkin');
+  assert.equal(body.checkin_answered, 1, 'Maya already answered');
+  assert.equal(body.checkin_sent, 1, 'Dan is asked');
+  const { data: dh } = await agent(dan, { action: 'history' });
+  const c = dh.messages.find(m => m.meta?.kind === 'checkin');
+  assert.match(c.body, /did you and Maya get to try this\? "Take a twenty-minute walk/);
+  assert.equal((await runWeekly('checkin')).body.checkin_already, 1, 'and only once');
+  await agent(dan, { action: 'checkin', action_id: dh.week.id, status: 'skipped' });
+});
+
+test('13. next Sunday builds on what happened', async () => {
+  // Move this week into the past, as if a week had gone by
+  const { data: h } = await agent(maya, { action: 'history' });
+  const prev = new Date(`${h.week.week_start}T00:00:00Z`); prev.setUTCDate(prev.getUTCDate() - 7);
+  const { error } = await service.from('weekly_actions').update({ week_start: prev.toISOString().slice(0, 10) }).eq('id', h.week.id);
+  assert.ifError(error);
+  await service.from('agent_messages').delete().in('meta->>kind', ['weekly', 'checkin']);
+
+  const { body } = await runWeekly('weekly');
+  assert.equal(body.weekly_sent, 2);
+  assert.equal(body.weekly_inactive, 1, 'Eve has not written lately, so Belluh stays quiet');
+  const latest = JSON.stringify(schemaReqs('action').at(-1));
+  assert.match(latest, /Last week's thing to try was \\"Take a twenty-minute walk after dinner, phones at home\.\\"/);
+  assert.match(latest, /Maya did it/); assert.match(latest, /Dan skipped it/);
+  const { data: h2 } = await agent(maya, { action: 'history' });
+  assert.notEqual(h2.week.id, h.week.id, 'a new week, a new thing to try');
+  assert.equal(h2.week.mine, null);
+});

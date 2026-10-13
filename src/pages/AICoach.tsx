@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Insight, ChatMessage, RelationshipArchetype, UserPersona } from '../types';
 import { chatWithBelluh, generateDailyReflection, getRelationshipArchetype, softenConflictMessage, detectPersonaFromEntries } from '../services/geminiService';
-import { belluhAgent, AgentMessage } from '../services/belluhAgent';
+import { belluhAgent, AgentMessage, WeekView } from '../services/belluhAgent';
+import WeeklyCard from '../components/WeeklyCard';
 import { Sparkles, Wand2, Activity, ArrowUp, Heart, Check, X, Brain, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { trackEvent } from '../services/analytics';
@@ -88,6 +89,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
   const [partnerName, setPartnerName] = useState<string | null>(null);
   const [agentMessages, setAgentMessages] = useState<AgentMessage[]>([]);
   const [memories, setMemories] = useState<{ id: string; fact: string }[] | null>(null);
+  const [week, setWeek] = useState<WeekView | null>(null);
 
   const [reflection, setReflection] = useState<string>('');
   const [archetype, setArchetype] = useState<RelationshipArchetype | null>(null);
@@ -111,8 +113,10 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
       if (h) {
         setAgentMessages(h.messages);
         setPartnerName(h.partner_name);
+        setWeek(h.week ?? null);
         setMode('agent');
         belluhAgent.markNotesRead();
+        belluhAgent.markBelluhSeen();
         return;
       }
       setMode('legacy');
@@ -208,6 +212,13 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
     if (ok) setAgentMessages(prev => prev.map(m => m.id === id ? { ...m, meta: { ...m.meta, status: 'discarded' } } : m));
   };
 
+  const onWeekChange = (w: WeekView, added: AgentMessage[]) => {
+    setWeek(w);
+    if (added.length) setAgentMessages(prev => [...prev, ...added]);
+  };
+  // The check-in buttons sit under the latest weekly message only
+  const weeklyCardOn = week ? [...agentMessages].reverse().find(m => m.meta?.action_id === week.id && (m.meta?.kind === 'weekly' || m.meta?.kind === 'checkin'))?.id : undefined;
+
   const openMemories = async () => setMemories(await belluhAgent.memories());
 
   const me = firstName(userName);
@@ -279,7 +290,9 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                      <BelluhAvatar />
                      <div className="max-w-[85%] md:max-w-[80%]">
                        {msg.meta?.entry_id && <p className="text-xs font-bold text-slate-300 mb-1">About your latest entry</p>}
+                       {msg.meta?.kind === 'weekly' && <p className="text-xs font-bold text-slate-300 mb-1">Your week, from Belluh</p>}
                        <p className="font-serif text-lg leading-loose text-slate-900 whitespace-pre-wrap">{msg.body}</p>
+                       {week && msg.id === weeklyCardOn && <div className="mt-4"><WeeklyCard week={week} onChange={onWeekChange} compact /></div>}
                      </div>
                    </div>
                  );

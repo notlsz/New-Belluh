@@ -7,10 +7,13 @@ import { DAILY_PROMPTS } from '../constants';
 import { questionForDay, isSameDay } from '../lib/daily';
 import { askBelluhAboutJournal, generateRelationshipForecast, detectPatterns } from '../services/geminiService';
 import { trackEvent } from '../services/analytics';
+import { belluhAgent, type WeekView } from '../services/belluhAgent';
+import WeeklyCard from '../components/WeeklyCard';
 
 interface TimelineProps {
   entries: JournalEntry[];
   currentUserId: string;
+  partnerName?: string;
   onTriggerPremium: () => void;
   activeCircleId: string;
   circles: Circle[];
@@ -23,11 +26,19 @@ interface TimelineProps {
   streak: number;
 }
 
-const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, activeCircleId, circles, onCircleChange, onLikeEntry, onCompose, onSearch: _onSearch, onDeleteEntry, onUpdateEntry, streak }) => {
+const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName, activeCircleId, circles, onCircleChange, onLikeEntry, onCompose, onSearch: _onSearch, onDeleteEntry, onUpdateEntry, streak }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCircleMenuOpen, setIsCircleMenuOpen] = useState(false);
   // Same question for both of you today
   const [todaysPrompt] = useState(() => questionForDay(DAILY_PROMPTS));
+  // This week's one thing to try together (from Belluh's Sunday message)
+  const [week, setWeek] = useState<WeekView | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const first = (partnerName || '').trim().split(/\s+/)[0] || null;
+    belluhAgent.thisWeek(currentUserId, first).then(w => { if (!cancelled) setWeek(w); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [currentUserId, partnerName]);
   const today = new Date();
   const myAnswer = entries.find(e => e.userId === currentUserId && e.prompt === todaysPrompt && isSameDay(e.timestamp, today));
   const partnerAnswer = entries.find(e => e.userId !== currentUserId && !e.isPrivate && e.prompt === todaysPrompt && isSameDay(e.timestamp, today));
@@ -361,6 +372,14 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, activeCircl
        <div className="relative min-h-[400px]">
           {/* Timeline Stem */}
           <div className="absolute left-14 md:left-20 top-0 bottom-0 w-px bg-slate-100"></div>
+
+          {/* This week's thing to try together: one tap to check in */}
+          {week && !isArchived && !isConstellation && (
+              <div className="relative pl-20 md:pl-24 pr-6 mb-10 animate-slide-up">
+                  <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-[#9bbecb] border-[2px] border-[#fcfcfc] rounded-full z-10 -translate-x-[3.5px]"></div>
+                  <WeeklyCard week={week} onChange={w => setWeek(w)} />
+              </div>
+          )}
 
           {/* Today's question: you both answer; your partner's answer opens once you've written yours */}
           {!isArchived && !isConstellation && (

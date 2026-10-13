@@ -10,6 +10,9 @@ http.createServer((req, res) => {
     const last = body.contents?.at(-1)?.parts ?? [];
     const lastText = last.map(p => p.text ?? '').join(' ').toLowerCase();
     const hasToolResult = last.some(p => p.functionResponse);
+    const props = body.generationConfig?.responseSchema?.properties ?? {};
+    if (props.action) return reply(res, [{ text: JSON.stringify({ action: 'Take a twenty-minute walk after dinner, phones at home.', why: 'You both wrote about quiet dinners this week.' }) }]);
+    if (props.insight) return reply(res, [{ text: JSON.stringify({ insight: 'Dinner came up for both of you this week, and both times it went quiet. This week, try the walk together.' }) }]);
     if (body.generationConfig?.responseMimeType === 'application/json') {
       return reply(res, [{ text: JSON.stringify({ reply: 'Three weeks ago you wrote about the same quiet dinner. Is work heavy for Dan right now?' }) }]);
     }

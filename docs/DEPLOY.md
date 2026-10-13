@@ -8,6 +8,7 @@ Do these in order.
    - `supabase/migrations/20261012000000_occasions_whatsapp.sql`
    - `supabase/migrations/20261012010000_belluh_agent.sql`
    - `supabase/migrations/20261012020000_security_hardening.sql`
+   - `supabase/migrations/20261012030000_weekly_loop.sql`
 
    The last one replaces the access rules on `journal_entries` and `partner_connections`, adds one-time invite links, and creates the private `journal-private` storage bucket.
 
@@ -17,9 +18,21 @@ Do these in order.
    ```bash
    supabase functions deploy gemini-proxy
    supabase functions deploy belluh-agent
+   supabase functions deploy belluh-weekly --no-verify-jwt
    supabase functions deploy whatsapp-webhook --no-verify-jwt     # when WhatsApp is ready
    supabase functions deploy occasion-reminders --no-verify-jwt   # when WhatsApp is ready
    ```
+
+4. **Weekly loop schedule** (SQL editor, needs `pg_cron` and `pg_net`; set the `CRON_SECRET` secret first):
+   ```sql
+   select cron.schedule('belluh-weekly', '10 * * * *', $$
+     select net.http_post(
+       url := 'https://<project-ref>.supabase.co/functions/v1/belluh-weekly',
+       headers := jsonb_build_object('x-cron-secret', '<CRON_SECRET>')
+     );
+   $$);
+   ```
+   It runs hourly and acts only on Sunday from 9am and Wednesday from 6pm in each person's own time zone. To try it immediately: `POST .../belluh-weekly?force=weekly&user=<your user id>` with the same header.
 
 ## What works before step 1-3, after the database is back
 
@@ -30,4 +43,4 @@ Do these in order.
 
 ## Smoke test after deploying
 
-With two test accounts: invite by link and accept; write a shared and a private entry each; check each sees only the other's shared entry; heart the partner's entry; record a voice note and reload after an hour; answer today's question on both; ask Belluh to send a note and confirm it arrives.
+With two test accounts: invite by link and accept; write a shared and a private entry each; check each sees only the other's shared entry; heart the partner's entry; record a voice note and reload after an hour; answer today's question on both; ask Belluh to send a note and confirm it arrives; force the weekly job for one account, tap "We did it" on the home card, and check the partner sees it.

@@ -67,6 +67,7 @@ export interface PersonContext {
   entries: string;   // from entriesBlock
   dates: string;     // from occasionsBlock
   today: string;     // YYYY-MM-DD
+  weekly?: string | null;  // this week's shared thing to try, and who has checked in
 }
 
 export function systemPrompt(c: PersonContext): string {
@@ -94,6 +95,9 @@ Actions (use the tools; don't just describe them)
 Safety
 - If anyone describes being hurt, threatened, controlled or afraid of ${partner}, take it seriously, don't coach them to smooth it over, and encourage them to reach out to someone they trust or a domestic violence hotline (in the US, 1-800-799-7233).
 - If someone mentions wanting to harm themselves, respond with care and point them to the 988 Suicide & Crisis Lifeline (call or text 988 in the US).
+
+This week's thing to try together
+${c.weekly ?? '(None yet. Belluh suggests one every Sunday.)'}
 
 What you remember about them
 ${c.memories.length ? c.memories.map(m => `- ${m}`).join('\n') : '(Nothing yet.)'}

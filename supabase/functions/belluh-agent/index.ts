@@ -6,17 +6,14 @@
 //            { action: 'react', entry_id: string }
 //            { action: 'send_note', draft_id: string, text?: string }
 //            { action: 'discard_note', draft_id: string }
+//            { action: 'checkin', action_id: string, status: 'done' | 'not_yet' | 'skipped' }
 
-import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 import {
-  visibleEntries, entriesBlock, occasionsBlock, systemPrompt, validateToolCall, cleanReply,
-  TOOL_DECLARATIONS, MEDIATE_INSTRUCTION, REACT_INSTRUCTION, type EntryRow, type OccasionRow,
+  validateToolCall, cleanReply, TOOL_DECLARATIONS, MEDIATE_INSTRUCTION, REACT_INSTRUCTION,
 } from '../_shared/agent.ts';
-import { localDateParts, isoDate } from '../_shared/occasions.ts';
 import { chatWithTools, jsonAnswer, type GeminiContent } from '../_shared/gemini.ts';
-
-const URL_ = Deno.env.get('SUPABASE_URL')!;
-const db = createClient(URL_, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
+import { db, loadCtx, buildSystem, addMessage, history, weekView, type Ctx } from '../_shared/agentdb.ts';
+import type { CheckinStatus } from '../_shared/weekly.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -24,65 +21,6 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
-
-interface Ctx {
-  userId: string;
-  myName: string;
-  partnerId: string | null;
-  partnerName: string | null;
-  partnerIds: string[];
-  timezone: string;
-}
-
-async function loadCtx(userId: string, timezone: string): Promise<Ctx> {
-  const { data: conns } = await db.from('partner_connections')
-    .select('user_id, partner_id').eq('status', 'connected').or(`user_id.eq.${userId},partner_id.eq.${userId}`);
-  const partnerIds = [...new Set((conns ?? []).map(c => (c.user_id === userId ? c.partner_id : c.user_id)))];
-  const { data: profiles } = await db.from('profiles').select('id, full_name, partner_name').in('id', [userId, ...partnerIds]);
-  const me = profiles?.find(p => p.id === userId);
-  const first = (n?: string | null) => (n ?? '').trim().split(/\s+/)[0] || null;
-  const partnerId = partnerIds[0] ?? null;
-  const partnerProfile = profiles?.find(p => p.id === partnerId);
-  return {
-    userId, partnerIds, partnerId, timezone,
-    myName: first(me?.full_name) ?? 'there',
-    partnerName: first(partnerProfile?.full_name) ?? first(me?.partner_name) ?? null,
-  };
-}
-
-async function buildSystem(ctx: Ctx): Promise<string> {
-  const today = localDateParts(new Date(), ctx.timezone);
-  const { data: rows } = await db.from('journal_entries')
-    .select('id, user_id, content, title, mood, is_shared, tags, created_at')
-    .in('user_id', [ctx.userId, ...ctx.partnerIds])
-    .order('created_at', { ascending: false }).limit(200);
-  const entries = visibleEntries(ctx.userId, ctx.partnerIds, (rows ?? []) as EntryRow[]);
-  const names: Record<string, string> = { [ctx.userId]: ctx.myName };
-  if (ctx.partnerId && ctx.partnerName) names[ctx.partnerId] = ctx.partnerName;
-
-  const { data: mem } = await db.from('agent_memories').select('fact').eq('user_id', ctx.userId).order('created_at').limit(60);
-  const { data: occ } = await db.from('occasions').select('label, month, day, year, repeats_yearly').eq('user_id', ctx.userId);
-
-  return systemPrompt({
-    myName: ctx.myName,
-    partnerName: ctx.partnerName,
-    memories: (mem ?? []).map(m => m.fact),
-    entries: entriesBlock(entries, names, ctx.userId),
-    dates: occasionsBlock((occ ?? []) as OccasionRow[], today),
-    today: isoDate(today),
-  });
-}
-
-async function addMessage(userId: string, role: string, body: string, meta: Record<string, unknown> = {}) {
-  const { data } = await db.from('agent_messages').insert({ user_id: userId, role, body, meta }).select().single();
-  return data;
-}
-
-async function history(userId: string, limit = 60) {
-  const { data } = await db.from('agent_messages').select('id, role, body, meta, created_at')
-    .eq('user_id', userId).order('created_at', { ascending: false }).limit(limit);
-  return (data ?? []).reverse();
-}
 
 async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate') {
   const text = message.trim().slice(0, 4000);
@@ -187,6 +125,33 @@ async function sendNote(ctx: Ctx, draftId: string, edited?: string) {
   return json({ ok: true });
 }
 
+function validTimeZone(tz: unknown): string | null {
+  if (typeof tz !== 'string' || tz.length > 64) return null;
+  try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return tz; } catch { return null; }
+}
+
+const CHECKIN_REPLIES: Record<CheckinStatus, string> = {
+  done: "Love that. I'll build on it next Sunday.",
+  not_yet: "No rush. There's still time this week.",
+  skipped: "Fair enough. Next Sunday I'll suggest something lighter.",
+};
+
+/** One tap from the Sunday card or the Wednesday check-in: did you try this week's thing? */
+async function checkin(ctx: Ctx, actionId: string, status: string) {
+  if (!['done', 'not_yet', 'skipped'].includes(status)) return json({ error: 'Unknown status' }, 400);
+  const s = status as CheckinStatus;
+  const { data: a } = await db.from('weekly_actions').select('id, user_a, user_b').eq('id', actionId).maybeSingle();
+  if (!a || (a.user_a !== ctx.userId && a.user_b !== ctx.userId)) return json({ error: 'Not found' }, 404);
+
+  const { data: prev } = await db.from('weekly_checkins').select('status').eq('action_id', actionId).eq('user_id', ctx.userId).maybeSingle();
+  const { error } = await db.from('weekly_checkins')
+    .upsert({ action_id: actionId, user_id: ctx.userId, status: s, updated_at: new Date().toISOString() }, { onConflict: 'action_id,user_id' });
+  if (error) return json({ error: "Couldn't save that. Try again." }, 500);
+
+  const messages = prev?.status === s ? [] : [await addMessage(ctx.userId, 'belluh', CHECKIN_REPLIES[s], { kind: 'checkin_reply', action_id: actionId })];
+  return json({ messages, week: await weekView(ctx) });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
@@ -198,12 +163,17 @@ Deno.serve(async (req) => {
 
   let body: any;
   try { body = await req.json(); } catch { return json({ error: 'Bad JSON' }, 400); }
-  const tz = typeof body.timezone === 'string' && body.timezone.length < 64 ? body.timezone : 'America/New_York';
+  const tz = validTimeZone(body.timezone) ?? 'America/New_York';
   const ctx = await loadCtx(user.id, tz);
 
   try {
     switch (body.action) {
-      case 'history': return json({ messages: await history(user.id), partner_name: ctx.partnerName });
+      case 'history': {
+        // Remember the person's time zone so the weekly loop arrives at their Sunday morning
+        await db.from('agent_settings').upsert({ user_id: user.id, timezone: tz, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+        return json({ messages: await history(user.id), partner_name: ctx.partnerName, week: await weekView(ctx).catch(() => null) });
+      }
+      case 'checkin': return await checkin(ctx, String(body.action_id ?? ''), String(body.status ?? ''));
       case 'chat': return json(await chat(ctx, String(body.message ?? ''), body.mode === 'mediate' ? 'mediate' : 'chat'));
       case 'react': return json(await react(ctx, String(body.entry_id ?? '')));
       case 'send_note': return await sendNote(ctx, String(body.draft_id ?? ''), typeof body.text === 'string' ? body.text : undefined);

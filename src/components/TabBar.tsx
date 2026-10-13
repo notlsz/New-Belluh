@@ -27,6 +27,7 @@ const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose, bad
             return (
               <button
                 key={tab.id}
+                aria-label={tab.label}
                 onClick={onCompose}
                 className="mx-2 bg-slate-900 text-white w-14 h-14 rounded-full shadow-lg shadow-slate-900/30 flex items-center justify-center transition-all duration-300 active:scale-95 hover:scale-105 hover:bg-black group relative overflow-hidden"
               >
@@ -39,6 +40,8 @@ const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose, bad
           return (
             <button
               key={tab.id}
+              aria-label={tab.label}
+              aria-current={isActive ? 'page' : undefined}
               onClick={() => onTabChange(tab.id)}
               className={`relative flex flex-col items-center justify-center w-12 h-12 rounded-full transition-all duration-500 ${
                 isActive ? 'text-slate-900' : 'text-slate-300 hover:text-slate-500'

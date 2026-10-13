@@ -2,7 +2,8 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
 const SECRET = process.env.JWT_SECRET;
-const FN = { 'belluh-agent': 8101, 'gemini-proxy': 8102 };
+const FN = { 'belluh-agent': 8101, 'gemini-proxy': 8102, 'belluh-weekly': 8103 };
+const NO_VERIFY_JWT = new Set(['belluh-weekly']); // cron jobs check their own secret
 const verify = (tok) => {
   const [h, p, s] = (tok || '').split('.');
   if (!s) return null;
@@ -35,11 +36,11 @@ http.createServer((req, res) => {
   }
   const m = /^\/functions\/v1\/([\w-]+)/.exec(u.pathname);
   if (m && FN[m[1]]) {
-    if (req.method !== 'OPTIONS') {
+    if (req.method !== 'OPTIONS' && !NO_VERIFY_JWT.has(m[1])) {
       const c = verify((req.headers.authorization || '').replace(/^Bearer /, ''));
       if (!c) { res.writeHead(401); return res.end('Invalid JWT'); } // Supabase verifies JWTs before functions run
     }
-    return forward(req, res, FN[m[1]], '/');
+    return forward(req, res, FN[m[1]], '/' + u.search);
   }
   res.writeHead(404); res.end('no route');
 }).listen(3000, () => console.log('gateway on 3000'));
