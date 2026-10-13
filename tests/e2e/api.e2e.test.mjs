@@ -277,6 +277,13 @@ test('14. a removed partner cannot reconnect with an old invite link', async () 
   assert.ok(again, 'the old link no longer works');
   const { data: seen } = await eve.from('journal_entries').select('id').eq('user_id', MAYA);
   assert.equal(seen.length, 0);
+
+  // and a stranger can't wipe Maya's other links by sending and withdrawing a request
+  const { data: t2 } = await maya.rpc('create_partner_invite');
+  await eve.from('partner_connections').insert({ user_id: EVE, partner_id: MAYA, status: 'pending' });
+  await eve.from('partner_connections').delete().eq('user_id', EVE).eq('partner_id', MAYA);
+  const { data: who } = await dan.rpc('preview_partner_invite', { p_token: t2 });
+  assert.equal(who, 'Maya', "Maya's new link still works");
 });
 
 test('15. nobody can hand their entry to someone else', async () => {

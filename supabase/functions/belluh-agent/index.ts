@@ -57,8 +57,11 @@ async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate') {
           return { ok: !error || error.code === '23505' };
         }
         case 'forget_memory': {
-          if (!askedToForget) return { ok: false, error: 'Only forget things when the person asks you to in their own message.' };
           const q = call.query.replace(/[%_\\]/g, '');
+          // Only when the person asked in their own words, and named the thing to forget
+          if (!askedToForget || !text.toLowerCase().includes(q.toLowerCase().trim())) {
+            return { ok: false, error: 'Only forget something when the person asks, in their own message, naming what to forget.' };
+          }
           if (q.length < 4) return { ok: false, error: 'Ask which memory they mean.' };
           const { data: matches } = await db.from('agent_memories').select('id, fact').eq('user_id', ctx.userId).ilike('fact', `%${q}%`);
           // Only forget when it's clearly one thing; otherwise ask, so a vague request can't wipe everything

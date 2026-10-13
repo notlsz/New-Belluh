@@ -37,11 +37,15 @@ end $$;
 revoke all on function public.accept_partner_invite(text) from public, anon;
 grant execute on function public.accept_partner_invite(text) to authenticated;
 
--- When two people disconnect, every invite link either of them made stops working
+-- When a couple disconnects, the links between the two of them are removed too.
+-- (Only for real connections, and only that pair's links, so nobody can wipe someone else's invites.)
 create or replace function public.expire_invites_on_disconnect() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  delete from public.partner_invites where inviter in (old.user_id, old.partner_id);
+  if old.status = 'connected' then
+    delete from public.partner_invites
+     where (inviter = old.user_id and used_by = old.partner_id) or (inviter = old.partner_id and used_by = old.user_id);
+  end if;
   return old;
 end $$;
 drop trigger if exists expire_invites_on_disconnect on public.partner_connections;
@@ -113,7 +117,8 @@ $$;
 create or replace function public.normalize_timezone() returns trigger
 language plpgsql as $$
 begin
-  if new.timezone is null or not exists (select 1 from pg_timezone_names where name = new.timezone) then
+  if new.timezone is null or new.timezone in ('Factory', 'localtime', 'posixrules')
+     or not exists (select 1 from pg_timezone_names where name = new.timezone) then
     new.timezone := 'America/New_York';
   end if;
   return new;
