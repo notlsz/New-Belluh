@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import TabBar from './components/TabBar';
 import Journal from './pages/Journal';
 import Timeline from './pages/Timeline';
@@ -20,6 +20,8 @@ import { supabase } from './lib/supabaseClient';
 import { useAdminAccess } from './hooks/useAdminAccess';
 import { trackEvent } from './services/analytics';
 import { belluhAgent } from './services/belluhAgent';
+import { resolveMedia, repairLegacyUrl } from './services/media';
+import { computeStreak } from './lib/daily';
 
 import Acquisition from './pages/Acquisition';
 import Report from './pages/Report';
@@ -53,26 +55,6 @@ const Toast = ({ message, type, onClose }: { message: string, type: 'success' | 
   );
 };
 
-// Generate signed URLs for secure media access
-const getSignedStorageUrl = async (bucketName: string, filePath: string, expirySeconds = 3600) => {
-  if (!filePath) return null;
-  
-  try {
-    const { data, error } = await supabase.storage
-      .from(bucketName)
-      .createSignedUrl(filePath, expirySeconds);
-    
-    if (error) {
-      console.error(`Error creating signed URL for ${bucketName}/${filePath}:`, error);
-      return null;
-    }
-    
-    return data?.signedUrl;
-  } catch (err) {
-    console.error('Failed to get signed URL:', err);
-    return null;
-  }
-};
 
 // Types for Invite Handling
 type PendingInvite = {
@@ -84,7 +66,14 @@ type PendingInvite = {
   }
 };
 
+// Theme and other settings are remembered on this device
+const SETTINGS_KEY = 'belluh_settings';
+const loadSavedSettings = (): Record<string, unknown> => {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); } catch { return {}; }
+};
+
 const App: React.FC = () => {
+  const loadedUserId = useRef<string | null>(null);
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Added loading state to prevent flash
@@ -143,7 +132,7 @@ const App: React.FC = () => {
       isPremium: false,
       joinDate: new Date(),
       activeCircleId: 'c1',
-      settings: CURRENT_USER.settings,
+      settings: { ...CURRENT_USER.settings, ...loadSavedSettings() } as any,
       hasCompletedOnboarding: false,
       detectedPersona: CURRENT_USER.detectedPersona
   });
@@ -215,7 +204,7 @@ const App: React.FC = () => {
           isPremium: false,
           joinDate: new Date(),
           activeCircleId: 'c1',
-          settings: CURRENT_USER.settings,
+          settings: { ...CURRENT_USER.settings, ...loadSavedSettings() } as any,
           hasCompletedOnboarding: false,
           detectedPersona: CURRENT_USER.detectedPersona
       });
@@ -228,24 +217,15 @@ const App: React.FC = () => {
 
         // --- HANDLE INVITE LINKS (Persistent) ---
         const params = new URLSearchParams(window.location.search);
-        let inviteId = params.get('invite');
-        if (!inviteId) inviteId = localStorage.getItem('pending_invite_id');
+        let inviteToken = params.get('invite');
+        try { if (!inviteToken) inviteToken = localStorage.getItem('pending_invite_id'); } catch { /* storage blocked */ }
 
-        if (inviteId && inviteId !== sessionUser.id) {
-            const { data: existing } = await supabase
-                .from('partner_connections')
-                .select('*')
-                .or(`and(user_id.eq.${inviteId},partner_id.eq.${sessionUser.id}),and(user_id.eq.${sessionUser.id},partner_id.eq.${inviteId})`);
-            
-            if (!existing || existing.length === 0) {
-                await supabase.from('partner_connections').insert({
-                    user_id: inviteId,
-                    partner_id: sessionUser.id,
-                    status: 'pending'
-                });
-                showNotification("Invite received! Check your profile.", "success");
-            }
-            localStorage.removeItem('pending_invite_id');
+        // Invite links carry a one-time token; the server checks it and connects you to whoever made the link
+        if (inviteToken) {
+            const { error: inviteError } = await supabase.rpc('accept_partner_invite', { p_token: inviteToken });
+            if (!inviteError) showNotification("You're connected! Your journals are linked.", "success");
+            else if (!/own invite/.test(inviteError.message)) showNotification("That invite link has expired or was already used. Ask for a new one.", "error");
+            try { localStorage.removeItem('pending_invite_id'); } catch { /* ignore */ }
         }
 
         try {
@@ -492,14 +472,20 @@ const App: React.FC = () => {
                 circleId: entryCircleId, 
                 likes: e.is_favorite ? 1 : 0, 
                 isLiked: e.is_favorite,
-                mediaUrl: e.photo_url,
-                audioUrl: e.audio_url
+                mediaUrl: repairLegacyUrl(e.photo_url),
+                audioUrl: repairLegacyUrl(e.audio_url)
             };
         });
-        setEntries(mappedEntries);
+        // Private voice notes and photos get fresh links each time the journal loads
+        const links = await resolveMedia(mappedEntries.flatMap(e => [e.mediaUrl, e.audioUrl]));
+        setEntries(mappedEntries.map(e => ({
+            ...e,
+            mediaUrl: e.mediaUrl && links.get(e.mediaUrl) || (e.mediaUrl?.startsWith('sb://') ? undefined : e.mediaUrl),
+            audioUrl: e.audioUrl && links.get(e.audioUrl) || (e.audioUrl?.startsWith('sb://') ? undefined : e.audioUrl),
+        })));
 
-        const currentStreak = myProfile?.journal_streak || 0;
-        setStreak(currentStreak);
+        // Streak = consecutive days with at least one entry of yours, counting back from today (or yesterday)
+        setStreak(computeStreak(mappedEntries.filter(e => e.userId === sessionUser.id).map(e => e.timestamp)));
 
         const primaryPartner = connectedProfiles.length > 0 ? connectedProfiles[0] : null;
         const displayPartnerName = myProfile?.partner_name || primaryPartner?.full_name || undefined;
@@ -515,9 +501,10 @@ const App: React.FC = () => {
             partnerName: displayPartnerName,
             partnerAvatar: primaryPartner?.avatar_url || undefined,
             circles: newCircles as any,
-            activeCircleId: 'c1', 
+            // Stay in the circle you were in, if it still exists
+            activeCircleId: newCircles.some((c: any) => c.id === prev.activeCircleId) ? prev.activeCircleId : 'c1',
             isPremium: false,
-            settings: CURRENT_USER.settings, // In a real app, merge with saved settings
+            settings: { ...CURRENT_USER.settings, ...loadSavedSettings() },
             hasCompletedOnboarding: !!displayPartnerName,
             relationshipFacts: relationshipFacts
         }));
@@ -536,21 +523,35 @@ const App: React.FC = () => {
       }
   };
 
+  // Keep an invite token from the link while the visitor signs up or logs in
+  useEffect(() => {
+    try {
+      const token = new URLSearchParams(window.location.search).get('invite');
+      if (token) localStorage.setItem('pending_invite_id', token);
+    } catch { /* storage blocked */ }
+  }, []);
+
   // Initialize Supabase Auth & Data
   useEffect(() => {
     let mounted = true;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-            if (session?.user && mounted) {
+        // Token refreshes happen every hour and must not reload everything or reset your place
+        if (event === 'SIGNED_IN') {
+            if (session?.user && mounted && loadedUserId.current !== session.user.id) {
+                loadedUserId.current = session.user.id;
                 loadUserData(session.user);
             }
         } else if (event === 'SIGNED_OUT') {
+            loadedUserId.current = null;
             if (mounted) resetUserState();
         }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user && mounted) loadUserData(session.user);
+        if (session?.user && mounted && loadedUserId.current !== session.user.id) {
+            loadedUserId.current = session.user.id;
+            loadUserData(session.user);
+        }
         else if (mounted) setIsLoading(false);
     });
 
@@ -639,8 +640,11 @@ const App: React.FC = () => {
       
       // Theme Update
       if (updates.settings) {
-          setUser(prev => ({ ...prev, settings: { ...prev.settings, ...updates.settings } }));
-          // Ideally save to DB here
+          setUser(prev => {
+              const settings = { ...prev.settings, ...updates.settings };
+              try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* storage blocked */ }
+              return { ...prev, settings };
+          });
           return;
       }
 
@@ -812,17 +816,10 @@ const App: React.FC = () => {
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser) return;
 
-    let signedAudioUrl = audioUrl;
-    let signedPhotoUrl = mediaUrl;
-
-    if (audioUrl && !audioUrl.includes('?token=')) {
-        const fileName = audioUrl.split('/').pop();
-        if (fileName) signedAudioUrl = await getSignedStorageUrl('journal-media', fileName, 3600);
-    }
-    if (mediaUrl && !mediaUrl.includes('?token=') && !mediaUrl.startsWith('data:')) {
-        const fileName = mediaUrl.split('/').pop();
-        if (fileName) signedPhotoUrl = await getSignedStorageUrl('journal-media', fileName, 3600);
-    }
+    // Store storage references (never links that expire); resolve them for display
+    const links = await resolveMedia([audioUrl, mediaUrl]);
+    const showAudio = audioUrl ? links.get(audioUrl) ?? (audioUrl.startsWith('sb://') ? undefined : audioUrl) : undefined;
+    const showPhoto = mediaUrl ? links.get(mediaUrl) ?? (mediaUrl.startsWith('sb://') ? undefined : mediaUrl) : undefined;
 
     const { data, error } = await supabase.from('journal_entries').insert([{
         user_id: currentUser.id,
@@ -831,8 +828,8 @@ const App: React.FC = () => {
         mood,
         title: prompt,
         is_shared: !isPrivate,
-        audio_url: signedAudioUrl,
-        photo_url: signedPhotoUrl,
+        audio_url: audioUrl ?? null,
+        photo_url: mediaUrl ?? null,
         date: new Date().toISOString(),
         tags: [`circle:${user.activeCircleId}`] 
     }]).select().single();
@@ -853,10 +850,14 @@ const App: React.FC = () => {
             circleId: user.activeCircleId, 
             likes: 0,
             isLiked: false,
-            audioUrl: signedAudioUrl || undefined,
-            mediaUrl: signedPhotoUrl || undefined
+            audioUrl: showAudio,
+            mediaUrl: showPhoto
         };
-        setEntries(prev => [newEntry, ...prev]);
+        setEntries(prev => {
+            const next = [newEntry, ...prev];
+            setStreak(computeStreak(next.filter(e => e.userId === currentUser.id).map(e => e.timestamp)));
+            return next;
+        });
         setIsComposeOpen(false); 
         setComposePrompt(undefined);
         showNotification('Memory captured!', 'success');

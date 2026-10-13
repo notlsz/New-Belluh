@@ -1,17 +1,22 @@
 
-import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
+import { Type, GenerateContentResponse } from "@google/genai";
+import { supabase } from "../lib/supabaseClient";
 import { JournalEntry, Insight, RelationshipArchetype, UserPersona, RelationshipReceipt, RelationshipForecast } from "../types";
 
-// Helper to initialize AI client just-in-time
-const getAI = () => {
-  // Configured via vite.config.ts define
-  const apiKey = process.env.API_KEY;
-
-  if (!apiKey) {
-    console.error("Belluh AI Error: API Key is missing. Please check your Vercel Environment Variables.");
-  }
-  return new GoogleGenAI({ apiKey: apiKey || '' });
-};
+// All AI calls go through Belluh's server (the gemini-proxy function), so no API key ships to the browser.
+// The shape mirrors the Gemini SDK the features were written against: getAI().models.generateContent({...}).
+const getAI = () => ({
+  models: {
+    generateContent: async (req: { model: string; contents: unknown; config?: unknown }): Promise<GenerateContentResponse> => {
+      const { data, error } = await supabase.functions.invoke('gemini-proxy', { body: req });
+      if (error) {
+        const status = (error as any)?.context?.status;
+        throw Object.assign(new Error(error.message || 'AI request failed'), { status });
+      }
+      return { text: (data as { text?: string })?.text ?? '' } as GenerateContentResponse;
+    },
+  },
+});
 
 // Helper to handle errors gracefully
 const handleGeminiError = (error: any, fallback: any) => {

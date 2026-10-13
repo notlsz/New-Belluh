@@ -4,7 +4,7 @@ import { EntryType, Mood } from '../types';
 import { DAILY_PROMPTS, MOOD_EMOJIS } from '../constants';
 import { Mic, Image as ImageIcon, Send, X, Loader2, Music, CheckCircle2, Lock, Globe } from 'lucide-react';
 import { transcribeAudio } from '../services/geminiService';
-import { supabase } from '../lib/supabaseClient';
+import { uploadPrivate } from '../services/media';
 
 interface JournalProps {
   onAddEntry: (content: string, mood: Mood | undefined, type: EntryType, prompt?: string, isPrivate?: boolean, audioUrl?: string, mediaUrl?: string) => void;
@@ -28,6 +28,9 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
   const [hasImage, setHasImage] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [uploadFailed, setUploadFailed] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -95,21 +98,9 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
                         setIsTranscribing(false); // Unblock text input ASAP
                     });
 
-                // 2. Kick off Upload (Background)
-                const fileName = `voice-notes/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-                supabase.storage
-                    .from('journal-media')
-                    .upload(fileName, audioBlob, { contentType: finalMimeType })
-                    .then(({ data, error }) => {
-                        if (!error && data) {
-                            const { data: publicUrlData } = supabase.storage
-                                .from('journal-media')
-                                .getPublicUrl(fileName);
-                            setAudioUrl(publicUrlData.publicUrl);
-                        } else {
-                            console.error('Upload failed:', error);
-                        }
-                    })
+                // 2. Upload to private storage in the background; the entry keeps a reference, not a link that expires
+                uploadPrivate('voice', audioBlob, fileExt, finalMimeType)
+                    .then(ref => { if (ref) setAudioUrl(ref); else setUploadFailed(true); })
                     .finally(() => {
                         setIsUploading(false); // Unblock Next button
                     });
@@ -144,6 +135,7 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
       if (hasImage) {
           setHasImage(false);
           setImagePreview(null);
+          setPhotoFile(null);
       } else {
           fileInputRef.current?.click();
       }
@@ -152,6 +144,7 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (file) {
+          setPhotoFile(file);
           const reader = new FileReader();
           reader.onloadend = () => {
               setImagePreview(reader.result as string);
@@ -163,9 +156,18 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
 
   const handleDeleteAudio = () => {
       setAudioUrl(null);
+      setUploadFailed(false);
   }
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
+       if (isSaving) return;
+       setIsSaving(true);
+       // Photos go to private storage instead of being stuffed into the database as text
+       let photoRef: string | undefined;
+       if (hasImage && photoFile) {
+           const ext = (photoFile.name.split('.').pop() || 'jpg').toLowerCase();
+           photoRef = (await uploadPrivate('photos', photoFile, ext, photoFile.type || 'image/jpeg')) ?? undefined;
+       }
        onAddEntry(
            content, 
            selectedMood, 
@@ -173,8 +175,9 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
            dailyPrompt, 
            isPrivate, 
            audioUrl || undefined, 
-           imagePreview || undefined
+           photoRef ?? (hasImage ? imagePreview || undefined : undefined)
        );
+       setIsSaving(false);
        setStep('success');
   };
 
@@ -214,13 +217,13 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
                         </div>
                     )}
                     {/* Audio Status Indicator */}
-                    {(audioUrl || isUploading) && !isRecording && (
+                    {(audioUrl || isUploading || uploadFailed) && !isRecording && (
                         <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 animate-slide-up">
                             <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white">
                                 {isUploading ? <Loader2 size={16} className="animate-spin" /> : <Mic size={16} />}
                             </div>
                             <div className="flex-1 text-xs font-bold">
-                                {isUploading ? "Syncing Audio..." : "Voice Note Ready"}
+                                {isUploading ? "Saving voice note..." : uploadFailed ? "Couldn't save the recording. Your words are kept above." : "Voice Note Ready"}
                             </div>
                             {!isUploading && (
                                 <button onClick={handleDeleteAudio} className="p-2 text-slate-400 hover:text-red-400">

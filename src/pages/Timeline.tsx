@@ -4,6 +4,7 @@ import EntryCard from '../components/EntryCard';
 import WeeklyReport from '../components/WeeklyReport';
 import { ChevronDown, Plus, Sparkles, PenLine, Flame, X, Loader2, ArrowRight, Waves, Quote, Archive, Star, BookOpen, History, CloudSun, CloudRain, Sun, Zap, Eye, EyeOff } from 'lucide-react';
 import { DAILY_PROMPTS } from '../constants';
+import { questionForDay, isSameDay } from '../lib/daily';
 import { askBelluhAboutJournal, generateRelationshipForecast, detectPatterns } from '../services/geminiService';
 import { trackEvent } from '../services/analytics';
 
@@ -25,7 +26,13 @@ interface TimelineProps {
 const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, activeCircleId, circles, onCircleChange, onLikeEntry, onCompose, onSearch: _onSearch, onDeleteEntry, onUpdateEntry, streak }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCircleMenuOpen, setIsCircleMenuOpen] = useState(false);
-  const [todaysPrompt] = useState(DAILY_PROMPTS[0]); 
+  // Same question for both of you today
+  const [todaysPrompt] = useState(() => questionForDay(DAILY_PROMPTS));
+  const today = new Date();
+  const myAnswer = entries.find(e => e.userId === currentUserId && e.prompt === todaysPrompt && isSameDay(e.timestamp, today));
+  const partnerAnswer = entries.find(e => e.userId !== currentUserId && !e.isPrivate && e.prompt === todaysPrompt && isSameDay(e.timestamp, today));
+  const partnerFirst = (partnerAnswer?.authorName || '').split(' ')[0] || 'Your partner';
+  const hasPartnerInCircle = (circles.find(c => c.id === activeCircleId)?.members?.length ?? 0) > 1;
 
   const [isSearching, setIsSearching] = useState(false);
   const [searchAnswer, setSearchAnswer] = useState<string | null>(null);
@@ -354,28 +361,60 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, activeCircl
           {/* Timeline Stem */}
           <div className="absolute left-14 md:left-20 top-0 bottom-0 w-px bg-slate-100"></div>
 
-          {/* Daily Ritual - Updated Design */}
-          {!hasUserPostedToday && !isArchived && !isConstellation && (
+          {/* Today's question: you both answer; your partner's answer opens once you've written yours */}
+          {!isArchived && !isConstellation && (
               <div className="relative pl-20 md:pl-24 pr-6 mb-16 animate-slide-up" style={{ animationDelay: '0.1s' }}>
                   <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-belluh-300 border-[2px] border-[#fcfcfc] rounded-full z-10 shadow-glow -translate-x-[3.5px]"></div>
-                  
-                  <button onClick={() => onCompose()} className="w-full text-left group max-w-xl">
+
+                  {!myAnswer ? (
+                  <button onClick={() => { trackEvent('daily_question_opened', { partner_answered: !!partnerAnswer }); onCompose(todaysPrompt); }} className="w-full text-left group max-w-xl">
                       <div className="bg-white border border-slate-100 shadow-sm hover:shadow-lg rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden group-hover:border-belluh-100 group-hover:-translate-y-1">
                           <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity"><PenLine size={80} className="rotate-12" /></div>
                           <div className="relative z-10">
                               <div className="flex items-center gap-2 mb-4">
-                                  <span className="bg-belluh-50 text-belluh-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Daily Ritual</span>
+                                  <span className="bg-belluh-50 text-belluh-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Today's Question</span>
                               </div>
                               <h3 className="font-serif text-2xl text-slate-800 leading-tight mb-6 group-hover:text-belluh-600 transition-colors">
                                   {todaysPrompt}
                               </h3>
+                              {partnerAnswer && (
+                                  <div className="mb-6 rounded-2xl bg-[#f7d8ee]/60 p-4">
+                                      <p className="text-xs font-bold text-[#831843] mb-2">{partnerFirst} answered</p>
+                                      <p className="font-serif text-[15px] text-[#5e1c43] blur-[5px] select-none" aria-hidden="true">{partnerAnswer.content.slice(0, 90) || 'A few words for you'}</p>
+                                      <p className="text-xs text-[#831843]/80 mt-2">Write yours to see it.</p>
+                                  </div>
+                              )}
                               <div className="flex items-center gap-3 text-sm font-bold text-slate-400 group-hover:text-slate-900 transition-colors">
                                   <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 group-hover:bg-white group-hover:shadow-sm"><Plus size={18} /></div>
-                                  <span>Tap to capture</span>
+                                  <span>{partnerAnswer ? 'Answer to unlock' : 'Tap to answer'}</span>
                               </div>
                           </div>
                       </div>
                   </button>
+                  ) : (
+                  <div className="w-full max-w-xl bg-white border border-slate-100 shadow-sm rounded-[2rem] p-8">
+                      <div className="flex items-center gap-2 mb-4">
+                          <span className="bg-belluh-50 text-belluh-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Today's Question</span>
+                      </div>
+                      <h3 className="font-serif text-xl text-slate-800 leading-tight mb-5">{todaysPrompt}</h3>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="rounded-2xl bg-slate-50 p-4">
+                              <p className="text-xs font-bold text-slate-400 mb-2">You</p>
+                              <p className="font-serif text-[15px] text-slate-700 leading-relaxed line-clamp-5">{myAnswer.content || 'Answered with a photo or voice note'}</p>
+                          </div>
+                          {partnerAnswer ? (
+                              <div className="rounded-2xl bg-[#f7d8ee] p-4 animate-scale-in">
+                                  <p className="text-xs font-bold text-[#831843] mb-2">{partnerFirst}</p>
+                                  <p className="font-serif text-[15px] text-[#5e1c43] leading-relaxed line-clamp-5">{partnerAnswer.content || 'Answered with a photo or voice note'}</p>
+                              </div>
+                          ) : (
+                              <div className="rounded-2xl border border-dashed border-slate-200 p-4 flex items-center">
+                                  <p className="text-sm text-slate-400">{hasPartnerInCircle ? "Your partner hasn't answered yet. You'll see theirs here." : 'Invite your partner from the Me tab to answer together.'}</p>
+                              </div>
+                          )}
+                      </div>
+                  </div>
+                  )}
               </div>
           )}
 

@@ -293,8 +293,11 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
   };
 
   const handleCopyInviteLink = async () => {
-      const inviteUrl = `${window.location.origin}?invite=${user.id}`;
-      try { await navigator.clipboard.writeText(inviteUrl); onShowToast("Invite link copied!", "success"); } catch (err) { onShowToast("Failed to copy link.", "error"); }
+      // One-time link; it no longer contains your account ID
+      const { data: token, error } = await supabase.rpc('create_partner_invite');
+      if (error || !token) { onShowToast("Couldn't create an invite link. Try again.", "error"); return; }
+      const inviteUrl = `${window.location.origin}/?invite=${token}`;
+      try { await navigator.clipboard.writeText(inviteUrl); onShowToast("Invite link copied! It works once, for 14 days.", "success"); } catch (err) { onShowToast("Failed to copy link.", "error"); }
   };
 
   const handleInviteSubmit = async (e: React.FormEvent) => {
@@ -303,9 +306,8 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
       
       setInviteStatus('searching');
       try {
-          const { data: profiles } = await supabase.from('profiles').select('id').ilike('email', inviteEmail.trim());
-          if (!profiles || profiles.length === 0) { setInviteStatus('not-found'); return; }
-          const partnerId = profiles[0].id;
+          const { data: partnerId } = await supabase.rpc('find_user_by_email', { p_email: inviteEmail.trim() });
+          if (!partnerId) { setInviteStatus('not-found'); return; }
           if (partnerId === user.id) { onShowToast("You cannot invite yourself!", "error"); setInviteStatus('idle'); return; }
 
           const { error } = await supabase.from('partner_connections').insert({ user_id: user.id, partner_id: partnerId, status: 'pending' });

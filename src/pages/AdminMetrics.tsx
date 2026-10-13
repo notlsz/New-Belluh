@@ -37,9 +37,8 @@ const AdminMetrics: React.FC<AdminMetricsProps> = ({ onBack }) => {
                 .order('created_at', { ascending: false });
 
             // Fetch Journal Entries for specific calc
-            const { data: journalData } = await supabase
-                .from('journal_entries')
-                .select('id, user_id, created_at');
+            // Counts only; the admin function never returns anyone's writing
+            const { data: journalData } = await supabase.rpc('admin_entry_stats');
 
             if (analyticsData) {
                 // @ts-ignore
