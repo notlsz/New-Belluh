@@ -7,7 +7,7 @@ import { DAILY_PROMPTS } from '../constants';
 import { questionForDay, isSameDay, hideLockedAnswer } from '../lib/daily';
 import { askBelluhAboutJournal, generateRelationshipForecast, detectPatterns } from '../services/geminiService';
 import { trackEvent } from '../services/analytics';
-import { belluhAgent, type WeekView } from '../services/belluhAgent';
+import { belluhAgent, type WeekView, type AgentMessage } from '../services/belluhAgent';
 import WeeklyCard from '../components/WeeklyCard';
 
 interface TimelineProps {
@@ -26,9 +26,11 @@ interface TimelineProps {
   streak: number;
   /** Opens the Belluh conversation with this message (one Belluh, one memory). */
   onAskBelluh?: (message: string) => void;
+  /** Opens the Belluh conversation. */
+  onOpenBelluh?: () => void;
 }
 
-const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName, activeCircleId, circles, onCircleChange, onLikeEntry, onCompose, onSearch: _onSearch, onDeleteEntry, onUpdateEntry, streak, onAskBelluh }) => {
+const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName, activeCircleId, circles, onCircleChange, onLikeEntry, onCompose, onSearch: _onSearch, onDeleteEntry, onUpdateEntry, streak, onAskBelluh, onOpenBelluh }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCircleMenuOpen, setIsCircleMenuOpen] = useState(false);
   // Same question for both of you today
@@ -63,8 +65,19 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
   const activeCircle = isConstellation ? null : circles.find(c => c.id === activeCircleId);
   const isArchived = activeCircle?.status === CircleStatus.Archived;
 
-  // Run pattern detection when entries change
+  // Belluh's latest word sits at the top of Home. Once Belluh is live, it replaces the older
+  // one-off forecast and pattern cards, so there is one Belluh with one memory.
+  const [belluhLive, setBelluhLive] = useState<boolean | null>(null);
+  const [latest, setLatest] = useState<AgentMessage | null>(null);
   useEffect(() => {
+    let cancelled = false;
+    belluhAgent.latest().then(r => { if (!cancelled) { setBelluhLive(r.live); setLatest(r.message); } }).catch(() => setBelluhLive(false));
+    return () => { cancelled = true; };
+  }, [currentUserId, week?.id, week?.mine]);
+
+  // Run pattern detection when entries change (only before Belluh is live)
+  useEffect(() => {
+    if (belluhLive !== false) return;
     const runDetection = async () => {
         const readable = hideLockedAnswer(entries, currentUserId, todaysPrompt);
         const patterns = await detectPatterns(readable);
@@ -79,7 +92,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
         }
     };
     runDetection();
-  }, [entries]);
+  }, [entries, belluhLive]);
 
   const hasUserPostedToday = useMemo(() => {
       const today = new Date();
@@ -105,7 +118,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
     let lastMonthStr = '';
 
     // Insert detected patterns at the top for visibility
-    if (!searchQuery && sorted.length > 0 && !isArchived && showPatterns) {
+    if (!searchQuery && sorted.length > 0 && !isArchived && showPatterns && belluhLive === false) {
         detectedPatterns.forEach(p => {
             items.push({ type: 'pattern', data: p });
         });
@@ -127,7 +140,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
     });
 
     return items;
-  }, [filteredEntries, detectedPatterns, searchQuery, isArchived, showPatterns]);
+  }, [filteredEntries, detectedPatterns, searchQuery, isArchived, showPatterns, belluhLive]);
 
   const ask = async (question: string) => {
     if (!question.trim()) return;
@@ -338,8 +351,23 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                 </div>
              </div>
 
-             {/* Forecast */}
-             {forecast && !isConstellation && !isArchived && showPatterns && (
+             {/* Belluh's latest word to you */}
+             {belluhLive && latest && !isConstellation && !isArchived && showPatterns && (
+                 <button type="button" onClick={() => onOpenBelluh?.()} className="w-full text-left mb-6 animate-scale-in group">
+                     <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-float flex items-start gap-4 relative overflow-hidden group-hover:shadow-lg transition-shadow">
+                         <div className="absolute top-0 left-0 w-1 h-full bg-[#f0addd]"></div>
+                         <div className="w-10 h-10 rounded-full bg-belluh-600 flex items-center justify-center text-white shrink-0"><Sparkles size={16} /></div>
+                         <div className="min-w-0">
+                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{latest.meta?.kind === 'weekly' ? 'Belluh · your week' : latest.meta?.kind === 'checkin' ? 'Belluh · check-in' : latest.meta?.kind === 'reminder' ? 'Belluh · reminder' : 'Belluh'}</span>
+                             <p className="mt-1 text-[15px] font-serif text-slate-800 leading-snug line-clamp-3">{latest.body}</p>
+                             <span className="mt-2 inline-block text-xs font-bold text-belluh-500">Reply</span>
+                         </div>
+                     </div>
+                 </button>
+             )}
+
+             {/* Forecast (before Belluh is live) */}
+             {belluhLive === false && forecast && !isConstellation && !isArchived && showPatterns && (
                  <div className="mb-6 animate-scale-in">
                      <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-float flex items-center gap-5 relative overflow-hidden">
                          <div className="absolute top-0 left-0 w-1 h-full bg-[#f0addd]"></div>

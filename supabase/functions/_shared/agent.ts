@@ -12,10 +12,13 @@ export interface EntryRow {
   is_shared: boolean | null;
   tags?: string[] | null;
   created_at: string;
+  audio_url?: string | null;
+  photo_url?: string | null;
 }
 
 export interface OccasionRow {
   label: string; month: number; day: number; year: number | null; repeats_yearly: boolean;
+  mentioned_at?: string | null; source?: string | null;
 }
 
 const SYSTEM_TAGS = ['system_circle_def', 'system_circle_member', 'system_facts', 'system_circle_metadata'];
@@ -80,7 +83,8 @@ export function entriesBlock(entries: EntryRow[], names: Record<string, string>,
       const privacy = e.user_id === viewerId && !e.is_shared ? ' [private: only you can see this]' : '';
       const mood = e.mood ? ` mood: ${e.mood}.` : '';
       const answering = e.title ? ` answering "${String(e.title).slice(0, 140)}":` : '';
-      return `- ${fmtDate(e.created_at)} ${who}${privacy}:${mood}${answering} ${String(e.content).replace(/\s+/g, ' ').slice(0, 600)}`;
+      const media = `${e.photo_url ? ' [with a photo]' : ''}${e.audio_url ? ' [voice note]' : ''}`;
+      return `- ${fmtDate(e.created_at)} ${who}${privacy}${media}:${mood}${answering} ${String(e.content).replace(/\s+/g, ' ').slice(0, 600)}`;
     })
     .join('\n');
 }
@@ -90,9 +94,13 @@ export function occasionsBlock(rows: OccasionRow[], today: LocalDate): string {
     .map(o => ({ o, next: nextOccurrence(o, today) }))
     .filter((x): x is { o: OccasionRow; next: LocalDate } => x.next !== null)
     .sort((a, b) => daysBetween(today, a.next) - daysBetween(today, b.next))
-    .slice(0, 15);
+    .slice(0, 30);
   if (!upcoming.length) return '(No saved dates.)';
-  return upcoming.map(({ o, next }) => `- ${o.label}: ${formatMonthDay(o.month, o.day)} (in ${daysBetween(today, next)} days)`).join('\n');
+  return upcoming.map(({ o, next }) => {
+    const n = daysBetween(today, next);
+    const told = o.mentioned_at ? `; they first told you on ${String(o.mentioned_at).slice(0, 10)}${o.source === 'whatsapp' ? ' on WhatsApp' : ''}` : '';
+    return `- ${o.label}: ${formatMonthDay(o.month, o.day)}${o.year && !o.repeats_yearly ? ` ${o.year}` : ''} (${n === 0 ? 'today' : `in ${n} days`}${told})`;
+  }).join('\n');
 }
 
 export interface PersonContext {
@@ -129,7 +137,10 @@ Privacy
 Actions (use the tools; don't just describe them)
 - remember_fact: when ${c.myName} tells you something lasting about themselves, ${partner} or the relationship (a preference, a sensitivity, a ritual, an important history). One short sentence. Don't store passing moods.
 - forget_memory: when they ask you to forget something.
-- save_date: when they mention a specific date worth remembering (birthday, anniversary, plan).
+- save_date: when they mention a specific date worth remembering (birthday, anniversary, plan). Belluh reminds them a week before and on the day, in the app and on WhatsApp if connected.
+- forget_date: when they ask you to remove a saved date.
+- set_reminders: when they ask to pause or resume date reminders.
+- When they ask what dates you remember, list them from "Their saved dates", with when they told you.
 - draft_note_to_partner: when they want to tell ${partner} something, or you've helped them find words they want to send. This only drafts it; ${c.myName} approves before anything is sent. Write it in ${c.myName}'s voice, first person.
 
 Safety
@@ -166,6 +177,7 @@ export const MEDIATE_INSTRUCTION =
 export const REACT_INSTRUCTION =
   'They just wrote the journal entry below. Decide whether a short reply from you would genuinely help: ' +
   'a connection to something earlier in the journal, a gentle question, or noticing a pattern. ' +
+  'If a photo is attached, notice one specific, kind thing in it. ' +
   'If you have nothing specific to add, reply with an empty string. Never reply with generic praise. ' +
   'At most two sentences. Return JSON: {"reply": string}.';
 
@@ -193,6 +205,16 @@ export const TOOL_DECLARATIONS = [
     },
   },
   {
+    name: 'forget_date',
+    description: 'Remove a saved date, matched by a few words of its name.',
+    parameters: { type: 'OBJECT', properties: { query: { type: 'STRING' } }, required: ['query'] },
+  },
+  {
+    name: 'set_reminders',
+    description: 'Pause (on=false) or resume (on=true) date reminders, in the app and on WhatsApp.',
+    parameters: { type: 'OBJECT', properties: { on: { type: 'BOOLEAN' } }, required: ['on'] },
+  },
+  {
     name: 'draft_note_to_partner',
     description: "Draft a note to the user's partner, in the user's voice. The user approves it before it is sent.",
     parameters: { type: 'OBJECT', properties: { text: { type: 'STRING' } }, required: ['text'] },
@@ -203,7 +225,9 @@ export type ToolCall =
   | { name: 'remember_fact'; fact: string }
   | { name: 'forget_memory'; query: string }
   | { name: 'save_date'; label: string; month: number; day: number; year: number | null; repeats_yearly: boolean }
-  | { name: 'draft_note_to_partner'; text: string };
+  | { name: 'draft_note_to_partner'; text: string }
+  | { name: 'forget_date'; query: string }
+  | { name: 'set_reminders'; on: boolean };
 
 const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '');
 
@@ -213,6 +237,8 @@ export function validateToolCall(name: string, args: Record<string, unknown> | u
   switch (name) {
     case 'remember_fact': { const fact = clean(a.fact, 300); return fact ? { name, fact } : null; }
     case 'forget_memory': { const query = clean(a.query, 100); return query.length >= 2 ? { name, query } : null; }
+    case 'forget_date': { const query = clean(a.query, 100); return query.length >= 2 ? { name, query } : null; }
+    case 'set_reminders': return typeof a.on === 'boolean' ? { name, on: a.on } : null;
     case 'draft_note_to_partner': {
       const text = typeof a.text === 'string' ? a.text.trim().slice(0, 1000) : '';
       return text ? { name, text } : null;

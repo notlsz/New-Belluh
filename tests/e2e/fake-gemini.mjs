@@ -20,6 +20,8 @@ http.createServer((req, res) => {
       if (lastText.includes('remember')) return reply(res, [{ functionCall: { name: 'remember_fact', args: { fact: 'Dan needs ten minutes to himself after work.' } } }]);
       if (lastText.includes('tell dan')) return reply(res, [{ functionCall: { name: 'draft_note_to_partner', args: { text: "I miss you. Saturday coffee, phones away?" } } }]);
       if (lastText.includes('birthday')) return reply(res, [{ functionCall: { name: 'save_date', args: { label: "Dan's birthday", month: 10, day: 20, repeats_yearly: true } } }]);
+      if (lastText.includes('pause reminders')) return reply(res, [{ functionCall: { name: 'set_reminders', args: { on: false } } }]);
+      if (lastText.includes('remove the date')) return reply(res, [{ functionCall: { name: 'forget_date', args: { query: 'Lisbon trip' } } }]);
       if (lastText.includes('forget')) return reply(res, [{ functionCall: { name: 'forget_memory', args: { query: 'e' } } }]);
     }
     if (hasToolResult) return reply(res, [{ text: 'Done. ' + JSON.stringify(last[0].functionResponse.response).slice(0, 120) }]);

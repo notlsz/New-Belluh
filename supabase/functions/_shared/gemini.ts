@@ -1,6 +1,6 @@
 // Server-side Gemini calls with function calling. The API key never reaches the browser.
 
-export interface GeminiPart { text?: string; functionCall?: { name: string; args?: Record<string, unknown> }; functionResponse?: unknown }
+export interface GeminiPart { text?: string; inlineData?: { mimeType: string; data: string }; functionCall?: { name: string; args?: Record<string, unknown> }; functionResponse?: unknown }
 export interface GeminiContent { role: 'user' | 'model'; parts: GeminiPart[] }
 
 const MODEL = () => Deno.env.get('GEMINI_MODEL') || 'gemini-2.5-flash';
@@ -58,10 +58,10 @@ export async function chatWithTools(opts: {
 }
 
 /** One structured JSON answer, no tools. */
-export async function jsonAnswer(system: string, prompt: string, schema: unknown): Promise<unknown | null> {
+export async function jsonAnswer(system: string, prompt: string, schema: unknown, images: { mimeType: string; data: string }[] = []): Promise<unknown | null> {
   const reply = await call({
     systemInstruction: { parts: [{ text: system }] },
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    contents: [{ role: 'user', parts: [...images.map(inlineData => ({ inlineData })), { text: prompt }] }],
     generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0.6, maxOutputTokens: 8192, ...thinkingFor(MODEL()) },
   });
   const text = reply?.parts?.map(p => p.text ?? '').join('');

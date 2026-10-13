@@ -104,7 +104,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
             <div>
               <p className="font-serif text-lg text-slate-900">Text Belluh your dates on WhatsApp.</p>
-              <p className="text-sm text-slate-500 mt-1">Birthdays, anniversaries, firsts. We'll remind you a week before and on the day.</p>
+              <p className="text-sm text-slate-500 mt-1">Or just tell Belluh in the app. Either way, Belluh reminds you a week before and on the day.</p>
             </div>
             <button onClick={connect} className="shrink-0 px-6 py-3 bg-[#25D366] text-white rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:brightness-105 transition-all">
               <MessageCircle size={16} /> Connect WhatsApp

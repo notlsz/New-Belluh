@@ -75,6 +75,21 @@ async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate') {
           const { error } = await db.from('occasions').insert({ user_id: ctx.userId, ...o, source: 'app', source_message: text.slice(0, 2000) });
           return { ok: !error || error.code === '23505', already_saved: error?.code === '23505' };
         }
+        case 'forget_date': {
+          // Same rule as forgetting a memory: only when the person asked, naming it
+          const q = call.query.replace(/[%_\\]/g, '').trim();
+          if (!askedToForget || q.length < 3 || !text.toLowerCase().includes(q.toLowerCase())) return { ok: false, error: 'Only remove a date when the person asks, naming it.' };
+          const { data: hits } = await db.from('occasions').select('id, label').eq('user_id', ctx.userId).ilike('label', `%${q}%`);
+          if (!hits?.length) return { ok: false, error: 'No saved date matches.' };
+          if (hits.length > 1) return { ok: false, error: 'Several dates match; ask which one.', matches: hits.map(h => h.label) };
+          await db.from('occasions').delete().eq('id', hits[0].id).eq('user_id', ctx.userId);
+          return { ok: true, removed: hits[0].label };
+        }
+        case 'set_reminders': {
+          await db.from('agent_settings').upsert({ user_id: ctx.userId, reminders_enabled: call.on, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+          await db.from('whatsapp_links').update({ reminders_enabled: call.on }).eq('user_id', ctx.userId);
+          return { ok: true, reminders: call.on ? 'on' : 'paused' };
+        }
         case 'draft_note_to_partner': {
           if (!ctx.partnerId) return { ok: false, error: 'No partner is connected yet. Suggest inviting them from the Me tab.' };
           const draft = await addMessage(ctx.userId, 'note_draft', call.text, { to_user: ctx.partnerId, to_name: ctx.partnerName, status: 'draft' });
@@ -101,15 +116,30 @@ async function underLimit(userId: string): Promise<boolean> {
 
 async function react(ctx: Ctx, entryId: string) {
   if (!(await underLimit(ctx.userId))) return { message: null };
-  const { data: entry } = await db.from('journal_entries').select('id, user_id, content, is_shared')
+  const { data: entry } = await db.from('journal_entries').select('id, user_id, content, is_shared, photo_url')
     .eq('id', entryId).maybeSingle();
-  if (!entry || entry.user_id !== ctx.userId || !entry.content?.trim()) return { message: null };
+  if (!entry || entry.user_id !== ctx.userId || (!entry.content?.trim() && !entry.photo_url)) return { message: null };
   const system = await buildSystem(ctx);
-  const out = await jsonAnswer(system, `${REACT_INSTRUCTION}\n\nEntry:\n${entry.content.slice(0, 3000)}`,
-    { type: 'OBJECT', properties: { reply: { type: 'STRING' } }, required: ['reply'] }) as { reply?: string } | null;
+  const photo = await entryPhoto(ctx.userId, entry.photo_url);
+  const out = await jsonAnswer(system, `${REACT_INSTRUCTION}\n\nEntry:\n${(entry.content ?? '').slice(0, 3000)}${photo ? '\n(Their photo is attached.)' : ''}`,
+    { type: 'OBJECT', properties: { reply: { type: 'STRING' } }, required: ['reply'] }, photo ? [photo] : []) as { reply?: string } | null;
   const reply = cleanReply(out?.reply ?? '');
   if (reply.length < 8) return { message: null };
   return { message: await addMessage(ctx.userId, 'belluh', reply, { entry_id: entryId }) };
+}
+
+/** The photo on the person's own entry, for Belluh to look at (their own private folder only, at most 4 MB). */
+async function entryPhoto(userId: string, ref: string | null): Promise<{ mimeType: string; data: string } | null> {
+  const prefix = 'sb://journal-private/';
+  if (!ref?.startsWith(prefix)) return null;
+  const path = ref.slice(prefix.length);
+  if (path.split('/')[0] !== userId) return null;
+  const { data: blob } = await db.storage.from('journal-private').download(path);
+  if (!blob || blob.size > 4 * 1024 * 1024 || !/^image\//.test(blob.type)) return null;
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return { mimeType: blob.type, data: btoa(bin) };
 }
 
 async function sendNote(ctx: Ctx, draftId: string, edited?: string) {

@@ -65,7 +65,7 @@ export async function weekView(ctx: Ctx) {
 export async function buildSystem(ctx: Ctx): Promise<string> {
   const today = localDateParts(new Date(), ctx.timezone);
   const { data: rows } = await db.from('journal_entries')
-    .select('id, user_id, content, title, mood, is_shared, tags, created_at')
+    .select('id, user_id, content, title, mood, is_shared, tags, created_at, audio_url, photo_url')
     .in('user_id', [ctx.userId, ...ctx.partnerIds])
     .order('created_at', { ascending: false }).limit(200);
   const all = (rows ?? []) as EntryRow[];
@@ -76,7 +76,7 @@ export async function buildSystem(ctx: Ctx): Promise<string> {
   const facts = factsBlock(all.filter(r => r.user_id === ctx.userId || (r.is_shared && ctx.partnerIds.includes(r.user_id))), names);
 
   const { data: mem } = await db.from('agent_memories').select('fact').eq('user_id', ctx.userId).order('created_at').limit(60);
-  const { data: occ } = await db.from('occasions').select('label, month, day, year, repeats_yearly').eq('user_id', ctx.userId);
+  const { data: occ } = await db.from('occasions').select('label, month, day, year, repeats_yearly, mentioned_at, source').eq('user_id', ctx.userId);
   const wk = await weekAction(ctx).catch(() => ({ action: null, checkins: [] }));
   const words: Record<string, string> = { done: 'did it', not_yet: 'not yet', skipped: 'skipped' };
   const [notes, pastWeeks] = await Promise.all([recentNotes(ctx), earlierWeeks(ctx, names, wk.action?.id ?? null)]);
