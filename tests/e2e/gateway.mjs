@@ -3,6 +3,7 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 const SECRET = process.env.JWT_SECRET;
 const FN = { 'belluh-agent': 8101, 'gemini-proxy': 8102, 'belluh-weekly': 8103 };
+const STORE = new Map(); // bucket/path -> { type, body }
 const NO_VERIFY_JWT = new Set(['belluh-weekly']); // cron jobs check their own secret
 const verify = (tok) => {
   const [h, p, s] = (tok || '').split('.');
@@ -28,6 +29,29 @@ http.createServer((req, res) => {
   res.writeHead = (code, headers = {}) => wh(code, { ...headers, ...CORS });
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
   const u = new URL(req.url, 'http://x');
+  // Minimal storage stand-in (service role only), enough to test moving old media
+  const st = /^\/storage\/v1\/object\/(?:(public)\/)?([\w-]+)\/(.+)$/.exec(u.pathname);
+  if (st) {
+    const [, isPublic, bucket, rawPath] = st;
+    const key = `${bucket}/${decodeURIComponent(rawPath)}`;
+    const claims = verify((req.headers.authorization || '').replace(/^Bearer /, ''));
+    if (!(isPublic && req.method === 'GET' && bucket === 'journal-media') && claims?.role !== 'service_role') { res.writeHead(403); return res.end('forbidden'); }
+    if (req.method === 'GET') {
+      const o = STORE.get(key);
+      if (!o) { res.writeHead(404); return res.end('{"error":"not_found"}'); }
+      res.writeHead(200, { 'content-type': o.type }); return res.end(o.body);
+    }
+    if (req.method === 'POST' || req.method === 'PUT') {
+      const chunks = []; req.on('data', c => chunks.push(c)); req.on('end', () => {
+        if (STORE.has(key) && req.headers['x-upsert'] !== 'true') { res.writeHead(409); return res.end('exists'); }
+        STORE.set(key, { type: req.headers['content-type'] || 'application/octet-stream', body: Buffer.concat(chunks) });
+        res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ Key: key }));
+      });
+      return;
+    }
+    if (req.method === 'DELETE') { const had = STORE.delete(key); res.writeHead(had ? 200 : 404); return res.end(); }
+  }
+  if (u.pathname === '/__storage') { res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify([...STORE.keys()])); }
   if (u.pathname.startsWith('/rest/v1')) return forward(req, res, 3001, req.url.replace('/rest/v1', '') || '/');
   if (u.pathname === '/auth/v1/user') {
     const c = verify((req.headers.authorization || '').replace(/^Bearer /, ''));
