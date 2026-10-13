@@ -21,3 +21,15 @@ export function questionForDay(questions: string[], now = new Date()): string {
 export function isSameDay(a: Date, b: Date): boolean {
   return dayKey(a) === dayKey(b);
 }
+
+/**
+ * Your partner's answer to today's question is locked until you answer too. Anything that reads the
+ * journal for you (AI features, letters, stats) gets the entries without it, so nothing gives it away.
+ */
+export function hideLockedAnswer<T extends { id: string; userId: string; prompt?: string; timestamp: Date }>(
+  entries: T[], userId: string, todaysPrompt: string, now = new Date(),
+): T[] {
+  const today = (e: T) => e.prompt === todaysPrompt && isSameDay(e.timestamp, now);
+  if (entries.some(e => e.userId === userId && today(e))) return entries;
+  return entries.filter(e => e.userId === userId || !today(e));
+}

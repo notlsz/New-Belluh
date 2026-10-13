@@ -24,3 +24,13 @@ test('both partners get the same question on the same day, and it changes daily'
   assert.equal(questionForDay(qs, new Date(2026, 9, 12, 1)), questionForDay(qs, new Date(2026, 9, 12, 23)));
   assert.notEqual(questionForDay(qs, new Date(2026, 9, 12)), questionForDay(qs, new Date(2026, 9, 13)));
 });
+
+import { hideLockedAnswer } from '../src/lib/daily.ts';
+test("AI features never see your partner's answer before you've answered", () => {
+  const now = new Date(2026, 9, 13, 15);
+  const q = 'What made you smile today?';
+  const e = (id: string, userId: string, prompt?: string, day = 13) => ({ id, userId, prompt, timestamp: new Date(2026, 9, day, 9) });
+  const rows = [e('d1', 'dan', q), e('d0', 'dan', q, 12), e('d2', 'dan')];
+  assert.deepEqual(hideLockedAnswer(rows, 'maya', q, now).map(r => r.id), ['d0', 'd2']);
+  assert.deepEqual(hideLockedAnswer([...rows, e('m1', 'maya', q)], 'maya', q, now).map(r => r.id), ['d1', 'd0', 'd2', 'm1']);
+});

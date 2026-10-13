@@ -13,6 +13,9 @@ interface AICoachProps {
   entryTexts: string[];
   onTriggerPremium: () => void;
   userName?: string;
+  /** A question asked from elsewhere in the app (the home "Ask Belluh" bar, an entry card), sent on open. */
+  initialMessage?: string | null;
+  onInitialMessageSent?: () => void;
 }
 
 const firstName = (n?: string) => (n ?? '').trim().split(/\s+/)[0] || '';
@@ -83,7 +86,7 @@ const NoteDraft: React.FC<{ msg: AgentMessage; onSend: (id: string, text: string
   );
 };
 
-const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremium, userName }) => {
+const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremium, userName, initialMessage, onInitialMessageSent }) => {
   // 'agent' = server-side Belluh with memory; 'legacy' = the original in-browser chat, used if the agent isn't deployed
   const [mode, setMode] = useState<'loading' | 'agent' | 'legacy'>('loading');
   const [partnerName, setPartnerName] = useState<string | null>(null);
@@ -104,6 +107,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
   // Prefer the agent; fall back to the original chat if it isn't available. Runs once per visit to the tab.
   const entryTextsRef = useRef(entryTexts);
   entryTextsRef.current = entryTexts;
+  const initialRef = useRef({ message: initialMessage, done: onInitialMessageSent });
   useEffect(() => {
     const entryTexts = entryTextsRef.current;
     let cancelled = false;
@@ -117,6 +121,12 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
         setMode('agent');
         belluhAgent.markNotesRead();
         belluhAgent.markBelluhSeen();
+        const first = initialRef.current;
+        if (first.message) {
+          first.done?.();
+          setIsTyping(true);
+          sendAgentRef.current?.(first.message).finally(() => setIsTyping(false));
+        }
         return;
       }
       setMode('legacy');
@@ -135,6 +145,8 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
         case UserPersona.Camus: initialMsg = "Life is made of fleeting moments. Let's examine the ones you've captured."; break;
       }
       setMessages([{ id: '1', role: 'model', text: initialMsg, timestamp: new Date() }]);
+      const first = initialRef.current;
+      if (first.message) { first.done?.(); sendLegacyRef.current?.(first.message); }
     })();
     return () => { cancelled = true; };
   }, []);
@@ -169,6 +181,9 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
     setIsConflictMode(false);
   };
 
+  const sendAgentRef = useRef(sendAgent);
+  sendAgentRef.current = sendAgent;
+
   const sendLegacy = async (originalInput: string) => {
     const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', text: originalInput, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
@@ -192,6 +207,9 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
     const aiResponseText = await chatWithBelluh(originalInput, historyForAI, detectedPersona);
     setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'model', text: aiResponseText, timestamp: new Date() }]);
   };
+
+  const sendLegacyRef = useRef(sendLegacy);
+  sendLegacyRef.current = sendLegacy;
 
   const handleSendMessage = async () => {
     if (!chatInput.trim() || isTyping) return;
@@ -220,6 +238,18 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
   const weeklyCardOn = week ? [...agentMessages].reverse().find(m => m.meta?.action_id === week.id && (m.meta?.kind === 'weekly' || m.meta?.kind === 'checkin'))?.id : undefined;
 
   const openMemories = async () => setMemories(await belluhAgent.memories());
+
+  // Ways in, from what Belluh knows, until the person has started talking to it
+  const starters: string[] = mode !== 'agent' || agentMessages.some(m => m.role === 'user') ? [] : [
+    ...(partnerName ? [`What's been on ${partnerName}'s mind lately?`, `Help me say something to ${partnerName}`] : ['What patterns do you see in my journal?']),
+    ...(week && !week.mine ? [`How do we make time for this week's thing?`] : []),
+    partnerName ? 'Plan something small for us this weekend' : 'What should I write about today?',
+  ];
+  const sendNow = async (text: string) => {
+    if (isTyping) return;
+    setIsTyping(true);
+    try { await sendAgent(text); } finally { setIsTyping(false); }
+  };
 
   const me = firstName(userName);
   const greeting = partnerName
@@ -351,10 +381,16 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
        {/* Input Area */}
        <div className="fixed bottom-0 left-0 right-0 p-4 pb-28 bg-gradient-to-t from-white via-white to-transparent pt-12 z-40">
             <div className="max-w-2xl mx-auto relative flex flex-col">
-                <div className="flex justify-start mb-3 pl-1">
+                <div className="flex items-center gap-2 mb-3 pl-1 overflow-x-auto no-scrollbar">
+                    {starters.map(t => (
+                        <button key={t} onClick={() => sendNow(t)} disabled={isTyping}
+                            className="shrink-0 py-1.5 px-4 rounded-full bg-white border border-belluh-100 text-xs font-bold text-belluh-900 hover:bg-belluh-50 disabled:opacity-50 shadow-sm">
+                            {t}
+                        </button>
+                    ))}
                     <button
                         onClick={() => setIsConflictMode(!isConflictMode)}
-                        className={`py-1.5 px-4 rounded-full transition-all duration-300 flex items-center gap-2 shadow-sm border text-xs font-bold uppercase tracking-wide ${isConflictMode ? 'bg-rose-50 text-rose-600 border-rose-100 ring-2 ring-rose-50 translate-y-1' : 'bg-white text-slate-400 border-slate-200 hover:text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
+                        className={`shrink-0 py-1.5 px-4 rounded-full transition-all duration-300 flex items-center gap-2 shadow-sm border text-xs font-bold uppercase tracking-wide ${isConflictMode ? 'bg-rose-50 text-rose-600 border-rose-100 ring-2 ring-rose-50 translate-y-1' : 'bg-white text-slate-400 border-slate-200 hover:text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
                     >
                         <Wand2 size={14} className={isConflictMode ? "animate-pulse" : ""} />
                         <span>{isConflictMode ? 'Mediation Active' : 'Mediate Conflict'}</span>

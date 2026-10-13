@@ -4,7 +4,7 @@ import EntryCard from '../components/EntryCard';
 import WeeklyReport from '../components/WeeklyReport';
 import { ChevronDown, Plus, Sparkles, PenLine, Flame, X, Loader2, ArrowRight, Waves, Quote, Archive, Star, BookOpen, History, CloudSun, CloudRain, Sun, Zap, Eye, EyeOff } from 'lucide-react';
 import { DAILY_PROMPTS } from '../constants';
-import { questionForDay, isSameDay } from '../lib/daily';
+import { questionForDay, isSameDay, hideLockedAnswer } from '../lib/daily';
 import { askBelluhAboutJournal, generateRelationshipForecast, detectPatterns } from '../services/geminiService';
 import { trackEvent } from '../services/analytics';
 import { belluhAgent, type WeekView } from '../services/belluhAgent';
@@ -24,9 +24,11 @@ interface TimelineProps {
   onDeleteEntry: (id: string) => void;
   onUpdateEntry: (id: string, content: string) => void;
   streak: number;
+  /** Opens the Belluh conversation with this message (one Belluh, one memory). */
+  onAskBelluh?: (message: string) => void;
 }
 
-const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName, activeCircleId, circles, onCircleChange, onLikeEntry, onCompose, onSearch: _onSearch, onDeleteEntry, onUpdateEntry, streak }) => {
+const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName, activeCircleId, circles, onCircleChange, onLikeEntry, onCompose, onSearch: _onSearch, onDeleteEntry, onUpdateEntry, streak, onAskBelluh }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCircleMenuOpen, setIsCircleMenuOpen] = useState(false);
   // Same question for both of you today
@@ -64,13 +66,14 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
   // Run pattern detection when entries change
   useEffect(() => {
     const runDetection = async () => {
-        const patterns = await detectPatterns(entries);
+        const readable = hideLockedAnswer(entries, currentUserId, todaysPrompt);
+        const patterns = await detectPatterns(readable);
         setDetectedPatterns(patterns);
         
         // Auto-generate forecast if we have enough data (Simulating "Always On" OS)
-        if (entries.length > 5) {
+        if (readable.length > 5) {
             setIsLoadingForecast(true);
-            const data = await generateRelationshipForecast(entries);
+            const data = await generateRelationshipForecast(readable);
             setForecast(data);
             setIsLoadingForecast(false);
         }
@@ -126,18 +129,22 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
     return items;
   }, [filteredEntries, detectedPatterns, searchQuery, isArchived, showPatterns]);
 
-  const handleSearchSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
+  const ask = async (question: string) => {
+    if (!question.trim()) return;
+    trackEvent('timeline_search', { query_length: question.length, agent: !!onAskBelluh });
+    // Questions go to the same Belluh you talk to in the Belluh tab, with its memory and context
+    if (onAskBelluh) { setSearchQuery(''); onAskBelluh(question.trim()); return; }
     setIsSearching(true); setSearchAnswer(null);
-    trackEvent('timeline_search', { query_length: searchQuery.length });
-    const answer = await askBelluhAboutJournal(searchQuery, entries);
+    const answer = await askBelluhAboutJournal(question, hideLockedAnswer(entries, currentUserId, todaysPrompt));
     setSearchAnswer(answer); setIsSearching(false);
   };
+  const handleSearchSubmit = (e: React.FormEvent) => { e.preventDefault(); ask(searchQuery); };
 
-  const handleAskAboutEntry = (content: string) => {
-      setSearchQuery(`Pattern for: "${content.substring(0, 30)}..."`);
-      handleSearchSubmit({ preventDefault: () => {} } as any);
+  const handleAskAboutEntry = (entry: JournalEntry) => {
+      const when = entry.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const whose = entry.userId === currentUserId ? 'my' : `${entry.authorName.split(' ')[0]}'s`;
+      const excerpt = entry.content.replace(/\s+/g, ' ').slice(0, 220);
+      ask(`About ${whose} entry from ${when}: "${excerpt}${entry.content.length > 220 ? '…' : ''}" What do you notice?`);
   };
 
   const getWeatherIcon = (type?: string) => {
@@ -525,7 +532,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                             entry={entry} 
                             isCurrentUser={entry.userId === currentUserId} 
                             onLike={isArchived ? undefined : onLikeEntry}
-                            onAskBelluh={() => handleAskAboutEntry(entry.content)}
+                            onAskBelluh={() => handleAskAboutEntry(entry)}
                             onDelete={isArchived ? undefined : () => onDeleteEntry(entry.id)}
                             onUpdate={isArchived ? undefined : (content) => onUpdateEntry(entry.id, content)}
                             showContext={isConstellation}

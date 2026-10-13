@@ -13,7 +13,7 @@ import AdminMetrics from './pages/AdminMetrics';
 import LegalModal from './components/LegalModal';
 import ArtifactModal from './components/ArtifactModal';
 import IntroGuide from './components/IntroGuide'; // Import the new guide
-import { CURRENT_USER, MOCK_INSIGHTS, THEMES } from './constants';
+import { CURRENT_USER, MOCK_INSIGHTS, THEMES, DAILY_PROMPTS } from './constants';
 import { JournalEntry, EntryType, Mood, User, CircleType, CircleStatus, ColorTheme } from './types';
 import { Sparkles, X, CheckCircle2, AlertCircle, Info } from 'lucide-react';
 import { supabase } from './lib/supabaseClient';
@@ -21,7 +21,7 @@ import { useAdminAccess } from './hooks/useAdminAccess';
 import { trackEvent } from './services/analytics';
 import { belluhAgent } from './services/belluhAgent';
 import { resolveMedia, repairLegacyUrl } from './services/media';
-import { computeStreak } from './lib/daily';
+import { computeStreak, hideLockedAnswer, questionForDay } from './lib/daily';
 
 import Acquisition from './pages/Acquisition';
 import Report from './pages/Report';
@@ -96,6 +96,8 @@ const App: React.FC = () => {
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [composePrompt, setComposePrompt] = useState<string | undefined>(undefined);
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  // What Belluh's features may read: everything you can see, minus your partner's locked answer to today's question
+  const readableEntries = useMemo(() => hideLockedAnswer(entries, loadedUserId.current ?? '', questionForDay(DAILY_PROMPTS)), [entries]);
   const [streak, setStreak] = useState(0);
   
   // Intro Guide State
@@ -111,6 +113,9 @@ const App: React.FC = () => {
   const [belluhReply, setBelluhReply] = useState<string | null>(null);
   const [unreadNotes, setUnreadNotes] = useState(0);
   const [newFromBelluh, setNewFromBelluh] = useState(false);
+  // A question asked from Home or an entry card, waiting for the Belluh tab to send it
+  const [belluhAsk, setBelluhAsk] = useState<string | null>(null);
+  const askBelluh = (message: string) => { setBelluhAsk(message); setBelluhReply(null); setNewFromBelluh(false); setCurrentTab('ai-coach'); };
   const [inviteOffer, setInviteOffer] = useState<{ token: string; name: string } | null>(null);
   const currentTabRef = useRef(currentTab);
   useEffect(() => { currentTabRef.current = currentTab; if (currentTab === 'ai-coach') setBelluhReply(null); }, [currentTab]);
@@ -1028,9 +1033,9 @@ const App: React.FC = () => {
 
   return (
     <div className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in">
-      {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} partnerName={user.partnerName} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} />}
-      {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={entries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} />}
-      {currentTab === 'profile' && <Profile user={user} entries={entries} streak={streak} onCircleChange={handleCircleChange} onCreateCircle={handleCreateCircle} onArchiveCircle={handleArchiveCircle} onRenameCircle={handleRenameCircle} onLogout={handleLogout} onUpdateUser={handleUpdateUser} onShowLegal={(type) => setLegalModalOpen(type)} onViewArtifact={(type) => setArtifactModalOpen(type)} onShowToast={showNotification} pendingInvites={pendingInvites} onAcceptInvite={handleAcceptInvite} onDeclineInvite={handleDeclineInvite} />}
+      {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} partnerName={user.partnerName} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} onAskBelluh={askBelluh} />}
+      {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} />}
+      {currentTab === 'profile' && <Profile user={user} entries={readableEntries} streak={streak} onCircleChange={handleCircleChange} onCreateCircle={handleCreateCircle} onArchiveCircle={handleArchiveCircle} onRenameCircle={handleRenameCircle} onLogout={handleLogout} onUpdateUser={handleUpdateUser} onShowLegal={(type) => setLegalModalOpen(type)} onViewArtifact={(type) => setArtifactModalOpen(type)} onShowToast={showNotification} pendingInvites={pendingInvites} onAcceptInvite={handleAcceptInvite} onDeclineInvite={handleDeclineInvite} />}
       
       {notification && <Toast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
       {inviteModal}
@@ -1054,7 +1059,7 @@ const App: React.FC = () => {
 
       {legalModalOpen && <LegalModal type={legalModalOpen} onClose={() => setLegalModalOpen(null)} />}
       
-      {artifactModalOpen && <ArtifactModal type={artifactModalOpen} onClose={() => setArtifactModalOpen(null)} entries={entries} currentUserId={user.id} userName={user.name} partnerName={user.partnerName || 'Partner'} />}
+      {artifactModalOpen && <ArtifactModal type={artifactModalOpen} onClose={() => setArtifactModalOpen(null)} entries={readableEntries} currentUserId={user.id} userName={user.name} partnerName={user.partnerName || 'Partner'} />}
       {showPremiumOverlay && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-fade-in" onClick={() => setShowPremiumOverlay(false)}><div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full text-center relative overflow-hidden shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}><div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-belluh-300 via-purple-300 to-indigo-300" /><div className="w-20 h-20 bg-belluh-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-apple animate-float"><Sparkles size={32} className="text-belluh-500" /></div><h2 className="text-3xl font-serif text-slate-900 mb-3 tracking-tight">Belluh Premium</h2><p className="text-slate-500 mb-8 text-sm leading-relaxed font-medium">Unlock deeper intimacy.</p><button onClick={() => setShowPremiumOverlay(false)} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm hover:bg-black transition-transform active:scale-95 shadow-xl shadow-slate-200">Start Free Trial</button><button onClick={() => setShowPremiumOverlay(false)} className="w-full py-3 text-xs text-slate-400 hover:text-slate-600 font-bold uppercase tracking-widest">Maybe Later</button></div></div>}
     </div>
   );
