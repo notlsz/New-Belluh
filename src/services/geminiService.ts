@@ -186,7 +186,9 @@ export const detectPatterns = async (entries: JournalEntry[]): Promise<Insight[]
     const rawText = response.text || "[]";
     const cleanText = rawText.replace(/```json\n?|\n?```/g, '').trim();
     
-    return JSON.parse(cleanText);
+    const parsed = JSON.parse(cleanText);
+    // An unexpected shape must not crash the timeline
+    return Array.isArray(parsed) ? parsed.filter((p: any) => p && typeof p.title === 'string' && typeof p.content === 'string').map((p: any) => ({ ...p, relatedEntryIds: Array.isArray(p.relatedEntryIds) ? p.relatedEntryIds : [] })) : [];
   } catch (e) {
     return handleGeminiError(e, []);
   }
@@ -251,7 +253,9 @@ export const getRelationshipArchetype = async (entryTexts: string[]): Promise<Re
     const rawText = response.text || "{}";
     const cleanText = rawText.replace(/```json\n?|\n?```/g, '').trim();
     
-    return JSON.parse(cleanText);
+    const parsed = JSON.parse(cleanText);
+    if (!parsed || typeof parsed.name !== 'string') throw new Error('Unexpected archetype shape');
+    return parsed;
   } catch (e) {
     return {
       name: "Partners",
@@ -355,7 +359,9 @@ export const generateRelationshipReceipt = async (entries: JournalEntry[], coupl
         
         const rawText = response.text || "{}";
         const cleanText = rawText.replace(/```json\n?|\n?```/g, '').trim();
-        return JSON.parse(cleanText);
+        const parsed = JSON.parse(cleanText);
+        if (!parsed || !Array.isArray(parsed.items) || typeof parsed.total !== 'string') throw new Error('Unexpected receipt shape');
+        return parsed;
 
     } catch (e) {
         // Fallback Receipt
@@ -409,7 +415,9 @@ export const generateRelationshipForecast = async (entries: JournalEntry[]): Pro
         );
          const rawText = response.text || "{}";
          const cleanText = rawText.replace(/```json\n?|\n?```/g, '').trim();
-         return JSON.parse(cleanText);
+         const parsed = JSON.parse(cleanText);
+         if (!parsed || typeof parsed.weather !== 'string' || typeof parsed.temperature !== 'number') throw new Error('Unexpected forecast shape');
+         return parsed;
 
     } catch (e) {
         return {

@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
 
   const key = Deno.env.get('GEMINI_API_KEY');
   if (!key) return json({ error: 'AI is not configured' }, 503);
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${built.model}:generateContent`, {
+  const res = await fetch(`${Deno.env.get('GEMINI_API_BASE') ?? 'https://generativelanguage.googleapis.com'}/v1beta/models/${built.model}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify(built.body),

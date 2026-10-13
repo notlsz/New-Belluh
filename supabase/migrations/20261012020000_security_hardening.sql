@@ -167,6 +167,34 @@ $$;
 revoke all on function public.admin_entry_stats() from public, anon;
 grant execute on function public.admin_entry_stats() to authenticated;
 
+-- ---------- 3c. profiles ----------
+-- You can see your own profile, people you're connected or connecting with, and members of circles you share.
+-- Strangers can't list profiles or read their emails.
+
+create or replace function public.can_see_profile(p_id uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select auth.uid() is not null and (
+    p_id = auth.uid()
+    or exists (select 1 from public.partner_connections c
+               where (c.user_id = auth.uid() and c.partner_id = p_id) or (c.user_id = p_id and c.partner_id = auth.uid()))
+    or exists (select 1 from public.journal_entries je
+               where 'system_circle_member' = any(je.tags) and ('member:' || p_id::text) = any(je.tags)
+                 and (je.user_id = auth.uid() or public.are_partners(auth.uid(), je.user_id)))
+    or exists (select 1 from public.journal_entries je
+               where 'system_circle_member' = any(je.tags) and ('member:' || auth.uid()::text) = any(je.tags)
+                 and je.user_id = p_id)
+  );
+$$;
+revoke all on function public.can_see_profile(uuid) from public, anon;
+grant execute on function public.can_see_profile(uuid) to authenticated;
+
+alter table public.profiles enable row level security;
+select pg_temp.drop_policies('profiles');
+create policy profiles_visible on public.profiles for select to authenticated using (public.can_see_profile(id));
+create policy profiles_insert_own on public.profiles for insert to authenticated with check (id = auth.uid());
+create policy profiles_update_own on public.profiles for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
+revoke all on public.profiles from anon;
+
 -- ---------- 4. private media ----------
 -- Files live at <owner id>/voice/... and <owner id>/photos/... ; the app stores "sb://journal-private/<path>"
 -- and turns it into a short-lived signed URL when it loads entries.

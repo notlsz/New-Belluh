@@ -11,7 +11,7 @@ export const thinkingFor = (model: string) => (model.startsWith('gemini-2.5') ? 
 async function call(body: unknown): Promise<GeminiContent | null> {
   const key = Deno.env.get('GEMINI_API_KEY');
   if (!key) throw new Error('Missing secret GEMINI_API_KEY');
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL()}:generateContent`, {
+  const res = await fetch(`${Deno.env.get('GEMINI_API_BASE') ?? 'https://generativelanguage.googleapis.com'}/v1beta/models/${MODEL()}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify(body),

@@ -50,7 +50,7 @@ export function sendTemplate(toE164: string, name: string, params: string[], lan
 export async function geminiJson(prompt: string, schema: unknown): Promise<unknown | null> {
   const model = Deno.env.get('GEMINI_MODEL') || 'gemini-2.5-flash';
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    const res = await fetch(`${Deno.env.get('GEMINI_API_BASE') ?? 'https://generativelanguage.googleapis.com'}/v1beta/models/${model}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env('GEMINI_API_KEY') },
       body: JSON.stringify({
