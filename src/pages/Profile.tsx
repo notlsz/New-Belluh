@@ -295,8 +295,10 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
   const handleCopyInviteLink = async () => {
       // One-time link; it no longer contains your account ID
       const { data: token, error } = await supabase.rpc('create_partner_invite');
-      if (error || !token) { onShowToast("Couldn't create an invite link. Try again.", "error"); return; }
-      const inviteUrl = `${window.location.origin}/?invite=${token}`;
+      // Until the new invite system is installed, fall back to a request link they must accept
+      const legacy = !!error && /could not find the function|PGRST202/i.test(`${error.message} ${(error as any).code ?? ''}`);
+      if (!legacy && (error || !token)) { onShowToast("Couldn't create an invite link. Try again.", "error"); return; }
+      const inviteUrl = `${window.location.origin}/?invite=${legacy ? user.id : token}`;
       try { await navigator.clipboard.writeText(inviteUrl); onShowToast("Invite link copied! It works once, for 14 days.", "success"); } catch (err) { onShowToast("Failed to copy link.", "error"); }
   };
 

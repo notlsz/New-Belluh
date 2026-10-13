@@ -73,13 +73,14 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, activeCircl
   }, [entries, currentUserId]);
 
   const filteredEntries = useMemo(() => {
-    let result = entries;
+    // Your partner's answer to today's question stays hidden until you've answered too
+    let result = !myAnswer && partnerAnswer ? entries.filter(e => e.id !== partnerAnswer.id) : entries;
     if (searchQuery.trim() && !searchAnswer) { 
         const query = searchQuery.toLowerCase();
         result = result.filter(e => e.content.toLowerCase().includes(query) || e.authorName.toLowerCase().includes(query));
     }
     return result;
-  }, [entries, searchQuery, searchAnswer]);
+  }, [entries, searchQuery, searchAnswer, myAnswer?.id, partnerAnswer?.id]);
 
   const groupedItems = useMemo(() => {
     const sorted = [...filteredEntries].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
@@ -380,7 +381,10 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, activeCircl
                               {partnerAnswer && (
                                   <div className="mb-6 rounded-2xl bg-[#f7d8ee]/60 p-4">
                                       <p className="text-xs font-bold text-[#831843] mb-2">{partnerFirst} answered</p>
-                                      <p className="font-serif text-[15px] text-[#5e1c43] blur-[5px] select-none" aria-hidden="true">{partnerAnswer.content.slice(0, 90) || 'A few words for you'}</p>
+                                      <div className="space-y-2 py-1" aria-hidden="true">
+                                          <div className="h-2.5 rounded-full bg-[#f0addd]/50 w-11/12" />
+                                          <div className="h-2.5 rounded-full bg-[#f0addd]/50 w-8/12" />
+                                      </div>
                                       <p className="text-xs text-[#831843]/80 mt-2">Write yours to see it.</p>
                                   </div>
                               )}

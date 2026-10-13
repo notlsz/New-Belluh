@@ -110,6 +110,27 @@ const App: React.FC = () => {
   // Belluh's short reply after you write, and notes from your partner waiting in the Belluh tab
   const [belluhReply, setBelluhReply] = useState<string | null>(null);
   const [unreadNotes, setUnreadNotes] = useState(0);
+  const [inviteOffer, setInviteOffer] = useState<{ token: string; name: string } | null>(null);
+  const currentTabRef = useRef(currentTab);
+  useEffect(() => { currentTabRef.current = currentTab; if (currentTab === 'ai-coach') setBelluhReply(null); }, [currentTab]);
+  const [inviteBusy, setInviteBusy] = useState(false);
+
+  const answerInvite = async (accept: boolean) => {
+    if (!inviteOffer) return;
+    setInviteBusy(true);
+    if (accept) {
+      const { error } = await supabase.rpc('accept_partner_invite', { p_token: inviteOffer.token });
+      if (error) showNotification("That invite link has expired or was already used. Ask for a new one.", "error");
+      else {
+        showNotification(`You're connected with ${inviteOffer.name}.`, "success");
+        const { data: { user: u } } = await supabase.auth.getUser();
+        if (u) loadUserData(u);
+      }
+    }
+    try { localStorage.removeItem('pending_invite_id'); } catch { /* ignore */ }
+    setInviteOffer(null);
+    setInviteBusy(false);
+  };
   useEffect(() => {
     if (!isAuthenticated) return;
     const check = () => belluhAgent.unreadNotes().then(setUnreadNotes);
@@ -220,12 +241,23 @@ const App: React.FC = () => {
         let inviteToken = params.get('invite');
         try { if (!inviteToken) inviteToken = localStorage.getItem('pending_invite_id'); } catch { /* storage blocked */ }
 
-        // Invite links carry a one-time token; the server checks it and connects you to whoever made the link
+        // Invite links carry a one-time token. We ask before connecting: opening a link alone never links accounts.
         if (inviteToken) {
-            const { error: inviteError } = await supabase.rpc('accept_partner_invite', { p_token: inviteToken });
-            if (!inviteError) showNotification("You're connected! Your journals are linked.", "success");
-            else if (!/own invite/.test(inviteError.message)) showNotification("That invite link has expired or was already used. Ask for a new one.", "error");
-            try { localStorage.removeItem('pending_invite_id'); } catch { /* ignore */ }
+            const { data: inviterName, error: previewError } = await supabase.rpc('preview_partner_invite', { p_token: inviteToken });
+            const rpcMissing = !!previewError && /could not find the function|PGRST202/i.test(`${previewError.message} ${(previewError as any).code ?? ''}`);
+            const isLegacyUserId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(inviteToken);
+            if (inviterName) {
+                setInviteOffer({ token: inviteToken, name: inviterName as string });
+            } else if (rpcMissing && isLegacyUserId && inviteToken !== sessionUser.id) {
+                // Before the new invite system is installed: send a request the other person must accept
+                const { error: reqError } = await supabase.from('partner_connections')
+                    .insert({ user_id: sessionUser.id, partner_id: inviteToken, status: 'pending' });
+                if (!reqError || reqError.code === '23505') showNotification("Request sent. It connects once they accept it in their profile.", "success");
+                try { localStorage.removeItem('pending_invite_id'); } catch { /* ignore */ }
+            } else {
+                showNotification("That invite link has expired or was already used. Ask for a new one.", "error");
+                try { localStorage.removeItem('pending_invite_id'); } catch { /* ignore */ }
+            }
         }
 
         try {
@@ -552,7 +584,7 @@ const App: React.FC = () => {
             loadedUserId.current = session.user.id;
             loadUserData(session.user);
         }
-        else if (mounted) setIsLoading(false);
+        else if (!session?.user && mounted) setIsLoading(false);
     });
 
     return () => { 
@@ -705,21 +737,25 @@ const App: React.FC = () => {
           const { data: existingMeta } = await supabase
             .from('journal_entries')
             .select('id, tags')
+            .eq('user_id', currentUser.id)
             .contains('tags', ['system_circle_metadata', `circle:${circleId}`])
+            .limit(1)
             .maybeSingle();
 
+          let renameError: unknown = null;
           if (existingMeta) {
-              await supabase.from('journal_entries').update({ title: newName }).eq('id', existingMeta.id);
+              ({ error: renameError } = await supabase.from('journal_entries').update({ title: newName }).eq('id', existingMeta.id));
           } else {
-              await supabase.from('journal_entries').insert([{
+              ({ error: renameError } = await supabase.from('journal_entries').insert([{
                   user_id: currentUser.id,
                   title: newName,
                   type: 'Milestone',
                   tags: ['system_circle_metadata', `circle:${circleId}`],
                   is_shared: true,
                   date: new Date().toISOString()
-              }]);
+              }]));
           }
+          if (renameError) { showNotification("Couldn't rename the circle. Try again.", 'error'); return; }
           
           setUser(prev => ({
               ...prev,
@@ -753,7 +789,9 @@ const App: React.FC = () => {
           const { data: existingMeta } = await supabase
             .from('journal_entries')
             .select('id, tags')
+            .eq('user_id', currentUser.id)
             .contains('tags', ['system_circle_metadata', `circle:${circleId}`])
+            .limit(1)
             .maybeSingle();
 
           if (existingMeta) {
@@ -765,7 +803,7 @@ const App: React.FC = () => {
               await supabase.from('journal_entries').insert([{
                   user_id: currentUser.id,
                   type: 'Milestone',
-                  tags: ['system_circle_metadata', `circle:${circleId}`, isArchiving ? 'status:archived' : ''],
+                  tags: ['system_circle_metadata', `circle:${circleId}`, ...(isArchiving ? ['status:archived'] : [])],
                   is_shared: true,
                   date: new Date().toISOString()
               }]);
@@ -862,7 +900,7 @@ const App: React.FC = () => {
         setComposePrompt(undefined);
         showNotification('Memory captured!', 'success');
         // Belluh may have something to add. Quietly skipped if it doesn't, or if the agent isn't deployed.
-        belluhAgent.react(data.id).then(res => { if (res?.message?.body) setBelluhReply(res.message.body); });
+        belluhAgent.react(data.id).then(res => { if (res?.message?.body && currentTabRef.current !== 'ai-coach') setBelluhReply(res.message.body); });
     } else {
         showNotification('Failed to save.', 'error');
     }
@@ -976,6 +1014,17 @@ const App: React.FC = () => {
       {currentTab === 'profile' && <Profile user={user} entries={entries} streak={streak} onCircleChange={handleCircleChange} onCreateCircle={handleCreateCircle} onArchiveCircle={handleArchiveCircle} onRenameCircle={handleRenameCircle} onLogout={handleLogout} onUpdateUser={handleUpdateUser} onShowLegal={(type) => setLegalModalOpen(type)} onViewArtifact={(type) => setArtifactModalOpen(type)} onShowToast={showNotification} pendingInvites={pendingInvites} onAcceptInvite={handleAcceptInvite} onDeclineInvite={handleDeclineInvite} />}
       
       {notification && <Toast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
+      {inviteOffer && (
+        <div className="fixed inset-0 z-[150] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
+          <div className="bg-white rounded-[2rem] max-w-sm w-full p-8 text-center shadow-2xl animate-scale-in">
+            <div className="w-14 h-14 rounded-full bg-[#f7d8ee] flex items-center justify-center mx-auto mb-5"><Sparkles size={22} className="text-[#d46aa9]" /></div>
+            <h2 className="font-serif text-2xl text-slate-900 mb-3">Connect with {inviteOffer.name}?</h2>
+            <p className="text-sm text-slate-500 leading-relaxed mb-7">You'll each see the entries the other chooses to share. Private entries stay private. You can disconnect anytime.</p>
+            <button disabled={inviteBusy} onClick={() => answerInvite(true)} className="w-full py-4 rounded-full bg-[#f0addd] text-white font-bold hover:bg-[#e57ec3] disabled:opacity-60">Connect</button>
+            <button disabled={inviteBusy} onClick={() => answerInvite(false)} className="w-full py-3 mt-2 text-sm font-bold text-slate-400 hover:text-slate-700">Not now</button>
+          </div>
+        </div>
+      )}
       {belluhReply && currentTab !== 'ai-coach' && !isComposeOpen && (
         <div className="fixed bottom-28 left-0 right-0 px-6 z-[55] flex justify-center animate-slide-up">
           <div className="max-w-[360px] w-full bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-900/10 border border-white p-4 flex gap-3">

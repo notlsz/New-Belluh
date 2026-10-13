@@ -48,7 +48,9 @@ export function buildGeminiBody(req: ProxyRequest): { model: string; body: unkno
   if (textChars > MAX_TEXT_CHARS) return { error: 'request too long' };
 
   const cfg = (req.config && typeof req.config === 'object' ? req.config : {}) as Record<string, unknown>;
-  const generationConfig: Record<string, unknown> = { maxOutputTokens: 2048 };
+  // Generous cap: newer models count hidden "thinking" against it, and 2.5 models skip thinking entirely
+  const generationConfig: Record<string, unknown> = { maxOutputTokens: 8192 };
+  if (model.startsWith('gemini-2.5')) generationConfig.thinkingConfig = { thinkingBudget: 0 };
   if (cfg.responseMimeType === 'application/json') generationConfig.responseMimeType = 'application/json';
   if (cfg.responseSchema && typeof cfg.responseSchema === 'object') generationConfig.responseSchema = cfg.responseSchema;
   if (typeof cfg.temperature === 'number') generationConfig.temperature = Math.max(0, Math.min(1.5, cfg.temperature));

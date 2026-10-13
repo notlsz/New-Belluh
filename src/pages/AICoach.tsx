@@ -99,8 +99,11 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Prefer the agent; fall back to the original chat if it isn't available
+  // Prefer the agent; fall back to the original chat if it isn't available. Runs once per visit to the tab.
+  const entryTextsRef = useRef(entryTexts);
+  entryTextsRef.current = entryTexts;
   useEffect(() => {
+    const entryTexts = entryTextsRef.current;
     let cancelled = false;
     (async () => {
       const h = await belluhAgent.history();
@@ -130,7 +133,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
       setMessages([{ id: '1', role: 'model', text: initialMsg, timestamp: new Date() }]);
     })();
     return () => { cancelled = true; };
-  }, [entryTexts]);
+  }, []);
 
   const didInitialScroll = useRef(false);
   useEffect(() => {

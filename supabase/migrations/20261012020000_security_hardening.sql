@@ -79,6 +79,17 @@ begin
   return v_inv.inviter;
 end $$;
 
+-- Lets the person who opened a link see who sent it, before they agree to connect
+create or replace function public.preview_partner_invite(p_token text) returns text
+language sql stable security definer set search_path = public as $$
+  select coalesce(nullif(split_part(trim(p.full_name), ' ', 1), ''), 'Someone')
+  from public.partner_invites i join public.profiles p on p.id = i.inviter
+  where auth.uid() is not null and i.token = p_token and i.expires_at > now()
+    and (i.used_by is null or i.used_by = auth.uid()) and i.inviter <> auth.uid();
+$$;
+revoke all on function public.preview_partner_invite(text) from public, anon;
+grant execute on function public.preview_partner_invite(text) to authenticated;
+
 revoke all on function public.create_partner_invite() from public, anon;
 revoke all on function public.accept_partner_invite(text) from public, anon;
 grant execute on function public.create_partner_invite() to authenticated;
@@ -169,11 +180,25 @@ drop policy if exists jp_owner_or_partner_read on storage.objects;
 drop policy if exists jp_owner_delete on storage.objects;
 create policy jp_owner_insert on storage.objects for insert to authenticated
   with check (bucket_id = 'journal-private' and (storage.foldername(name))[1] = auth.uid()::text);
+-- A partner can open a file only if it is attached to an entry its owner shared
+create or replace function public.can_read_private_media(p_name text) returns boolean
+language sql stable security definer set search_path = public, storage as $$
+  select case
+    when (storage.foldername(p_name))[1] = auth.uid()::text then true
+    else exists (
+      select 1 from public.journal_entries je
+      where je.user_id::text = (storage.foldername(p_name))[1]
+        and je.is_shared is true
+        and ('sb://journal-private/' || p_name) in (je.audio_url, je.photo_url)
+        and public.are_partners(auth.uid(), je.user_id)
+    )
+  end;
+$$;
+revoke all on function public.can_read_private_media(text) from public, anon;
+grant execute on function public.can_read_private_media(text) to authenticated;
+
 create policy jp_owner_or_partner_read on storage.objects for select to authenticated
-  using (bucket_id = 'journal-private' and (
-    (storage.foldername(name))[1] = auth.uid()::text
-    or public.are_partners(auth.uid(), ((storage.foldername(name))[1])::uuid)
-  ));
+  using (bucket_id = 'journal-private' and public.can_read_private_media(name));
 create policy jp_owner_delete on storage.objects for delete to authenticated
   using (bucket_id = 'journal-private' and (storage.foldername(name))[1] = auth.uid()::text);
 

@@ -5,6 +5,9 @@ export interface GeminiContent { role: 'user' | 'model'; parts: GeminiPart[] }
 
 const MODEL = () => Deno.env.get('GEMINI_MODEL') || 'gemini-2.5-flash';
 
+// 2.5 models spend output tokens on hidden "thinking"; short, warm replies don't need it
+export const thinkingFor = (model: string) => (model.startsWith('gemini-2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {});
+
 async function call(body: unknown): Promise<GeminiContent | null> {
   const key = Deno.env.get('GEMINI_API_KEY');
   if (!key) throw new Error('Missing secret GEMINI_API_KEY');
@@ -38,7 +41,7 @@ export async function chatWithTools(opts: {
       systemInstruction: { parts: [{ text: opts.system }] },
       contents,
       tools: [{ functionDeclarations: opts.tools }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 800 },
+      generationConfig: { temperature: 0.7, maxOutputTokens: 8192, ...thinkingFor(MODEL()) },
     });
     if (!reply) return null;
     const calls = (reply.parts ?? []).filter(p => p.functionCall);
@@ -59,7 +62,7 @@ export async function jsonAnswer(system: string, prompt: string, schema: unknown
   const reply = await call({
     systemInstruction: { parts: [{ text: system }] },
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0.6 },
+    generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0.6, maxOutputTokens: 8192, ...thinkingFor(MODEL()) },
   });
   const text = reply?.parts?.map(p => p.text ?? '').join('');
   try { return text ? JSON.parse(text) : null; } catch { return null; }

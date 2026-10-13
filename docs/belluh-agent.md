@@ -28,7 +28,7 @@ It doesn't flirt, play a romantic role or try to replace the partner. Grok's com
 2. Set the `GEMINI_API_KEY` secret (optional `GEMINI_MODEL`, default `gemini-2.5-flash`).
 3. `supabase functions deploy belluh-agent` (keep JWT verification on).
 
-Until it is deployed, the Belluh tab falls back to the original chat, so nothing breaks.
+Until it is deployed, the Belluh tab falls back to the original chat. That chat also needs the `gemini-proxy` function (all AI now runs on the server), so deploy both together.
 
 ## Tests
 
