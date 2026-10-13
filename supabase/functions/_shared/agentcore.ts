@@ -14,7 +14,9 @@ export type Channel = 'app' | 'whatsapp' | 'sms'; // also the source recorded on
 export interface Result { status: number; body: any }
 const res = (body: any, status = 200): Result => ({ status, body });
 
-const TEXTING = "\n\nRight now they're texting you from their phone, not the app. Reply in plain text, one to three short sentences, no markdown or lists. Everything you do still shows up in the app.";
+// WhatsApp's terms allow a business's own assistant, not a general-purpose AI chatbot, so by text Belluh stays on its job
+const TEXTING = "\n\nRight now they're texting you from their phone, not the app. Reply in plain text, one to three short sentences, no markdown or lists. Everything you do still shows up in the app." +
+  " By text, stay on what Belluh is for: the two of them, their journal, dates, plans and notes to each other. If they ask for something unrelated (general knowledge, homework, code, news), say in one line that by text you can only help with things between them, and offer something you can do.";
 
 /** "1) Fri, Oct 16 · 7:00 PM" lines for a plan, in the reader's time zone. */
 export const planChoices = (opts: PlanOption[], tz: string) => opts.map((o, i) => `${i + 1}) ${o.label ? `${o.label} · ` : ''}${formatOption(o, tz)}`).join('\n');

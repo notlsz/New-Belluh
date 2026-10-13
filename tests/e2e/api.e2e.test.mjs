@@ -575,6 +575,7 @@ test('25. Belluh itself works over WhatsApp and SMS: same thread and memory, not
   await hook('Please remember that Dan likes quiet mornings');
   const last = geminiRequests().filter(r => r.body?.systemInstruction).at(-1).body;
   assert.match(last.systemInstruction.parts[0].text, /texting you from their phone/, 'Belluh knows to keep it short');
+  assert.match(last.systemInstruction.parts[0].text, /by text you can only help with things between them/, "stays Belluh, not a general chatbot (WhatsApp's terms)");
   assert.match(last.systemInstruction.parts[0].text, /Plans together|Dinner at the Thai place/, 'with all of its context');
   assert.doesNotMatch(JSON.stringify(last), /DAN PRIVATE/, "Dan's private entries never reach it, on any channel");
   assert.match(toMaya().at(-1).text.body, /^Done\./);
