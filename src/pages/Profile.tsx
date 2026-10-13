@@ -5,6 +5,7 @@ import { Settings, Heart, Plus, X, Trash2, Shield, ChevronRight, Users, Check, S
 import { supabase } from '../lib/supabaseClient';
 import { generateRelationshipReceipt } from '../services/geminiService';
 import { THEMES } from '../constants';
+import WhatsAppDates from '../components/WhatsAppDates';
 
 interface ProfileProps {
   user: User;
@@ -292,8 +293,13 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
   };
 
   const handleCopyInviteLink = async () => {
-      const inviteUrl = `${window.location.origin}?invite=${user.id}`;
-      try { await navigator.clipboard.writeText(inviteUrl); onShowToast("Invite link copied!", "success"); } catch (err) { onShowToast("Failed to copy link.", "error"); }
+      // One-time link; it no longer contains your account ID
+      const { data: token, error } = await supabase.rpc('create_partner_invite');
+      // Until the new invite system is installed, fall back to a request link they must accept
+      const legacy = !!error && /could not find the function|PGRST202/i.test(`${error.message} ${(error as any).code ?? ''}`);
+      if (!legacy && (error || !token)) { onShowToast("Couldn't create an invite link. Try again.", "error"); return; }
+      const inviteUrl = `${window.location.origin}/?invite=${legacy ? user.id : token}`;
+      try { await navigator.clipboard.writeText(inviteUrl); onShowToast(legacy ? "Invite link copied!" : "Invite link copied! It works once, for 14 days.", "success"); } catch (err) { onShowToast("Failed to copy link.", "error"); }
   };
 
   const handleInviteSubmit = async (e: React.FormEvent) => {
@@ -302,9 +308,8 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
       
       setInviteStatus('searching');
       try {
-          const { data: profiles } = await supabase.from('profiles').select('id').ilike('email', inviteEmail.trim());
-          if (!profiles || profiles.length === 0) { setInviteStatus('not-found'); return; }
-          const partnerId = profiles[0].id;
+          const { data: partnerId } = await supabase.rpc('find_user_by_email', { p_email: inviteEmail.trim() });
+          if (!partnerId) { setInviteStatus('not-found'); return; }
           if (partnerId === user.id) { onShowToast("You cannot invite yourself!", "error"); setInviteStatus('idle'); return; }
 
           const { error } = await supabase.from('partner_connections').insert({ user_id: user.id, partner_id: partnerId, status: 'pending' });
@@ -484,6 +489,8 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                               )}
                           </div>
                       )}
+
+                      <WhatsAppDates onShowToast={onShowToast} />
                       
                       {/* Artifact Grid */}
                       <div className="grid grid-cols-2 gap-4">

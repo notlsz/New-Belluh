@@ -76,17 +76,13 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
           // 1. Look up profile by email (RLS allows this)
           // Uses .ilike for case-insensitive email matching
-          const { data: profiles } = await supabase
-              .from('profiles')
-              .select('id')
-              .ilike('email', inviteEmail.trim());
+          // Exact match on the server; no wildcard search over other people's emails
+          const { data: partnerId } = await supabase.rpc('find_user_by_email', { p_email: inviteEmail.trim() });
 
-          if (!profiles || profiles.length === 0) {
+          if (!partnerId) {
               setInviteStatus('not-found');
               return;
           }
-
-          const partnerId = profiles[0].id;
           if (partnerId === user.id) {
               alert("You cannot invite yourself!");
               setInviteStatus('idle');

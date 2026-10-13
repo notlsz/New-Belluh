@@ -1,6 +1,7 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, ArrowRight, Activity, TrendingUp, Lock, Fingerprint, Menu, X, Heart } from 'lucide-react';
+import { Sparkles, ArrowRight, Activity, TrendingUp, Lock, Menu, X, Heart } from 'lucide-react';
 import { ORGANIZATIONS } from '../constants';
 
 interface LandingPageProps {
@@ -12,9 +13,9 @@ interface LandingPageProps {
 }
 
 const LogoItem = ({ org }: { org: typeof ORGANIZATIONS[0] }) => {
-  const [errorLevel, setErrorLevel] = useState(0);
+  const [error, setError] = useState(false);
 
-  if (errorLevel >= 2) {
+  if (error) {
     return (
       <span className="text-sm font-bold text-slate-300 uppercase tracking-widest whitespace-nowrap px-4 font-sans opacity-60 hover:opacity-100 transition-opacity">
         {org.name}
@@ -22,15 +23,11 @@ const LogoItem = ({ org }: { org: typeof ORGANIZATIONS[0] }) => {
     );
   }
 
-  const src = errorLevel === 0 
-    ? `https://logo.clearbit.com/${org.domain}`
-    : `https://www.google.com/s2/favicons?domain=${org.domain}&sz=128`;
-
   return (
     <img 
-      src={src} 
+      src={`https://www.google.com/s2/favicons?domain=${org.domain}&sz=128`} 
       alt={org.name} 
-      onError={() => setErrorLevel(prev => prev + 1)}
+      onError={() => setError(true)}
       className="max-h-12 max-w-full w-auto opacity-40 hover:opacity-100 hover:scale-110 transition-all duration-500 grayscale hover:grayscale-0 object-contain" 
     />
   );
@@ -58,7 +55,7 @@ const LogoMarquee = () => (
 
     <div className="text-center mt-8">
       <span className="text-[10px] text-slate-300 font-medium tracking-wide uppercase">
-        * Used independently by individuals
+        * Used independently by individuals. Not affiliated with these organizations.
       </span>
     </div>
   </div>
@@ -67,17 +64,15 @@ const LogoMarquee = () => (
 const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShowLegal, onGoToAbout, onGoToCareers }) => {
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [pastHero, setPastHero] = useState(false);
   const lastScrollY = useRef(0);
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
+      setPastHero(currentScrollY > 520);
       
-      if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
-        setIsNavVisible(false);
-      } else {
-        setIsNavVisible(true);
-      }
+      setIsNavVisible(true);
       
       lastScrollY.current = currentScrollY;
     };
@@ -128,17 +123,28 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
 
       {/* Floating Pill Navbar - Scroll Aware */}
       <div className={`fixed top-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-2xl z-50 transition-all duration-500 transform ${isNavVisible ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0'}`}>
-        <nav className="bg-white/80 backdrop-blur-xl rounded-full shadow-lg shadow-slate-200/50 border border-white px-6 py-3 flex items-center justify-between">
+        <nav className="bg-white/90 backdrop-blur-xl rounded-full shadow-lg shadow-slate-200/50 border border-white px-6 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                 <span className="font-serif text-xl font-bold tracking-tight text-[#9bbecb] drop-shadow-sm" style={{ textShadow: '0 1px 1px rgba(0,0,0,0.1)' }}>Belluh</span>
             </div>
 
+            <div className="flex items-center gap-2">
+            <button
+                onClick={onGetStarted}
+                tabIndex={pastHero ? 0 : -1}
+                aria-hidden={!pastHero}
+                className={`overflow-hidden whitespace-nowrap h-10 bg-[#f0addd] text-white rounded-full font-bold text-sm hover:bg-[#e57ec3] shadow-md shadow-[#f0addd]/30 transition-all duration-500 ${pastHero ? 'max-w-[140px] px-5 opacity-100' : 'max-w-0 px-0 opacity-0 pointer-events-none'}`}
+            >
+                Start free
+            </button>
             <button 
                 onClick={toggleMenu}
+                aria-label="Open menu"
                 className="bg-[#CDE9F2] text-cyan-900 w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md hover:shadow-lg"
             >
                 <Menu size={20} strokeWidth={2.5} />
             </button>
+            </div>
         </nav>
       </div>
 
@@ -181,25 +187,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                        onClick={() => { toggleMenu(); onGetStarted(); }}
                        className="w-full py-4 rounded-full bg-[#9bbecb] text-white font-bold hover:bg-[#8aaab7] transition-colors shadow-xl text-lg flex items-center justify-center gap-2"
                    >
-                       Join Belluh <ArrowRight size={18} />
+                       Start free <ArrowRight size={18} />
                    </button>
                </div>
           </div>
       </div>
 
       {/* Hero Section */}
-      <section className="relative z-10 pt-44 pb-20 md:pt-56 md:pb-32 px-6">
+      <section className="relative z-10 pt-32 pb-10 md:pt-36 md:pb-12 px-6">
          <div className="max-w-4xl mx-auto text-center animate-slide-up">
              
-             <h1 className="text-5xl md:text-7xl font-serif font-medium leading-[1.1] mb-8 text-slate-900 tracking-tight drop-shadow-sm">
-                 <span className="text-[#9bbecb]">The AI journal</span> <br/> <span className="text-[#f0addd] italic">for couples.</span>
+             <h1 className="text-5xl md:text-7xl font-serif font-medium leading-[1.1] mb-6 text-slate-900 tracking-tight drop-shadow-sm">
+                 <span className="text-[#9bbecb]">The AI journal</span> <br /> <span className="text-[#f0addd] italic">for couples.</span>
              </h1>
              
-             <p className="text-xl md:text-2xl text-slate-500 font-light leading-relaxed max-w-2xl mx-auto mb-12">
-                 Capture memories, track emotional patterns, and deepen intimacy with the world's first AI relationship companion.
+             <p className="text-xl md:text-2xl text-slate-500 font-light leading-relaxed max-w-2xl mx-auto mb-8">
+                 You each write a few lines a day. Every Sunday, Belluh reads both sides and tells you one thing to understand and one thing to try.
              </p>
 
-             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
                  <button 
                     onClick={onGetStarted}
                     className="w-full sm:w-auto px-10 py-4 bg-[#f0addd] text-white rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#e57ec3] transition-all hover:scale-105 active:scale-95 shadow-xl shadow-[#f0addd]/30"
@@ -209,7 +215,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                  </button>
                  <button 
                     onClick={onLogin}
-                    className="w-full sm:w-auto px-10 py-4 bg-white/80 backdrop-blur-sm text-slate-600 border border-white rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-white hover:text-[#f0addd] hover:shadow-lg transition-all"
+                    className="w-auto px-6 py-2 sm:px-10 sm:py-4 sm:bg-white/80 sm:backdrop-blur-sm text-slate-600 sm:border sm:border-white rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-white hover:text-[#f0addd] sm:hover:shadow-lg transition-all"
                  >
                      I have an account
                  </button>
@@ -217,29 +223,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
          </div>
       </section>
 
-      {/* Marquee Section */}
-      <LogoMarquee />
-
       {/* Visual Demo Section */}
-      <section className="relative z-10 px-6 pb-24 pt-32">
+      <section id="example" className="relative z-10 px-6 pb-28 scroll-mt-24">
           <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-16">
-                   <h2 className="text-4xl md:text-6xl font-serif font-bold text-slate-900 mb-6 tracking-tighter">
-                      Intelligence, applied to intimacy.
-                   </h2>
-                   <p className="text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-light">
-                      Belluh turns thousands of small moments into a cohesive understanding of your shared life.
-                   </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 min-h-[600px]">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                   
                   {/* Card 1: The AI Analysis */}
-                  <div className="md:col-span-8 bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] flex flex-col justify-between relative overflow-hidden group hover:scale-[1.005] transition-all duration-700 min-h-[400px]">
+                  <div className="md:col-span-8 bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] flex flex-col justify-between relative overflow-hidden group hover:scale-[1.005] transition-all duration-700 min-h-[400px]">
                       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-[#CDE9F2]/30 to-transparent rounded-bl-full opacity-50 pointer-events-none"></div>
                       
                       <div className="relative z-10">
-                          <div className="flex items-center gap-3 mb-8">
+                          <div className="flex items-center gap-3 mb-6">
                               <div className="w-10 h-10 bg-white border border-slate-100 rounded-full flex items-center justify-center shadow-sm text-[#f0addd]">
                                   <Sparkles size={18} className="fill-[#f0addd]" />
                               </div>
@@ -251,17 +245,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                           </h3>
                           
                           <p className="text-lg text-slate-500 leading-relaxed max-w-2xl font-light">
-                              Belluh detected a shift in your communication pattern on Tuesday. By expressing fear instead of withdrawing, your connection synergy increased by 40%.
+                              On Tuesday you said what you were afraid of instead of going quiet. Belluh noticed, because it read both of your entries.
                           </p>
                       </div>
 
                       <div className="relative z-10 mt-12 md:mt-0 flex flex-col md:flex-row md:items-center gap-6">
-                          <button className="px-8 py-4 bg-slate-50 hover:bg-slate-100 rounded-full text-sm font-bold text-slate-900 transition-colors flex items-center justify-center gap-2 border border-slate-100">
-                              View Analysis <ArrowRight size={16} />
+                          <button onClick={onGetStarted} className="px-8 py-4 bg-slate-50 hover:bg-slate-100 rounded-full text-sm font-bold text-slate-900 transition-colors flex items-center justify-center gap-2 border border-slate-100">
+                              Get your first insight <ArrowRight size={16} />
                           </button>
                           <div className="flex items-center gap-2 text-slate-400">
                               <Activity size={16} className="text-[#CDE9F2]" />
-                              <span className="text-xs font-medium">Generated from 14 entries</span>
+                              <span className="text-xs font-medium">Example insight, written from 14 entries</span>
                           </div>
                       </div>
                   </div>
@@ -273,9 +267,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                       <div className="flex-1 bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] flex flex-col justify-between relative overflow-hidden group hover:scale-[1.01] transition-transform duration-500 min-h-[250px]">
                           
                           <div className="relative z-10 flex justify-between items-start">
-                              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Synergy Score</span>
+                              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">This week</span>
                               <div className="px-3 py-1 bg-[#f0addd]/10 text-[#c06ba5] rounded-full text-[10px] font-bold flex items-center gap-1">
-                                  <TrendingUp size={12} /> +12%
+                                  <TrendingUp size={12} /> Warming
                               </div>
                           </div>
 
@@ -291,7 +285,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
 
                           <div className="relative z-10">
                               <div className="text-6xl font-sans font-semibold tracking-tighter text-slate-900">94</div>
-                              <p className="text-sm text-slate-500 mt-1 font-medium">Exceptional Harmony</p>
+                              <p className="text-sm text-slate-500 mt-1 font-medium">Clear skies ahead</p>
                           </div>
                       </div>
 
@@ -299,6 +293,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
               </div>
           </div>
       </section>
+
+      {/* Marquee Section */}
+      <LogoMarquee />
 
       {/* Visual Demo Section - Apple Style Immersive Cards */}
       <section id="features" className="relative z-10 py-32 px-6 bg-slate-50/50">
@@ -318,7 +315,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                         It sees what <br/> <span className="text-[#9bbecb]">you might miss.</span>
                     </h2>
                     <p className="text-xl md:text-2xl text-slate-500 leading-relaxed font-light max-w-lg">
-                        Emotional velocity. Connection cadence. Belluh analyzes the unspoken rhythm of your relationship.
+                        Belluh reads both sides of your week and names the pattern neither of you can see from inside it.
                     </p>
                 </div>
                 
@@ -351,8 +348,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                          <h2 className="text-5xl md:text-7xl font-serif font-semibold tracking-tighter text-cyan-950 mb-6">
                              Your safe <br/> <span className="text-cyan-700">haven.</span>
                          </h2>
-                         <p className="text-xl md:text-2xl text-cyan-900/80 leading-relaxed font-light">
-                             Your journal is encrypted. Only you and your partner can access it.
+                         <p className="text-xl md:text-2xl text-cyan-900/80 leading-relaxed font-light mb-6">
+                             Every entry is shared or private, your call. Encrypted in storage and in transit, and never sold.
+                         </p>
+                         <p className="text-base text-cyan-900/70 leading-relaxed">
+                             Insights are written by Google's Gemini models, which process your entries to write them.{' '}
+                             <button onClick={() => onShowLegal('privacy')} className="font-bold underline decoration-cyan-900/30 underline-offset-4 hover:text-cyan-950">Privacy policy</button>
                          </p>
                      </div>
                      
@@ -392,17 +393,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                       <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#f0addd]/20 to-transparent rounded-bl-full opacity-0 transition-opacity group-hover:opacity-100 duration-700"></div>
                       
                       <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-8 border border-slate-100 shadow-sm">
-                          <Fingerprint size={24} className="text-slate-900"/>
+                          <Heart size={24} className="text-slate-900"/>
                       </div>
                       
                       <h3 className="text-3xl md:text-4xl font-serif font-semibold text-slate-900 mb-4 tracking-tight">Resolve one thing per week.</h3>
                       <p className="text-lg text-slate-500 leading-relaxed mb-8">
-                          Every week, you get one clear insight + one action to try.
+                          Every Sunday you get one clear insight and one small thing to try. Write, record a voice note, or add a photo.
                       </p>
                       
                       <div className="flex gap-2 flex-wrap">
-                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">Immediate Insight</span>
-                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">Immediate Next Step</span>
+                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">One insight</span>
+                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">One next step</span>
+                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">Voice notes, transcribed</span>
                       </div>
                  </div>
             </div>
@@ -413,7 +415,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       {/* Infinite Marquee Section */}
       <section id="stories" className="relative z-10 py-24 overflow-hidden bg-white/50 backdrop-blur-sm border-t border-slate-50">
         <div className="max-w-7xl mx-auto px-6 mb-16 text-center">
-            <h2 className="text-4xl md:text-6xl font-serif font-semibold text-slate-900 mb-6 tracking-tighter">Real stories.</h2>
+            <h2 className="text-4xl md:text-6xl font-serif font-semibold text-slate-900 mb-6 tracking-tighter">Every moment counts.</h2>
             <p className="text-slate-500 text-lg max-w-2xl mx-auto leading-relaxed">
                 From the big milestones to the quiet Sunday mornings, Belluh keeps your story alive.
             </p>
@@ -448,21 +450,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
               <div className="w-16 h-16 bg-[#f0addd]/10 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse-slow">
                   <Heart size={24} className="text-[#f0addd] fill-[#f0addd]" />
               </div>
-              <blockquote className="text-3xl md:text-5xl font-serif text-slate-900 leading-tight mb-10 drop-shadow-sm">
-                  "It feels like a therapist and a best friend combined. It saved our communication."
-              </blockquote>
-              <div className="flex items-center justify-center gap-4">
-                  <div className="w-12 h-12 bg-white rounded-full overflow-hidden shadow-md border border-white">
-                      <img 
-                        src="https://images.unsplash.com/photo-1533738363-b7f9aef128ce?auto=format&fit=crop&w=100&q=80" 
-                        alt="Sarah & Tom" 
-                        className="w-full h-full object-cover"
-                      />
-                  </div>
-                  <div className="text-left">
-                      <div className="text-sm font-bold text-slate-900">Sarah & Tom</div>
-                      <div className="text-[10px] text-[#f0addd] font-bold uppercase tracking-widest">Early Adopters</div>
-                  </div>
+              <h2 className="text-3xl md:text-5xl font-serif text-slate-900 leading-tight mb-6 drop-shadow-sm">
+                  <span className="text-[#9bbecb]">Start tonight.</span> <span className="text-[#f0addd] italic">Together.</span>
+              </h2>
+              <p className="text-xl text-slate-500 font-light leading-relaxed mb-10">Write one line about today and send your partner the link. Your first insight arrives on Sunday.</p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <button onClick={onGetStarted} className="w-full sm:w-auto px-10 py-4 bg-[#f0addd] text-white rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#e57ec3] transition-all hover:scale-105 active:scale-95 shadow-xl shadow-[#f0addd]/30">
+                      <span>Start Your Journey</span><ArrowRight size={16} />
+                  </button>
+                  <button onClick={onLogin} className="w-full sm:w-auto px-10 py-4 bg-white/80 backdrop-blur-sm text-slate-600 border border-white rounded-full font-bold text-sm hover:bg-white hover:text-[#f0addd] hover:shadow-lg transition-all">
+                      I have an account
+                  </button>
               </div>
           </div>
       </section>
@@ -479,6 +477,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
 
                <div className="flex gap-8 text-xs font-bold text-slate-400 uppercase tracking-widest">
                    <button onClick={onGoToCareers} className="hover:text-slate-600 transition-colors">Careers</button>
+                   <button onClick={onGoToAbout} className="hover:text-slate-600 transition-colors">About</button>
                    <button onClick={() => onShowLegal('tos')} className="hover:text-slate-600 transition-colors">Terms</button>
                    <button onClick={() => onShowLegal('privacy')} className="hover:text-slate-600 transition-colors">Privacy</button>
                </div>

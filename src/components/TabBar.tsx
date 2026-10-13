@@ -5,9 +5,10 @@ interface TabBarProps {
   currentTab: string;
   onTabChange: (tab: string) => void;
   onCompose: () => void;
+  badges?: Record<string, boolean>;
 }
 
-const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose }) => {
+const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose, badges = {} }) => {
   const tabs = [
     { id: 'timeline', icon: BookHeart, label: 'Story' }, // Main Home
     { id: 'compose', icon: Plus, label: 'Capture', isAction: true },
@@ -26,6 +27,7 @@ const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose }) =
             return (
               <button
                 key={tab.id}
+                aria-label={tab.label}
                 onClick={onCompose}
                 className="mx-2 bg-slate-900 text-white w-14 h-14 rounded-full shadow-lg shadow-slate-900/30 flex items-center justify-center transition-all duration-300 active:scale-95 hover:scale-105 hover:bg-black group relative overflow-hidden"
               >
@@ -38,6 +40,8 @@ const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose }) =
           return (
             <button
               key={tab.id}
+              aria-label={tab.label}
+              aria-current={isActive ? 'page' : undefined}
               onClick={() => onTabChange(tab.id)}
               className={`relative flex flex-col items-center justify-center w-12 h-12 rounded-full transition-all duration-500 ${
                 isActive ? 'text-slate-900' : 'text-slate-300 hover:text-slate-500'
@@ -46,6 +50,9 @@ const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose }) =
               <Icon size={24} strokeWidth={isActive ? 2.5 : 2} className={`transition-all duration-300 ${isActive ? 'scale-110' : 'scale-100'}`} />
               {isActive && (
                 <span className="absolute -bottom-2 w-1 h-1 bg-belluh-300 rounded-full animate-scale-in" />
+              )}
+              {badges[tab.id] && !isActive && (
+                <span aria-label="New note" className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#f0addd] rounded-full ring-2 ring-white" />
               )}
             </button>
           );

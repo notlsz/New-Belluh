@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --experimental-strip-types --test tests/occasions.test.ts tests/agent.test.ts tests/daily.test.ts tests/weekly.test.ts",
+    "test:e2e": "node --test tests/e2e/api.e2e.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.20.0",

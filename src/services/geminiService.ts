@@ -1,17 +1,22 @@
 
-import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
+import { Type, GenerateContentResponse } from "@google/genai";
+import { supabase } from "../lib/supabaseClient";
 import { JournalEntry, Insight, RelationshipArchetype, UserPersona, RelationshipReceipt, RelationshipForecast } from "../types";
 
-// Helper to initialize AI client just-in-time
-const getAI = () => {
-  // Configured via vite.config.ts define
-  const apiKey = process.env.API_KEY;
-
-  if (!apiKey) {
-    console.error("Belluh AI Error: API Key is missing. Please check your Vercel Environment Variables.");
-  }
-  return new GoogleGenAI({ apiKey: apiKey || '' });
-};
+// All AI calls go through Belluh's server (the gemini-proxy function), so no API key ships to the browser.
+// The shape mirrors the Gemini SDK the features were written against: getAI().models.generateContent({...}).
+const getAI = () => ({
+  models: {
+    generateContent: async (req: { model: string; contents: unknown; config?: unknown }): Promise<GenerateContentResponse> => {
+      const { data, error } = await supabase.functions.invoke('gemini-proxy', { body: req });
+      if (error) {
+        const status = (error as any)?.context?.status;
+        throw Object.assign(new Error(error.message || 'AI request failed'), { status });
+      }
+      return { text: (data as { text?: string })?.text ?? '' } as GenerateContentResponse;
+    },
+  },
+});
 
 // Helper to handle errors gracefully
 const handleGeminiError = (error: any, fallback: any) => {
@@ -181,7 +186,9 @@ export const detectPatterns = async (entries: JournalEntry[]): Promise<Insight[]
     const rawText = response.text || "[]";
     const cleanText = rawText.replace(/```json\n?|\n?```/g, '').trim();
     
-    return JSON.parse(cleanText);
+    const parsed = JSON.parse(cleanText);
+    // An unexpected shape must not crash the timeline
+    return Array.isArray(parsed) ? parsed.filter((p: any) => p && typeof p.title === 'string' && typeof p.content === 'string').map((p: any) => ({ ...p, relatedEntryIds: Array.isArray(p.relatedEntryIds) ? p.relatedEntryIds : [] })) : [];
   } catch (e) {
     return handleGeminiError(e, []);
   }
@@ -246,7 +253,9 @@ export const getRelationshipArchetype = async (entryTexts: string[]): Promise<Re
     const rawText = response.text || "{}";
     const cleanText = rawText.replace(/```json\n?|\n?```/g, '').trim();
     
-    return JSON.parse(cleanText);
+    const parsed = JSON.parse(cleanText);
+    if (!parsed || typeof parsed.name !== 'string') throw new Error('Unexpected archetype shape');
+    return parsed;
   } catch (e) {
     return {
       name: "Partners",
@@ -350,7 +359,9 @@ export const generateRelationshipReceipt = async (entries: JournalEntry[], coupl
         
         const rawText = response.text || "{}";
         const cleanText = rawText.replace(/```json\n?|\n?```/g, '').trim();
-        return JSON.parse(cleanText);
+        const parsed = JSON.parse(cleanText);
+        if (!parsed || !Array.isArray(parsed.items) || typeof parsed.total !== 'string') throw new Error('Unexpected receipt shape');
+        return parsed;
 
     } catch (e) {
         // Fallback Receipt
@@ -404,7 +415,9 @@ export const generateRelationshipForecast = async (entries: JournalEntry[]): Pro
         );
          const rawText = response.text || "{}";
          const cleanText = rawText.replace(/```json\n?|\n?```/g, '').trim();
-         return JSON.parse(cleanText);
+         const parsed = JSON.parse(cleanText);
+         if (!parsed || typeof parsed.weather !== 'string' || typeof parsed.temperature !== 'number') throw new Error('Unexpected forecast shape');
+         return parsed;
 
     } catch (e) {
         return {

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import TabBar from './components/TabBar';
 import Journal from './pages/Journal';
 import Timeline from './pages/Timeline';
@@ -19,6 +19,9 @@ import { Sparkles, X, CheckCircle2, AlertCircle, Info } from 'lucide-react';
 import { supabase } from './lib/supabaseClient';
 import { useAdminAccess } from './hooks/useAdminAccess';
 import { trackEvent } from './services/analytics';
+import { belluhAgent } from './services/belluhAgent';
+import { resolveMedia, repairLegacyUrl } from './services/media';
+import { computeStreak } from './lib/daily';
 
 import Acquisition from './pages/Acquisition';
 import Report from './pages/Report';
@@ -52,26 +55,6 @@ const Toast = ({ message, type, onClose }: { message: string, type: 'success' | 
   );
 };
 
-// Generate signed URLs for secure media access
-const getSignedStorageUrl = async (bucketName: string, filePath: string, expirySeconds = 3600) => {
-  if (!filePath) return null;
-  
-  try {
-    const { data, error } = await supabase.storage
-      .from(bucketName)
-      .createSignedUrl(filePath, expirySeconds);
-    
-    if (error) {
-      console.error(`Error creating signed URL for ${bucketName}/${filePath}:`, error);
-      return null;
-    }
-    
-    return data?.signedUrl;
-  } catch (err) {
-    console.error('Failed to get signed URL:', err);
-    return null;
-  }
-};
 
 // Types for Invite Handling
 type PendingInvite = {
@@ -83,7 +66,14 @@ type PendingInvite = {
   }
 };
 
+// Theme and other settings are remembered on this device
+const SETTINGS_KEY = 'belluh_settings';
+const loadSavedSettings = (): Record<string, unknown> => {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); } catch { return {}; }
+};
+
 const App: React.FC = () => {
+  const loadedUserId = useRef<string | null>(null);
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Added loading state to prevent flash
@@ -117,6 +107,43 @@ const App: React.FC = () => {
   // Notification State
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
 
+  // Belluh's short reply after you write, and notes from your partner waiting in the Belluh tab
+  const [belluhReply, setBelluhReply] = useState<string | null>(null);
+  const [unreadNotes, setUnreadNotes] = useState(0);
+  const [newFromBelluh, setNewFromBelluh] = useState(false);
+  const [inviteOffer, setInviteOffer] = useState<{ token: string; name: string } | null>(null);
+  const currentTabRef = useRef(currentTab);
+  useEffect(() => { currentTabRef.current = currentTab; if (currentTab === 'ai-coach') setBelluhReply(null); }, [currentTab]);
+  const [inviteBusy, setInviteBusy] = useState(false);
+
+  const answerInvite = async (accept: boolean) => {
+    if (!inviteOffer) return;
+    setInviteBusy(true);
+    if (accept) {
+      const { error } = await supabase.rpc('accept_partner_invite', { p_token: inviteOffer.token });
+      if (error) showNotification("That invite link has expired or was already used. Ask for a new one.", "error");
+      else {
+        showNotification(`You're connected with ${inviteOffer.name}.`, "success");
+        const { data: { user: u } } = await supabase.auth.getUser();
+        if (u) loadUserData(u);
+      }
+    }
+    try { localStorage.removeItem('pending_invite_id'); } catch { /* ignore */ }
+    setInviteOffer(null);
+    setInviteBusy(false);
+  };
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    supabase.auth.getUser().then(({ data: { user: u } }) => { if (u) belluhAgent.saveTimeZone(u.id); });
+    const check = () => {
+      belluhAgent.unreadNotes().then(setUnreadNotes);
+      belluhAgent.hasNewFromBelluh().then(setNewFromBelluh);
+    };
+    check();
+    const t = setInterval(check, 60_000);
+    return () => clearInterval(t);
+  }, [isAuthenticated]);
+
   const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setNotification({ message, type });
   };
@@ -131,7 +158,7 @@ const App: React.FC = () => {
       isPremium: false,
       joinDate: new Date(),
       activeCircleId: 'c1',
-      settings: CURRENT_USER.settings,
+      settings: { ...CURRENT_USER.settings, ...loadSavedSettings() } as any,
       hasCompletedOnboarding: false,
       detectedPersona: CURRENT_USER.detectedPersona
   });
@@ -203,7 +230,7 @@ const App: React.FC = () => {
           isPremium: false,
           joinDate: new Date(),
           activeCircleId: 'c1',
-          settings: CURRENT_USER.settings,
+          settings: { ...CURRENT_USER.settings, ...loadSavedSettings() } as any,
           hasCompletedOnboarding: false,
           detectedPersona: CURRENT_USER.detectedPersona
       });
@@ -216,24 +243,26 @@ const App: React.FC = () => {
 
         // --- HANDLE INVITE LINKS (Persistent) ---
         const params = new URLSearchParams(window.location.search);
-        let inviteId = params.get('invite');
-        if (!inviteId) inviteId = localStorage.getItem('pending_invite_id');
+        let inviteToken = params.get('invite');
+        try { if (!inviteToken) inviteToken = localStorage.getItem('pending_invite_id'); } catch { /* storage blocked */ }
 
-        if (inviteId && inviteId !== sessionUser.id) {
-            const { data: existing } = await supabase
-                .from('partner_connections')
-                .select('*')
-                .or(`and(user_id.eq.${inviteId},partner_id.eq.${sessionUser.id}),and(user_id.eq.${sessionUser.id},partner_id.eq.${inviteId})`);
-            
-            if (!existing || existing.length === 0) {
-                await supabase.from('partner_connections').insert({
-                    user_id: inviteId,
-                    partner_id: sessionUser.id,
-                    status: 'pending'
-                });
-                showNotification("Invite received! Check your profile.", "success");
+        // Invite links carry a one-time token. We ask before connecting: opening a link alone never links accounts.
+        if (inviteToken) {
+            const { data: inviterName, error: previewError } = await supabase.rpc('preview_partner_invite', { p_token: inviteToken });
+            const rpcMissing = !!previewError && /could not find the function|PGRST202/i.test(`${previewError.message} ${(previewError as any).code ?? ''}`);
+            const isLegacyUserId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(inviteToken);
+            if (inviterName) {
+                setInviteOffer({ token: inviteToken, name: inviterName as string });
+            } else if (rpcMissing && isLegacyUserId && inviteToken !== sessionUser.id) {
+                // Before the new invite system is installed: send a request the other person must accept
+                const { error: reqError } = await supabase.from('partner_connections')
+                    .insert({ user_id: sessionUser.id, partner_id: inviteToken, status: 'pending' });
+                if (!reqError || reqError.code === '23505') showNotification("Request sent. It connects once they accept it in their profile.", "success");
+                try { localStorage.removeItem('pending_invite_id'); } catch { /* ignore */ }
+            } else {
+                showNotification("That invite link has expired or was already used. Ask for a new one.", "error");
+                try { localStorage.removeItem('pending_invite_id'); } catch { /* ignore */ }
             }
-            localStorage.removeItem('pending_invite_id');
         }
 
         try {
@@ -298,9 +327,10 @@ const App: React.FC = () => {
         const myFirstName = myProfile?.full_name?.trim().split(' ')[0] || sessionUser.email?.split('@')[0] || 'Me';
         
         const getCircleMetadata = (circleId: string) => {
-            const metaEntry = dbEntries?.find((e: any) => 
-                e.tags && e.tags.includes('system_circle_metadata') && e.tags.includes(`circle:${circleId}`)
-            );
+            const isMeta = (e: any) => e.tags && e.tags.includes('system_circle_metadata') && e.tags.includes(`circle:${circleId}`);
+            // Your own setting for this circle wins; otherwise use your partner's
+            const metaEntry = dbEntries?.find((e: any) => isMeta(e) && e.user_id === sessionUser.id)
+                ?? dbEntries?.find((e: any) => isMeta(e));
             return {
                 name: metaEntry?.title, // Overridden name
                 isArchived: metaEntry?.tags?.includes('status:archived') // Overridden status
@@ -439,12 +469,14 @@ const App: React.FC = () => {
         }
 
         const contentEntries = dbEntries ? dbEntries.filter((e: any) => 
-            !e.tags || (
+            // Never show another person's private entries
+            (e.user_id === sessionUser.id || e.is_shared) &&
+            (!e.tags || (
                 !e.tags.includes('system_circle_def') && 
                 !e.tags.includes('system_circle_member') &&
                 !e.tags.includes('system_facts') &&
                 !e.tags.includes('system_circle_metadata')
-            )
+            ))
         ) : [];
         
         const mappedEntries: JournalEntry[] = contentEntries.map((e: any) => {
@@ -478,14 +510,20 @@ const App: React.FC = () => {
                 circleId: entryCircleId, 
                 likes: e.is_favorite ? 1 : 0, 
                 isLiked: e.is_favorite,
-                mediaUrl: e.photo_url,
-                audioUrl: e.audio_url
+                mediaUrl: repairLegacyUrl(e.photo_url),
+                audioUrl: repairLegacyUrl(e.audio_url)
             };
         });
-        setEntries(mappedEntries);
+        // Private voice notes and photos get fresh links each time the journal loads
+        const links = await resolveMedia(mappedEntries.flatMap(e => [e.mediaUrl, e.audioUrl]));
+        setEntries(mappedEntries.map(e => ({
+            ...e,
+            mediaUrl: e.mediaUrl && links.get(e.mediaUrl) || (e.mediaUrl?.startsWith('sb://') ? undefined : e.mediaUrl),
+            audioUrl: e.audioUrl && links.get(e.audioUrl) || (e.audioUrl?.startsWith('sb://') ? undefined : e.audioUrl),
+        })));
 
-        const currentStreak = myProfile?.journal_streak || 0;
-        setStreak(currentStreak);
+        // Streak = consecutive days with at least one entry of yours, counting back from today (or yesterday)
+        setStreak(computeStreak(mappedEntries.filter(e => e.userId === sessionUser.id).map(e => e.timestamp)));
 
         const primaryPartner = connectedProfiles.length > 0 ? connectedProfiles[0] : null;
         const displayPartnerName = myProfile?.partner_name || primaryPartner?.full_name || undefined;
@@ -501,9 +539,10 @@ const App: React.FC = () => {
             partnerName: displayPartnerName,
             partnerAvatar: primaryPartner?.avatar_url || undefined,
             circles: newCircles as any,
-            activeCircleId: 'c1', 
+            // Stay in the circle you were in, if it still exists
+            activeCircleId: newCircles.some((c: any) => c.id === prev.activeCircleId) ? prev.activeCircleId : 'c1',
             isPremium: false,
-            settings: CURRENT_USER.settings, // In a real app, merge with saved settings
+            settings: { ...CURRENT_USER.settings, ...loadSavedSettings() },
             hasCompletedOnboarding: !!displayPartnerName,
             relationshipFacts: relationshipFacts
         }));
@@ -522,22 +561,36 @@ const App: React.FC = () => {
       }
   };
 
+  // Keep an invite token from the link while the visitor signs up or logs in
+  useEffect(() => {
+    try {
+      const token = new URLSearchParams(window.location.search).get('invite');
+      if (token) localStorage.setItem('pending_invite_id', token);
+    } catch { /* storage blocked */ }
+  }, []);
+
   // Initialize Supabase Auth & Data
   useEffect(() => {
     let mounted = true;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-            if (session?.user && mounted) {
+        // Token refreshes happen every hour and must not reload everything or reset your place
+        if (event === 'SIGNED_IN') {
+            if (session?.user && mounted && loadedUserId.current !== session.user.id) {
+                loadedUserId.current = session.user.id;
                 loadUserData(session.user);
             }
         } else if (event === 'SIGNED_OUT') {
+            loadedUserId.current = null;
             if (mounted) resetUserState();
         }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user && mounted) loadUserData(session.user);
-        else if (mounted) setIsLoading(false);
+        if (session?.user && mounted && loadedUserId.current !== session.user.id) {
+            loadedUserId.current = session.user.id;
+            loadUserData(session.user);
+        }
+        else if (!session?.user && mounted) setIsLoading(false);
     });
 
     return () => { 
@@ -625,8 +678,11 @@ const App: React.FC = () => {
       
       // Theme Update
       if (updates.settings) {
-          setUser(prev => ({ ...prev, settings: { ...prev.settings, ...updates.settings } }));
-          // Ideally save to DB here
+          setUser(prev => {
+              const settings = { ...prev.settings, ...updates.settings };
+              try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* storage blocked */ }
+              return { ...prev, settings };
+          });
           return;
       }
 
@@ -687,21 +743,25 @@ const App: React.FC = () => {
           const { data: existingMeta } = await supabase
             .from('journal_entries')
             .select('id, tags')
+            .eq('user_id', currentUser.id)
             .contains('tags', ['system_circle_metadata', `circle:${circleId}`])
+            .limit(1)
             .maybeSingle();
 
+          let renameError: unknown = null;
           if (existingMeta) {
-              await supabase.from('journal_entries').update({ title: newName }).eq('id', existingMeta.id);
+              ({ error: renameError } = await supabase.from('journal_entries').update({ title: newName }).eq('id', existingMeta.id));
           } else {
-              await supabase.from('journal_entries').insert([{
+              ({ error: renameError } = await supabase.from('journal_entries').insert([{
                   user_id: currentUser.id,
                   title: newName,
                   type: 'Milestone',
                   tags: ['system_circle_metadata', `circle:${circleId}`],
                   is_shared: true,
                   date: new Date().toISOString()
-              }]);
+              }]));
           }
+          if (renameError) { showNotification("Couldn't rename the circle. Try again.", 'error'); return; }
           
           setUser(prev => ({
               ...prev,
@@ -735,7 +795,9 @@ const App: React.FC = () => {
           const { data: existingMeta } = await supabase
             .from('journal_entries')
             .select('id, tags')
+            .eq('user_id', currentUser.id)
             .contains('tags', ['system_circle_metadata', `circle:${circleId}`])
+            .limit(1)
             .maybeSingle();
 
           if (existingMeta) {
@@ -747,7 +809,7 @@ const App: React.FC = () => {
               await supabase.from('journal_entries').insert([{
                   user_id: currentUser.id,
                   type: 'Milestone',
-                  tags: ['system_circle_metadata', `circle:${circleId}`, isArchiving ? 'status:archived' : ''],
+                  tags: ['system_circle_metadata', `circle:${circleId}`, ...(isArchiving ? ['status:archived'] : [])],
                   is_shared: true,
                   date: new Date().toISOString()
               }]);
@@ -798,17 +860,10 @@ const App: React.FC = () => {
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser) return;
 
-    let signedAudioUrl = audioUrl;
-    let signedPhotoUrl = mediaUrl;
-
-    if (audioUrl && !audioUrl.includes('?token=')) {
-        const fileName = audioUrl.split('/').pop();
-        if (fileName) signedAudioUrl = await getSignedStorageUrl('journal-media', fileName, 3600);
-    }
-    if (mediaUrl && !mediaUrl.includes('?token=') && !mediaUrl.startsWith('data:')) {
-        const fileName = mediaUrl.split('/').pop();
-        if (fileName) signedPhotoUrl = await getSignedStorageUrl('journal-media', fileName, 3600);
-    }
+    // Store storage references (never links that expire); resolve them for display
+    const links = await resolveMedia([audioUrl, mediaUrl]);
+    const showAudio = audioUrl ? links.get(audioUrl) ?? (audioUrl.startsWith('sb://') ? undefined : audioUrl) : undefined;
+    const showPhoto = mediaUrl ? links.get(mediaUrl) ?? (mediaUrl.startsWith('sb://') ? undefined : mediaUrl) : undefined;
 
     const { data, error } = await supabase.from('journal_entries').insert([{
         user_id: currentUser.id,
@@ -817,8 +872,8 @@ const App: React.FC = () => {
         mood,
         title: prompt,
         is_shared: !isPrivate,
-        audio_url: signedAudioUrl,
-        photo_url: signedPhotoUrl,
+        audio_url: audioUrl ?? null,
+        photo_url: mediaUrl ?? null,
         date: new Date().toISOString(),
         tags: [`circle:${user.activeCircleId}`] 
     }]).select().single();
@@ -839,13 +894,19 @@ const App: React.FC = () => {
             circleId: user.activeCircleId, 
             likes: 0,
             isLiked: false,
-            audioUrl: signedAudioUrl || undefined,
-            mediaUrl: signedPhotoUrl || undefined
+            audioUrl: showAudio,
+            mediaUrl: showPhoto
         };
-        setEntries(prev => [newEntry, ...prev]);
+        setEntries(prev => {
+            const next = [newEntry, ...prev];
+            setStreak(computeStreak(next.filter(e => e.userId === currentUser.id).map(e => e.timestamp)));
+            return next;
+        });
         setIsComposeOpen(false); 
         setComposePrompt(undefined);
         showNotification('Memory captured!', 'success');
+        // Belluh may have something to add. Quietly skipped if it doesn't, or if the agent isn't deployed.
+        belluhAgent.react(data.id).then(res => { if (res?.message?.body && currentTabRef.current !== 'ai-coach') setBelluhReply(res.message.body); });
     } else {
         showNotification('Failed to save.', 'error');
     }
@@ -950,16 +1011,43 @@ const App: React.FC = () => {
       );
   }
 
-  if (isOnboarding) return <Onboarding onComplete={handleOnboardingComplete} />;
+  // Shown over any screen, including onboarding, so someone who signs up from a link is asked right away
+  const inviteModal = inviteOffer ? (
+        <div className="fixed inset-0 z-[150] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
+          <div className="bg-white rounded-[2rem] max-w-sm w-full p-8 text-center shadow-2xl animate-scale-in">
+            <div className="w-14 h-14 rounded-full bg-[#f7d8ee] flex items-center justify-center mx-auto mb-5"><Sparkles size={22} className="text-[#d46aa9]" /></div>
+            <h2 className="font-serif text-2xl text-slate-900 mb-3">Connect with {inviteOffer.name}?</h2>
+            <p className="text-sm text-slate-500 leading-relaxed mb-7">You'll each see the entries the other chooses to share. Private entries stay private. You can disconnect anytime.</p>
+            <button disabled={inviteBusy} onClick={() => answerInvite(true)} className="w-full py-4 rounded-full bg-[#f0addd] text-white font-bold hover:bg-[#e57ec3] disabled:opacity-60">Connect</button>
+            <button disabled={inviteBusy} onClick={() => answerInvite(false)} className="w-full py-3 mt-2 text-sm font-bold text-slate-400 hover:text-slate-700">Not now</button>
+          </div>
+        </div>
+      ) : null;
+
+  if (isOnboarding) return <>{inviteModal}<Onboarding onComplete={handleOnboardingComplete} /></>;
 
   return (
     <div className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in">
-      {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} />}
-      {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={entries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} />}
+      {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} partnerName={user.partnerName} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} />}
+      {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={entries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} />}
       {currentTab === 'profile' && <Profile user={user} entries={entries} streak={streak} onCircleChange={handleCircleChange} onCreateCircle={handleCreateCircle} onArchiveCircle={handleArchiveCircle} onRenameCircle={handleRenameCircle} onLogout={handleLogout} onUpdateUser={handleUpdateUser} onShowLegal={(type) => setLegalModalOpen(type)} onViewArtifact={(type) => setArtifactModalOpen(type)} onShowToast={showNotification} pendingInvites={pendingInvites} onAcceptInvite={handleAcceptInvite} onDeclineInvite={handleDeclineInvite} />}
       
       {notification && <Toast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
-      <TabBar currentTab={currentTab} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); setCurrentTab(tab); }} onCompose={() => handleCompose()} />
+      {inviteModal}
+      {belluhReply && currentTab !== 'ai-coach' && !isComposeOpen && (
+        <div className="fixed bottom-28 left-0 right-0 px-6 z-[55] flex justify-center animate-slide-up">
+          <div className="max-w-[360px] w-full bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-900/10 border border-white p-4 flex gap-3">
+            <div className="w-8 h-8 rounded-full bg-belluh-600 flex items-center justify-center text-white shrink-0"><Sparkles size={14} /></div>
+            <button className="text-left flex-1" onClick={() => { setBelluhReply(null); setCurrentTab('ai-coach'); }}>
+              <p className="text-xs font-bold text-slate-400">Belluh</p>
+              <p className="font-serif text-[15px] leading-snug text-slate-800 line-clamp-3">{belluhReply}</p>
+              <p className="text-xs font-bold text-belluh-500 mt-1.5">Reply</p>
+            </button>
+            <button aria-label="Dismiss" onClick={() => setBelluhReply(null)} className="text-slate-300 hover:text-slate-500 self-start"><X size={16} /></button>
+          </div>
+        </div>
+      )}
+      <TabBar currentTab={currentTab} badges={{ 'ai-coach': unreadNotes > 0 || newFromBelluh }} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); if (tab === 'ai-coach') { setUnreadNotes(0); setNewFromBelluh(false); setBelluhReply(null); } setCurrentTab(tab); }} onCompose={() => handleCompose()} />
       {isComposeOpen && <div className="fixed inset-0 z-[60] bg-paper animate-slide-up"><button onClick={() => setIsComposeOpen(false)} className="absolute top-6 right-6 w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 z-50 transition-colors"><X size={20} /></button><Journal onAddEntry={handleAddEntry} partnerName={user.partnerName || 'Partner'} onTriggerPremium={handleTriggerPremium} initialPrompt={composePrompt} userName={user.name} partnerHasEntry={partnerHasEntry} /></div>}
       
       {showIntro && <IntroGuide onClose={() => setShowIntro(false)} />}
