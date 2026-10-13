@@ -410,8 +410,8 @@ test('22. WhatsApp end to end: one-tap link, text a date, get the reply and the 
   assert.match(sent().at(-1).text.body, /connected/);
 
   await hook("Dan's birthday is October 20");
-  // Maya already told Belluh this date in the app (scenario 4), so WhatsApp recognizes it: one list, two ways in
-  assert.match(sent().at(-1).text.body, /Already saved: Dan's birthday \(you told me on/);
+  // Texting Belluh is talking to Belluh: the agent saves dates, and knows Maya already told it this one in the app (scenario 4)
+  assert.match(sent().at(-1).text.body, /already_saved/);
   const { data: occ } = await maya.from('occasions').select('label');
   assert.equal(occ.filter(o => o.label === "Dan's birthday").length, 1, 'no duplicate');
 
@@ -537,7 +537,7 @@ test('24. SMS works exactly like WhatsApp: one-tap link, dates, STOP/START, remi
   assert.equal(texts().length, before, 'a retried delivery is not answered twice');
   const { data: occ } = await dan.from('occasions').select('label, source').eq('source', 'sms');
   assert.equal(occ.length, 1, 'the date is saved, marked as texted');
-  assert.match(texts().at(-1).sms.Body, /Saved/i);
+  assert.match(texts().at(-1).sms.Body, /^Done\./, 'Belluh answers by text');
 
   await sms('STOP');
   assert.equal((await dan.from('whatsapp_links').select('reminders_enabled').single()).data.reminders_enabled, false);
@@ -554,4 +554,70 @@ test('24. SMS works exactly like WhatsApp: one-tap link, dates, STOP/START, remi
   assert.ok(texts().some(t => /^Belluh reminder: Tahoe weekend is in one week, .*Reply STOP to pause reminders\.$/.test(t.sms.Body)));
   // Maya, linked on WhatsApp, still gets the WhatsApp template
   assert.equal((await maya.from('whatsapp_links').select('channel').single()).data.channel, 'whatsapp');
+});
+
+test('25. Belluh itself works over WhatsApp and SMS: same thread and memory, notes, plans, weekly check-in, STOP', async () => {
+  const hook = async (text, from = '15551230000') => {
+    const body = JSON.stringify({ entry: [{ changes: [{ value: { messages: [{ from, id: 'wamid.in.' + Math.random(), timestamp: String(Math.floor(Date.now() / 1000)), type: 'text', text: { body: text } }] } }] }] });
+    const sig = 'sha256=' + crypto.createHmac('sha256', 'wa-secret').update(body).digest('hex');
+    return fetch(`${URL_}/functions/v1/whatsapp-webhook`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-hub-signature-256': sig }, body });
+  };
+  const SMS_URL = `${URL_}/functions/v1/sms-webhook`;
+  const sms = async (text, from = '+15557770000') => {
+    const params = { From: from, To: '+15550001111', Body: text, MessageSid: 'SM' + Math.random().toString(36).slice(2), NumMedia: '0' };
+    const sig = crypto.createHmac('sha1', 'tw-token').update(SMS_URL + Object.keys(params).sort().map(k => k + params[k]).join('')).digest('base64');
+    return fetch(SMS_URL, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'x-twilio-signature': sig }, body: new URLSearchParams(params) });
+  };
+  const toMaya = () => geminiRequests().filter(r => r.whatsapp?.to === '15551230000').map(r => r.whatsapp);
+  const toDan = () => geminiRequests().filter(r => r.sms?.To === '+15557770000').map(r => r.sms.Body);
+
+  // Maya (WhatsApp) talks to Belluh: the reply comes back on WhatsApp, and it's the same thread as the app
+  await hook('Please remember that Dan likes quiet mornings');
+  const last = geminiRequests().filter(r => r.body?.systemInstruction).at(-1).body;
+  assert.match(last.systemInstruction.parts[0].text, /texting you from their phone/, 'Belluh knows to keep it short');
+  assert.match(last.systemInstruction.parts[0].text, /Plans together|Dinner at the Thai place/, 'with all of its context');
+  assert.doesNotMatch(JSON.stringify(last), /DAN PRIVATE/, "Dan's private entries never reach it, on any channel");
+  assert.match(toMaya().at(-1).text.body, /^Done\./);
+  const { data: h } = await agent(maya, { action: 'history' });
+  const fromPhone = h.messages.filter(m => m.meta?.channel === 'whatsapp');
+  assert.ok(fromPhone.some(m => m.body === 'Please remember that Dan likes quiet mornings'), 'the WhatsApp message is in her app thread');
+  const { data: mem } = await maya.from('agent_memories').select('fact');
+  assert.ok(mem.length >= 1, 'memory saved from WhatsApp');
+
+  // A note: drafted on WhatsApp, sent with one word, delivered to Dan by SMS and in his app
+  await hook('Can you tell dan I miss him');
+  assert.match(toMaya().at(-1).text.body, /Note to Dan:\n"I miss you. Saturday coffee, phones away\?"\n\nReply SEND to send it, or DISCARD\./);
+  await hook('SEND');
+  assert.match(toMaya().at(-1).text.body, /Sent to Dan ✓/);
+  assert.match(toDan().at(-1), /^From Maya, via Belluh:\n"I miss you. Saturday coffee, phones away\?"/);
+  const { data: dh } = await agent(dan, { action: 'history' });
+  assert.ok(dh.messages.some(m => m.role === 'partner_note' && m.body.startsWith('I miss you')), 'and in his app');
+  await hook('SEND');
+  assert.doesNotMatch(toMaya().at(-1).text.body, /Sent to Dan/, 'nothing is sent twice');
+
+  // A plan: Maya asks on WhatsApp, Dan picks by texting "2", Maya hears back on WhatsApp
+  await hook('plan a dinner with Dan this week please');
+  assert.match(toDan().at(-1), /^Maya wants to plan "Dinner at the Thai place" with you\. Pick a time:\n1\) .*\n2\) Saturday · .*\n\nReply 1, 2, or NONE/);
+  await sms('2');
+  assert.match(toDan().at(-1), /^It's set: "Dinner at the Thai place"/);
+  assert.match(toMaya().at(-1).text.body, /^Dan picked .* for "Dinner at the Thai place"/);
+  const { data: picked } = await dan.from('plans').select('status, chosen_option').order('created_at', { ascending: false }).limit(1).single();
+  assert.deepEqual(picked, { status: 'confirmed', chosen_option: 'b' });
+  await sms('3');
+  assert.doesNotMatch(toDan().at(-1), /It's set/, 'no open plan: a number is just a message to Belluh');
+
+  // This week's thing to try, answered by text
+  await sms('did it');
+  const { data: wk } = await agent(dan, { action: 'history' });
+  assert.equal(wk.week.mine, 'done');
+
+  // STOP pauses everything Belluh starts; replies still work
+  await sms('STOP');
+  const before = toDan().length;
+  await hook('tell dan good night');
+  await hook('SEND');
+  assert.equal(toDan().length, before, 'paused means no texts to Dan');
+  const { data: dh2 } = await agent(dan, { action: 'history' });
+  assert.ok(dh2.messages.some(m => m.role === 'partner_note' && m.body.startsWith('I miss you')), 'the note still reaches his app');
+  await sms('START');
 });
