@@ -33,6 +33,16 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
   }, []);
 
   const other = partnerName || 'Partner';
+  const doneBy = (w: Week, mine: boolean) => checkins.some(c => c.action_id === w.id && c.status === 'done' && (c.user_id === me) === mine);
+  // Weeks in a row (newest first) where both of you tried it; this week doesn't break the streak while it's still going
+  const streak = (() => {
+    let n = 0;
+    for (const [i, w] of (weeks ?? []).entries()) {
+      const both = doneBy(w, true) && doneBy(w, false);
+      if (both) n++; else if (i === 0) continue; else break;
+    }
+    return n;
+  })();
   const did = (mine: boolean) => (weeks ?? []).filter(w => checkins.some(c => c.action_id === w.id && c.status === 'done' && (c.user_id === me) === mine)).length;
 
   return (
@@ -51,6 +61,28 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
           {weeks === null && <div className="h-24 rounded-2xl bg-slate-50 animate-pulse" />}
           {weeks && weeks.length === 0 && (
             <p className="text-sm text-slate-500 leading-relaxed">Every Sunday, Belluh suggests one small thing for the two of you to try, based on what you share. Your weeks will collect here.</p>
+          )}
+
+          {weeks && weeks.length > 1 && (
+            <section aria-label="Last weeks at a glance">
+              <div className="flex items-end justify-between mb-3">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">At a glance</h3>
+                {streak > 1 && <p className="text-xs font-bold text-[#831843]">{streak} weeks in a row, together</p>}
+              </div>
+              <div className="flex gap-1.5">
+                {[...weeks].slice(0, 8).reverse().map(w => (
+                  <div key={w.id} className="flex-1 min-w-0" title={`Week of ${w.week_start}: ${w.action}`}>
+                    <div className={`h-9 rounded-lg ${doneBy(w, true) ? 'bg-slate-900' : 'bg-slate-100'}`} />
+                    <div className={`h-9 rounded-lg mt-1 ${doneBy(w, false) ? 'bg-[#9bbecb]' : 'bg-slate-100'}`} />
+                    <p className="text-[9px] text-slate-400 text-center mt-1">{new Date(`${w.week_start}T12:00:00`).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-4 mt-2 text-[11px] text-slate-500">
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-slate-900" />You</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#9bbecb]" />{other}</span>
+              </div>
+            </section>
           )}
 
           {plans.length > 0 && (

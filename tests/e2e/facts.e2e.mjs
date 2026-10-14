@@ -11,7 +11,7 @@ const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push
 await p.goto(APP); await p.waitForTimeout(3000);
 await p.locator('nav button[aria-label="Me"]').click(); await p.waitForTimeout(2000);
 await p.getByText('Add date').first().click(); await p.waitForTimeout(500);
-await p.getByLabel('Anniversary').fill('2021-06-14');
+await p.getByLabel('Together since').fill('2021-06-14');
 await p.getByLabel('First Date').fill('2020-05-01');
 await p.getByRole('button', { name: /save|done/i }).first().click(); await p.waitForTimeout(2500);
 const t = await p.locator('body').innerText();

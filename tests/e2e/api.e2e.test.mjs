@@ -622,3 +622,73 @@ test('25. Belluh itself works over WhatsApp and SMS: same thread and memory, not
   assert.ok(dh2.messages.some(m => m.role === 'partner_note' && m.body.startsWith('I miss you')), 'the note still reaches his app');
   await sms('START');
 });
+
+test("26. show Belluh a photo in chat: it sees yours, never someone else's", async () => {
+  // A tiny real PNG in Maya's own private folder (the app uploads it the same way)
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+  const put = (path) => fetch(`${URL_}/storage/v1/object/journal-private/${path}`, { method: 'POST', headers: { Authorization: `Bearer ${SERVICE}`, 'content-type': 'image/png' }, body: png });
+  await put(`${MAYA}/photos/chat1.png`);
+  await put(`${DAN}/photos/dan-secret.png`);
+
+  const { data: out } = await agent(maya, { action: 'chat', message: 'What do you think of this?', photo: `sb://journal-private/${MAYA}/photos/chat1.png` });
+  assert.equal(out.messages[0].meta.photo, `sb://journal-private/${MAYA}/photos/chat1.png`, 'the photo stays on her message');
+  const sent = geminiRequests().filter(r => r.body?.contents).at(-1).body.contents;
+  const parts = sent.at(-1).parts.length ? sent.at(-1).parts : sent.at(-2).parts;
+  assert.ok(JSON.stringify(sent).includes(png.toString('base64')), 'Belluh is sent the actual image');
+
+  // A path in someone else's folder is ignored
+  await agent(maya, { action: 'chat', message: 'And this one?', photo: `sb://journal-private/${DAN}/photos/dan-secret.png` });
+  const sent2 = geminiRequests().filter(r => r.body?.contents).at(-1).body;
+  assert.ok(!JSON.stringify(sent2.contents.at(-1)).includes('inlineData'), "Dan's photo never reaches Maya's Belluh");
+  assert.ok(parts.length >= 1);
+});
+
+test('27. notifications: a browser that turned them on gets an encrypted push only it can read', async () => {
+  // Dan's browser (a key pair it keeps), subscribed to a stand-in push service
+  const ua = crypto.createECDH('prime256v1'); ua.generateKeys();
+  const authSecret = crypto.randomBytes(16);
+  const b64u = (b) => Buffer.from(b).toString('base64url');
+  const endpoint = 'http://127.0.0.1:3002/push/dan-laptop';
+  const { error } = await dan.from('push_subscriptions').insert({ user_id: DAN, endpoint, p256dh: b64u(ua.getPublicKey()), auth: b64u(authSecret) });
+  assert.ifError(error);
+  assert.ok((await maya.from('push_subscriptions').insert({ user_id: DAN, endpoint: 'http://127.0.0.1:3002/push/x', p256dh: 'A'.repeat(87), auth: 'B'.repeat(22) })).error, 'nobody can add a browser to someone else');
+  assert.equal((await maya.from('push_subscriptions').select('id')).data.length, 0, "and nobody sees anyone else's");
+  // A subscription aimed somewhere that isn't a push service is never called
+  await dan.from('push_subscriptions').insert({ user_id: DAN, endpoint: 'http://169.254.169.254/latest', p256dh: b64u(ua.getPublicKey()), auth: b64u(authSecret) });
+
+  const { data: key } = await dan.functions.invoke('belluh-push', { body: { action: 'key' } });
+  assert.equal(Buffer.from(key.publicKey, 'base64url').length, 65, 'Belluh made its own VAPID key');
+  const { data: again } = await maya.functions.invoke('belluh-push', { body: { action: 'key' } });
+  assert.equal(again.publicKey, key.publicKey, 'one key for everyone');
+  assert.equal((await anon.from('app_keys').select('*')).data?.length ?? 0, 0);
+  assert.equal((await maya.from('app_keys').select('*')).data?.length ?? 0, 0, 'the private key is never readable');
+
+  // Maya plans something: Dan's browser gets it
+  const pushes = () => geminiRequests().filter(r => r.push !== undefined);
+  const before = pushes().length;
+  await agent(maya, { action: 'chat', message: 'plan a dinner for Friday please' });
+  const p = pushes().slice(before).filter(x => x.url === '/push/dan-laptop').at(-1);
+  assert.ok(p, 'a push went to Dan');
+  assert.equal(p.headers.encoding, 'aes128gcm');
+  assert.match(p.headers.authorization, new RegExp(`^vapid t=[\\w-]+\\.[\\w-]+\\.[\\w-]+, k=${key.publicKey}$`));
+  assert.ok(!geminiRequests().some(r => (r.url ?? '').includes('169.254')), 'the fake endpoint was never called');
+
+  // Decrypt it the way Dan's browser would
+  const body = Buffer.from(p.push, 'base64');
+  const salt = body.subarray(0, 16), idlen = body[20], asPub = body.subarray(21, 21 + idlen), ct = body.subarray(21 + idlen);
+  const h = (s, k, i, n) => Buffer.from(crypto.hkdfSync('sha256', k, s, i, n));
+  const ikm = h(authSecret, ua.computeSecret(asPub), Buffer.concat([Buffer.from('WebPush: info\0'), ua.getPublicKey(), asPub]), 32);
+  const d = crypto.createDecipheriv('aes-128-gcm', h(salt, ikm, Buffer.from('Content-Encoding: aes128gcm\0'), 16), h(salt, ikm, Buffer.from('Content-Encoding: nonce\0'), 12));
+  d.setAuthTag(ct.subarray(ct.length - 16));
+  const plain = Buffer.concat([d.update(ct.subarray(0, ct.length - 16)), d.final()]);
+  const msg = JSON.parse(plain.subarray(0, plain.length - 1).toString());
+  assert.equal(msg.body, 'Maya wants to plan "Dinner at the Thai place". Tap to pick a time.');
+  assert.equal(msg.url, '/?tab=belluh');
+
+  // A browser that unsubscribed (the service answers 410) is forgotten
+  await service.from('push_subscriptions').insert({ user_id: DAN, endpoint: 'http://127.0.0.1:3002/push/gone-phone', p256dh: b64u(ua.getPublicKey()), auth: b64u(authSecret) });
+  const { data: t } = await dan.functions.invoke('belluh-push', { body: { action: 'test' } });
+  assert.equal(t.sent, 1, 'the test notification reached the working browser');
+  const { data: left } = await dan.from('push_subscriptions').select('endpoint');
+  assert.deepEqual(left.map(x => x.endpoint), [endpoint], 'dead and bogus subscriptions are cleaned up');
+});

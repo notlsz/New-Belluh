@@ -2,7 +2,7 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
 const SECRET = process.env.JWT_SECRET;
-const FN = { 'belluh-agent': 8101, 'gemini-proxy': 8102, 'belluh-weekly': 8103, 'whatsapp-webhook': 8104, 'occasion-reminders': 8105, 'belluh-calendar': 8106, 'sms-webhook': 8107 };
+const FN = { 'belluh-agent': 8101, 'gemini-proxy': 8102, 'belluh-weekly': 8103, 'whatsapp-webhook': 8104, 'occasion-reminders': 8105, 'belluh-calendar': 8106, 'sms-webhook': 8107, 'belluh-push': 8108 };
 const STORE = new Map(); // bucket/path -> { type, body }
 const NO_VERIFY_JWT = new Set(['belluh-weekly', 'whatsapp-webhook', 'occasion-reminders', 'belluh-calendar', 'sms-webhook']); // cron jobs check their own secret; the calendar feed checks its token
 const verify = (tok) => {

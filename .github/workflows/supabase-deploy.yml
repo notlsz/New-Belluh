@@ -111,6 +111,7 @@ jobs:
           supabase functions deploy belluh-agent --project-ref "$PROJECT_REF"
           supabase functions deploy belluh-weekly --project-ref "$PROJECT_REF" --no-verify-jwt
           supabase functions deploy belluh-calendar --project-ref "$PROJECT_REF" --no-verify-jwt
+          supabase functions deploy belluh-push --project-ref "$PROJECT_REF"
 
       - name: Texting Belluh (WhatsApp and SMS) and reminders
         if: steps.setup.outputs.ready == 'true'

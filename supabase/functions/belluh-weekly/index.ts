@@ -77,7 +77,7 @@ async function weekly(ctx: Ctx, ws: string) {
   const msg = await addMessage(ctx.userId, 'belluh', insight, {
     kind: 'weekly', week: ws, ...(action ? { action_id: action.id, action: action.action, why: action.why } : {}),
   });
-  if (msg) await notify(ctx.userId, action ? `${insight}\n\nThis week, together: "${action.action}"\nReply DID IT once you have.` : insight);
+  if (msg) await notify(ctx.userId, action ? `${insight}\n\nThis week, together: "${action.action}"\nReply DID IT once you have.` : insight, { title: 'Your week, from Belluh', push: insight, tag: 'weekly' });
   return msg ? 'sent' : 'already';
 }
 
@@ -89,7 +89,7 @@ async function checkin(ctx: Ctx, ws: string) {
   const msg = await addMessage(ctx.userId, 'belluh', checkinMessage(action.action, ctx.partnerName), {
     kind: 'checkin', week: ws, action_id: action.id, action: action.action,
   });
-  if (msg) await notify(ctx.userId, `${checkinMessage(action.action, ctx.partnerName)}\nReply DID IT, NOT YET or SKIP.`);
+  if (msg) await notify(ctx.userId, `${checkinMessage(action.action, ctx.partnerName)}\nReply DID IT, NOT YET or SKIP.`, { push: checkinMessage(action.action, ctx.partnerName), tag: 'checkin' });
   return msg ? 'sent' : 'already';
 }
 
@@ -111,7 +111,7 @@ async function reminders(ctx: Ctx, local: ReturnType<typeof localDateParts>): Pr
     const body = stage === 'day_of'
       ? `${label} is today. You first told me about it on ${told}. Want a hand with something small for it?`
       : `${label} is ${when}, ${date}. You first told me about it on ${told}. Want a few ideas?`;
-    if (await addMessage(ctx.userId, 'belluh', body, { kind: 'reminder', week: key, occasion_id: o.id })) sent++;
+    if (await addMessage(ctx.userId, 'belluh', body, { kind: 'reminder', week: key, occasion_id: o.id })) { sent++; await notify(ctx.userId, body, { pushOnly: true, tag: 'reminder' }); }
   }
   return sent;
 }

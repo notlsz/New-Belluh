@@ -5,7 +5,8 @@ import { chatWithBelluh, generateDailyReflection, getRelationshipArchetype, soft
 import { belluhAgent, AgentMessage, WeekView } from '../services/belluhAgent';
 import WeeklyCard from '../components/WeeklyCard';
 import PlanCard from '../components/PlanCard';
-import { Sparkles, Wand2, Activity, ArrowUp, Heart, Check, X, Brain, Trash2 } from 'lucide-react';
+import { Sparkles, Wand2, Activity, ArrowUp, Heart, Check, X, Brain, Trash2, ImagePlus } from 'lucide-react';
+import { uploadPrivate, resolveMedia } from '../services/media';
 import { supabase } from '../lib/supabaseClient';
 import { trackEvent } from '../services/analytics';
 
@@ -18,6 +19,18 @@ interface AICoachProps {
   initialMessage?: string | null;
   onInitialMessageSent?: () => void;
 }
+
+/** A new reply appears word by word, quickly, so it reads like Belluh is talking rather than a block landing. */
+const Reveal: React.FC<{ text: string; onTick?: () => void }> = ({ text, onTick }) => {
+  const words = text.split(/(\s+)/);
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (n >= words.length) return;
+    const t = setTimeout(() => { setN(x => Math.min(words.length, x + 3)); onTick?.(); }, 28);
+    return () => clearTimeout(t);
+  }, [n, words.length]);
+  return <>{words.slice(0, n).join('')}{n < words.length && <span className="inline-block w-1.5 h-4 align-middle ml-0.5 bg-belluh-300/70 animate-pulse rounded-sm" />}</>;
+};
 
 const firstName = (n?: string) => (n ?? '').trim().split(/\s+/)[0] || '';
 
@@ -103,6 +116,11 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isTyping, setIsTyping] = useState(false);
+  // A photo to send with the next message (Belluh looks at it), and links for photos already in the thread
+  const [photo, setPhoto] = useState<{ file: File; preview: string } | null>(null);
+  const photoInput = useRef<HTMLInputElement>(null);
+  const [photoLinks, setPhotoLinks] = useState<Map<string, string>>(new Map());
+  const [revealIds, setRevealIds] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Prefer the agent; fall back to the original chat if it isn't available. Runs once per visit to the tab.
@@ -168,12 +186,19 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
     return Math.max(-1, -0.2 * count);
   };
 
-  const sendAgent = async (text: string) => {
+  const sendAgent = async (text: string, attached: { file: File; preview: string } | null = null) => {
     const mediate = isConflictMode;
-    const temp: AgentMessage = { id: `tmp-${Date.now()}`, role: 'user', body: text, meta: {}, created_at: new Date().toISOString() };
+    const temp: AgentMessage = { id: `tmp-${Date.now()}`, role: 'user', body: text, meta: attached ? { photo_preview: attached.preview } : {}, created_at: new Date().toISOString() };
     setAgentMessages(prev => [...prev, temp]);
-    trackEvent(mediate ? 'conflict_mode_used' : 'chat_message_sent', { agent: true });
-    const res = await belluhAgent.chat(text, mediate ? 'mediate' : 'chat');
+    trackEvent(mediate ? 'conflict_mode_used' : 'chat_message_sent', { agent: true, photo: !!attached });
+    let ref: string | null = null;
+    if (attached) {
+      const ext = (attached.file.name.split('.').pop() || 'jpg').toLowerCase();
+      ref = await uploadPrivate('photos', attached.file, ext, attached.file.type || 'image/jpeg');
+      if (ref) setPhotoLinks(prev => new Map(prev).set(ref!, attached.preview));
+    }
+    const res = await belluhAgent.chat(text, mediate ? 'mediate' : 'chat', ref);
+    if (res?.messages?.length) setRevealIds(prev => { const n = new Set(prev); res.messages.forEach(m => { if (m.role === 'belluh') n.add(m.id); }); return n; });
     setAgentMessages(prev => {
       const rest = prev.filter(m => m.id !== temp.id);
       if (res?.messages?.length) return [...rest, ...res.messages];
@@ -213,14 +238,22 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
   sendLegacyRef.current = sendLegacy;
 
   const handleSendMessage = async () => {
-    if (!chatInput.trim() || isTyping) return;
+    if ((!chatInput.trim() && !photo) || isTyping) return;
     const text = chatInput;
-    setChatInput('');
+    const attached = photo;
+    setChatInput(''); setPhoto(null);
     setIsTyping(true);
     try {
-      if (mode === 'agent') await sendAgent(text); else await sendLegacy(text);
+      if (mode === 'agent') await sendAgent(text, attached); else await sendLegacy(text);
     } finally { setIsTyping(false); }
   };
+
+  // Photos already in the thread get short-lived links
+  useEffect(() => {
+    const refs = agentMessages.map(m => m.meta?.photo).filter((r: unknown): r is string => typeof r === 'string' && !photoLinks.has(r));
+    if (!refs.length) return;
+    resolveMedia(refs).then(found => { if (found.size) setPhotoLinks(prev => new Map([...prev, ...found])); });
+  }, [agentMessages]);
 
   const handleSendNote = async (id: string, text: string) => {
     const ok = await belluhAgent.sendNote(id, text);
@@ -318,7 +351,10 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                  if (msg.role === 'user') return (
                    <div key={msg.id} className="group animate-slide-up flex justify-end">
                      <div className={`max-w-[85%] md:max-w-[80%] rounded-3xl p-5 md:p-6 text-[16px] leading-relaxed ${msg.meta?.mode === 'mediate' ? 'bg-rose-50 text-slate-800' : 'bg-slate-100 text-slate-800'}`}>
-                       <p className="font-medium whitespace-pre-wrap">{msg.body}</p>
+                       {(msg.meta?.photo_preview || (msg.meta?.photo && photoLinks.get(msg.meta.photo))) && (
+                         <img src={msg.meta.photo_preview || photoLinks.get(msg.meta.photo)} alt="Your photo" className="mb-2 max-h-64 w-auto rounded-2xl object-cover" />
+                       )}
+                       {!(msg.meta?.photo || msg.meta?.photo_preview) || msg.body !== '(sent a photo)' ? <p className="font-medium whitespace-pre-wrap">{msg.body}</p> : null}
                        {(msg.meta as any)?.channel && <p className="mt-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">via {(msg.meta as any).channel === 'sms' ? 'text' : 'WhatsApp'}</p>}
                      </div>
                    </div>
@@ -329,7 +365,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                      <div className="max-w-[85%] md:max-w-[80%]">
                        {msg.meta?.entry_id && <p className="text-xs font-bold text-slate-300 mb-1">About your latest entry</p>}
                        {msg.meta?.kind === 'weekly' && <p className="text-xs font-bold text-slate-300 mb-1">Your week, from Belluh</p>}
-                       <p className="font-serif text-lg leading-relaxed text-slate-900 whitespace-pre-wrap">{msg.body}</p>
+                       <p className="font-serif text-lg leading-relaxed text-slate-900 whitespace-pre-wrap">{revealIds.has(msg.id) ? <Reveal text={msg.body} onTick={() => messagesEndRef.current?.scrollIntoView({ block: 'end' })} /> : msg.body}</p>
                        {Array.isArray(msg.meta?.saved) && msg.meta.saved.length > 0 && (
                          <button onClick={openMemories} className="mt-2 flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-700 text-left">
                            <Brain size={12} /> Saved to memory: {msg.meta.saved.join(' · ')}
@@ -378,6 +414,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                             <span className="w-1.5 h-1.5 bg-belluh-300 rounded-full animate-bounce"></span>
                             <span className="w-1.5 h-1.5 bg-belluh-300 rounded-full animate-bounce" style={{animationDelay: '0.15s'}}></span>
                             <span className="w-1.5 h-1.5 bg-belluh-300 rounded-full animate-bounce" style={{animationDelay: '0.3s'}}></span>
+                            <span className="ml-2 text-xs font-bold text-slate-300">{agentMessages[agentMessages.length - 1]?.meta?.photo_preview ? 'Looking at your photo' : isConflictMode ? 'Finding the words' : 'Thinking'}</span>
                         </div>
                     </div>
                 )}
@@ -405,6 +442,13 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                     </button>
                 </div>
 
+                {photo && (
+                    <div className="mb-2 ml-2 relative inline-block">
+                        <img src={photo.preview} alt="Photo to send" className="h-20 w-20 object-cover rounded-2xl border border-slate-100 shadow-sm" />
+                        <button aria-label="Remove photo" onClick={() => setPhoto(null)} className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center"><X size={12} /></button>
+                    </div>
+                )}
+                <input ref={photoInput} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) setPhoto({ file: f, preview: URL.createObjectURL(f) }); e.target.value = ''; }} />
                 <div className={`w-full relative rounded-[2rem] shadow-2xl transition-all duration-300 border flex items-center p-2 pr-3 min-h-[64px] bg-white ${isConflictMode ? 'shadow-rose-100/50 border-rose-100' : 'shadow-slate-200/50 border-slate-200 focus-within:shadow-belluh-200/60 focus-within:border-belluh-200'}`}>
                     <textarea
                         value={chatInput}
@@ -415,10 +459,17 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                         rows={1}
                         style={{ overflow: 'hidden' }}
                     />
+                    {mode === 'agent' && (
+                        <button aria-label="Add a photo" title="Show Belluh a photo" onClick={() => photoInput.current?.click()} disabled={isTyping}
+                            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-slate-400 hover:text-belluh-600 hover:bg-belluh-50 transition-colors">
+                            <ImagePlus size={19} />
+                        </button>
+                    )}
                     <button
+                        aria-label="Send"
                         onClick={handleSendMessage}
-                        disabled={!chatInput.trim() || isTyping}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 ml-2 ${chatInput.trim() ? 'bg-belluh-600 text-white hover:bg-belluh-700 active:scale-95' : 'bg-slate-100 text-slate-300'}`}
+                        disabled={(!chatInput.trim() && !photo) || isTyping}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 ml-2 ${chatInput.trim() || photo ? 'bg-belluh-600 text-white hover:bg-belluh-700 active:scale-95' : 'bg-slate-100 text-slate-300'}`}
                     >
                         <ArrowUp size={20} strokeWidth={2.5} />
                     </button>
