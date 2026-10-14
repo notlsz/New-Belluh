@@ -212,7 +212,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
              </h1>
              
              <p className="text-xl md:text-2xl text-slate-500 font-light leading-relaxed max-w-2xl mx-auto mb-8">
-                 You each write a few lines a day. Belluh remembers what matters, plans the date, reminds you both, and every Sunday tells you one thing to try together.
+                 Write a few lines a day. Belluh remembers, plans, and reminds you both.
              </p>
 
              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
