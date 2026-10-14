@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, ArrowRight, Activity, TrendingUp, Lock, Menu, X, Heart } from 'lucide-react';
 import { rememberCta } from '../services/analytics';
+import { ORGANIZATIONS } from '../constants';
 
-// What Belluh connects to, shown in the scrolling strip
-const ORGANIZATIONS = [
+// What Belluh connects to, shown in the second scrolling strip
+const INTEGRATIONS = [
   { name: 'WhatsApp', domain: 'whatsapp.com' },
   { name: 'Google Calendar', domain: 'calendar.google.com' },
   { name: 'Apple iCloud', domain: 'icloud.com' },
@@ -21,7 +22,7 @@ interface LandingPageProps {
   onGoToCareers: () => void;
 }
 
-const LogoItem = ({ org }: { org: typeof ORGANIZATIONS[0] }) => {
+const LogoItem = ({ org }: { org: { name: string; domain: string } }) => {
   const [error, setError] = useState(false);
 
   if (error) {
@@ -42,11 +43,11 @@ const LogoItem = ({ org }: { org: typeof ORGANIZATIONS[0] }) => {
   );
 };
 
-const LogoMarquee = () => (
+const LogoMarquee = ({ title, orgs, note, repeat = 2 }: { title: string; orgs: { name: string; domain: string }[]; note: string; repeat?: number }) => (
   <div className="w-full py-20 overflow-hidden relative z-20 bg-[#F8FDFF]/80 backdrop-blur-md border-y border-[#CDE9F2]">
     <div className="text-center mb-10 px-4">
       <span className="text-[10px] md:text-xs font-bold text-slate-400 tracking-[0.2em] md:tracking-[0.3em] uppercase md:border-b md:border-[#CDE9F2] md:pb-3">
-        Works with
+        {title}
       </span>
     </div>
     
@@ -54,7 +55,7 @@ const LogoMarquee = () => (
       <div className="absolute inset-y-0 left-0 w-24 md:w-32 bg-gradient-to-r from-[#F8FDFF] z-10" />
       <div className="absolute inset-y-0 right-0 w-24 md:w-32 bg-gradient-to-l from-[#F8FDFF] z-10" />
       <div className="flex animate-marquee items-center w-max group-hover:[animation-play-state:paused]">
-        {[...ORGANIZATIONS, ...ORGANIZATIONS, ...ORGANIZATIONS, ...ORGANIZATIONS, ...ORGANIZATIONS, ...ORGANIZATIONS].map((org, i) => (
+        {Array.from({ length: repeat }, () => orgs).flat().map((org, i) => (
           <div key={i} className="mx-8 md:mx-12 shrink-0 flex items-center justify-center h-16 w-32">
              <LogoItem org={org} />
           </div>
@@ -64,7 +65,7 @@ const LogoMarquee = () => (
 
     <div className="text-center mt-8">
       <span className="text-[10px] text-slate-300 font-medium tracking-wide uppercase">
-        * Trademarks belong to their owners.
+        {note}
       </span>
     </div>
   </div>
@@ -232,8 +233,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
          </div>
       </section>
 
+      {/* Where Belluh's couples are */}
+      <LogoMarquee title="Used by couples at" orgs={ORGANIZATIONS} note="* Used independently by individuals. Not affiliated with these organizations." />
+
       {/* Visual Demo Section */}
-      <section id="example" className="relative z-10 px-6 pb-28 scroll-mt-24">
+      <section id="example" className="relative z-10 px-6 pt-16 pb-28 scroll-mt-24">
           <div className="max-w-7xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                   
@@ -304,7 +308,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       </section>
 
       {/* Marquee Section */}
-      <LogoMarquee />
+      <LogoMarquee title="Works with" orgs={INTEGRATIONS} note="* Trademarks belong to their owners." repeat={6} />
 
       {/* Visual Demo Section - Apple Style Immersive Cards */}
       <section id="features" className="relative z-10 py-32 px-6 bg-slate-50/50">
