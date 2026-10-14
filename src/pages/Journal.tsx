@@ -23,7 +23,7 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
   const todaysQuestion = questionForDay(DAILY_PROMPTS);
   const [dailyPrompt, setDailyPrompt] = useState<string | null>(initialPrompt || null);
   const [isPrivate, setIsPrivate] = useState(false);
-  const [step, setStep] = useState<'write' | 'mood' | 'success'>('write');
+  const [step, setStep] = useState<'write' | 'success'>('write');
   
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -38,10 +38,6 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleNext = () => {
-      if(content.trim() || hasImage || audioUrl) setStep('mood');
-  }
 
   const startRecording = async () => {
     try {
@@ -257,41 +253,36 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
                     autoFocus
                     disabled={isTranscribing}
                 />
-                <div className="mt-auto pt-6 flex items-center justify-between">
-                    <div className="flex gap-2">
-                         <button onClick={handleMicClick} disabled={isBusy} className={`h-12 px-5 rounded-full flex items-center gap-2 transition-all ${isRecording ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-500'}`}>
-                            {isRecording ? <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" /> : (isTranscribing ? <Loader2 size={18} className="animate-spin" /> : <Mic size={18} />)}
-                        </button>
-                        {!isRecording && !isBusy && <button onClick={handleImageClick} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${hasImage ? 'bg-belluh-50 text-belluh-600' : 'bg-slate-50 text-slate-500'}`}><ImageIcon size={18} /></button>}
+                {/* One step: mood is optional, sharing is one tap, Save is right here */}
+                <div className="mt-auto pt-4">
+                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-3 -mx-1 px-1" role="group" aria-label="How does it feel? Optional">
+                        {Object.values(Mood).map((m) => (
+                            <button key={m} type="button" aria-label={m} aria-pressed={selectedMood === m} title={m}
+                                onClick={() => setSelectedMood(selectedMood === m ? undefined : m)}
+                                className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xl transition-all ${selectedMood === m ? 'bg-white shadow-apple ring-2 ring-belluh-300 scale-110' : 'bg-slate-50 opacity-70 hover:opacity-100'}`}>
+                                {MOOD_EMOJIS[m]}
+                            </button>
+                        ))}
                     </div>
-                    {(content.trim() || hasImage || audioUrl) && !isRecording && !isBusy && (
-                        <button onClick={handleNext} className="h-12 px-8 bg-slate-900 text-white rounded-full font-bold text-sm flex items-center gap-2">
-                            <span>Next</span> <Send size={14} />
-                        </button>
-                    )}
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex gap-1.5 items-center min-w-0">
+                            <button onClick={handleMicClick} disabled={isBusy} aria-label={isRecording ? 'Stop recording' : 'Record a voice note'} className={`h-11 w-11 shrink-0 rounded-full flex items-center justify-center transition-all ${isRecording ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-500'}`}>
+                                {isRecording ? <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" /> : (isTranscribing ? <Loader2 size={18} className="animate-spin" /> : <Mic size={18} />)}
+                            </button>
+                            {!isRecording && !isBusy && <button onClick={handleImageClick} aria-label="Add a photo" className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all ${hasImage ? 'bg-belluh-50 text-belluh-600' : 'bg-slate-50 text-slate-500'}`}><ImageIcon size={18} /></button>}
+                            <button type="button" onClick={() => setIsPrivate(!isPrivate)} aria-pressed={isPrivate}
+                                className={`h-11 px-3.5 shrink-0 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all ${isPrivate ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-500'}`}>
+                                {isPrivate ? <><Lock size={13} /> Just me</> : <><Globe size={13} /> Shared</>}
+                            </button>
+                        </div>
+                        {(content.trim() || hasImage || audioUrl) && !isRecording && !isBusy && (
+                            <button onClick={handleFinalSubmit} disabled={isSaving} aria-label="Save to Story" className="h-11 px-5 bg-slate-900 text-white rounded-full font-bold text-sm flex items-center gap-2 shrink-0 disabled:opacity-60">
+                                <span>{isSaving ? 'Saving…' : <><span className="sm:hidden">Save</span><span className="hidden sm:inline">Save to Story</span></>}</span> <Send size={14} />
+                            </button>
+                        )}
+                    </div>
+                    <p className="mt-2 text-[11px] text-slate-400">{isPrivate ? `Only you can see this. Belluh never shows it to ${partnerName || 'your partner'}.` : `${partnerName || 'Your partner'} will see this.`}</p>
                 </div>
-            </div>
-            <div className={`transition-all duration-500 flex flex-col h-full ${step === 'mood' ? 'opacity-100 scale-100 z-10' : 'opacity-0 translate-x-10 pointer-events-none absolute inset-0'}`}>
-                 <div className="flex justify-between items-center mb-10">
-                    <h3 className="text-slate-800 font-serif text-2xl">How did this feel?</h3>
-                    <button onClick={() => setStep('write')} className="text-xs font-bold text-slate-400 uppercase tracking-widest">Back</button>
-                 </div>
-                 <div className="grid grid-cols-4 gap-4 mb-auto">
-                    {Object.values(Mood).map((m) => (
-                        <button key={m} onClick={() => setSelectedMood(m)} className={`aspect-square rounded-2xl flex flex-col items-center justify-center transition-all ${selectedMood === m ? 'bg-white shadow-apple ring-2 ring-belluh-300' : 'bg-slate-50/50'}`}>
-                        <span className="text-3xl">{MOOD_EMOJIS[m]}</span>
-                        </button>
-                    ))}
-                 </div>
-                 <div className="space-y-4 mb-8">
-                     <div className="bg-slate-50 p-1.5 rounded-xl flex">
-                         <button onClick={() => setIsPrivate(false)} className={`flex-1 py-3 rounded-lg text-xs font-bold uppercase transition-all ${!isPrivate ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400'}`}><Globe size={14} className="inline mr-2" />Share</button>
-                         <button onClick={() => setIsPrivate(true)} className={`flex-1 py-3 rounded-lg text-xs font-bold uppercase transition-all ${isPrivate ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400'}`}><Lock size={14} className="inline mr-2" />Private</button>
-                     </div>
-                 </div>
-                 <button onClick={handleFinalSubmit} disabled={!selectedMood} className={`w-full py-4 rounded-full font-bold text-sm shadow-xl flex items-center justify-center gap-2 ${selectedMood ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-300'}`}>
-                    <span>Save to Story</span> <Send size={16} />
-                 </button>
             </div>
         </div>
       )}

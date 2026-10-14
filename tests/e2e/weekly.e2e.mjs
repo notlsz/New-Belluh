@@ -17,6 +17,13 @@ const open = async (sub, email) => {
   await p.goto(APP); await p.waitForTimeout(3500); return { p, errs };
 };
 const MAYA = '11111111-1111-1111-1111-111111111111', DAN = '22222222-2222-2222-2222-222222222222';
+// Start from "nobody has answered this week" (other suites may have checked in already)
+{
+  const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const h = b64({ alg: 'HS256', typ: 'JWT' }), p = b64({ role: 'service_role', exp: Math.floor(Date.now() / 1000) + 600 });
+  const svc = `${h}.${p}.${crypto.createHmac('sha256', SECRET).update(`${h}.${p}`).digest('base64url')}`;
+  await fetch('http://127.0.0.1:3000/rest/v1/weekly_checkins?user_id=in.(' + MAYA + ',' + DAN + ')', { method: 'DELETE', headers: { apikey: svc, authorization: `Bearer ${svc}` } });
+}
 {
   const { p, errs } = await open(DAN, 'dan@test.com');
   const card = p.getByText('This week, together').first();

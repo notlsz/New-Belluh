@@ -58,7 +58,7 @@ await fetch(`${API}/functions/v1/belluh-agent`, { method: 'POST', headers: { 'co
   const t5 = await p.locator('body').innerText();
   check('Me shows "shared this month", no made-up Synergy', /shared this month/.test(t5) && !/Synergy|Resonance/.test(t5));
   check('Unset dates say "Add date", not "Today"', t5.includes('Add date') && !/\bToday\b/.test(t5.split('First Met')[1] ?? ''));
-  await p.getByText('Dates, WhatsApp & calendar').click(); await p.waitForTimeout(2000);
+  await p.getByText('Texting, notifications & calendar').click(); await p.waitForTimeout(2000);
   await p.getByRole('button', { name: /Add to my calendar/ }).scrollIntoViewIfNeeded();
   await p.getByRole('button', { name: /Add to my calendar/ }).click(); await p.waitForTimeout(1500);
   const webcal = await p.locator('a', { hasText: 'Apple Calendar' }).getAttribute('href').catch(() => null);

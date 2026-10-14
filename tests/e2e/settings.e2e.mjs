@@ -13,8 +13,8 @@ const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push
 await p.goto(APP); await p.waitForTimeout(3000);
 await p.locator('nav button[aria-label="Me"]').click(); await p.waitForTimeout(2000);
 const me = await p.locator('body').innerText();
-check('Me page points to Settings for dates, WhatsApp & calendar', me.includes('Dates, WhatsApp & calendar') && !me.includes('Your calendar'));
-await p.getByText('Dates, WhatsApp & calendar').click(); await p.waitForTimeout(2500);
+check('Me page points to Settings for dates, WhatsApp & calendar', me.includes('Texting, notifications & calendar') && !me.includes('Your calendar'));
+await p.getByText('Texting, notifications & calendar').click(); await p.waitForTimeout(2500);
 const t = await p.locator('body').innerText();
 check('Settings has WhatsApp, text and calendar', t.includes('Connect WhatsApp') && t.includes('Connect by text') && t.includes('Add to my calendar'));
 await p.screenshot({ path: `${OUT}/settings.png` });

@@ -19,6 +19,7 @@ Do these in order.
    - `supabase/migrations/20261013010000_belluh_reminders.sql`
    - `supabase/migrations/20261013020000_plans_calendar.sql`
    - `supabase/migrations/20261013030000_sms_channel.sql`
+   - `supabase/migrations/20261014000000_web_push.sql`
 
    The last one replaces the access rules on `journal_entries` and `partner_connections`, adds one-time invite links, and creates the private `journal-private` storage bucket.
 
@@ -30,6 +31,7 @@ Do these in order.
    supabase functions deploy belluh-agent
    supabase functions deploy belluh-weekly --no-verify-jwt
    supabase functions deploy belluh-calendar --no-verify-jwt      # calendar apps can't sign in; the link's token is the key
+   supabase functions deploy belluh-push                          # notifications; makes its own VAPID keys on first use
    supabase functions deploy whatsapp-webhook --no-verify-jwt     # when WhatsApp is ready
    supabase functions deploy occasion-reminders --no-verify-jwt   # when WhatsApp or SMS is ready
    supabase functions deploy sms-webhook --no-verify-jwt          # when SMS (Twilio) is ready

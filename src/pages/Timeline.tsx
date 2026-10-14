@@ -37,6 +37,16 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
   const [isCircleMenuOpen, setIsCircleMenuOpen] = useState(false);
   // Same question for both of you today
   const [todaysPrompt] = useState(() => questionForDay(DAILY_PROMPTS));
+  // Home stays fresh: coming back to the app (or a new Belluh message) reloads the week, plans and Belluh's latest word
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const bump = () => { if (document.visibilityState !== 'hidden') setTick(t => t + 1); };
+    window.addEventListener('focus', bump);
+    document.addEventListener('visibilitychange', bump);
+    window.addEventListener('belluh:refresh', bump);
+    const iv = setInterval(bump, 120000);
+    return () => { window.removeEventListener('focus', bump); document.removeEventListener('visibilitychange', bump); window.removeEventListener('belluh:refresh', bump); clearInterval(iv); };
+  }, []);
   // This week's one thing to try together (from Belluh's Sunday message)
   const [week, setWeek] = useState<WeekView | null>(null);
   useEffect(() => {
@@ -44,7 +54,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
     const first = (partnerName || '').trim().split(/\s+/)[0] || null;
     belluhAgent.thisWeek(currentUserId, first).then(w => { if (!cancelled) setWeek(w); }).catch(() => {});
     return () => { cancelled = true; };
-  }, [currentUserId, partnerName]);
+  }, [currentUserId, partnerName, tick]);
   const today = new Date();
   const myAnswer = entries.find(e => e.userId === currentUserId && e.prompt === todaysPrompt && isSameDay(e.timestamp, today));
   const partnerAnswer = entries.find(e => e.userId !== currentUserId && !e.isPrivate && e.prompt === todaysPrompt && isSameDay(e.timestamp, today));
@@ -71,13 +81,13 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
   // one-off forecast and pattern cards, so there is one Belluh with one memory.
   const [belluhLive, setBelluhLive] = useState<boolean | null>(null);
   const [homePlans, setHomePlans] = useState<{ id: string }[]>([]);
-  useEffect(() => { belluhAgent.homePlans().then(setHomePlans).catch(() => {}); }, [currentUserId]);
+  useEffect(() => { belluhAgent.homePlans().then(setHomePlans).catch(() => {}); }, [currentUserId, tick]);
   const [latest, setLatest] = useState<AgentMessage | null>(null);
   useEffect(() => {
     let cancelled = false;
     belluhAgent.latest().then(r => { if (!cancelled) { setBelluhLive(r.live); setLatest(r.message); } }).catch(() => setBelluhLive(false));
     return () => { cancelled = true; };
-  }, [currentUserId, week?.id, week?.mine]);
+  }, [currentUserId, week?.id, week?.mine, tick]);
 
   // Run pattern detection when entries change (only before Belluh is live)
   useEffect(() => {
@@ -343,16 +353,18 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                      <button
                         onClick={() => setShowPatterns(!showPatterns)}
                         className={`w-12 h-12 rounded-full border border-slate-100 flex items-center justify-center transition-all group shadow-sm ${showPatterns ? 'bg-belluh-50 text-belluh-500 border-belluh-100' : 'bg-white text-slate-400 hover:text-slate-600'}`}
-                        title={showPatterns ? "Hide patterns" : "Show patterns"}
+                        title={showPatterns ? "Hide Belluh's cards" : "Show Belluh's cards"} aria-label={showPatterns ? "Hide Belluh's cards" : "Show Belluh's cards"} aria-pressed={!showPatterns}
                      >
                         {showPatterns ? <Eye size={20} strokeWidth={1.5} /> : <EyeOff size={20} strokeWidth={1.5} />}
                      </button>
                      {!isConstellation && (
                          <button 
                             onClick={() => { setShowWeeklyReport(true); trackEvent('weekly_report_opened'); }}
-                            className="w-12 h-12 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-belluh-500 hover:border-belluh-200 shadow-sm transition-all group"
+                            aria-label="Our weeks" title="Our weeks"
+                            className="h-12 min-w-[3rem] px-3.5 rounded-full bg-white border border-slate-100 flex items-center justify-center gap-2 text-slate-400 hover:text-belluh-500 hover:border-belluh-200 shadow-sm transition-all group"
                          >
                             <BookOpen size={20} strokeWidth={1.5} className="group-hover:scale-110 transition-transform"/>
+                            <span className="hidden md:inline text-xs font-bold text-slate-500">Our weeks</span>
                          </button>
                      )}
                 </div>
@@ -407,13 +419,21 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
              </form>
 
              {/* Search Result Display */}
-             {searchAnswer && <div className="mt-4 animate-slide-up bg-white rounded-3xl p-8 shadow-2xl border border-slate-50 relative overflow-hidden"><div className="absolute top-0 left-0 w-1.5 h-full bg-belluh-300"></div><p className="text-slate-800 font-serif leading-loose text-lg">{searchAnswer}</p></div>}
+             {searchAnswer && <div className="mt-4 animate-slide-up bg-white rounded-3xl p-8 shadow-2xl border border-slate-50 relative overflow-hidden"><div className="absolute top-0 left-0 w-1.5 h-full bg-belluh-300"></div><p className="text-slate-800 font-serif leading-relaxed text-lg">{searchAnswer}</p></div>}
           </div>
        </div>
 
        <div className="relative min-h-[400px]">
           {/* Timeline Stem */}
           <div className="absolute left-14 md:left-20 top-0 bottom-0 w-px bg-slate-100"></div>
+
+          {/* Today: what needs you now, before the story */}
+          {!isArchived && !isConstellation && (
+              <div className="relative pl-20 md:pl-24 pr-6 mb-5 flex items-center gap-3">
+                  <span className="text-[10px] font-bold text-belluh-400 uppercase tracking-widest">Today</span>
+                  <div className="h-px bg-slate-100 flex-1"></div>
+              </div>
+          )}
 
           {/* Plans: one waiting for you to pick a time, or one coming up */}
           {homePlans.length > 0 && !isArchived && !isConstellation && (
@@ -437,7 +457,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                   <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-belluh-300 border-[2px] border-[#fcfcfc] rounded-full z-10 shadow-glow -translate-x-[3.5px]"></div>
 
                   {!myAnswer ? (
-                  <button onClick={() => { trackEvent('daily_question_opened', { partner_answered: !!partnerAnswer }); onCompose(todaysPrompt); }} className="w-full text-left group max-w-xl">
+                  <button onClick={() => { trackEvent('daily_question_opened', { partner_answered: !!partnerAnswer }); onCompose(todaysPrompt); }} className="w-full text-left group">
                       <div className="bg-white border border-slate-100 shadow-sm hover:shadow-lg rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden group-hover:border-belluh-100 group-hover:-translate-y-1">
                           <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity"><PenLine size={80} className="rotate-12" /></div>
                           <div className="relative z-10">
@@ -465,7 +485,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                       </div>
                   </button>
                   ) : (
-                  <div className="w-full max-w-xl bg-white border border-slate-100 shadow-sm rounded-[2rem] p-8">
+                  <div className="w-full bg-white border border-slate-100 shadow-sm rounded-[2rem] p-8">
                       <div className="flex items-center gap-2 mb-4">
                           <span className="bg-belluh-50 text-belluh-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Today's Question</span>
                       </div>
@@ -517,7 +537,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                         
                         <div 
                             onClick={() => setSelectedPattern(pattern)}
-                            className={`max-w-xl w-full rounded-[2rem] p-8 shadow-xl relative overflow-hidden group cursor-pointer hover:scale-[1.01] transition-transform ${isSpiral ? 'bg-[#CDE9F2] text-cyan-950' : 'bg-white border border-belluh-100'}`}
+                            className={`w-full rounded-[2rem] p-8 shadow-xl relative overflow-hidden group cursor-pointer hover:scale-[1.01] transition-transform ${isSpiral ? 'bg-[#CDE9F2] text-cyan-950' : 'bg-white border border-belluh-100'}`}
                         >
                              {/* Abstract Background Art */}
                              {isSpiral && (
@@ -570,7 +590,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
               return (
                   <div key={entry.id} className="relative pl-20 md:pl-24 pr-6 group transition-[padding] duration-300" style={{ animationDelay: `${index * 50}ms` }}>
                     <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-white border-[2px] border-slate-200 rounded-full z-10 shadow-sm group-hover:border-belluh-300 group-hover:scale-110 transition-all duration-300 ring-4 ring-[#fcfcfc] -translate-x-[3.5px]"></div>
-                    <div className="max-w-xl w-full">
+                    <div className="w-full">
                         <EntryCard 
                             entry={entry} 
                             isCurrentUser={entry.userId === currentUserId} 

@@ -40,7 +40,7 @@ const WeeklyCard: React.FC<{
   // Once you've answered, the card folds down to one line so it stays out of the way
   if ((week.mine === 'done' || week.mine === 'skipped') && !editing) {
     return (
-      <div className="w-full max-w-xl rounded-[2rem] border border-[#CDE9F2] bg-[#CDE9F2]/20 px-5 py-4 flex items-center gap-3">
+      <div className="w-full rounded-[2rem] border border-[#CDE9F2] bg-[#CDE9F2]/20 px-5 py-4 flex items-center gap-3">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${week.mine === 'done' ? 'bg-slate-900 text-white' : 'bg-white text-slate-300 border border-slate-200'}`}>
           <Check size={14} />
         </div>
@@ -54,14 +54,14 @@ const WeeklyCard: React.FC<{
   }
 
   return (
-    <div className={`w-full max-w-xl rounded-[2rem] border border-[#CDE9F2] bg-gradient-to-br from-white to-[#CDE9F2]/30 ${compact ? 'p-5' : 'p-7'} shadow-sm`}>
+    <div className={`w-full rounded-[2rem] border border-[#CDE9F2] bg-gradient-to-br from-white to-[#CDE9F2]/30 ${compact ? 'p-5' : 'p-5 md:p-7'} shadow-sm`}>
       <span className="bg-[#CDE9F2]/70 text-[#3d6b7b] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
         {week.partner_name ? 'This week, together' : 'This week'}
       </span>
       <h3 className={`font-serif text-slate-800 leading-snug mt-4 ${compact ? 'text-lg' : 'text-xl md:text-2xl'}`}>{week.action}</h3>
       {week.why && <p className="text-sm text-slate-500 leading-relaxed mt-2">{week.why}</p>}
 
-      <div className="mt-5 flex flex-wrap items-center gap-1.5">
+      <div className="mt-5 flex flex-wrap items-center gap-1">
         {OPTIONS.map(o => {
           const on = week.mine === o.status;
           return (
@@ -70,7 +70,7 @@ const WeeklyCard: React.FC<{
               disabled={!!busy}
               onClick={() => answer(o.status)}
               aria-pressed={on}
-              className={`px-3.5 py-2 rounded-full text-sm font-bold transition-colors flex items-center gap-1.5 disabled:opacity-60 ${
+              className={`px-3 py-2 rounded-full text-sm font-bold transition-colors flex items-center gap-1.5 disabled:opacity-60 ${
                 on ? 'bg-slate-900 text-white' : o.status === 'done' ? 'bg-white border border-slate-200 text-slate-800 hover:border-slate-400' : 'text-slate-400 hover:text-slate-700'
               }`}
             >

@@ -7,7 +7,8 @@ Belluh is the same Belluh tab, now with a memory and the ability to act. It is b
 - **One ongoing conversation per person.** It reads your entries and the entries your partner shares, plus your saved dates and what it remembers about you. Conversations persist across devices.
 - **Remembers, and forgets on request.** When you tell it something lasting ("Dan needs ten minutes after work"), it saves it. Tap **Memory** in the Belluh tab to see everything it keeps and delete any of it, or say "forget that".
 - **Dates, exactly like WhatsApp.** Tell Belluh a date in the app or text it on WhatsApp; both save to the same list. In the app you can also ask what it remembers (with when you told it), remove one, or pause reminders. Reminders arrive in the Belluh tab a week before and on the day, and on WhatsApp too if it's connected.
-- **Sees your photos.** When you add a photo to an entry, Belluh's reply can notice something in it.
+- **Sees your photos.** When you add a photo to an entry, or send one in the Belluh chat, Belluh looks at it. Only photos in your own private folder are ever sent to it.
+- **Notifications.** Turn them on per device in Me → Settings: plans and notes from your partner, answers to your plans, Sunday's suggestion, Wednesday's check-in and date reminders. Messages are end-to-end encrypted to the browser (Web Push with Belluh's own VAPID key, made on first use and kept server-side). On iPhone, add Belluh to the Home Screen first.
 - **Front and center.** Belluh's latest word sits at the top of Home. Once Belluh is live it replaces the older one-off forecast and pattern cards, so there is one Belluh with one memory.
 - **Carries notes to your partner, with your approval.** Ask it to help you say something to your partner; it drafts the note in your voice and shows **Send to Dan / Don't send**. Nothing is sent until you tap Send. Your partner sees it in their Belluh tab as "From Maya, via Belluh", with a pink dot on the tab.
 - **Replies after you write, when it has something to add.** A small Belluh card appears after you save an entry, linking it to something earlier or asking one question. If it has nothing specific to say, it stays quiet.
@@ -44,4 +45,4 @@ Until it is deployed, the Belluh tab falls back to the original chat. That chat 
 
 ## Tests
 
-`npm test` covers the privacy filter, prompt, tool validation, date logic and the weekly loop's schedule and prompts. `tests/e2e` runs everything against real Postgres with the migrations applied (26 API scenarios, plus browser checks for the app and the weekly card). `tests/gemini_loop.deno.test.ts` checks that tool calls run and their results go back to the model (`deno test --allow-env`).
+`npm test` covers the privacy filter, prompt, tool validation, date logic and the weekly loop's schedule and prompts. `tests/e2e` runs everything against real Postgres with the migrations applied (28 API scenarios, plus browser checks for the app and the weekly card). `tests/gemini_loop.deno.test.ts` checks that tool calls run and their results go back to the model (`deno test --allow-env`).

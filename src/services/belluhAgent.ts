@@ -58,7 +58,7 @@ export const belluhAgent = {
   planRespond: (planId: string, optionId: string | null, note = '') => call<{ plan: Plan; messages: AgentMessage[] }>({ action: 'plan_respond', plan_id: planId, option_id: optionId, note }),
   planCancel: (planId: string) => call<{ plan: Plan }>({ action: 'plan_cancel', plan_id: planId }),
   checkin: (actionId: string, status: CheckinStatus) => call<{ messages: AgentMessage[]; week: WeekView | null }>({ action: 'checkin', action_id: actionId, status }),
-  chat: (message: string, mode: 'chat' | 'mediate' = 'chat') => call<{ messages: AgentMessage[] }>({ action: 'chat', message, mode }),
+  chat: (message: string, mode: 'chat' | 'mediate' = 'chat', photo: string | null = null) => call<{ messages: AgentMessage[] }>({ action: 'chat', message, mode, ...(photo ? { photo } : {}) }),
   react: (entryId: string) => call<{ message: AgentMessage | null }>({ action: 'react', entry_id: entryId }),
   sendNote: (draftId: string, text?: string) => call<{ ok: boolean }>({ action: 'send_note', draft_id: draftId, text }),
   discardNote: (draftId: string) => call<{ ok: boolean }>({ action: 'discard_note', draft_id: draftId }),

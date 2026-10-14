@@ -7,6 +7,7 @@ import { generateRelationshipReceipt } from '../services/geminiService';
 import { THEMES } from '../constants';
 import WhatsAppDates from '../components/WhatsAppDates';
 import CalendarSync from '../components/CalendarSync';
+import NotificationsToggle from '../components/NotificationsToggle';
 import { parseFactDate, ymdString } from '../../supabase/functions/_shared/facts';
 
 interface ProfileProps {
@@ -92,6 +93,11 @@ const getRelativeDisplay = (date: Date, type: 'past' | 'future' | 'auto') => {
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Tomorrow';
     if (diffDays === -1) return 'Yesterday';
+    if (diffDays < 0 && type !== 'future') {
+        const ago = -diffDays;
+        if (ago >= 365) { const y = Math.floor(ago / 365.25); return `${y} ${y === 1 ? 'year' : 'years'} ago`; }
+        if (ago >= 60) return `${Math.floor(ago / 30.44)} months ago`;
+    }
     if (type === 'future' || (type === 'auto' && diffDays > 0)) return `${Math.abs(diffDays)} Days Away`;
     return `${Math.abs(diffDays)} Days Ago`;
 };
@@ -498,8 +504,8 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                                   <FactCard id="firstMet" onAdd={() => setIsEditingFacts(true)} label="First Met" date={facts.firstMet} setDate={(d: Date) => setFacts({...facts, firstMet: d})} isEditing={isEditingFacts} icon={Users} theme="blue" config={factConfigs.firstMet} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
                                   <FactCard id="firstKiss" onAdd={() => setIsEditingFacts(true)} label="First Kiss" date={facts.firstKiss} setDate={(d: Date) => setFacts({...facts, firstKiss: d})} isEditing={isEditingFacts} icon={Heart} theme="rose" config={factConfigs.firstKiss} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
                                   <FactCard id="firstDate" onAdd={() => setIsEditingFacts(true)} label="First Date" date={facts.firstDate} setDate={(d: Date) => setFacts({...facts, firstDate: d})} isEditing={isEditingFacts} icon={Calendar} theme="purple" config={factConfigs.firstDate} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
-                                  <FactCard id="anniversary" onAdd={() => setIsEditingFacts(true)} label="Anniversary" date={facts.anniversary} setDate={(d: Date) => setFacts({...facts, anniversary: d})} isEditing={isEditingFacts} icon={Sparkles} theme="amber" config={factConfigs.anniversary} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="future" />
-                                  <FactCard id="partnerBday" onAdd={() => setIsEditingFacts(true)} label="Partner B-Day" date={facts.partnerBday} setDate={(d: Date) => setFacts({...facts, partnerBday: d})} isEditing={isEditingFacts} icon={Gift} theme="orange" config={factConfigs.partnerBday} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="future" />
+                                  <FactCard id="anniversary" onAdd={() => setIsEditingFacts(true)} label="Together since" date={facts.anniversary} setDate={(d: Date) => setFacts({...facts, anniversary: d})} isEditing={isEditingFacts} icon={Sparkles} theme="amber" config={factConfigs.anniversary} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
+                                  <FactCard id="partnerBday" onAdd={() => setIsEditingFacts(true)} label={(() => { const n = (user.partnerName || activeMembers.find(m => m.id !== user.id)?.name || '').split(' ')[0]; return n ? `${n}'s birthday` : "Partner's birthday"; })()} date={facts.partnerBday} setDate={(d: Date) => setFacts({...facts, partnerBday: d})} isEditing={isEditingFacts} icon={Gift} theme="orange" config={factConfigs.partnerBday} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="future" />
                               </div>
                               {isEditingFacts && Object.values(factConfigs).some((c: any) => c.hidden) && (
                                   <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
@@ -516,13 +522,14 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
 
                       {datesReady && <button onClick={() => setShowSettingsModal(true)} className="w-full mb-12 bg-white rounded-[2rem] border border-slate-100 shadow-sm p-5 flex items-center justify-between text-left hover:border-slate-200 transition-colors">
                           <div>
-                              <p className="font-serif text-lg text-slate-900">Dates, WhatsApp & calendar</p>
-                              <p className="text-sm text-slate-500 mt-0.5">Text Belluh your dates and put your plans in your calendar. In Settings.</p>
+                              <p className="font-serif text-lg text-slate-900">Texting, notifications & calendar</p>
+                              <p className="text-sm text-slate-500 mt-0.5">WhatsApp or text, notifications, and your plans in your calendar.</p>
                           </div>
                           <ChevronRight size={18} className="text-slate-300 shrink-0" />
                       </button>}
                       
-                      {/* Artifact Grid */}
+                      {/* Keepsakes */}
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 mb-4">Keepsakes</h3>
                       <div className="grid grid-cols-2 gap-4">
                           <div onClick={() => onViewArtifact('letter')} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col aspect-square justify-between cursor-pointer hover:shadow-md transition-shadow">
                               <Mail size={24} className="text-[#f0addd]" />
@@ -674,12 +681,13 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
 
                   {/* Connected: texting Belluh and calendars */}
                   <WhatsAppDates onShowToast={onShowToast} />
+                  <NotificationsToggle onShowToast={onShowToast} />
                   <CalendarSync onShowToast={onShowToast} />
                   
                   {/* Theme Selector */}
                   <div className="mb-8">
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                          <Palette size={14} /> Color Theme
+                          <Palette size={14} /> Appearance
                       </p>
                       <div className="flex gap-2 flex-wrap">
                           {Object.keys(THEMES).map((themeKey) => (
@@ -694,6 +702,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                       </div>
                   </div>
 
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Account</p>
                   <div className="space-y-1">
                     <button onClick={() => onShowLegal('tos')} className="w-full py-3 flex items-center justify-between text-slate-500 hover:bg-slate-50 rounded-xl px-2"><span className="text-sm font-bold">Terms of Service</span><ChevronRight size={16} /></button>
                     <button onClick={() => onShowLegal('privacy')} className="w-full py-3 flex items-center justify-between text-slate-500 hover:bg-slate-50 rounded-xl px-2"><span className="text-sm font-bold">Privacy Policy</span><ChevronRight size={16} /></button>

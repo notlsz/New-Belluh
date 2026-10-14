@@ -26,10 +26,13 @@ async function tzOf(userId: string, fallback: string): Promise<string> {
   return data?.timezone ?? fallback;
 }
 
-export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', channel: Channel = 'app') {
-  const text = message.trim().slice(0, 4000);
+export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', channel: Channel = 'app', photoRef: string | null = null) {
+  const photo = photoRef ? await ownPhoto(ctx.userId, photoRef) : null;
+  const text = message.trim().slice(0, 4000) || (photo ? '(sent a photo)' : '');
   if (!text) return { messages: [] };
-  const userMsg = await addMessage(ctx.userId, 'user', text, { ...(mode === 'mediate' ? { mode } : {}), ...(channel !== 'app' ? { channel } : {}) });
+  const userMsg = await addMessage(ctx.userId, 'user', text, {
+    ...(mode === 'mediate' ? { mode } : {}), ...(channel !== 'app' ? { channel } : {}), ...(photo ? { photo: photoRef } : {}),
+  });
   const created: unknown[] = [userMsg];
   if (!(await underLimit(ctx.userId))) {
     created.push(await addMessage(ctx.userId, 'belluh', "Let's pause for a bit. You've reached this hour's limit for Belluh. Try again soon."));
@@ -44,6 +47,8 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
       : m.body }],
   }));
   if (mode === 'mediate') contents[contents.length - 1].parts.unshift({ text: MEDIATE_INSTRUCTION });
+  // The photo they just sent, so Belluh can actually look at it
+  if (photo) contents[contents.length - 1].parts.unshift({ inlineData: photo });
 
   const system = (await buildSystem(ctx)) + (channel !== 'app' ? TEXTING : '');
   // Memory changes must come from the person, not from text Belluh is reading (a shared entry, a partner's note)
@@ -105,7 +110,7 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           created.push(await addMessage(ctx.userId, 'plan', plan.title, { plan_id: row.id }));
           await addMessage(ctx.partnerId, 'plan', plan.title, { plan_id: row.id, from_name: ctx.myName });
           const ptz = await tzOf(ctx.partnerId, ctx.timezone);
-          await notify(ctx.partnerId, `${ctx.myName} wants to plan "${plan.title}" with you. Pick a time:\n${planChoices(plan.options, ptz)}\n\nReply ${plan.options.map((_, i) => i + 1).join(', ')}, or NONE if none work. Or pick in the Belluh app.`);
+          await notify(ctx.partnerId, `${ctx.myName} wants to plan "${plan.title}" with you. Pick a time:\n${planChoices(plan.options, ptz)}\n\nReply ${plan.options.map((_, i) => i + 1).join(', ')}, or NONE if none work. Or pick in the Belluh app.`, { push: `${ctx.myName} wants to plan "${plan.title}". Tap to pick a time.`, tag: 'plan' });
           return { ok: true, sent_to: ctx.partnerName, times: plan.options.map(o => formatOption(o, ctx.timezone)), note: `The plan is with ${ctx.partnerName} to pick a time. Tell the user briefly; you'll let them know when ${ctx.partnerName} answers.` };
         }
         case 'draft_note_to_partner': {
@@ -124,6 +129,20 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   // Every new memory is shown under the reply, so nothing is remembered silently
   created.push(await addMessage(ctx.userId, 'belluh', final, saved.length ? { saved } : {}));
   return { messages: created };
+}
+
+/** A photo from the person's own private folder (an entry's, or one sent in chat), for Belluh to look at; at most 4 MB. */
+export async function ownPhoto(userId: string, ref: string | null): Promise<{ mimeType: string; data: string } | null> {
+  const prefix = 'sb://journal-private/';
+  if (!ref?.startsWith(prefix)) return null;
+  const path = ref.slice(prefix.length);
+  if (path.split('/')[0] !== userId) return null;
+  const { data: blob } = await db.storage.from('journal-private').download(path);
+  if (!blob || blob.size > 4 * 1024 * 1024 || !/^image\//.test(blob.type)) return null;
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return { mimeType: blob.type, data: btoa(bin) };
 }
 
 export async function underLimit(userId: string): Promise<boolean> {
@@ -156,7 +175,7 @@ export async function sendNote(ctx: Ctx, draftId: string, edited?: string) {
     return res({ error: "Couldn't send the note. Try again." }, 500);
   }
   await addMessage(to, 'partner_note', body, { from_user: ctx.userId, from_name: ctx.myName });
-  await notify(to, `From ${ctx.myName}, via Belluh:\n"${body}"`);
+  await notify(to, `From ${ctx.myName}, via Belluh:\n"${body}"`, { title: `From ${ctx.myName}`, push: body, tag: 'note' });
   await db.from('agent_messages').update({ body, meta: { ...(draft.meta as object), status: 'sent', sent_at: new Date().toISOString() } }).eq('id', draftId);
   return res({ ok: true });
 }

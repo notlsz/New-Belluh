@@ -6,6 +6,11 @@ const reply = (res, parts) => { res.writeHead(200, { 'content-type': 'applicatio
 http.createServer((req, res) => {
   const chunks = []; req.on('data', c => chunks.push(c)); req.on('end', () => {
     const rawBody = Buffer.concat(chunks).toString();
+    // Stand-in for a browser push service: record the encrypted message and its headers
+    if (req.url.startsWith('/push/')) {
+      fs.appendFileSync(LOG, JSON.stringify({ url: req.url, push: Buffer.concat(chunks).toString('base64'), headers: { authorization: req.headers.authorization, encoding: req.headers['content-encoding'], ttl: req.headers.ttl, topic: req.headers.topic } }) + '\n');
+      res.writeHead(req.url.startsWith('/push/gone') ? 410 : 201); return res.end();
+    }
     // Stand-in for Twilio's SMS API (form-encoded): record what Belluh sends
     if (req.url.startsWith('/twilio/')) {
       const form = Object.fromEntries(new URLSearchParams(rawBody));

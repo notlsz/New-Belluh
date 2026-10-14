@@ -92,7 +92,16 @@ const App: React.FC = () => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
   
   // App State
-  const [currentTab, setCurrentTab] = useState('timeline');
+  // A notification opens straight to the Belluh tab (?tab=belluh), then the address is tidied
+  const [currentTab, setCurrentTab] = useState(() => {
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('tab') !== 'belluh') return 'timeline';
+      url.searchParams.delete('tab');
+      window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+      return 'ai-coach';
+    } catch { return 'timeline'; }
+  });
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [composePrompt, setComposePrompt] = useState<string | undefined>(undefined);
   const [entries, setEntries] = useState<JournalEntry[]>([]);

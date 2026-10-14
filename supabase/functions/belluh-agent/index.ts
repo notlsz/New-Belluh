@@ -11,7 +11,7 @@
 import { cleanReply, REACT_INSTRUCTION } from '../_shared/agent.ts';
 import { jsonAnswer } from '../_shared/gemini.ts';
 import { db, loadCtx, buildSystem, addMessage, history, weekView, type Ctx } from '../_shared/agentdb.ts';
-import { chat, underLimit, sendNote, planRespond, planCancel, checkin, type Result } from '../_shared/agentcore.ts';
+import { chat, underLimit, sendNote, planRespond, planCancel, checkin, ownPhoto, type Result } from '../_shared/agentcore.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -27,26 +27,12 @@ async function react(ctx: Ctx, entryId: string) {
     .eq('id', entryId).maybeSingle();
   if (!entry || entry.user_id !== ctx.userId || (!entry.content?.trim() && !entry.photo_url)) return { message: null };
   const system = await buildSystem(ctx);
-  const photo = await entryPhoto(ctx.userId, entry.photo_url);
+  const photo = await ownPhoto(ctx.userId, entry.photo_url);
   const out = await jsonAnswer(system, `${REACT_INSTRUCTION}\n\nEntry:\n${(entry.content ?? '').slice(0, 3000)}${photo ? '\n(Their photo is attached.)' : ''}`,
     { type: 'OBJECT', properties: { reply: { type: 'STRING' } }, required: ['reply'] }, photo ? [photo] : []) as { reply?: string } | null;
   const reply = cleanReply(out?.reply ?? '');
   if (reply.length < 8) return { message: null };
   return { message: await addMessage(ctx.userId, 'belluh', reply, { entry_id: entryId }) };
-}
-
-/** The photo on the person's own entry, for Belluh to look at (their own private folder only, at most 4 MB). */
-async function entryPhoto(userId: string, ref: string | null): Promise<{ mimeType: string; data: string } | null> {
-  const prefix = 'sb://journal-private/';
-  if (!ref?.startsWith(prefix)) return null;
-  const path = ref.slice(prefix.length);
-  if (path.split('/')[0] !== userId) return null;
-  const { data: blob } = await db.storage.from('journal-private').download(path);
-  if (!blob || blob.size > 4 * 1024 * 1024 || !/^image\//.test(blob.type)) return null;
-  const bytes = new Uint8Array(await blob.arrayBuffer());
-  let bin = '';
-  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return { mimeType: blob.type, data: btoa(bin) };
 }
 
 function validTimeZone(tz: unknown): string | null {
@@ -78,7 +64,7 @@ Deno.serve(async (req) => {
       case 'checkin': return out(await checkin(ctx, String(body.action_id ?? ''), String(body.status ?? '')));
       case 'plan_respond': return out(await planRespond(ctx, String(body.plan_id ?? ''), body.option_id ? String(body.option_id) : null, String(body.note ?? '')));
       case 'plan_cancel': return out(await planCancel(ctx, String(body.plan_id ?? '')));
-      case 'chat': return json(await chat(ctx, String(body.message ?? ''), body.mode === 'mediate' ? 'mediate' : 'chat'));
+      case 'chat': return json(await chat(ctx, String(body.message ?? ''), body.mode === 'mediate' ? 'mediate' : 'chat', 'app', typeof body.photo === 'string' ? body.photo : null));
       case 'react': return json(await react(ctx, String(body.entry_id ?? '')));
       case 'send_note': return out(await sendNote(ctx, String(body.draft_id ?? ''), typeof body.text === 'string' ? body.text : undefined));
       case 'discard_note': {
