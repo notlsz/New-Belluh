@@ -2,7 +2,16 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, ArrowRight, Activity, TrendingUp, Lock, Menu, X, Heart } from 'lucide-react';
-import { ORGANIZATIONS } from '../constants';
+import { rememberCta } from '../services/analytics';
+
+// What Belluh connects to, shown in the scrolling strip
+const ORGANIZATIONS = [
+  { name: 'WhatsApp', domain: 'whatsapp.com' },
+  { name: 'Google Calendar', domain: 'calendar.google.com' },
+  { name: 'Apple iCloud', domain: 'icloud.com' },
+  { name: 'Outlook', domain: 'outlook.live.com' },
+  { name: 'Gemini', domain: 'gemini.google.com' },
+];
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -37,7 +46,7 @@ const LogoMarquee = () => (
   <div className="w-full py-20 overflow-hidden relative z-20 bg-[#F8FDFF]/80 backdrop-blur-md border-y border-[#CDE9F2]">
     <div className="text-center mb-10 px-4">
       <span className="text-[10px] md:text-xs font-bold text-slate-400 tracking-[0.2em] md:tracking-[0.3em] uppercase md:border-b md:border-[#CDE9F2] md:pb-3">
-        Used by couples at
+        Works with
       </span>
     </div>
     
@@ -45,7 +54,7 @@ const LogoMarquee = () => (
       <div className="absolute inset-y-0 left-0 w-24 md:w-32 bg-gradient-to-r from-[#F8FDFF] z-10" />
       <div className="absolute inset-y-0 right-0 w-24 md:w-32 bg-gradient-to-l from-[#F8FDFF] z-10" />
       <div className="flex animate-marquee items-center w-max group-hover:[animation-play-state:paused]">
-        {[...ORGANIZATIONS, ...ORGANIZATIONS].map((org, i) => (
+        {[...ORGANIZATIONS, ...ORGANIZATIONS, ...ORGANIZATIONS, ...ORGANIZATIONS, ...ORGANIZATIONS, ...ORGANIZATIONS].map((org, i) => (
           <div key={i} className="mx-8 md:mx-12 shrink-0 flex items-center justify-center h-16 w-32">
              <LogoItem org={org} />
           </div>
@@ -55,7 +64,7 @@ const LogoMarquee = () => (
 
     <div className="text-center mt-8">
       <span className="text-[10px] text-slate-300 font-medium tracking-wide uppercase">
-        * Used independently by individuals. Not affiliated with these organizations.
+        * Trademarks belong to their owners.
       </span>
     </div>
   </div>
@@ -130,7 +139,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
 
             <div className="flex items-center gap-2">
             <button
-                onClick={onGetStarted}
+                onClick={() => { rememberCta('nav'); onGetStarted(); }}
                 tabIndex={pastHero ? 0 : -1}
                 aria-hidden={!pastHero}
                 className={`overflow-hidden whitespace-nowrap h-10 bg-[#f0addd] text-white rounded-full font-bold text-sm hover:bg-[#e57ec3] shadow-md shadow-[#f0addd]/30 transition-all duration-500 ${pastHero ? 'max-w-[140px] px-5 opacity-100' : 'max-w-0 px-0 opacity-0 pointer-events-none'}`}
@@ -184,7 +193,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                        Sign In
                    </button>
                    <button 
-                       onClick={() => { toggleMenu(); onGetStarted(); }}
+                       onClick={() => { toggleMenu(); rememberCta('menu'); onGetStarted(); }}
                        className="w-full py-4 rounded-full bg-[#9bbecb] text-white font-bold hover:bg-[#8aaab7] transition-colors shadow-xl text-lg flex items-center justify-center gap-2"
                    >
                        Start free <ArrowRight size={18} />
@@ -202,12 +211,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
              </h1>
              
              <p className="text-xl md:text-2xl text-slate-500 font-light leading-relaxed max-w-2xl mx-auto mb-8">
-                 You each write a few lines a day. Every Sunday, Belluh reads both sides and tells you one thing to understand and one thing to try.
+                 You each write a few lines a day. Belluh remembers what matters, plans the date, reminds you both, and every Sunday tells you one thing to try together.
              </p>
 
              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
                  <button 
-                    onClick={onGetStarted}
+                    onClick={() => { rememberCta('hero'); onGetStarted(); }}
                     className="w-full sm:w-auto px-10 py-4 bg-[#f0addd] text-white rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#e57ec3] transition-all hover:scale-105 active:scale-95 shadow-xl shadow-[#f0addd]/30"
                  >
                      <span>Start Your Journey</span>
@@ -250,7 +259,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                       </div>
 
                       <div className="relative z-10 mt-12 md:mt-0 flex flex-col md:flex-row md:items-center gap-6">
-                          <button onClick={onGetStarted} className="px-8 py-4 bg-slate-50 hover:bg-slate-100 rounded-full text-sm font-bold text-slate-900 transition-colors flex items-center justify-center gap-2 border border-slate-100">
+                          <button onClick={() => { rememberCta('insight_card'); onGetStarted(); }} className="px-8 py-4 bg-slate-50 hover:bg-slate-100 rounded-full text-sm font-bold text-slate-900 transition-colors flex items-center justify-center gap-2 border border-slate-100">
                               Get your first insight <ArrowRight size={16} />
                           </button>
                           <div className="flex items-center gap-2 text-slate-400">
@@ -269,7 +278,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                           <div className="relative z-10 flex justify-between items-start">
                               <span className="text-xs font-bold uppercase tracking-widest text-slate-400">This week</span>
                               <div className="px-3 py-1 bg-[#f0addd]/10 text-[#c06ba5] rounded-full text-[10px] font-bold flex items-center gap-1">
-                                  <TrendingUp size={12} /> Warming
+                                  <TrendingUp size={12} /> Streak
                               </div>
                           </div>
 
@@ -284,8 +293,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                           </div>
 
                           <div className="relative z-10">
-                              <div className="text-6xl font-sans font-semibold tracking-tighter text-slate-900">94</div>
-                              <p className="text-sm text-slate-500 mt-1 font-medium">Clear skies ahead</p>
+                              <div className="text-6xl font-sans font-semibold tracking-tighter text-slate-900">3</div>
+                              <p className="text-sm text-slate-500 mt-1 font-medium">weeks in a row, together</p>
                           </div>
                       </div>
 
@@ -349,7 +358,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                              Your safe <br/> <span className="text-cyan-700">haven.</span>
                          </h2>
                          <p className="text-xl md:text-2xl text-cyan-900/80 leading-relaxed font-light mb-6">
-                             Every entry is shared or private, your call. Encrypted in storage and in transit, and never sold.
+                             Every entry is shared or private, your call. Your partner never sees your private entries, and neither does their Belluh. Encrypted in storage and in transit, and never sold.
                          </p>
                          <p className="text-base text-cyan-900/70 leading-relaxed">
                              Insights are written by Google's Gemini models, which process your entries to write them.{' '}
@@ -403,8 +412,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                       
                       <div className="flex gap-2 flex-wrap">
                           <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">One insight</span>
-                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">One next step</span>
-                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">Voice notes, transcribed</span>
+                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">Plans the date</span>
+                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">Works on WhatsApp</span>
+                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">Voice notes</span>
                       </div>
                  </div>
             </div>
@@ -429,11 +439,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                              <span className="text-5xl opacity-40 text-white font-serif leading-none">❝</span>
                          </div>
                          <p className="font-serif text-[#5e1c43] text-lg leading-relaxed whitespace-normal line-clamp-3 group-hover:text-black transition-colors">
-                             {i === 1 ? "The way you look at me when I'm cooking... it felt like home." : 
-                              i === 2 ? "I never want to forget the sound of your laugh in the rain." :
-                              i === 3 ? "Found that old ticket stub from our first date." :
-                              i === 4 ? "Just a quiet morning with coffee and you. Perfect." :
-                              "We stayed up way too late talking about the future."}
+                             {i === 1 ? "He remembered the oat milk. After this week, that was everything." :
+                              i === 2 ? "We argued about nothing, then laughed about it at 1am." :
+                              i === 3 ? "She texted 'drive safe' and I believed her." :
+                              i === 4 ? "First Sunday walk with no phones. We talked the whole way." :
+                              "Two years today. Still the same booth."}
                          </p>
                          <div className="flex items-center gap-2 pt-4 border-t border-black/5">
                              <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
@@ -455,7 +465,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
               </h2>
               <p className="text-xl text-slate-500 font-light leading-relaxed mb-10">Write one line about today and send your partner the link. Your first insight arrives on Sunday.</p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <button onClick={onGetStarted} className="w-full sm:w-auto px-10 py-4 bg-[#f0addd] text-white rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#e57ec3] transition-all hover:scale-105 active:scale-95 shadow-xl shadow-[#f0addd]/30">
+                  <button onClick={() => { rememberCta('final'); onGetStarted(); }} className="w-full sm:w-auto px-10 py-4 bg-[#f0addd] text-white rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#e57ec3] transition-all hover:scale-105 active:scale-95 shadow-xl shadow-[#f0addd]/30">
                       <span>Start Your Journey</span><ArrowRight size={16} />
                   </button>
                   <button onClick={onLogin} className="w-full sm:w-auto px-10 py-4 bg-white/80 backdrop-blur-sm text-slate-600 border border-white rounded-full font-bold text-sm hover:bg-white hover:text-[#f0addd] hover:shadow-lg transition-all">

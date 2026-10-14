@@ -18,7 +18,7 @@ import { JournalEntry, EntryType, Mood, User, CircleType, CircleStatus, ColorThe
 import { Sparkles, X, CheckCircle2, AlertCircle, Info } from 'lucide-react';
 import { supabase } from './lib/supabaseClient';
 import { useAdminAccess } from './hooks/useAdminAccess';
-import { trackEvent } from './services/analytics';
+import { trackEvent, flushCta } from './services/analytics';
 import { belluhAgent } from './services/belluhAgent';
 import { resolveMedia, repairLegacyUrl } from './services/media';
 import { computeStreak, hideLockedAnswer, questionForDay } from './lib/daily';
@@ -592,6 +592,7 @@ const App: React.FC = () => {
             if (session?.user && mounted && loadedUserId.current !== session.user.id) {
                 loadedUserId.current = session.user.id;
                 loadUserData(session.user);
+                setTimeout(flushCta, 1500); // which landing button brought them in
             }
         } else if (event === 'SIGNED_OUT') {
             loadedUserId.current = null;
