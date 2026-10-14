@@ -1,8 +1,5 @@
-
-
-import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, ArrowRight, Activity, TrendingUp, Lock, Menu, X, Heart } from 'lucide-react';
-import { ORGANIZATIONS } from '../constants';
+import React, { useState, useEffect } from 'react';
+import { ArrowRight, Menu, X, Lock, CalendarHeart, MessageCircle, BellRing, Sparkles, PenLine, Heart, Check, ChevronDown, ShieldCheck, Mail } from 'lucide-react';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -12,502 +9,312 @@ interface LandingPageProps {
   onGoToCareers: () => void;
 }
 
-const LogoItem = ({ org }: { org: typeof ORGANIZATIONS[0] }) => {
-  const [error, setError] = useState(false);
+// Brand: #f0addd pink, #CDE9F2 sky, #9bbecb slate-blue. Text uses deeper shades of the same hues so it stays readable.
+const INK_PINK = '#b4447f';
+const INK_BLUE = '#3f7486';
 
-  if (error) {
-    return (
-      <span className="text-sm font-bold text-slate-300 uppercase tracking-widest whitespace-nowrap px-4 font-sans opacity-60 hover:opacity-100 transition-opacity">
-        {org.name}
-      </span>
-    );
-  }
+const Avatar: React.FC<{ letter: string; tone: 'pink' | 'blue' | 'belluh' }> = ({ letter, tone }) => (
+  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${tone === 'pink' ? 'bg-[#f7d8ee] text-[#7a1f55]' : tone === 'blue' ? 'bg-[#CDE9F2] text-[#2d5a68]' : 'bg-[#e11d63] text-white'}`}>
+    {tone === 'belluh' ? <Sparkles size={13} /> : letter}
+  </div>
+);
 
-  return (
-    <img 
-      src={`https://www.google.com/s2/favicons?domain=${org.domain}&sz=128`} 
-      alt={org.name} 
-      onError={() => setError(true)}
-      className="max-h-12 max-w-full w-auto opacity-40 hover:opacity-100 hover:scale-110 transition-all duration-500 grayscale hover:grayscale-0 object-contain" 
-    />
-  );
-};
-
-const LogoMarquee = () => (
-  <div className="w-full py-20 overflow-hidden relative z-20 bg-[#F8FDFF]/80 backdrop-blur-md border-y border-[#CDE9F2]">
-    <div className="text-center mb-10 px-4">
-      <span className="text-[10px] md:text-xs font-bold text-slate-400 tracking-[0.2em] md:tracking-[0.3em] uppercase md:border-b md:border-[#CDE9F2] md:pb-3">
-        Used by couples at
-      </span>
-    </div>
-    
-    <div className="relative flex overflow-hidden group">
-      <div className="absolute inset-y-0 left-0 w-24 md:w-32 bg-gradient-to-r from-[#F8FDFF] z-10" />
-      <div className="absolute inset-y-0 right-0 w-24 md:w-32 bg-gradient-to-l from-[#F8FDFF] z-10" />
-      <div className="flex animate-marquee items-center w-max group-hover:[animation-play-state:paused]">
-        {[...ORGANIZATIONS, ...ORGANIZATIONS].map((org, i) => (
-          <div key={i} className="mx-8 md:mx-12 shrink-0 flex items-center justify-center h-16 w-32">
-             <LogoItem org={org} />
-          </div>
-        ))}
+/** The real "Us" conversation, drawn in the app's own style: both partners and Belluh in one thread. */
+const UsThreadMock: React.FC = () => (
+  <div className="relative mx-auto w-full max-w-[360px]">
+    <div className="absolute -inset-6 bg-gradient-to-br from-[#f0addd]/30 via-white/0 to-[#CDE9F2]/50 blur-2xl rounded-[3rem]" aria-hidden="true" />
+    <div className="relative bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl shadow-slate-200/70 p-5 text-left">
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-50">
+        <div>
+          <p className="font-serif text-[15px] text-slate-900">Us</p>
+          <p className="text-[11px] text-slate-500">Maya, Dan and Belluh</p>
+        </div>
+        <div className="flex -space-x-2"><Avatar letter="M" tone="pink" /><Avatar letter="D" tone="blue" /><Avatar letter="" tone="belluh" /></div>
       </div>
-    </div>
-
-    <div className="text-center mt-8">
-      <span className="text-[10px] text-slate-300 font-medium tracking-wide uppercase">
-        * Used independently by individuals. Not affiliated with these organizations.
-      </span>
+      <div className="space-y-3 text-[13.5px] leading-snug">
+        <div className="flex gap-2 items-end"><Avatar letter="M" tone="pink" /><p className="bg-[#fdf2f9] text-slate-800 rounded-2xl rounded-bl-md px-3 py-2">Belluh, can you plan something for this week? We've both been slammed.</p></div>
+        <div className="flex gap-2 items-end"><Avatar letter="" tone="belluh" />
+          <div className="bg-slate-50 rounded-2xl rounded-bl-md px-3 py-2 text-slate-800">
+            <p>You both wrote about missing the Thai place. Dan, which works?</p>
+            <div className="mt-2 rounded-xl bg-white border border-[#f0addd]/60 p-2.5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#7a1f55]">Dinner at the Thai place</p>
+              <div className="mt-1.5 grid gap-1.5">
+                <span className="flex items-center justify-between rounded-lg border border-slate-200 px-2.5 py-1.5 text-[12px]">Fri, Oct 16 · 7:00 PM<span className="font-bold text-[#7a1f55]">Pick</span></span>
+                <span className="flex items-center justify-between rounded-lg bg-slate-900 text-white px-2.5 py-1.5 text-[12px]">Sat, Oct 17 · 7:00 PM<Check size={13} /></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-2 items-end justify-end"><p className="bg-[#eef8fb] text-slate-800 rounded-2xl rounded-br-md px-3 py-2">Saturday. I'll book it.</p><Avatar letter="D" tone="blue" /></div>
+        <div className="flex gap-2 items-end"><Avatar letter="" tone="belluh" /><p className="bg-slate-50 text-slate-800 rounded-2xl rounded-bl-md px-3 py-2">Set. It's in your dates, one tap from your calendars, and I'll remind you both Saturday morning.</p></div>
+      </div>
     </div>
   </div>
 );
 
+const FEATURES = [
+  { icon: CalendarHeart, title: 'Plans the date', body: 'Ask Belluh for a night out. It suggests times, your partner taps one, and it\'s one tap from both your calendars, with a reminder.' },
+  { icon: Heart, title: 'Remembers both of you', body: 'What helps after a hard day. Whose birthday is next. What you both keep writing about. It never forgets the small things.' },
+  { icon: Mail, title: 'Helps you say it', body: 'Stuck on how to say something? Belluh drafts it in your voice. Nothing reaches your partner until you tap Send.' },
+  { icon: Sparkles, title: 'One true thing, every Sunday', body: 'Belluh reads the week from both sides and gives you one insight and one small thing to try together.' },
+  { icon: MessageCircle, title: 'Text it, too', body: 'Talk to Belluh on WhatsApp or by text. Same Belluh, same memory. Reply 1, 2 or 3 to pick a time.' },
+  { icon: BellRing, title: 'Nudges, not noise', body: 'A heads-up when your partner sends a plan or a note, a week before every date that matters, and nothing else.' },
+];
+
+const STEPS = [
+  { icon: PenLine, title: 'Write a line a day', body: 'A thought, a photo, a voice note. Share it with your partner or keep it to yourself.' },
+  { icon: Sparkles, title: 'Belluh connects both sides', body: 'It sees what you each share and notices what neither of you can see from inside it.' },
+  { icon: CalendarHeart, title: 'It does the follow-through', body: 'Plans, reminders, the right words at the right time. You just show up.' },
+];
+
+const FAQ = [
+  { q: 'Is Belluh an AI girlfriend or boyfriend?', a: "No. Belluh has no avatar and doesn't flirt. It works for the two of you and points you back to each other." },
+  { q: 'Can my partner read my private entries?', a: 'No. Private entries are yours alone. Belluh never shows them to your partner and never uses them in anything your partner sees.' },
+  { q: 'What does Belluh actually do?', a: 'It remembers what matters, plans dates your partner can accept with one tap, puts them one tap from your calendars, reminds you before birthdays and anniversaries, drafts notes you approve, and sends one insight every Sunday.' },
+  { q: 'Do we both need to join?', a: "Belluh is built for two, so it's best together. You can start alone and invite your partner with a link whenever you're ready." },
+  { q: 'Can I use it from WhatsApp or text?', a: 'Yes. Connect in Settings with one tap. Texting Belluh is the same Belluh as in the app, with the same memory.' },
+  { q: 'What happens to my data?', a: "Entries are encrypted in transit and at rest and never sold. Belluh's replies are written by Google's Gemini models, which process your entries to write them." },
+];
+
 const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShowLegal, onGoToAbout, onGoToCareers }) => {
-  const [isNavVisible, setIsNavVisible] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pastHero, setPastHero] = useState(false);
-  const lastScrollY = useRef(0);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      setPastHero(currentScrollY > 520);
-      
-      setIsNavVisible(true);
-      
-      lastScrollY.current = currentScrollY;
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setPastHero(window.scrollY > 520);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
-
-  // Lock body scroll when menu is open
   useEffect(() => {
-      if (isMenuOpen) {
-          document.body.style.overflow = 'hidden';
-      } else {
-          document.body.style.overflow = 'unset';
-      }
-      return () => {
-          document.body.style.overflow = 'unset';
-      };
+    document.body.style.overflow = isMenuOpen ? 'hidden' : 'unset';
+    return () => { document.body.style.overflow = 'unset'; };
   }, [isMenuOpen]);
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-
   const scrollToSection = (id: string) => {
-      setIsMenuOpen(false);
-      const element = document.getElementById(id);
-      if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-      }
+    setIsMenuOpen(false);
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
-
   const menuItems = [
-      { label: 'Features', action: () => scrollToSection('features') },
-      { label: 'Privacy', action: () => { toggleMenu(); onShowLegal('privacy'); } },
-      { label: 'Stories', action: () => scrollToSection('stories') },
-      { label: 'Our Why', action: () => { toggleMenu(); onGoToAbout(); } },
-      { label: 'Careers', action: () => { toggleMenu(); onGoToCareers(); } }
+    { label: 'How it works', action: () => scrollToSection('how') },
+    { label: 'Features', action: () => scrollToSection('features') },
+    { label: 'Privacy', action: () => scrollToSection('privacy') },
+    { label: 'Questions', action: () => scrollToSection('faq') },
+    { label: 'Our why', action: () => { setIsMenuOpen(false); onGoToAbout(); } },
   ];
 
+  const PrimaryCTA: React.FC<{ label?: string; className?: string }> = ({ label = 'Start free', className = '' }) => (
+    <button onClick={onGetStarted}
+      className={`group h-14 px-8 bg-[#f0addd] text-[#4a0f33] rounded-full font-bold text-[15px] hover:bg-[#ea97cf] active:scale-[0.98] transition-all shadow-lg shadow-[#f0addd]/40 flex items-center justify-center gap-2 ${className}`}>
+      <span>{label}</span><ArrowRight size={17} className="group-hover:translate-x-0.5 transition-transform" />
+    </button>
+  );
+
   return (
-    <div className="min-h-screen bg-[#fcfcfc] text-slate-900 font-sans selection:bg-[#f0addd] selection:text-white overflow-x-hidden relative">
-      
-      {/* --- Ambient Cloud Background Layers --- */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-          <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-[#CDE9F2]/30 rounded-full blur-[120px] animate-float opacity-60"></div>
-          <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-[#f0addd]/20 rounded-full blur-[130px] animate-pulse-slow opacity-50"></div>
-          <div className="absolute top-[40%] left-[30%] w-[40vw] h-[40vw] bg-white rounded-full blur-[80px] animate-breathing opacity-80 mix-blend-overlay"></div>
+    <div className="min-h-screen bg-[#fcfcfc] text-slate-900 font-sans selection:bg-[#f0addd] selection:text-[#4a0f33] overflow-x-hidden relative">
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-[#CDE9F2]/30 rounded-full blur-[120px] animate-float opacity-60" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-[#f0addd]/20 rounded-full blur-[130px] animate-pulse-slow opacity-50" />
       </div>
 
-      {/* Floating Pill Navbar - Scroll Aware */}
-      <div className={`fixed top-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-2xl z-50 transition-all duration-500 transform ${isNavVisible ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0'}`}>
-        <nav className="bg-white/90 backdrop-blur-xl rounded-full shadow-lg shadow-slate-200/50 border border-white px-6 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                <span className="font-serif text-xl font-bold tracking-tight text-[#9bbecb] drop-shadow-sm" style={{ textShadow: '0 1px 1px rgba(0,0,0,0.1)' }}>Belluh</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-            <button
-                onClick={onGetStarted}
-                tabIndex={pastHero ? 0 : -1}
-                aria-hidden={!pastHero}
-                className={`overflow-hidden whitespace-nowrap h-10 bg-[#f0addd] text-white rounded-full font-bold text-sm hover:bg-[#e57ec3] shadow-md shadow-[#f0addd]/30 transition-all duration-500 ${pastHero ? 'max-w-[140px] px-5 opacity-100' : 'max-w-0 px-0 opacity-0 pointer-events-none'}`}
-            >
-                Start free
+      {/* Nav */}
+      <div className="fixed top-5 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-3xl z-50">
+        <nav className="bg-white/90 backdrop-blur-xl rounded-full shadow-lg shadow-slate-200/50 border border-white pl-6 pr-3 py-2.5 flex items-center justify-between" aria-label="Main">
+          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="font-serif text-xl font-bold tracking-tight" style={{ color: INK_BLUE }}>Belluh</button>
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+            <button onClick={() => scrollToSection('how')} className="hover:text-slate-900">How it works</button>
+            <button onClick={() => scrollToSection('features')} className="hover:text-slate-900">Features</button>
+            <button onClick={() => scrollToSection('privacy')} className="hover:text-slate-900">Privacy</button>
+            <button onClick={onLogin} className="hover:text-slate-900">Sign in</button>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={onGetStarted} tabIndex={pastHero ? 0 : -1} aria-hidden={!pastHero}
+              className={`overflow-hidden whitespace-nowrap h-10 bg-[#f0addd] text-[#4a0f33] rounded-full font-bold text-sm hover:bg-[#ea97cf] transition-all duration-500 ${pastHero ? 'max-w-[140px] px-5 opacity-100' : 'max-w-0 px-0 opacity-0 pointer-events-none'}`}>
+              Start free
             </button>
-            <button 
-                onClick={toggleMenu}
-                aria-label="Open menu"
-                className="bg-[#CDE9F2] text-cyan-900 w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md hover:shadow-lg"
-            >
-                <Menu size={20} strokeWidth={2.5} />
+            <button onClick={() => setIsMenuOpen(true)} aria-label="Open menu" className="md:hidden bg-[#CDE9F2] text-[#1f4b59] w-10 h-10 rounded-full flex items-center justify-center">
+              <Menu size={20} strokeWidth={2.5} />
             </button>
-            </div>
+          </div>
         </nav>
       </div>
 
-      {/* Full Screen Menu Overlay - Clean Design */}
-      <div className={`fixed inset-0 z-[100] bg-white transition-all duration-700 ease-[cubic-bezier(0.32,0.725,0,1)] ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}>
-          <div className="flex flex-col h-full p-6 md:p-12 relative max-w-7xl mx-auto w-full">
-               <div className="flex justify-between items-center mb-12">
-                   <span className="font-serif text-2xl font-bold tracking-tight text-[#9bbecb]">Belluh</span>
-                   <button 
-                    onClick={toggleMenu}
-                    className="bg-slate-50 text-slate-900 w-12 h-12 rounded-full flex items-center justify-center hover:bg-slate-100 transition-colors border border-slate-100"
-                   >
-                       <X size={24} strokeWidth={2} />
-                   </button>
-               </div>
-
-               <div className="flex-1 flex flex-col justify-center items-start gap-4 md:gap-8 animate-slide-up pl-2">
-                   {menuItems.map((item, idx) => (
-                       <button 
-                         key={idx}
-                         onClick={item.action}
-                         className="group relative flex items-start gap-6 text-left transition-all duration-500 w-full md:w-auto"
-                       >
-                           <span className="text-xs font-bold font-sans text-slate-200 group-hover:text-[#9bbecb] mt-2 md:mt-4 transition-colors duration-300">0{idx + 1}</span>
-                           <span className="text-5xl md:text-8xl font-serif font-medium text-slate-300 group-hover:text-[#9bbecb] tracking-tighter transition-colors duration-300 leading-[0.9] group-hover:translate-x-2 transform">
-                               {item.label}
-                           </span>
-                       </button>
-                   ))}
-               </div>
-
-               <div className="flex flex-col gap-4 mt-auto pt-8 w-full max-w-md animate-fade-in">
-                   <button 
-                       onClick={() => { toggleMenu(); onLogin(); }}
-                       className="w-full py-4 rounded-full bg-slate-50 font-bold text-slate-900 hover:bg-slate-100 transition-colors text-lg border border-slate-100"
-                   >
-                       Sign In
-                   </button>
-                   <button 
-                       onClick={() => { toggleMenu(); onGetStarted(); }}
-                       className="w-full py-4 rounded-full bg-[#9bbecb] text-white font-bold hover:bg-[#8aaab7] transition-colors shadow-xl text-lg flex items-center justify-center gap-2"
-                   >
-                       Start free <ArrowRight size={18} />
-                   </button>
-               </div>
+      {/* Mobile menu */}
+      <div className={`fixed inset-0 z-[100] bg-white transition-all duration-500 ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`} aria-hidden={!isMenuOpen}>
+        <div className="flex flex-col h-full p-6">
+          <div className="flex justify-between items-center mb-10">
+            <span className="font-serif text-2xl font-bold" style={{ color: INK_BLUE }}>Belluh</span>
+            <button onClick={() => setIsMenuOpen(false)} aria-label="Close menu" className="bg-slate-50 w-12 h-12 rounded-full flex items-center justify-center border border-slate-100"><X size={22} /></button>
           </div>
+          <div className="flex-1 flex flex-col gap-5">
+            {menuItems.map(item => (
+              <button key={item.label} onClick={item.action} className="text-left text-4xl font-serif text-slate-800 hover:text-[#3f7486]">{item.label}</button>
+            ))}
+          </div>
+          <div className="flex flex-col gap-3 pt-6">
+            <button onClick={() => { setIsMenuOpen(false); onLogin(); }} className="w-full py-4 rounded-full bg-slate-50 font-bold text-slate-900 border border-slate-100">Sign in</button>
+            <button onClick={() => { setIsMenuOpen(false); onGetStarted(); }} className="w-full py-4 rounded-full bg-[#f0addd] text-[#4a0f33] font-bold flex items-center justify-center gap-2">Start free <ArrowRight size={18} /></button>
+          </div>
+        </div>
       </div>
 
-      {/* Hero Section */}
-      <section className="relative z-10 pt-32 pb-10 md:pt-36 md:pb-12 px-6">
-         <div className="max-w-4xl mx-auto text-center animate-slide-up">
-             
-             <h1 className="text-5xl md:text-7xl font-serif font-medium leading-[1.1] mb-6 text-slate-900 tracking-tight drop-shadow-sm">
-                 <span className="text-[#9bbecb]">The AI journal</span> <br /> <span className="text-[#f0addd] italic">for couples.</span>
-             </h1>
-             
-             <p className="text-xl md:text-2xl text-slate-500 font-light leading-relaxed max-w-2xl mx-auto mb-8">
-                 You each write a few lines a day. Every Sunday, Belluh reads both sides and tells you one thing to understand and one thing to try.
-             </p>
-
-             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
-                 <button 
-                    onClick={onGetStarted}
-                    className="w-full sm:w-auto px-10 py-4 bg-[#f0addd] text-white rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#e57ec3] transition-all hover:scale-105 active:scale-95 shadow-xl shadow-[#f0addd]/30"
-                 >
-                     <span>Start Your Journey</span>
-                     <ArrowRight size={16} />
-                 </button>
-                 <button 
-                    onClick={onLogin}
-                    className="w-auto px-6 py-2 sm:px-10 sm:py-4 sm:bg-white/80 sm:backdrop-blur-sm text-slate-600 sm:border sm:border-white rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-white hover:text-[#f0addd] sm:hover:shadow-lg transition-all"
-                 >
-                     I have an account
-                 </button>
-             </div>
-         </div>
-      </section>
-
-      {/* Visual Demo Section */}
-      <section id="example" className="relative z-10 px-6 pb-28 scroll-mt-24">
-          <div className="max-w-7xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                  
-                  {/* Card 1: The AI Analysis */}
-                  <div className="md:col-span-8 bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] flex flex-col justify-between relative overflow-hidden group hover:scale-[1.005] transition-all duration-700 min-h-[400px]">
-                      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-[#CDE9F2]/30 to-transparent rounded-bl-full opacity-50 pointer-events-none"></div>
-                      
-                      <div className="relative z-10">
-                          <div className="flex items-center gap-3 mb-6">
-                              <div className="w-10 h-10 bg-white border border-slate-100 rounded-full flex items-center justify-center shadow-sm text-[#f0addd]">
-                                  <Sparkles size={18} className="fill-[#f0addd]" />
-                              </div>
-                              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Weekly Insight</span>
-                          </div>
-
-                          <h3 className="text-3xl md:text-5xl font-serif text-slate-900 leading-[1.15] mb-6 tracking-tight">
-                              "You navigate conflict with silence. But this week, you chose <span className="text-[#f0addd] underline decoration-[#f0addd]/30 underline-offset-4 decoration-4">words</span>."
-                          </h3>
-                          
-                          <p className="text-lg text-slate-500 leading-relaxed max-w-2xl font-light">
-                              On Tuesday you said what you were afraid of instead of going quiet. Belluh noticed, because it read both of your entries.
-                          </p>
-                      </div>
-
-                      <div className="relative z-10 mt-12 md:mt-0 flex flex-col md:flex-row md:items-center gap-6">
-                          <button onClick={onGetStarted} className="px-8 py-4 bg-slate-50 hover:bg-slate-100 rounded-full text-sm font-bold text-slate-900 transition-colors flex items-center justify-center gap-2 border border-slate-100">
-                              Get your first insight <ArrowRight size={16} />
-                          </button>
-                          <div className="flex items-center gap-2 text-slate-400">
-                              <Activity size={16} className="text-[#CDE9F2]" />
-                              <span className="text-xs font-medium">Example insight, written from 14 entries</span>
-                          </div>
-                      </div>
-                  </div>
-
-                  {/* Right Column Stack */}
-                  <div className="md:col-span-4 flex flex-col gap-6">
-                      
-                      {/* Card 2: The Metric */}
-                      <div className="flex-1 bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] flex flex-col justify-between relative overflow-hidden group hover:scale-[1.01] transition-transform duration-500 min-h-[250px]">
-                          
-                          <div className="relative z-10 flex justify-between items-start">
-                              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">This week</span>
-                              <div className="px-3 py-1 bg-[#f0addd]/10 text-[#c06ba5] rounded-full text-[10px] font-bold flex items-center gap-1">
-                                  <TrendingUp size={12} /> Warming
-                              </div>
-                          </div>
-
-                          <div className="relative z-10 flex items-end gap-2 h-24 mb-2 mt-4">
-                              {[20, 45, 30, 60, 45, 80, 70, 50, 90, 85].map((h, i) => (
-                                  <div 
-                                    key={i} 
-                                    className={`flex-1 rounded-t-sm transition-all duration-700 hover:opacity-100 ${i % 2 === 0 ? 'bg-[#CDE9F2]' : 'bg-[#f0addd]'}`} 
-                                    style={{ height: `${h}%`, opacity: 0.6 + (i/20) }}
-                                  ></div>
-                              ))}
-                          </div>
-
-                          <div className="relative z-10">
-                              <div className="text-6xl font-sans font-semibold tracking-tighter text-slate-900">94</div>
-                              <p className="text-sm text-slate-500 mt-1 font-medium">Clear skies ahead</p>
-                          </div>
-                      </div>
-
-                  </div>
-              </div>
-          </div>
-      </section>
-
-      {/* Marquee Section */}
-      <LogoMarquee />
-
-      {/* Visual Demo Section - Apple Style Immersive Cards */}
-      <section id="features" className="relative z-10 py-32 px-6 bg-slate-50/50">
-        <div className="max-w-7xl mx-auto space-y-32">
-            
-            {/* Feature 1: Intelligence - The "Hero" Feature */}
-            <div className="group relative bg-white rounded-[3rem] p-8 md:p-20 shadow-2xl shadow-slate-200/50 border border-white overflow-hidden transition-transform duration-700 hover:scale-[1.01]">
-                {/* Subtle Theme Glow */}
-                <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-b from-[#f0addd]/20 to-transparent rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3 opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
-                
-                <div className="relative z-10 md:w-2/3">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full mb-8">
-                         <Sparkles size={14} className="text-[#f0addd]" />
-                         <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Pattern Recognition</span>
-                    </div>
-                    <h2 className="text-5xl md:text-7xl font-serif font-semibold tracking-tighter text-slate-900 mb-6">
-                        It sees what <br/> <span className="text-[#9bbecb]">you might miss.</span>
-                    </h2>
-                    <p className="text-xl md:text-2xl text-slate-500 leading-relaxed font-light max-w-lg">
-                        Belluh reads both sides of your week and names the pattern neither of you can see from inside it.
-                    </p>
-                </div>
-                
-                {/* Visual: Simulated Interface */}
-                <div className="mt-16 md:absolute md:top-1/2 md:right-20 md:-translate-y-1/2 md:w-96">
-                     <div className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-apple transform rotate-3 transition-transform duration-700 group-hover:rotate-0 group-hover:scale-105">
-                          <div className="flex items-center gap-3 mb-4">
-                              <div className="w-8 h-8 rounded-full bg-[#f0addd] flex items-center justify-center text-white"><Sparkles size={14}/></div>
-                              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Insight Detected</div>
-                          </div>
-                          <p className="font-serif text-lg leading-relaxed text-slate-800">
-                              "You withdraw when stressed, but your partner responds best to shared quiet time. Try sitting together in silence."
-                          </p>
-                     </div>
-                </div>
-            </div>
-
-            {/* Feature 2: Privacy - Light Blue Cloud Theme */}
-            <div className="group relative bg-[#CDE9F2] rounded-[3rem] p-8 md:p-20 shadow-2xl overflow-hidden text-slate-900 transition-transform duration-700 hover:scale-[1.01]">
-                 {/* Cloud Animations - Background */}
-                 <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-white/40 rounded-full blur-[80px] pointer-events-none animate-float"></div>
-                 <div className="absolute bottom-[-10%] left-[-20%] w-[500px] h-[500px] bg-white/30 rounded-full blur-[60px] pointer-events-none animate-pulse-slow"></div>
-
-                 <div className="relative z-10 flex flex-col md:flex-row items-center gap-12 md:gap-24">
-                     <div className="flex-1 text-center md:text-left">
-                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full mb-8 border border-white/40 shadow-sm">
-                             <Lock size={14} className="text-cyan-700" />
-                             <span className="text-xs font-bold uppercase tracking-widest text-cyan-900">Private Vault</span>
-                         </div>
-                         <h2 className="text-5xl md:text-7xl font-serif font-semibold tracking-tighter text-cyan-950 mb-6">
-                             Your safe <br/> <span className="text-cyan-700">haven.</span>
-                         </h2>
-                         <p className="text-xl md:text-2xl text-cyan-900/80 leading-relaxed font-light mb-6">
-                             Every entry is shared or private, your call. Encrypted in storage and in transit, and never sold.
-                         </p>
-                         <p className="text-base text-cyan-900/70 leading-relaxed">
-                             Insights are written by Google's Gemini models, which process your entries to write them.{' '}
-                             <button onClick={() => onShowLegal('privacy')} className="font-bold underline decoration-cyan-900/30 underline-offset-4 hover:text-cyan-950">Privacy policy</button>
-                         </p>
-                     </div>
-                     
-                     <div className="relative w-80 h-80 flex items-center justify-center">
-                          <div className="relative animate-float">
-                                {/* Glow */}
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-white/50 blur-[70px] rounded-full"></div>
-                                
-                                {/* Cloud Body */}
-                                <div className="relative z-10 filter drop-shadow-[0_15px_35px_rgba(50,120,160,0.15)]">
-                                    <div className="relative w-72 h-56">
-                                        {/* Layer 1: Base Puffs */}
-                                        <div className="absolute bottom-0 left-4 w-32 h-32 bg-white rounded-full"></div>
-                                        <div className="absolute bottom-2 right-4 w-36 h-36 bg-white rounded-full"></div>
-                                        
-                                        {/* Layer 2: Top Puffs */}
-                                        <div className="absolute bottom-12 left-16 w-40 h-40 bg-white rounded-full"></div>
-                                        <div className="absolute bottom-8 right-24 w-28 h-28 bg-white rounded-full"></div>
-
-                                        {/* Layer 3: Soften Edges */}
-                                        <div className="absolute bottom-4 left-10 w-52 h-20 bg-white blur-lg rounded-full"></div>
-                                    </div>
-                                </div>
-                                
-                                {/* Aesthetic Sparkles */}
-                                <Sparkles className="absolute -top-4 right-10 text-white w-8 h-8 animate-pulse fill-white/60 drop-shadow-sm" />
-                                <Sparkles className="absolute bottom-10 -left-6 text-white w-5 h-5 animate-pulse delay-700 fill-white/60 drop-shadow-sm" />
-                          </div>
-                     </div>
-                 </div>
-            </div>
-
-            {/* Feature 3: Adaptive Persona */}
-            <div className="w-full">
-                 {/* Card A: Adaptation */}
-                 <div className="bg-[#fcfcfc] rounded-[3rem] p-10 md:p-16 border border-slate-100 shadow-xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500">
-                      <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#f0addd]/20 to-transparent rounded-bl-full opacity-0 transition-opacity group-hover:opacity-100 duration-700"></div>
-                      
-                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-8 border border-slate-100 shadow-sm">
-                          <Heart size={24} className="text-slate-900"/>
-                      </div>
-                      
-                      <h3 className="text-3xl md:text-4xl font-serif font-semibold text-slate-900 mb-4 tracking-tight">Resolve one thing per week.</h3>
-                      <p className="text-lg text-slate-500 leading-relaxed mb-8">
-                          Every Sunday you get one clear insight and one small thing to try. Write, record a voice note, or add a photo.
-                      </p>
-                      
-                      <div className="flex gap-2 flex-wrap">
-                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">One insight</span>
-                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">One next step</span>
-                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">Voice notes, transcribed</span>
-                      </div>
-                 </div>
-            </div>
-
-        </div>
-      </section>
-
-      {/* Infinite Marquee Section */}
-      <section id="stories" className="relative z-10 py-24 overflow-hidden bg-white/50 backdrop-blur-sm border-t border-slate-50">
-        <div className="max-w-7xl mx-auto px-6 mb-16 text-center">
-            <h2 className="text-4xl md:text-6xl font-serif font-semibold text-slate-900 mb-6 tracking-tighter">Every moment counts.</h2>
-            <p className="text-slate-500 text-lg max-w-2xl mx-auto leading-relaxed">
-                From the big milestones to the quiet Sunday mornings, Belluh keeps your story alive.
+      {/* Hero */}
+      <section className="relative z-10 pt-32 md:pt-40 pb-16 md:pb-24 px-6">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-[1.1fr_1fr] gap-14 md:gap-10 items-center">
+          <div className="text-center md:text-left animate-slide-up">
+            <p className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] mb-6" style={{ color: INK_PINK }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#f0addd]" /> The AI for two
             </p>
-        </div>
-        
-        <div className="relative w-full overflow-hidden mask-gradient-x py-4">
-             <div className="flex gap-8 animate-marquee whitespace-nowrap mb-8">
-                 {[1,2,3,4,5,1,2,3,4,5].map((i, idx) => (
-                     <div key={idx} className="w-[340px] h-[220px] bg-[#f7d8ee] rounded-3xl border border-black/5 flex-shrink-0 p-8 flex flex-col justify-between hover:scale-[1.02] transition-all cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] group">
-                         <div className="flex justify-between items-start">
-                             <span className="text-5xl opacity-40 text-white font-serif leading-none">❝</span>
-                         </div>
-                         <p className="font-serif text-[#5e1c43] text-lg leading-relaxed whitespace-normal line-clamp-3 group-hover:text-black transition-colors">
-                             {i === 1 ? "The way you look at me when I'm cooking... it felt like home." : 
-                              i === 2 ? "I never want to forget the sound of your laugh in the rain." :
-                              i === 3 ? "Found that old ticket stub from our first date." :
-                              i === 4 ? "Just a quiet morning with coffee and you. Perfect." :
-                              "We stayed up way too late talking about the future."}
-                         </p>
-                         <div className="flex items-center gap-2 pt-4 border-t border-black/5">
-                             <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                             <div className="text-[10px] font-bold uppercase text-[#831843] tracking-widest">Entry #{100 + idx}</div>
-                         </div>
-                     </div>
-                 ))}
-             </div>
+            <h1 className="text-[2.75rem] leading-[1.05] md:text-7xl md:leading-[1.02] font-serif font-medium tracking-tight text-slate-900">
+              One AI that works for <span className="italic" style={{ color: INK_PINK }}>both</span> of you.
+            </h1>
+            <p className="mt-6 text-lg md:text-xl text-slate-600 leading-relaxed max-w-xl mx-auto md:mx-0">
+              You each write a little. Belluh remembers what matters, plans the date, reminds you both, and tells you one true thing every Sunday.
+            </p>
+            <div className="mt-9 flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+              <PrimaryCTA />
+              <button onClick={onLogin} className="h-14 px-8 rounded-full font-bold text-[15px] text-slate-800 bg-white border border-slate-200 hover:border-slate-300 transition-colors">I have an account</button>
+            </div>
+            <ul className="mt-7 flex flex-wrap gap-x-5 gap-y-2 justify-center md:justify-start text-sm text-slate-500">
+              <li className="flex items-center gap-1.5"><Check size={15} style={{ color: INK_BLUE }} /> Free to start</li>
+              <li className="flex items-center gap-1.5"><Check size={15} style={{ color: INK_BLUE }} /> Works on WhatsApp and text</li>
+              <li className="flex items-center gap-1.5"><Lock size={14} style={{ color: INK_BLUE }} /> Private entries stay private</li>
+            </ul>
+          </div>
+          <div className="animate-slide-up" style={{ animationDelay: '0.15s' }}>
+            <UsThreadMock />
+          </div>
         </div>
       </section>
-      
-      <section className="relative z-10 py-24 px-6 text-center">
-          <div className="max-w-3xl mx-auto">
-              <div className="w-16 h-16 bg-[#f0addd]/10 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse-slow">
-                  <Heart size={24} className="text-[#f0addd] fill-[#f0addd]" />
-              </div>
-              <h2 className="text-3xl md:text-5xl font-serif text-slate-900 leading-tight mb-6 drop-shadow-sm">
-                  <span className="text-[#9bbecb]">Start tonight.</span> <span className="text-[#f0addd] italic">Together.</span>
-              </h2>
-              <p className="text-xl text-slate-500 font-light leading-relaxed mb-10">Write one line about today and send your partner the link. Your first insight arrives on Sunday.</p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <button onClick={onGetStarted} className="w-full sm:w-auto px-10 py-4 bg-[#f0addd] text-white rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#e57ec3] transition-all hover:scale-105 active:scale-95 shadow-xl shadow-[#f0addd]/30">
-                      <span>Start Your Journey</span><ArrowRight size={16} />
-                  </button>
-                  <button onClick={onLogin} className="w-full sm:w-auto px-10 py-4 bg-white/80 backdrop-blur-sm text-slate-600 border border-white rounded-full font-bold text-sm hover:bg-white hover:text-[#f0addd] hover:shadow-lg transition-all">
-                      I have an account
-                  </button>
-              </div>
-          </div>
+
+      {/* How it works */}
+      <section id="how" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-center" style={{ color: INK_BLUE }}>How it works</p>
+          <h2 className="mt-3 text-4xl md:text-5xl font-serif text-center text-slate-900 tracking-tight">A minute a day. Belluh does the rest.</h2>
+          <ol className="mt-14 grid md:grid-cols-3 gap-5">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className="bg-white rounded-[2rem] border border-slate-100 p-7 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <span className="w-10 h-10 rounded-full bg-[#CDE9F2]/60 flex items-center justify-center" style={{ color: INK_BLUE }}><s.icon size={18} /></span>
+                  <span className="text-xs font-bold text-slate-400">Step {i + 1}</span>
+                </div>
+                <h3 className="mt-5 font-serif text-2xl text-slate-900">{s.title}</h3>
+                <p className="mt-2 text-slate-600 leading-relaxed">{s.body}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
       </section>
 
-      <footer className="relative z-10 py-10 bg-white border-t border-slate-50">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-               <button 
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  className="flex items-center gap-2 group transition-all duration-300 hover:opacity-80"
-               >
-                    <Sparkles size={18} className="text-[#f0addd] fill-[#f0addd]/20 transition-transform group-hover:rotate-12" />
-                    <span className="font-serif font-bold text-slate-600 tracking-tight group-hover:text-slate-900 transition-colors">Belluh AI</span>
-               </button>
-
-               <div className="flex gap-8 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                   <button onClick={onGoToCareers} className="hover:text-slate-600 transition-colors">Careers</button>
-                   <button onClick={onGoToAbout} className="hover:text-slate-600 transition-colors">About</button>
-                   <button onClick={() => onShowLegal('tos')} className="hover:text-slate-600 transition-colors">Terms</button>
-                   <button onClick={() => onShowLegal('privacy')} className="hover:text-slate-600 transition-colors">Privacy</button>
-               </div>
-
-               <div className="text-xs text-slate-400 font-bold tracking-wide">
-                   © 2026 Belluh Inc.
-               </div>
+      {/* Sunday insight, the original magic */}
+      <section className="relative z-10 px-6 pb-20 md:pb-28">
+        <div className="max-w-6xl mx-auto bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 p-8 md:p-14 grid md:grid-cols-[1.3fr_1fr] gap-10 items-center">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: INK_PINK }}>Every Sunday</p>
+            <blockquote className="mt-4 font-serif text-3xl md:text-[2.6rem] leading-[1.15] text-slate-900">
+              “You both wrote about dinner going quiet this week. Try a twenty-minute walk after, phones at home.”
+            </blockquote>
+            <p className="mt-5 text-slate-600 leading-relaxed max-w-lg">One insight from both sides of your week, and one small thing to try together. Midweek, a one-tap check-in. Next Sunday builds on how it went.</p>
           </div>
+          <div className="rounded-[2rem] border border-[#CDE9F2] bg-gradient-to-br from-white to-[#CDE9F2]/40 p-6">
+            <span className="bg-[#CDE9F2] text-[#1f4b59] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">This week, together</span>
+            <p className="mt-4 font-serif text-xl text-slate-800 leading-snug">Take a twenty-minute walk after dinner, phones at home.</p>
+            <div className="mt-5 flex flex-wrap gap-2 text-sm">
+              <span className="px-3.5 py-2 rounded-full bg-slate-900 text-white font-bold flex items-center gap-1.5"><Check size={14} /> We did it</span>
+              <span className="px-3.5 py-2 rounded-full text-slate-500 font-bold">Not yet</span>
+            </div>
+            <p className="mt-4 text-xs text-slate-500">Dan did it too · 3 weeks in a row, together</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="relative z-10 px-6 py-20 md:py-28 bg-white/60 border-y border-slate-100 scroll-mt-24">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-center" style={{ color: INK_BLUE }}>What Belluh does</p>
+          <h2 className="mt-3 text-4xl md:text-5xl font-serif text-center text-slate-900 tracking-tight">Not a chatbot. A third teammate.</h2>
+          <div className="mt-14 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {FEATURES.map(f => (
+              <div key={f.title} className="bg-white rounded-[2rem] border border-slate-100 p-7 hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                <span className="w-11 h-11 rounded-2xl bg-[#fdf2f9] flex items-center justify-center" style={{ color: INK_PINK }}><f.icon size={20} /></span>
+                <h3 className="mt-5 font-serif text-xl text-slate-900">{f.title}</h3>
+                <p className="mt-2 text-slate-600 leading-relaxed text-[15px]">{f.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Privacy */}
+      <section id="privacy" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
+        <div className="max-w-6xl mx-auto rounded-[2.5rem] bg-[#CDE9F2]/60 border border-[#CDE9F2] p-8 md:p-14 grid md:grid-cols-[1.2fr_1fr] gap-10 items-center">
+          <div>
+            <p className="inline-flex items-center gap-2 bg-white/80 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest text-[#1f4b59]"><ShieldCheck size={13} /> Private by design</p>
+            <h2 className="mt-5 text-4xl md:text-5xl font-serif text-[#12313b] tracking-tight leading-[1.08]">Some things are just yours.</h2>
+            <p className="mt-5 text-[#24505e] text-lg leading-relaxed">Mark any entry private and it stays yours: your partner never sees it, and Belluh never uses it in anything your partner sees. Everything is encrypted in transit and at rest, and never sold.</p>
+            <p className="mt-4 text-sm text-[#2f5d6b]">Belluh's replies are written by Google's Gemini models, which process your entries to write them. <button onClick={() => onShowLegal('privacy')} className="font-bold underline underline-offset-4">Privacy policy</button></p>
+          </div>
+          <ul className="grid gap-3">
+            {['Shared or private, every entry', "Your partner's private entries never reach your Belluh", 'Notes reach your partner only when you tap Send', 'Turn off texts or notifications any time'].map(t => (
+              <li key={t} className="flex items-start gap-3 bg-white/85 rounded-2xl px-4 py-3.5 text-[15px] text-slate-800"><Lock size={16} className="mt-0.5 shrink-0 text-[#1f4b59]" />{t}</li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Not a companion */}
+      <section className="relative z-10 px-6 pb-20 md:pb-28">
+        <div className="max-w-3xl mx-auto text-center">
+          <Heart className="mx-auto" size={22} style={{ color: INK_PINK }} />
+          <h2 className="mt-4 text-3xl md:text-4xl font-serif text-slate-900 tracking-tight">Belluh isn't trying to be your partner.</h2>
+          <p className="mt-4 text-lg text-slate-600 leading-relaxed">No avatar, no flirting, no affection meter. Belluh works for the two of you, and every answer points you back to each other.</p>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="relative z-10 px-6 pb-20 md:pb-28 scroll-mt-24">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-serif text-slate-900 tracking-tight text-center">Questions</h2>
+          <div className="mt-10 divide-y divide-slate-100 bg-white rounded-[2rem] border border-slate-100">
+            {FAQ.map((f, i) => (
+              <div key={f.q}>
+                <button onClick={() => setOpenFaq(openFaq === i ? null : i)} aria-expanded={openFaq === i}
+                  className="w-full flex items-center justify-between gap-4 text-left px-6 md:px-8 py-5">
+                  <span className="font-serif text-lg text-slate-900">{f.q}</span>
+                  <ChevronDown size={18} className={`shrink-0 text-slate-400 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
+                </button>
+                {openFaq === i && <p className="px-6 md:px-8 pb-6 -mt-1 text-slate-600 leading-relaxed">{f.a}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="relative z-10 px-6 pb-24 md:pb-32">
+        <div className="max-w-4xl mx-auto text-center rounded-[2.5rem] bg-gradient-to-br from-[#fdf2f9] to-[#eef8fb] border border-white shadow-xl shadow-slate-200/40 px-6 py-16 md:py-20">
+          <h2 className="text-4xl md:text-6xl font-serif text-slate-900 tracking-tight">Start tonight. <span className="italic" style={{ color: INK_PINK }}>Together.</span></h2>
+          <p className="mt-5 text-lg text-slate-600 max-w-xl mx-auto">Write one line about today and send your partner the link. Belluh takes it from there.</p>
+          <div className="mt-9 flex flex-col sm:flex-row gap-3 justify-center">
+            <PrimaryCTA />
+            <button onClick={onLogin} className="h-14 px-8 rounded-full font-bold text-[15px] text-slate-800 bg-white border border-slate-200 hover:border-slate-300">I have an account</button>
+          </div>
+        </div>
+      </section>
+
+      <footer className="relative z-10 py-10 bg-white border-t border-slate-100">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-5 text-sm text-slate-500">
+          <span className="font-serif font-bold" style={{ color: INK_BLUE }}>Belluh</span>
+          <div className="flex gap-6">
+            <button onClick={onGoToAbout} className="hover:text-slate-800">About</button>
+            <button onClick={onGoToCareers} className="hover:text-slate-800">Careers</button>
+            <button onClick={() => onShowLegal('tos')} className="hover:text-slate-800">Terms</button>
+            <button onClick={() => onShowLegal('privacy')} className="hover:text-slate-800">Privacy</button>
+          </div>
+          <span>© 2026 Belluh Inc.</span>
+        </div>
       </footer>
-      
-      <style>{`
-        .mask-gradient-x {
-            mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-            -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-        }
-        @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-        @keyframes marquee-reverse {
-            0% { transform: translateX(-50%); }
-            100% { transform: translateX(0); }
-        }
-        .animate-marquee {
-            animation: marquee 40s linear infinite;
-        }
-        .animate-marquee-reverse {
-            animation: marquee-reverse 40s linear infinite;
-        }
-      `}</style>
     </div>
   );
 };

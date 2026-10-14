@@ -692,3 +692,41 @@ test('27. notifications: a browser that turned them on gets an encrypted push on
   const { data: left } = await dan.from('push_subscriptions').select('endpoint');
   assert.deepEqual(left.map(x => x.endpoint), [endpoint], 'dead and bogus subscriptions are cleaned up');
 });
+
+test('28. Us: one thread for both of them and Belluh, built only from what both can see', async () => {
+  // Fresh daily-question lock check: Dan answers today's question; Maya hasn't
+  await dan.from('journal_entries').insert({ user_id: DAN, content: 'DAN DAILY ANSWER today', title: 'Us test question', is_shared: true });
+
+  const { data: h0 } = await agent(maya, { action: 'us_history' });
+  assert.equal(h0.partner_name, 'Dan');
+  const { data: s1 } = await agent(maya, { action: 'us_send', message: 'Hey you, dinner tonight?', ask_belluh: false });
+  assert.equal(s1.messages.length, 1, 'just a message to Dan; Belluh stays quiet unless asked');
+
+  const before = geminiRequests().length;
+  const { data: s2 } = await agent(maya, { action: 'us_send', message: 'Belluh, plan a dinner for us this week?' });
+  const roles = s2.messages.map(m => m.role);
+  assert.ok(roles.includes('plan') && roles.at(-1) === 'belluh', JSON.stringify(roles));
+  const sent = geminiRequests().slice(before).filter(r => r.body?.systemInstruction);
+  const sys = sent[0].body.systemInstruction.parts[0].text;
+  assert.match(sys, /three-way chat with Maya and Dan/);
+  for (const secret of ['MAYA PRIVATE', 'DAN PRIVATE', 'DAN DAILY ANSWER', 'Dan likes quiet mornings', 'I miss you. Saturday coffee']) {
+    assert.ok(!JSON.stringify(sent).includes(secret), `the shared thread never sees: ${secret}`);
+  }
+  assert.match(JSON.stringify(sent[0].body.contents), /Maya: Hey you, dinner tonight\?/, 'messages are labelled by who wrote them');
+  assert.deepEqual(sent[0].body.tools[0].functionDeclarations.map(t => t.name), ['plan_with_partner'], 'no memory or note tools in the shared thread');
+
+  // Dan sees the same thread and picks a time; the answer lands in the thread
+  const { data: dh } = await agent(dan, { action: 'us_history' });
+  assert.ok(dh.messages.some(m => m.body === 'Hey you, dinner tonight?' && m.author === MAYA));
+  const planMsg = dh.messages.find(m => m.role === 'plan');
+  await agent(dan, { action: 'plan_respond', plan_id: planMsg.meta.plan_id, option_id: 'a' });
+  const { data: mh } = await agent(maya, { action: 'us_history' });
+  assert.match(mh.messages.at(-1).body, /^Dan picked .* It's set: "Dinner at the Thai place"/);
+
+  // Nobody can write the thread directly, and strangers can't read it
+  assert.ok((await maya.from('us_messages').insert({ user_a: MAYA < DAN ? MAYA : DAN, user_b: MAYA < DAN ? DAN : MAYA, author: DAN, role: 'user', body: 'forged' })).error);
+  assert.equal((await eve.from('us_messages').select('id')).data.length, 0);
+  assert.ok((await maya.from('us_messages').select('id')).data.length >= 4);
+  const { data: eh } = await agent(eve, { action: 'us_send', message: 'hi' });
+  assert.equal(eh, null, 'no partner, no shared thread');
+});

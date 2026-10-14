@@ -5,6 +5,7 @@ import { chatWithBelluh, generateDailyReflection, getRelationshipArchetype, soft
 import { belluhAgent, AgentMessage, WeekView } from '../services/belluhAgent';
 import WeeklyCard from '../components/WeeklyCard';
 import PlanCard from '../components/PlanCard';
+import UsThread from '../components/UsThread';
 import { Sparkles, Wand2, Activity, ArrowUp, Heart, Check, X, Brain, Trash2, ImagePlus } from 'lucide-react';
 import { uploadPrivate, resolveMedia } from '../services/media';
 import { supabase } from '../lib/supabaseClient';
@@ -104,6 +105,9 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
   // 'agent' = server-side Belluh with memory; 'legacy' = the original in-browser chat, used if the agent isn't deployed
   const [mode, setMode] = useState<'loading' | 'agent' | 'legacy'>('loading');
   const [partnerName, setPartnerName] = useState<string | null>(null);
+  // "Just you" (your own conversation with Belluh) or "Us" (you, your partner and Belluh together)
+  const [space, setSpace] = useState<'me' | 'us'>(() => { try { return localStorage.getItem('belluh_space') === 'us' ? 'us' : 'me'; } catch { return 'me'; } });
+  const pickSpace = (s: 'me' | 'us') => { setSpace(s); try { localStorage.setItem('belluh_space', s); } catch { /* ignore */ } };
   const [agentMessages, setAgentMessages] = useState<AgentMessage[]>([]);
   const [memories, setMemories] = useState<{ id: string; fact: string }[] | null>(null);
   const [week, setWeek] = useState<WeekView | null>(null);
@@ -286,9 +290,26 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
   };
 
   const me = firstName(userName);
+  const spaceSwitch = (
+    <div role="tablist" aria-label="Conversation" className="flex items-center bg-slate-100 rounded-full p-0.5 text-xs font-bold">
+      <button role="tab" aria-selected={space === 'me'} onClick={() => pickSpace('me')} className={`px-3 py-1.5 rounded-full transition-colors ${space === 'me' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>Just you</button>
+      <button role="tab" aria-selected={space === 'us'} onClick={() => { pickSpace('us'); trackEvent('us_opened'); }} className={`px-3 py-1.5 rounded-full transition-colors ${space === 'us' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>Us · {partnerName}</button>
+    </div>
+  );
+
   const greeting = partnerName
     ? `Hi${me ? ` ${me}` : ''}. I've read your journal, and the entries ${partnerName} shares with you. Tell me what's on your mind, ask me about a pattern, or ask me to help you say something to ${partnerName}.`
     : `Hi${me ? ` ${me}` : ''}. I've read your journal. Tell me what's on your mind, or ask me about a pattern you've noticed.`;
+
+  if (mode === 'agent' && partnerName && space === 'us') {
+    return <UsThread partnerName={partnerName} myName={userName} header={
+      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl">
+        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-2">
+          <span className="text-sm font-bold font-serif text-belluh-900">Belluh</span><span className="text-belluh-200">/</span>{spaceSwitch}
+        </div>
+      </div>
+    } />;
+  }
 
   return (
     <div className="flex flex-col h-screen bg-white text-slate-900 font-sans selection:bg-belluh-100">
@@ -299,9 +320,10 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
             <div className="flex items-center gap-2 p-1.5 rounded-lg">
                 <span className="text-sm font-bold font-serif text-belluh-900">Belluh</span>
                 <span className="text-belluh-200">/</span>
+                {mode === 'agent' && partnerName ? spaceSwitch : (
                 <span className="text-sm font-medium text-slate-500">
-                  {mode === 'agent' ? (partnerName ? `You & ${partnerName}` : 'Just you') : `${detectedPersona} Mode`}
-                </span>
+                  {mode === 'agent' ? 'Just you' : `${detectedPersona} Mode`}
+                </span>)}
             </div>
             <div className="flex items-center gap-2">
               {isConflictMode && (

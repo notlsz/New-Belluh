@@ -5,7 +5,8 @@ import {
   validateToolCall, cleanReply, TOOL_DECLARATIONS, MEDIATE_INSTRUCTION,
 } from './agent.ts';
 import { chatWithTools, type GeminiContent } from './gemini.ts';
-import { db, addMessage, history, weekView, buildSystem, type Ctx } from './agentdb.ts';
+import { db, addMessage, history, weekView, buildSystem, buildUsSystem, type Ctx } from './agentdb.ts';
+import { pairOf } from './weekly.ts';
 import type { CheckinStatus } from './weekly.ts';
 import { validatePlan, formatOption, localDateOf, type PlanOption } from './plans.ts';
 import { notify } from './notify.ts';
@@ -220,6 +221,11 @@ export async function planRespond(ctx: Ctx, planId: string, optionId: string | n
     await notify(p.created_by, toCreator);
     messages.push(await addMessage(ctx.userId, 'belluh', `Got it. I've let them know those times don't work.`, { kind: 'plan_declined', plan_id: planId }));
   }
+  // A plan made in the shared thread gets its answer there too
+  if (ctx.partnerId) {
+    const { data: inUs } = await db.from('us_messages').select('id').eq('role', 'plan').eq('meta->>plan_id', planId).limit(1);
+    if (inUs?.length) await usAdd(ctx, null, 'belluh', chosen ? `${ctx.myName} picked ${formatOption(chosen, ctx.timezone)}. It's set: "${p.title}". I'll remind you both.` : `${ctx.myName} can't make those times for "${p.title}".${note.trim() ? ` "${note.trim().slice(0, 300)}"` : ''} Want other times?`);
+  }
   const { data: fresh } = await db.from('plans').select('*').eq('id', planId).single();
   return res({ plan: fresh, messages });
 }
@@ -248,4 +254,65 @@ export async function checkin(ctx: Ctx, actionId: string, status: string) {
 
   const messages = prev?.status === s ? [] : [await addMessage(ctx.userId, 'belluh', CHECKIN_REPLIES[s], { kind: 'checkin_reply', action_id: actionId })];
   return res({ messages, week: await weekView(ctx) });
+}
+
+
+// ---------- Us: the couple and Belluh in one thread ----------
+
+const pairKey = (ctx: Ctx) => pairOf(ctx.userId, ctx.partnerId) as { user_a: string; user_b: string };
+
+export async function usHistory(ctx: Ctx, limit = 80): Promise<Result> {
+  if (!ctx.partnerId) return res({ messages: [], partner_name: null });
+  const { user_a, user_b } = pairKey(ctx);
+  const { data } = await db.from('us_messages').select('id, author, role, body, meta, created_at')
+    .eq('user_a', user_a).eq('user_b', user_b).order('created_at', { ascending: false }).limit(limit);
+  return res({ messages: (data ?? []).reverse(), partner_name: ctx.partnerName, partner_id: ctx.partnerId });
+}
+
+async function usAdd(ctx: Ctx, author: string | null, role: 'user' | 'belluh' | 'plan', body: string, meta: Record<string, unknown> = {}) {
+  const { user_a, user_b } = pairKey(ctx);
+  const { data } = await db.from('us_messages').insert({ user_a, user_b, author, role, body, meta }).select('id, author, role, body, meta, created_at').single();
+  return data;
+}
+
+/** One message into the shared thread; Belluh answers when asked (or named). */
+export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Promise<Result> {
+  if (!ctx.partnerId || !ctx.partnerName) return res({ error: 'Connect with your partner first.' }, 400);
+  const text = message.trim().slice(0, 4000);
+  if (!text) return res({ error: 'Empty message' }, 400);
+  const created: unknown[] = [await usAdd(ctx, ctx.userId, 'user', text)];
+  await notify(ctx.partnerId, `${ctx.myName}: ${text}`, { pushOnly: true, title: 'Us', tag: 'us' });
+
+  if (!(askBelluh || /\bbelluh\b/i.test(text))) return res({ messages: created });
+  if (!(await underLimit(ctx.userId))) {
+    created.push(await usAdd(ctx, null, 'belluh', "Let's pause for a bit. You've reached this hour's limit for Belluh."));
+    return res({ messages: created });
+  }
+
+  const { data: recent } = await db.from('us_messages').select('author, role, body').eq('user_a', pairKey(ctx).user_a).eq('user_b', pairKey(ctx).user_b)
+    .order('created_at', { ascending: false }).limit(30);
+  const names: Record<string, string> = { [ctx.userId]: ctx.myName, [ctx.partnerId]: ctx.partnerName };
+  const contents: GeminiContent[] = (recent ?? []).reverse().filter(m => m.role !== 'plan').map(m => (m.role === 'belluh'
+    ? { role: 'model', parts: [{ text: m.body }] }
+    : { role: 'user', parts: [{ text: `${names[m.author ?? ''] ?? 'Partner'}: ${m.body}` }] }));
+  const system = await buildUsSystem(ctx);
+  const reply = await chatWithTools({
+    system, contents, tools: TOOL_DECLARATIONS.filter((t: any) => t.name === 'plan_with_partner'),
+    runTool: async (name, args) => {
+      const call = validateToolCall(name, args);
+      if (!call || call.name !== 'plan_with_partner') return { ok: false, error: 'Not available in the shared thread.' };
+      const plan = validatePlan(call.args, ctx.timezone);
+      if (!plan) return { ok: false, error: 'Those times are not valid. Use future local times as YYYY-MM-DDTHH:mm, at most three.' };
+      const { data: row, error } = await db.from('plans').insert({
+        created_by: ctx.userId, partner_id: ctx.partnerId, title: plan.title, details: plan.details, options: plan.options, timezone: ctx.timezone,
+      }).select('id').single();
+      if (error || !row) return { ok: false, error: "Couldn't save the plan." };
+      created.push(await usAdd(ctx, null, 'plan', plan.title, { plan_id: row.id, from_name: ctx.myName, for_user: ctx.partnerId }));
+      await notify(ctx.partnerId, `${ctx.myName} wants to plan "${plan.title}". Pick a time in Belluh.`, { push: `${ctx.myName} wants to plan "${plan.title}". Tap to pick a time.`, tag: 'plan' });
+      return { ok: true, note: `The plan card is in the chat. ${ctx.partnerName} picks a time right there. Say so in one short line.` };
+    },
+  });
+  const final = cleanReply(reply ?? '') || "I'm having trouble thinking right now. Try me again in a moment.";
+  created.push(await usAdd(ctx, null, 'belluh', final));
+  return res({ messages: created });
 }

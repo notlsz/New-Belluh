@@ -4,7 +4,7 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.45.4';
 import {
   visibleEntries, entriesBlock, occasionsBlock, systemPrompt, hideUnansweredDaily, factsBlock, notesBlock, weeksBlock,
-  plansBlock, type EntryRow, type OccasionRow, type NoteRow, type PastWeek, type PlanRow,
+  plansBlock, sharedBetween, usSystemPrompt, type EntryRow, type OccasionRow, type NoteRow, type PastWeek, type PlanRow,
 } from './agent.ts';
 import { localDateParts, isoDate } from './occasions.ts';
 import { weekStart, pairOf, type CheckinStatus } from './weekly.ts';
@@ -97,6 +97,33 @@ export async function buildSystem(ctx: Ctx): Promise<string> {
     notes: notesBlock(notes, names),
     plans: plansBlock(plans, names, ctx.timezone),
     pastWeeks: weeksBlock(pastWeeks),
+  });
+}
+
+/** Belluh's context for the couple's shared thread: only what both of them can see. */
+export async function buildUsSystem(ctx: Ctx): Promise<string> {
+  if (!ctx.partnerId || !ctx.partnerName) throw new Error('no partner');
+  const today = localDateParts(new Date(), ctx.timezone);
+  const { data: rows } = await db.from('journal_entries')
+    .select('id, user_id, content, title, mood, is_shared, tags, created_at, audio_url, photo_url')
+    .in('user_id', [ctx.userId, ctx.partnerId]).eq('is_shared', true)
+    .order('created_at', { ascending: false }).limit(200);
+  const all = (rows ?? []) as EntryRow[];
+  const names: Record<string, string> = { [ctx.userId]: ctx.myName, [ctx.partnerId]: ctx.partnerName };
+  const wk = await weekAction(ctx).catch(() => ({ action: null, checkins: [] as { user_id: string; status: CheckinStatus }[] }));
+  const words: Record<string, string> = { done: 'did it', not_yet: 'not yet', skipped: 'skipped' };
+  const [pastWeeks, plans] = await Promise.all([earlierWeeks(ctx, names, wk.action?.id ?? null), couplePlans(ctx)]);
+  const weekdayName = new Intl.DateTimeFormat('en-US', { timeZone: ctx.timezone, weekday: 'long' }).format(new Date());
+  // Entry text is written from nobody's point of view here ("Maya", "Dan"), never "you"
+  const neutral = (e: EntryRow[]) => entriesBlock(e, names, '__nobody__');
+  return usSystemPrompt({
+    names: [ctx.myName, ctx.partnerName],
+    today: `${isoDate(today)} (${weekdayName}, time zone ${ctx.timezone})`,
+    facts: factsBlock(all.filter(r => r.is_shared), names),
+    weekly: wk.action ? `"${wk.action.action}"` + (wk.checkins.length ? ` (${wk.checkins.map(c => `${names[c.user_id] ?? 'Partner'}: ${words[c.status]}`).join(', ')})` : ' (no check-ins yet)') : null,
+    pastWeeks: weeksBlock(pastWeeks),
+    plans: plansBlock(plans, names, ctx.timezone),
+    entries: neutral(sharedBetween(ctx.userId, ctx.partnerId, all)),
   });
 }
 
