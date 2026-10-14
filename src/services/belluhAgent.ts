@@ -1,6 +1,8 @@
 import { supabase, supabaseUrl } from '../lib/supabaseClient';
 import type { PlanOption } from '../../supabase/functions/_shared/plans';
 
+export interface UsMessage { id: string; author: string | null; role: 'user' | 'belluh' | 'plan'; body: string; meta: any; created_at: string }
+
 export type AgentRole = 'user' | 'belluh' | 'partner_note' | 'note_draft' | 'plan';
 
 export interface Plan {
@@ -55,6 +57,8 @@ async function call<T>(body: Record<string, unknown>): Promise<T | null> {
 
 export const belluhAgent = {
   history: () => call<{ messages: AgentMessage[]; partner_name: string | null; week: WeekView | null }>({ action: 'history' }),
+  usHistory: () => call<{ messages: UsMessage[]; partner_name: string | null; partner_id?: string }>({ action: 'us_history' }),
+  usSend: (message: string, askBelluh = true) => call<{ messages: UsMessage[] }>({ action: 'us_send', message, ask_belluh: askBelluh }),
   planRespond: (planId: string, optionId: string | null, note = '') => call<{ plan: Plan; messages: AgentMessage[] }>({ action: 'plan_respond', plan_id: planId, option_id: optionId, note }),
   planCancel: (planId: string) => call<{ plan: Plan }>({ action: 'plan_cancel', plan_id: planId }),
   checkin: (actionId: string, status: CheckinStatus) => call<{ messages: AgentMessage[]; week: WeekView | null }>({ action: 'checkin', action_id: actionId, status }),

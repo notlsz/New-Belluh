@@ -142,8 +142,9 @@ const FactCard = ({ id, label, date, setDate, isEditing, icon: Icon, theme, conf
                         <button type="button" onClick={onAdd} className="text-lg font-serif font-medium opacity-60 hover:opacity-100 underline-offset-4 hover:underline">Add date</button>
                     ) : (
                     <>
-                        <div className={`${config.size === 'big' || config.size === 'wide' ? 'text-4xl md:text-5xl' : 'text-3xl md:text-4xl'} font-serif font-medium tracking-tight leading-tight mb-1`}>{getRelativeDisplay(date, mode)}</div>
-                        <div className="text-sm font-medium opacity-60">{date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+                        {/* Past dates lead with the day itself; upcoming ones lead with the countdown */}
+                        <div className={`${config.size === 'big' || config.size === 'wide' ? 'text-4xl md:text-5xl' : 'text-3xl md:text-4xl'} font-serif font-medium tracking-tight leading-tight mb-1`}>{mode === 'past' ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : getRelativeDisplay(date, mode)}</div>
+                        <div className="text-sm font-medium opacity-70">{mode === 'past' ? `${date.getFullYear()} · ${getRelativeDisplay(date, mode).replace(' years ago', ' yrs ago').replace(' year ago', ' yr ago').replace(' months ago', ' mo ago')}` : date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
                     </>
                     )
                 )}

@@ -117,3 +117,27 @@ test('in-app Belluh can do everything WhatsApp can with dates', () => {
   const block = occasionsBlock([{ label: "Dan's birthday", month: 10, day: 20, year: null, repeats_yearly: true, mentioned_at: '2026-03-03T10:00:00Z', source: 'whatsapp' }], { y: 2026, m: 10, d: 13 });
   assert.match(block, /Dan's birthday: October 20 \(in 7 days; they first told you on 2026-03-03 on WhatsApp\)/);
 });
+
+import { sharedBetween, usSystemPrompt } from '../supabase/functions/_shared/agent.ts';
+
+test('Us thread: Belluh only gets what both of them can see', () => {
+  const now = new Date('2026-10-14T20:00:00Z');
+  const row = (id: string, user_id: string, content: string, extra: Record<string, unknown> = {}) => ({ id, user_id, content, is_shared: true, tags: [], created_at: '2026-10-14T12:00:00Z', ...extra }) as never;
+  const rows = [
+    row('1', 'm', 'Maya shared this'),
+    row('2', 'm', 'MAYA PRIVATE', { is_shared: false }),
+    row('3', 'd', 'DAN PRIVATE', { is_shared: false }),
+    row('4', 'd', 'Dan answered the daily question', { title: 'Q today' }),
+    row('5', 'e', 'Someone else entirely'),
+    row('6', 'm', '{"firstMet":"2020-01-01"}', { tags: ['system_facts'] }),
+  ];
+  const out = sharedBetween('m', 'd', rows, now).map((r: any) => r.content);
+  assert.deepEqual(out, ['Maya shared this'], "no private entries, no strangers, and Dan's daily answer waits for Maya's");
+  const both = sharedBetween('m', 'd', [...rows, row('7', 'm', 'Maya answered too', { title: 'Q today' })], now).map((r: any) => r.content);
+  assert.ok(both.includes('Dan answered the daily question') && both.includes('Maya answered too'), 'once both answer, both are in');
+
+  const p = usSystemPrompt({ names: ['Maya', 'Dan'], today: '2026-10-14', facts: null, weekly: null, pastWeeks: null, plans: null, entries: '- Maya shared this' });
+  assert.match(p, /three-way chat with Maya and Dan/);
+  assert.match(p, /Both of them see everything you write here/);
+  assert.match(p, /that stays private/);
+});

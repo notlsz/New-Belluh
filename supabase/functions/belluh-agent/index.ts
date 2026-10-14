@@ -11,7 +11,7 @@
 import { cleanReply, REACT_INSTRUCTION } from '../_shared/agent.ts';
 import { jsonAnswer } from '../_shared/gemini.ts';
 import { db, loadCtx, buildSystem, addMessage, history, weekView, type Ctx } from '../_shared/agentdb.ts';
-import { chat, underLimit, sendNote, planRespond, planCancel, checkin, ownPhoto, type Result } from '../_shared/agentcore.ts';
+import { chat, underLimit, sendNote, planRespond, planCancel, checkin, ownPhoto, usHistory, usSend, type Result } from '../_shared/agentcore.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -66,6 +66,8 @@ Deno.serve(async (req) => {
       case 'plan_cancel': return out(await planCancel(ctx, String(body.plan_id ?? '')));
       case 'chat': return json(await chat(ctx, String(body.message ?? ''), body.mode === 'mediate' ? 'mediate' : 'chat', 'app', typeof body.photo === 'string' ? body.photo : null));
       case 'react': return json(await react(ctx, String(body.entry_id ?? '')));
+      case 'us_history': return out(await usHistory(ctx));
+      case 'us_send': return out(await usSend(ctx, String(body.message ?? ''), body.ask_belluh !== false));
       case 'send_note': return out(await sendNote(ctx, String(body.draft_id ?? ''), typeof body.text === 'string' ? body.text : undefined));
       case 'discard_note': {
         const { data: d } = await db.from('agent_messages').select('user_id, role, meta').eq('id', String(body.draft_id ?? '')).maybeSingle();

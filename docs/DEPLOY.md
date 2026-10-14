@@ -20,6 +20,7 @@ Do these in order.
    - `supabase/migrations/20261013020000_plans_calendar.sql`
    - `supabase/migrations/20261013030000_sms_channel.sql`
    - `supabase/migrations/20261014000000_web_push.sql`
+   - `supabase/migrations/20261014010000_us_thread.sql`
 
    The last one replaces the access rules on `journal_entries` and `partner_connections`, adds one-time invite links, and creates the private `journal-private` storage bucket.
 
