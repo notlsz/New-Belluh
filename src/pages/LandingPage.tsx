@@ -373,7 +373,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       </div>
 
       {/* Hero Section */}
-      <section className="relative z-10 min-h-[100svh] flex flex-col items-center justify-center pt-28 pb-24 px-6">
+      <section className="hero-wrap relative z-10 min-h-[100svh] flex flex-col items-center justify-center pt-28 pb-24 px-6">
          <div className="w-full max-w-4xl mx-auto text-center animate-slide-up">
              <div className="flex flex-col items-center mb-4 md:mb-6">
                  <BelluhOrb size={heroOrb} onTap={heroTap.tap} label="Belluh. Tap to change its shape." />
@@ -406,7 +406,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
              </div>
              <p className="mt-5 text-sm text-slate-400">Free to start. Bring your partner whenever you're ready.</p>
          </div>
-         <div className="absolute bottom-6 md:bottom-8 inset-x-0 flex justify-center">
+         {/* The real app, peeking up from the bottom of the first screen on laptops */}
+         <button onClick={() => scrollToSection('inside')} aria-label="See inside Belluh" className="hero-peek absolute bottom-0 left-1/2 -translate-x-1/2 w-[300px] h-[170px] overflow-hidden group">
+             <div className="absolute inset-x-0 -bottom-6 h-24 bg-gradient-to-t from-[#fcfcfc] to-transparent z-10 pointer-events-none"></div>
+             <div className="transition-transform duration-700 group-hover:-translate-y-3">
+                 <PhoneFrame src="/screens/us.webp" alt="Belluh planning a ramen night for Maya and Dan in their shared thread" />
+             </div>
+         </button>
+         <div className="hero-cue absolute bottom-6 md:bottom-8 inset-x-0 flex justify-center">
              <button onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })} aria-label="Scroll down" className="w-11 h-11 rounded-full flex items-center justify-center text-[#9bbecb] hover:text-[#f0addd] transition-colors animate-bounce">
                  <ChevronDown size={24} />
              </button>
@@ -469,6 +476,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       {/* Marquee Section */}
       <LogoMarquee title="Works with" orgs={INTEGRATIONS} note="* Trademarks belong to their owners." repeat={6} />
 
+      {/* Why Belluh exists, in the founder's words (from the Our Why page) */}
+      <section id="why" className="relative z-10 px-6 py-24 md:py-32 scroll-mt-24">
+          <div className="max-w-3xl mx-auto text-center">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-8">Why Belluh exists</p>
+              <blockquote className="font-serif text-3xl md:text-5xl leading-[1.15] tracking-tight text-slate-900">
+                  "We've built a world of perfect documentation and <span className="text-[#f0addd] italic">zero remembrance.</span>"
+              </blockquote>
+              <p className="mt-8 text-lg md:text-xl text-slate-500 font-light leading-relaxed max-w-2xl mx-auto">
+                  "Love isn't always built in the big moments. ... It's built in the supermarket. It's built in how someone listens when you talk about shrimp."
+              </p>
+              <p className="mt-6 text-sm font-bold text-slate-700">Jimmy Liu, founder</p>
+              <button onClick={onGoToAbout} className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#f0addd] transition-colors">
+                  Read the whole story <ArrowRight size={15} />
+              </button>
+          </div>
+      </section>
+
       {/* FAQ */}
       <section id="faq" className="relative z-10 pt-24 px-6 scroll-mt-24">
           <div className="max-w-3xl mx-auto">
@@ -525,6 +549,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       </footer>
       
       <style>{`
+        .hero-peek { display: none; }
+        @media (min-width: 768px) and (min-height: 820px) { .hero-peek { display: block; } .hero-cue { display: none; } .hero-wrap { padding-bottom: 200px; padding-top: 96px; } }
         .mask-gradient-x {
             mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
             -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
