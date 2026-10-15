@@ -64,12 +64,12 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
           {messages === null && <div className="h-20 rounded-3xl bg-slate-50 animate-pulse" />}
           {messages !== null && messages.length === 0 && (
             <div className="text-center py-10 px-6">
-              <div className="w-12 h-12 mx-auto rounded-full bg-[#f7d8ee] text-[#831843] flex items-center justify-center"><Sparkles size={20} /></div>
+              <div className="mx-auto w-fit text-[#9bbecb]" aria-hidden="true"><Sparkles size={30} strokeWidth={1.5} /></div>
               <p className="mt-4 font-serif text-xl text-slate-900">You, {partnerName} and Belluh</p>
               <p className="mt-2 text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">Plan together, decide together, ask Belluh together. Belluh here only knows what you've both shared, never anyone's private entries.</p>
               <div className="mt-5 flex flex-wrap justify-center gap-2">
                 {['Plan a date night for us this week', 'What have we both been writing about?', 'Give us something small to try tonight'].map(s => (
-                  <button key={s} onClick={() => setText(s)} className="px-3.5 py-1.5 rounded-full bg-white border border-belluh-100 text-xs font-bold text-belluh-900 hover:bg-belluh-50">{s}</button>
+                  <button key={s} onClick={() => setText(s)} className="px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:border-[#9bbecb] hover:text-[#3f7486]">{s}</button>
                 ))}
               </div>
             </div>
@@ -79,10 +79,8 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
             if (m.role === 'plan') return <div key={m.id} className="pl-10"><PlanCard planId={m.meta?.plan_id} partnerName={partnerName} /></div>;
             return (
               <div key={m.id} className={`flex items-end gap-2 animate-slide-up ${w === 'me' ? 'justify-end' : ''}`}>
-                {w !== 'me' && (
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${w === 'belluh' ? 'bg-belluh-600 text-white' : 'bg-[#CDE9F2] text-[#2d5a68]'}`}>
-                    {w === 'belluh' ? <Sparkles size={14} /> : partnerName[0]}
-                  </div>
+                {w === 'belluh' && (
+                  <div className="w-8 shrink-0 pb-3 flex justify-center text-[#9bbecb]" aria-hidden="true"><Sparkles size={18} strokeWidth={1.75} /></div>
                 )}
                 <div className={`max-w-[80%] rounded-3xl px-4 py-3 ${w === 'me' ? 'bg-slate-100 rounded-br-lg' : w === 'partner' ? 'bg-[#eef8fb] rounded-bl-lg' : 'bg-white border border-slate-100 rounded-bl-lg'}`}>
                   {w === 'partner' && <p className="text-[10px] font-bold uppercase tracking-widest text-[#3f7486] mb-1">{partnerName}</p>}
@@ -113,7 +111,7 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
           <p className="text-center text-[10px] text-slate-400 mb-2">{myFirst} and {partnerName} both see this. Belluh only knows what you've both shared.</p>
           <div className="w-full rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-200 bg-white flex items-center p-2 pr-3 min-h-[60px] focus-within:border-belluh-200">
             <button type="button" onClick={() => setAsk(!ask)} aria-pressed={ask} title={ask ? 'Belluh will answer' : `Just to ${partnerName}`}
-              className={`shrink-0 h-9 px-3 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors ${ask ? 'bg-belluh-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+              className={`shrink-0 h-9 px-3 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors ${ask ? 'bg-[#9bbecb] text-white' : 'bg-slate-100 text-slate-500'}`}>
               <Sparkles size={13} /> {ask ? 'Belluh' : 'Off'}
             </button>
             <textarea value={text} onChange={e => setText(e.target.value)} rows={1}
@@ -122,7 +120,7 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
               aria-label={`Message ${partnerName} and Belluh`}
               className="flex-1 bg-transparent border-none px-3 py-2 max-h-32 resize-none focus:outline-none text-[16px] text-slate-800 placeholder:text-slate-400" style={{ overflow: 'hidden' }} />
             <button aria-label="Send to Us" onClick={send} disabled={!text.trim() || busy}
-              className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${text.trim() ? 'bg-belluh-600 text-white' : 'bg-slate-100 text-slate-300'}`}>
+              className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${text.trim() ? 'bg-[#9bbecb] text-white' : 'bg-slate-100 text-slate-300'}`}>
               <ArrowUp size={19} strokeWidth={2.5} />
             </button>
           </div>

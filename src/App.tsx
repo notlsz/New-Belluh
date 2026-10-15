@@ -1049,7 +1049,7 @@ const App: React.FC = () => {
   const inviteModal = inviteOffer ? (
         <div className="fixed inset-0 z-[150] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
           <div className="bg-white rounded-[2rem] max-w-sm w-full p-8 text-center shadow-2xl animate-scale-in">
-            <div className="w-14 h-14 rounded-full bg-[#f7d8ee] flex items-center justify-center mx-auto mb-5"><Sparkles size={22} className="text-[#d46aa9]" /></div>
+            <div className="w-fit mx-auto mb-5 text-[#9bbecb]" aria-hidden="true"><Sparkles size={30} strokeWidth={1.5} /></div>
             <h2 className="font-serif text-2xl text-slate-900 mb-3">Connect with {inviteOffer.name}?</h2>
             <p className="text-sm text-slate-500 leading-relaxed mb-7">You'll each see the entries the other chooses to share. Private entries stay private. You can disconnect anytime.</p>
             <button disabled={inviteBusy} onClick={() => answerInvite(true)} className="w-full py-4 rounded-full bg-[#f0addd] text-white font-bold hover:bg-[#e57ec3] disabled:opacity-60">Connect</button>
@@ -1076,7 +1076,7 @@ const App: React.FC = () => {
       {belluhReply && currentTab !== 'ai-coach' && !isComposeOpen && (
         <div className="fixed bottom-28 left-0 right-0 px-6 z-[55] flex justify-center animate-slide-up">
           <div className="max-w-[360px] w-full bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-900/10 border border-white p-4 flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-belluh-600 flex items-center justify-center text-white shrink-0"><Sparkles size={14} /></div>
+            <div className="shrink-0 pt-0.5 text-[#9bbecb]" aria-hidden="true"><Sparkles size={18} strokeWidth={1.75} /></div>
             <button className="text-left flex-1" onClick={() => { setBelluhReply(null); setCurrentTab('ai-coach'); }}>
               <p className="text-xs font-bold text-slate-400">Belluh</p>
               <p className="font-serif text-[15px] leading-snug text-slate-800 line-clamp-3">{belluhReply}</p>
