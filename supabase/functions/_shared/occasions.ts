@@ -61,11 +61,15 @@ export type Command =
   | { type: 'pick'; option: number }
   | { type: 'none'; note: string }
   | { type: 'checkin'; status: 'done' | 'not_yet' | 'skipped' }
+  | { type: 'offer'; accept: boolean }
   | { type: 'capture'; text: string };
 
 /** Short replies people send from their phone. Anything else is a message to Belluh. */
 export function parseCommand(raw: string): Command {
-  const text = raw.trim();
+  // Telegram: the Connect button opens the chat with "/start <code>", and its menu sends commands as "/help", "/list@BelluhBot"
+  const tgStart = /^\/start\s+([a-z0-9]{6})$/i.exec(raw.trim());
+  if (tgStart) return { type: 'link', code: tgStart[1].toUpperCase() };
+  const text = raw.trim().replace(/^\/(start|help|list|stop)(@\w+)?$/i, '$1');
   const lower = text.toLowerCase().replace(/[’]/g, "'");
   const link = /^link\s+([a-z0-9]{6})$/i.exec(text);
   if (link) return { type: 'link', code: link[1].toUpperCase() };
@@ -84,6 +88,8 @@ export function parseCommand(raw: string): Command {
   if (/^(did it|we did it|done)[.!]*$/.test(lower)) return { type: 'checkin', status: 'done' };
   if (/^not yet[.!]*$/.test(lower)) return { type: 'checkin', status: 'not_yet' };
   if (/^(skip|skipped|skip it)[.!]*$/.test(lower)) return { type: 'checkin', status: 'skipped' };
+  if (/^(plan it|yes,? plan it|help me plan it)[.!]*$/.test(lower)) return { type: 'offer', accept: true };
+  if (/^(not now|no thanks|maybe later)[.!]*$/.test(lower)) return { type: 'offer', accept: false };
   return { type: 'capture', text };
 }
 
@@ -220,10 +226,14 @@ export function normalizeExtracted(raw: unknown): ExtractedOccasion[] {
 export const HELP_TEXT =
   "I'm Belluh, the same Belluh as in the app. Text me like you'd talk to me there: what's on your mind, a date to remember " +
   "(\"Maya's birthday is May 12\"), or \"plan a dinner with Maya this week\". Notes and plans from your partner come here too.\n\n" +
+  'Ask me to remind you of something ("remind me to call his mom Sunday at 5") and I will. ' +
   'LIST shows your dates. FORGET <name> removes one. STOP pauses my messages, START turns them back on.';
 
 export const NOT_LINKED_TEXT =
   "Hi, I'm Belluh. To save dates here, open Belluh, go to Me → Settings, and tap Connect WhatsApp. It opens WhatsApp with the code ready to send.";
+
+export const NOT_LINKED_TELEGRAM_TEXT =
+  "Hi, I'm Belluh. To connect, open Belluh, go to Me → Settings, and tap Connect Telegram. It brings you back here, already linked.";
 
 export const NOT_LINKED_SMS_TEXT =
   "Hi, I'm Belluh. To save dates by text, open Belluh, go to Me → Settings, and tap Connect by text. It opens Messages with the code ready to send.";

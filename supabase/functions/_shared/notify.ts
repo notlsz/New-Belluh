@@ -5,6 +5,7 @@
 import { db } from './agentdb.ts';
 import { sendText, sendTemplate } from './whatsapp.ts';
 import { sendSms } from './sms.ts';
+import { sendTelegram, telegramChat } from './telegram.ts';
 import { sendPush } from './webpush.ts';
 import { vapidKeys, PUSH_SUBJECT, PUSH_EXTRA_HOSTS } from './pushkeys.ts';
 
@@ -41,7 +42,8 @@ export async function notify(userId: string | null, text: string, opts: { pushOn
       .select('phone_e164, channel, last_inbound_at, reminders_enabled').eq('user_id', userId).maybeSingle();
     if (!link?.phone_e164 || !link.reminders_enabled) return pushed > 0;
     let id: string | null;
-    if (link.channel === 'sms') id = await sendSms(link.phone_e164, text);
+    if (link.channel === 'telegram' || telegramChat(link.phone_e164)) { const tg = telegramChat(link.phone_e164); id = tg ? await sendTelegram(tg, text) : null; }
+    else if (link.channel === 'sms') id = await sendSms(link.phone_e164, text);
     else {
       const open = link.last_inbound_at && Date.now() - new Date(link.last_inbound_at).getTime() < WINDOW_MS;
       // Template parameters can't hold line breaks

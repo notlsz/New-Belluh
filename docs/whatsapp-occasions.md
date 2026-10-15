@@ -1,4 +1,4 @@
-# WhatsApp: Belluh remembers every date
+# Texting Belluh (WhatsApp, SMS, Telegram): Belluh remembers every date
 
 Users text Belluh on WhatsApp ("Maya's birthday is May 12"). Belluh saves the date, remembers when they first said it, and sends a reminder a week before and on the day.
 
@@ -119,6 +119,16 @@ Everything above also works by SMS: one-tap **Connect by text** (opens Messages 
 4. Vercel: `VITE_BELLUH_SMS_NUMBER` = the number, e.g. `+15551234567`.
 
 Every request is checked against Twilio's signature (`X-Twilio-Signature`) using the auth token. If the project is behind a custom domain, set the `SMS_WEBHOOK_URL` secret to the exact URL Twilio calls. Twilio's own STOP handling also applies to SMS.
+
+## Telegram, the fastest way to turn texting on
+
+Telegram needs no business number, carrier registration or message templates, and it has no rule against an assistant like Belluh. It's the same Belluh as WhatsApp and SMS, with buttons for one-tap answers (SEND / DISCARD, 1 / 2 / NONE, DID IT, PLAN IT).
+
+1. In Telegram, message @BotFather, send `/newbot`, pick a name (Belluh) and a username (for example `BelluhBot`). It replies with a token.
+2. GitHub secret: `TELEGRAM_BOT_TOKEN` = that token. The deploy workflow stores it, deploys `telegram-webhook`, registers the webhook (with a secret derived from the token, so every update is verified) and sets the bot's menu (help, list, stop).
+3. Vercel: `VITE_BELLUH_TELEGRAM_BOT` = the username, without the @.
+
+In the app, Me → Settings shows **Connect Telegram**. One tap opens the bot with `/start <code>` and Telegram links it as soon as the person taps Start.
 
 ## Not possible: Snapchat, iMessage
 

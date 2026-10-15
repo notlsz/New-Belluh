@@ -1,3 +1,4 @@
+import BelluhActions from '../components/BelluhActions';
 import React, { useMemo, useState, useEffect } from 'react';
 import { JournalEntry, Circle, Insight, CircleStatus, RelationshipForecast } from '../types';
 import EntryCard from '../components/EntryCard';
@@ -372,17 +373,23 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
 
              {/* Belluh's latest word to you */}
              {belluhLive && latest && !(latest.meta?.kind === 'weekly' && week) && !isConstellation && !isArchived && showPatterns && (
-                 <button type="button" onClick={() => onOpenBelluh?.()} className="w-full text-left mb-6 animate-scale-in group">
+                 <div className="w-full mb-6 animate-scale-in group">
                      <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-float flex items-start gap-4 relative overflow-hidden group-hover:shadow-lg transition-shadow">
                          <div className="absolute top-0 left-0 w-1 h-full bg-[#f0addd]"></div>
                          <div className="w-10 h-10 rounded-full bg-belluh-600 flex items-center justify-center text-white shrink-0"><Sparkles size={16} /></div>
-                         <div className="min-w-0">
-                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{latest.meta?.kind === 'weekly' ? 'Your week from Belluh' : latest.meta?.kind === 'checkin' ? 'Check-in from Belluh' : latest.meta?.kind === 'reminder' ? 'Reminder from Belluh' : 'Belluh'}</span>
-                             <p className="mt-1 text-[15px] font-serif text-slate-800 leading-snug line-clamp-3">{latest.body}</p>
-                             <span className="mt-2 inline-block text-xs font-bold text-belluh-500">Reply</span>
+                         <div className="min-w-0 flex-1">
+                             <button type="button" onClick={() => onOpenBelluh?.()} className="w-full text-left">
+                                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{({ weekly: 'Your week from Belluh', checkin: 'Check-in from Belluh', reminder: 'Reminder from Belluh', remind: 'Reminder you asked for', offer: 'Belluh noticed', plan_nudge: 'Waiting on you', after_plan: 'From Belluh' } as Record<string, string>)[latest.meta?.kind] ?? 'Belluh'}</span>
+                                 <p className="mt-1 text-[15px] font-serif text-slate-800 leading-snug line-clamp-3">{latest.body}</p>
+                             </button>
+                             <BelluhActions key={latest.id} msg={latest} partnerName={partnerName} onCompose={(p) => onCompose(p)}
+                                 onAdded={(added, updated) => { setLatest(added.length ? added[added.length - 1] : updated); if (added.length) onOpenBelluh?.(); }} />
+                             {!['offer', 'after_plan', 'plan_nudge'].includes(latest.meta?.kind) && !(Array.isArray(latest.meta?.links) && latest.meta.links.length) && (
+                                 <button type="button" onClick={() => onOpenBelluh?.()} className="mt-2 inline-block text-xs font-bold text-belluh-500">Reply</button>
+                             )}
                          </div>
                      </div>
-                 </button>
+                 </div>
              )}
 
              {/* Forecast (before Belluh is live) */}
