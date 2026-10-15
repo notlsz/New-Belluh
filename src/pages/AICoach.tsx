@@ -44,8 +44,8 @@ const Reveal: React.FC<{ text: string; onTick?: () => void }> = ({ text, onTick 
 const firstName = (n?: string) => (n ?? '').trim().split(/\s+/)[0] || '';
 
 const BelluhAvatar = () => (
-  <div className="w-8 h-8 rounded-full bg-belluh-600 flex items-center justify-center text-white shrink-0 mt-1 shadow-sm">
-    <Sparkles size={14} />
+  <div className="w-8 shrink-0 mt-1.5 flex justify-center text-[#9bbecb]" aria-hidden="true">
+    <Sparkles size={20} strokeWidth={1.75} />
   </div>
 );
 
@@ -93,7 +93,7 @@ const NoteDraft: React.FC<{ msg: AgentMessage; onSend: (id: string, text: string
         <button
           disabled={busy || !text.trim()}
           onClick={async () => { setBusy(true); await onSend(msg.id, text); setBusy(false); }}
-          className="px-5 py-2.5 rounded-full bg-belluh-600 text-white text-sm font-bold hover:bg-belluh-700 disabled:opacity-50 flex items-center gap-2"
+          className="px-5 py-2.5 rounded-full bg-[#9bbecb] text-white text-sm font-bold hover:bg-[#8aaab7] disabled:opacity-50 flex items-center gap-2"
         >
           <Heart size={14} className="fill-white" /> Send to {to}
         </button>
@@ -317,7 +317,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
     return <UsThread partnerName={partnerName} myName={userName} header={
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-2">
-          {!inSheet && <><span className="text-sm font-bold font-serif text-belluh-900">Belluh</span><span className="text-belluh-200">/</span></>}{spaceSwitch}
+          {!inSheet && <><span className="text-sm font-bold font-serif text-[#9bbecb]">Belluh</span><span className="text-belluh-200">/</span></>}{spaceSwitch}
           {closeBtn}
         </div>
       </div>
@@ -331,7 +331,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-transparent">
          <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2 p-1.5 rounded-lg">
-                {!inSheet && <><span className="text-sm font-bold font-serif text-belluh-900">Belluh</span>
+                {!inSheet && <><span className="text-sm font-bold font-serif text-[#9bbecb]">Belluh</span>
                 <span className="text-belluh-200">/</span></>}
                 {mode === 'agent' && partnerName ? spaceSwitch : (
                 <span className="text-sm font-medium text-slate-500">
@@ -377,7 +377,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                  if (msg.role === 'note_draft') return <NoteDraft key={msg.id} msg={msg} onSend={handleSendNote} onDiscard={handleDiscardNote} />;
                  if (msg.role === 'partner_note') return (
                    <div key={msg.id} className="animate-slide-up flex gap-4 md:gap-6">
-                     <div className="w-8 h-8 rounded-full bg-[#f7d8ee] flex items-center justify-center text-[#831843] shrink-0 mt-1"><Heart size={14} className="fill-[#f0addd] text-[#f0addd]" /></div>
+                     <div className="w-8 shrink-0 mt-1.5 flex justify-center" aria-hidden="true"><Heart size={18} className="fill-[#f0addd] text-[#f0addd]" /></div>
                      <div className="max-w-[85%] rounded-3xl bg-[#f7d8ee] p-5">
                        <p className="text-xs font-bold text-[#831843] mb-2">From {msg.meta?.from_name || 'your partner'}, via Belluh</p>
                        <p className="font-serif text-[17px] leading-relaxed text-[#5e1c43] whitespace-pre-wrap">{msg.body}</p>
@@ -471,7 +471,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                 <div className="flex flex-wrap items-center gap-2 mb-3 pl-1">
                     {starters.map(t => (
                         <button key={t} onClick={() => sendNow(t)} disabled={isTyping}
-                            className="shrink-0 py-1.5 px-4 rounded-full bg-white border border-belluh-100 text-xs font-bold text-belluh-900 hover:bg-belluh-50 disabled:opacity-50 shadow-sm">
+                            className="shrink-0 py-1.5 px-4 rounded-full bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:border-[#9bbecb] hover:text-[#3f7486] disabled:opacity-50 shadow-sm">
                             {t}
                         </button>
                     ))}
@@ -511,7 +511,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                         aria-label="Send"
                         onClick={handleSendMessage}
                         disabled={(!chatInput.trim() && !photo) || isTyping}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 ml-2 ${chatInput.trim() || photo ? 'bg-belluh-600 text-white hover:bg-belluh-700 active:scale-95' : 'bg-slate-100 text-slate-300'}`}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 ml-2 ${chatInput.trim() || photo ? 'bg-[#9bbecb] text-white hover:bg-belluh-700 active:scale-95' : 'bg-slate-100 text-slate-300'}`}
                     >
                         <ArrowUp size={20} strokeWidth={2.5} />
                     </button>
