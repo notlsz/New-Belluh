@@ -40,7 +40,7 @@ const CHAPTERS = [
 
 // The evening, itemized. An illustration of the story, in the spirit of Belluh's own keepsake receipt.
 const RECEIPT: [string, string][] = [
-  ['Shrimp, freshly weighed', '1 lb'],
+  ['Shrimp, freshly weighed', '1'],
   ['Words said without speaking', '10,000'],
   ['Questions that kept me up', '1'],
   ['Seconds at the crosswalk', '50'],
