@@ -576,11 +576,13 @@ const App: React.FC = () => {
             relationshipFacts: relationshipFacts
         }));
         
-        if (!displayPartnerName && !primaryPartner) {
-           setIsOnboarding(true);
-        } else {
-            setIsOnboarding(false);
-        }
+        // Onboarding is only for someone new: an account made in the last day, no partner named or connected, nothing written yet, and not finished before
+        let onboardedHere = false;
+        try { onboardedHere = localStorage.getItem(`belluh_onboarded:${sessionUser.id}`) === '1'; } catch { /* storage blocked */ }
+        const hasWritten = mappedEntries.some(e => e.userId === sessionUser.id);
+        const createdAt = Date.parse((sessionUser as any).created_at ?? '');
+        const oldAccount = Number.isFinite(createdAt) && Date.now() - createdAt > 24 * 3600_000;
+        setIsOnboarding(!oldAccount && !displayPartnerName && !primaryPartner && !hasWritten && !onboardedHere);
         
         setIsAuthenticated(true);
       } catch (err) {
@@ -656,48 +658,55 @@ const App: React.FC = () => {
   };
 
   const handleOnboardingComplete = async (partnerName: string, firstEntry: string) => {
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
-    if (!currentUser) return;
-    
-    // 1. Update Profile
-    await supabase.from('profiles').update({ partner_name: partnerName }).eq('id', currentUser.id);
-    
-    // 2. Insert Entry
-    const { data: entryData } = await supabase.from('journal_entries').insert([{
-        user_id: currentUser.id,
-        content: firstEntry,
-        type: 'Freeform', 
-        is_shared: false, 
-        is_favorite: false,
-        tags: ['onboarding', 'first_magic_moment', 'circle:c1'], 
-        date: new Date().toISOString()
-    }]).select().single();
-    
-    // 3. Update Local State
-    setUser(prev => ({ ...prev, partnerName, hasCompletedOnboarding: true }));
-    
-    if (entryData) {
-        const newEntry: JournalEntry = {
-            id: entryData.id,
-            userId: currentUser.id,
-            authorName: user.name,
-            authorAvatar: user.avatar,
-            content: firstEntry,
-            timestamp: new Date(entryData.created_at),
-            type: EntryType.Freeform,
-            mood: undefined,
-            prompt: undefined,
-            isPrivate: true,
-            circleId: 'c1',
-            likes: 0,
-            isLiked: false
-        };
-        setEntries(prev => [newEntry, ...prev]);
-    }
+    // Whatever happens below, onboarding is done: it never shows again for this person
+    try { if (user.id) localStorage.setItem(`belluh_onboarded:${user.id}`, '1'); } catch { /* storage blocked */ }
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) return;
+      try { localStorage.setItem(`belluh_onboarded:${currentUser.id}`, '1'); } catch { /* storage blocked */ }
 
-    setIsOnboarding(false);
-    setShowIntro(true); 
-    // loadUserData(currentUser) call removed to prevent state race condition
+      // 1. Save their partner's name, creating the profile if sign-up didn't (Google sign-in, confirming by email)
+      if (partnerName) await supabase.from('profiles').upsert({ id: currentUser.id, partner_name: partnerName }, { onConflict: 'id' });
+
+      // 2. Insert Entry
+      const { data: entryData } = !firstEntry ? { data: null } : await supabase.from('journal_entries').insert([{
+          user_id: currentUser.id,
+          content: firstEntry,
+          type: 'Freeform', 
+          is_shared: false, 
+          is_favorite: false,
+          tags: ['onboarding', 'first_magic_moment', 'circle:c1'], 
+          date: new Date().toISOString()
+      }]).select().single();
+    
+      // 3. Update Local State
+      setUser(prev => ({ ...prev, partnerName: partnerName || prev.partnerName, hasCompletedOnboarding: true }));
+    
+      if (entryData) {
+          const newEntry: JournalEntry = {
+              id: entryData.id,
+              userId: currentUser.id,
+              authorName: user.name,
+              authorAvatar: user.avatar,
+              content: firstEntry,
+              timestamp: new Date(entryData.created_at),
+              type: EntryType.Freeform,
+              mood: undefined,
+              prompt: undefined,
+              isPrivate: true,
+              circleId: 'c1',
+              likes: 0,
+              isLiked: false
+          };
+          setEntries(prev => [newEntry, ...prev]);
+      }
+
+    } catch (err) {
+      console.error('Finishing onboarding', err);
+    } finally {
+      setIsOnboarding(false);
+      setShowIntro(true);
+    }
   };
 
   const handleUpdateUser = async (updates: Partial<User>) => {

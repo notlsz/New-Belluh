@@ -3,14 +3,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, ArrowRight, Activity, TrendingUp, Lock, Menu, X, Heart, ChevronDown } from 'lucide-react';
 import { rememberCta } from '../services/analytics';
+import BelluhOrb from '../components/BelluhOrb';
+import BelluhSpeech from '../components/BelluhSpeech';
+import { belluh, type BelluhState } from '../lib/belluhPresence';
 import { ORGANIZATIONS } from '../constants';
 
 const FAQ = [
   { q: 'Can my partner read my private entries?', a: 'No. Every entry is shared or private, your call. Your partner never sees your private entries, and neither does their Belluh.' },
-  { q: 'What does Belluh actually do?', a: 'It remembers what matters to you both, plans dates your partner can accept with one tap, reminds you before birthdays and anniversaries, helps you find the words for a note, and every Sunday gives you one insight and one small thing to try together.' },
+  { q: 'What does Belluh actually do?', a: 'It remembers what matters to you both, plans dates your partner can accept with one tap, gets a table ready to book, reminds you before birthdays and anniversaries, sends the reminders you ask for, helps you find the words for a note, and every Sunday gives you one insight and one small thing to try together.' },
   { q: 'Do we both need to sign up?', a: "Belluh is made for two, so it's best together. You can start on your own and send your partner the link whenever you're ready." },
   { q: 'Is Belluh an AI girlfriend or boyfriend?', a: "No. Belluh doesn't flirt or play a partner. It works for the two of you and points you back to each other." },
-  { q: 'Can I use it from WhatsApp or text?', a: "Yes. Connect in Settings with one tap and text Belluh like you'd talk to it in the app. Same Belluh, same memory." },
+  { q: 'Can I use it from WhatsApp or text?', a: "Yes. Connect WhatsApp, SMS or Telegram in Settings with one tap and text Belluh like you'd talk to it in the app. Same Belluh, same memory." },
+  { q: 'Why is Belluh made of water?', a: "So you can see what it's doing. It ripples when you type, swirls while it thinks, and moves with every word it says. Ask it to become something, a cat, a lighthouse, the first letter of your name, and it takes that shape." },
   { q: 'What happens to my data?', a: "Your entries are encrypted in storage and in transit, and never sold. Belluh's replies are written by Google's Gemini models, which process your entries to write them." },
   { q: 'Is it free?', a: 'Yes, Belluh is free to start.' },
 ];
@@ -106,10 +110,107 @@ const LogoMarquee = ({ title, orgs, note, repeat = 2 }: { title: string; orgs: {
   </div>
 );
 
+
+const TRY_EXAMPLES = ['turn into a cat', 'become a sunflower', 'turn into the letter J', 'become a rocket', 'turn into a dolphin', 'become a heart'];
+const withArticle = (thing: string) => (/^(the|a|an)\s/i.test(thing) ? thing : `${/^[aeiou]/i.test(thing) ? 'an' : 'a'} ${thing}`);
+
+// Belluh, live: it listens as you type, thinks, talks word by word, and becomes what you ask for
+const MeetBelluh: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) => {
+  const [state, setState] = useState<BelluhState>(belluh.state());
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [reply, setReply] = useState({ id: 0, text: "Hi, I'm Belluh. Ask me to become anything." });
+  const [hint, setHint] = useState(0);
+  const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
+  useEffect(() => belluh.subscribe(setState), []);
+  useEffect(() => { belluh.prefetch(); const onR = () => setWide(window.innerWidth >= 768); window.addEventListener('resize', onR); return () => window.removeEventListener('resize', onR); }, []);
+  useEffect(() => { const t = setInterval(() => setHint(h => (h + 1) % TRY_EXAMPLES.length), 2600); return () => clearInterval(t); }, []);
+  const say = (t: string) => setReply(r => ({ id: r.id + 1, text: t }));
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const t = text.trim();
+    if (!t || busy) return;
+    setText(''); setBusy(true);
+    const release = belluh.holdThinking();
+    const res = await belluh.tryShape(t).catch(() => ({ asked: false, done: false, subject: '' }));
+    await new Promise(r => setTimeout(r, 650));
+    release(); setBusy(false);
+    if (res.asked && res.subject === 'water') say("Back to water. This is where I'm most myself.");
+    else if (res.done) say(`Here I am as ${withArticle(res.subject)}. Still water, just a different shape.`);
+    else if (res.asked) say(`Sign up and I'll draw ${withArticle(res.subject)} for you. Here I only know everyday things.`);
+    else say('In the app I plan your dates, remember the little things and write with you both. Here, ask me to become something.');
+  };
+
+  const STATES: { key: BelluhState; label: string; text: string }[] = [
+    { key: 'listening', label: 'Listening', text: 'Every key you type ripples the water.' },
+    { key: 'thinking', label: 'Thinking', text: 'The ripples circle and it glows from inside.' },
+    { key: 'talking', label: 'Talking', text: 'Every word it says moves the water.' },
+  ];
+
+  return (
+    <section id="meet" className="relative z-10 px-6 pt-20 pb-8 scroll-mt-24">
+      <div className="max-w-7xl mx-auto">
+        <div className="relative rounded-[2.5rem] md:rounded-[3rem] overflow-hidden border border-white bg-gradient-to-br from-white via-[#F4FAFC] to-[#fdf2f9] shadow-[0_30px_80px_-30px_rgba(63,116,134,0.35)]">
+          <div className="absolute -top-40 -left-24 w-[520px] h-[520px] rounded-full bg-[#CDE9F2]/70 blur-[110px] pointer-events-none"></div>
+          <div className="absolute -bottom-48 right-[-10%] w-[560px] h-[560px] rounded-full bg-[#f0addd]/25 blur-[120px] pointer-events-none"></div>
+          <div className="relative grid grid-cols-1 md:grid-cols-2 items-center gap-6 md:gap-10 p-8 md:p-16">
+            <div className="flex flex-col items-center order-1">
+              <div className="relative">
+                <div className="absolute inset-[-18%] rounded-full bg-[radial-gradient(circle,rgba(205,233,242,0.9)_0%,rgba(205,233,242,0)_65%)] blur-2xl animate-breathing pointer-events-none"></div>
+                <BelluhOrb size={wide ? 300 : 210} onTap={() => {}} label="Belluh. Tap to make a ripple." />
+              </div>
+              <p className="mt-6 min-h-[3.5rem] max-w-sm text-center font-serif text-xl md:text-2xl leading-snug text-slate-800" aria-live="polite">
+                <BelluhSpeech key={reply.id} text={reply.text} />
+              </p>
+            </div>
+            <div className="order-2 text-center md:text-left">
+              <h2 className="text-4xl md:text-6xl font-serif leading-[1.05] tracking-tight mb-5 drop-shadow-sm">
+                <span className="text-[#9bbecb]">Meet</span> <span className="text-[#f0addd] italic">Belluh.</span>
+              </h2>
+              <p className="text-lg md:text-xl text-slate-500 font-light leading-relaxed mb-8 max-w-md mx-auto md:mx-0">
+                Your relationship's assistant, made of living water. You can see it listen, think and talk, and it becomes anything you ask for.
+              </p>
+              <div className="grid grid-cols-3 gap-2 md:gap-4 mb-8 text-left">
+                {STATES.map(st => (
+                  <div key={st.key} className={`rounded-2xl px-3 py-3 md:px-4 md:py-4 transition-all duration-500 ${state === st.key ? 'bg-white shadow-[0_12px_30px_-12px_rgba(63,116,134,0.45)] -translate-y-0.5' : 'bg-white/40'}`}>
+                    <p className={`text-[11px] md:text-xs font-bold uppercase tracking-widest transition-colors duration-500 ${state === st.key ? 'text-[#3f7486]' : 'text-slate-400'}`}>{st.label}</p>
+                    <p className="hidden md:block mt-1.5 text-sm text-slate-500 leading-snug">{st.text}</p>
+                  </div>
+                ))}
+              </div>
+              <form onSubmit={submit} className="flex items-center gap-2 bg-white rounded-full border border-slate-100 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.18)] p-1.5 pl-5 focus-within:border-[#CDE9F2] focus-within:shadow-[0_20px_50px_-15px_rgba(155,190,203,0.6)] transition-all">
+                <input
+                  value={text}
+                  onChange={e => { setText(e.target.value); belluh.key(); }}
+                  placeholder={`Try: ${TRY_EXAMPLES[hint]}`}
+                  aria-label="Say something to Belluh"
+                  maxLength={80}
+                  className="flex-1 min-w-0 bg-transparent py-2.5 text-[16px] text-slate-800 placeholder:text-slate-400 focus:outline-none"
+                />
+                <button type="submit" disabled={busy || !text.trim()} className="shrink-0 h-11 px-5 rounded-full bg-[#9bbecb] text-white text-sm font-bold hover:bg-[#8aaab7] disabled:opacity-50 transition-all active:scale-95">Ask</button>
+              </form>
+              <button onClick={() => { rememberCta('meet'); onGetStarted(); }} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#f0addd] transition-colors">
+                Bring Belluh home <ArrowRight size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShowLegal, onGoToAbout, onGoToCareers }) => {
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pastHero, setPastHero] = useState(false);
+  const [heroOrb, setHeroOrb] = useState(() => (typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerHeight >= 760 ? 150 : 104));
+  useEffect(() => {
+    const onR = () => setHeroOrb(window.innerWidth >= 768 && window.innerHeight >= 760 ? 150 : 104);
+    window.addEventListener('resize', onR);
+    return () => window.removeEventListener('resize', onR);
+  }, []);
   const lastScrollY = useRef(0);
 
   useEffect(() => {
@@ -151,6 +252,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const menuItems = [
+      { label: 'Meet Belluh', action: () => scrollToSection('meet') },
       { label: 'Features', action: () => scrollToSection('features') },
       { label: 'Inside', action: () => scrollToSection('inside') },
       { label: 'FAQ', action: () => scrollToSection('faq') },
@@ -245,13 +347,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       {/* Hero Section */}
       <section className="relative z-10 min-h-[100svh] flex flex-col items-center justify-center pt-28 pb-24 px-6">
          <div className="w-full max-w-4xl mx-auto text-center animate-slide-up">
-             
+             <div className="flex justify-center mb-4 md:mb-6">
+                 <BelluhOrb size={heroOrb} onTap={() => {}} label="Belluh. Tap to make a ripple." />
+             </div>
              <h1 className="text-5xl md:text-7xl font-serif font-medium leading-[1.1] mb-6 text-slate-900 tracking-tight drop-shadow-sm">
                  <span className="text-[#9bbecb]">The AI journal</span> <br /> <span className="text-[#f0addd] italic">for couples.</span>
              </h1>
              
-             <p className="text-xl md:text-2xl text-slate-500 font-light leading-relaxed max-w-2xl mx-auto mb-8">
-                 Write a few lines a day. Belluh remembers, plans, and reminds you both.
+             <p className="text-xl md:text-2xl text-slate-500 font-light leading-relaxed max-w-2xl mx-auto mb-8 min-h-[3.75rem] md:min-h-0">
+                 <BelluhSpeech text="Write a few lines a day. Belluh remembers, plans, and reminds you both." delay={700} />
              </p>
 
              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
@@ -280,6 +384,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       {/* Where Belluh's couples are */}
       <LogoMarquee title="Used by couples at" orgs={ORGANIZATIONS} note="* Used independently by individuals. Not affiliated with these organizations." />
 
+      <MeetBelluh onGetStarted={onGetStarted} />
+
       {/* Visual Demo Section */}
       <section id="example" className="relative z-10 px-6 pt-16 pb-28 scroll-mt-24">
           <div className="max-w-7xl mx-auto">
@@ -291,9 +397,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                       
                       <div className="relative z-10">
                           <div className="flex items-center gap-3 mb-6">
-                              <div className="w-10 h-10 bg-white border border-slate-100 rounded-full flex items-center justify-center shadow-sm text-[#f0addd]">
-                                  <Sparkles size={18} className="fill-[#f0addd]" />
-                              </div>
+                              <BelluhOrb size={34} />
                               <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Weekly Insight</span>
                           </div>
 
@@ -372,15 +476,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                   </div>
 
                   <div className="absolute z-20 bottom-6 inset-x-5 mx-auto max-w-[290px] md:max-w-[320px] md:inset-x-auto md:bottom-auto md:top-28 md:right-[6%] md:mx-0 rounded-3xl bg-white/85 backdrop-blur-xl border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.18)] p-3 md:p-4 flex gap-3">
-                      <div className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-[#f0addd] flex items-center justify-center shrink-0"><Sparkles size={18} className="text-white fill-white" /></div>
+                      <div className="shrink-0 pt-0.5"><BelluhOrb size={34} /></div>
                       <div className="min-w-0">
                           <div className="flex items-center justify-between gap-3"><span className="text-sm font-bold text-slate-900">Belluh</span><span className="text-xs text-slate-400">now</span></div>
                           <p className="text-[13px] md:text-sm text-slate-600 leading-snug mt-0.5">Dan picked Fri, Oct 16 at 7:00 PM for "Ramen, then the night market".</p>
                       </div>
                   </div>
 
-                  <div className="hidden md:flex absolute z-20 bottom-24 left-[6%] items-center gap-3 rounded-full bg-white/85 backdrop-blur-xl border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] pl-2 pr-5 py-2">
-                      <div className="w-9 h-9 rounded-full bg-[#CDE9F2] flex items-center justify-center"><Lock size={15} className="text-[#3f7486]" /></div>
+                  <div className="hidden md:flex absolute z-20 bottom-24 left-[6%] items-center gap-2.5 rounded-full bg-white/85 backdrop-blur-xl border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] px-5 py-3">
+                      <Lock size={16} className="text-[#3f7486]" />
                       <span className="text-sm font-bold text-slate-700">Private entries stay private</span>
                   </div>
               </div>
@@ -426,7 +530,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                 <div className="mt-16 md:absolute md:top-1/2 md:right-20 md:-translate-y-1/2 md:w-96">
                      <div className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-apple transform rotate-3 transition-transform duration-700 group-hover:rotate-0 group-hover:scale-105">
                           <div className="flex items-center gap-3 mb-4">
-                              <div className="w-8 h-8 rounded-full bg-[#f0addd] flex items-center justify-center text-white"><Sparkles size={14}/></div>
+                              <BelluhOrb size={28} />
                               <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Insight Detected</div>
                           </div>
                           <p className="font-serif text-lg leading-relaxed text-slate-800">
@@ -495,20 +599,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                  <div className="bg-[#fcfcfc] rounded-[3rem] p-10 md:p-16 border border-slate-100 shadow-xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500">
                       <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#f0addd]/20 to-transparent rounded-bl-full opacity-0 transition-opacity group-hover:opacity-100 duration-700"></div>
                       
-                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mb-8 border border-slate-100 shadow-sm">
-                          <Heart size={24} className="text-slate-900"/>
-                      </div>
-                      
-                      <h3 className="text-3xl md:text-4xl font-serif font-semibold text-slate-900 mb-4 tracking-tight">Resolve one thing per week.</h3>
-                      <p className="text-lg text-slate-500 leading-relaxed mb-8">
-                          Every Sunday you get one clear insight and one small thing to try. Write, record a voice note, or add a photo.
+                      <Heart size={26} strokeWidth={1.75} className="text-[#f0addd] mb-8" />
+
+                      <h3 className="text-3xl md:text-4xl font-serif font-semibold text-slate-900 mb-4 tracking-tight">It doesn't just suggest. It does.</h3>
+                      <p className="text-lg text-slate-500 leading-relaxed mb-8 max-w-3xl">
+                          Ask once and Belluh handles it: a plan your partner accepts with one tap, a table ready to book, gift ideas from what they said they love, a reminder at the right moment. Anything that reaches your partner waits for your yes.
                       </p>
                       
                       <div className="flex gap-2 flex-wrap">
-                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">One insight</span>
-                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">Plans the date</span>
-                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">Works on WhatsApp</span>
-                          <span className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">Voice notes</span>
+                          {['Plans the date', 'Books the table', 'Gift ideas', 'Reminders', 'One insight every Sunday', 'WhatsApp, SMS and Telegram'].map(c => (
+                              <span key={c} className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">{c}</span>
+                          ))}
                       </div>
                  </div>
             </div>
@@ -562,8 +663,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
 
       <section className="relative z-10 py-24 px-6 text-center">
           <div className="max-w-3xl mx-auto">
-              <div className="w-16 h-16 bg-[#f0addd]/10 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse-slow">
-                  <Heart size={24} className="text-[#f0addd] fill-[#f0addd]" />
+              <div className="flex justify-center mb-8">
+                  <BelluhOrb size={88} onTap={() => {}} label="Belluh. Tap to make a ripple." />
               </div>
               <h2 className="text-3xl md:text-5xl font-serif text-slate-900 leading-tight mb-6 drop-shadow-sm">
                   <span className="text-[#9bbecb]">Start tonight.</span> <span className="text-[#f0addd] italic">Together.</span>
@@ -586,8 +687,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                   className="flex items-center gap-2 group transition-all duration-300 hover:opacity-80"
                >
-                    <Sparkles size={18} className="text-[#f0addd] fill-[#f0addd]/20 transition-transform group-hover:rotate-12" />
-                    <span className="font-serif font-bold text-slate-600 tracking-tight group-hover:text-slate-900 transition-colors">Belluh AI</span>
+                    <BelluhOrb size={20} />
+                    <span className="font-serif font-bold text-slate-600 tracking-tight group-hover:text-slate-900 transition-colors">Belluh</span>
                </button>
 
                <div className="flex gap-8 text-xs font-bold text-slate-400 uppercase tracking-widest">
