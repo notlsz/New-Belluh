@@ -144,7 +144,7 @@ const FactCard = ({ id, label, date, setDate, isEditing, icon: Icon, theme, conf
                     <>
                         {/* Past dates lead with the day itself; upcoming ones lead with the countdown */}
                         <div className={`${config.size === 'big' || config.size === 'wide' ? 'text-4xl md:text-5xl' : 'text-3xl md:text-4xl'} font-serif font-medium tracking-tight leading-tight mb-1`}>{mode === 'past' ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : getRelativeDisplay(date, mode)}</div>
-                        <div className="text-sm font-medium opacity-70">{mode === 'past' ? `${date.getFullYear()} · ${getRelativeDisplay(date, mode).replace(' years ago', ' yrs ago').replace(' year ago', ' yr ago').replace(' months ago', ' mo ago')}` : date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+                        <div className="text-sm font-medium opacity-70">{mode === 'past' ? `${date.getFullYear()} (${getRelativeDisplay(date, mode).replace(' years ago', ' yrs ago').replace(' year ago', ' yr ago').replace(' months ago', ' mo ago')})` : date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
                     </>
                     )
                 )}
@@ -732,7 +732,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                                     <div className="flex flex-col items-center mb-8 relative z-10">
                                          <div className="w-12 h-12 border-2 border-current rounded-full flex items-center justify-center mb-4 opacity-80"><Infinity size={24} /></div>
                                          <h2 className="font-mono text-xl font-bold uppercase tracking-widest text-center leading-tight mb-2">{receiptData.merchantName}</h2>
-                                         <p className="font-mono text-[10px] uppercase tracking-widest opacity-60">{receiptData.date} • {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                                         <p className="font-mono text-[10px] uppercase tracking-widest opacity-60">{receiptData.date}, {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                                     </div>
                                     <div className="border-b border-dashed border-current opacity-30 mb-6"></div>
                                     <div className="space-y-4 font-mono text-xs mb-8">

@@ -20,7 +20,7 @@ test('Belluh can only propose real, future times', () => {
   assert.deepEqual(p.options, [{ id: 'a', starts_at: '2026-10-17T23:00:00.000Z', minutes: 90, label: 'Saturday' }]);
   assert.equal(validatePlan({ title: 'x', options: [] }, 'America/New_York', now), null);
   assert.equal(validatePlan({ title: 'Walk', options: [{ start: '2026-10-01T10:00' }] }, 'America/New_York', now), null);
-  assert.equal(formatOption(p.options[0], 'America/New_York'), 'Sat, Oct 17 · 7:00 PM');
+  assert.equal(formatOption(p.options[0], 'America/New_York'), 'Sat, Oct 17 at 7:00 PM');
   assert.deepEqual(localDateOf(p.options[0].starts_at, 'America/New_York'), { y: 2026, m: 10, d: 17 });
 });
 

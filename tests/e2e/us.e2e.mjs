@@ -16,8 +16,8 @@ const open = async (sub, email) => {
   return { p, errs };
 };
 const maya = await open(MAYA, 'maya@test.com');
-check('Belluh tab offers "Just you" and "Us · Dan"', await maya.p.getByRole('tab', { name: 'Just you' }).count() === 1 && await maya.p.getByRole('tab', { name: /Us · Dan/ }).count() === 1);
-await maya.p.getByRole('tab', { name: /Us · Dan/ }).click(); await maya.p.waitForTimeout(2000);
+check('Belluh tab offers "Just you" and "You & Dan"', await maya.p.getByRole('tab', { name: 'Just you' }).count() === 1 && await maya.p.getByRole('tab', { name: /You & Dan/ }).count() === 1);
+await maya.p.getByRole('tab', { name: /You & Dan/ }).click(); await maya.p.waitForTimeout(2000);
 check('Us shows the shared conversation', (await maya.p.locator('body').innerText()).includes('Hey you, dinner tonight?'));
 await maya.p.getByLabel('Message Dan and Belluh').fill('Belluh, what have we both been writing about?');
 await maya.p.getByRole('button', { name: 'Send to Us' }).click(); await maya.p.waitForTimeout(3000);
@@ -29,7 +29,7 @@ await maya.p.getByRole('button', { name: /^Belluh$|^Off$/ }).first().click(); //
 await maya.p.getByLabel('Message Dan and Belluh').fill('Love you, see you at 7');
 await maya.p.getByRole('button', { name: 'Send to Us' }).click(); await maya.p.waitForTimeout(1500);
 const dan = await open(DAN, 'dan@test.com');
-await dan.p.getByRole('tab', { name: /Us · Maya/ }).click(); await dan.p.waitForTimeout(2500);
+await dan.p.getByRole('tab', { name: /You & Maya/ }).click(); await dan.p.waitForTimeout(2500);
 const td = await dan.p.locator('body').innerText();
 check('Dan sees the same thread, labelled', td.includes('Love you, see you at 7') && td.includes('Plain reply from the model.') && td.includes('MAYA'));
 await dan.p.screenshot({ path: `${OUT}/us-dan.png` });

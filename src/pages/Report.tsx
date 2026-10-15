@@ -6,7 +6,7 @@ const Report: React.FC = () => {
             <div className="max-w-[800px] w-full">
                 <header className="mb-24">
                     <p className="text-sm font-sans font-medium text-slate-500 mb-6 tracking-wide uppercase">
-                        Belluh Research &middot; Technical Report
+                        Belluh Research: Technical Report
                     </p>
                     <h1 className="text-4xl md:text-[52px] font-medium tracking-tight mb-8 leading-[1.1] font-sans">
                         Attractiveness Index: Ivy League & National Distributions

@@ -4,6 +4,14 @@ import { belluhAgent, type Plan } from '../services/belluhAgent';
 import { formatOption, googleCalendarUrl, icsCalendar } from '../../supabase/functions/_shared/plans';
 import { trackEvent } from '../services/analytics';
 
+// A label like "Friday" or "Saturday evening" only repeats the date, so it's shown only when it adds something ("After work")
+const extraLabel = (o: { label?: string | null; starts_at: string }) => {
+  const l = (o.label ?? '').trim();
+  if (!l) return '';
+  const day = new Date(o.starts_at).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+  return /^(mon|tue|wed|thu|fri|sat|sun)/i.test(l) && l.toLowerCase().startsWith(day.slice(0, 3)) ? '' : l;
+};
+
 const tz = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return 'America/New_York'; } };
 
 /** Downloads one event as .ics, which Apple Calendar and Outlook open directly. */
@@ -68,7 +76,7 @@ const PlanCard: React.FC<{ planId: string; partnerName?: string | null; onChange
             {plan.options.map(o => (
               <button key={o.id} disabled={!!busy} onClick={() => respond(o.id)}
                 className="w-full text-left px-4 py-3 rounded-2xl bg-white border border-slate-200 hover:border-[#f0addd] disabled:opacity-60 flex items-center justify-between gap-3">
-                <span className="text-[15px] text-slate-800 font-medium">{o.label ? `${o.label} · ` : ''}{formatOption(o, tz())}</span>
+                <span className="flex flex-col text-[15px] text-slate-800 font-medium">{extraLabel(o) && <span className="text-xs font-bold text-slate-400">{extraLabel(o)}</span>}{formatOption(o, tz())}</span>
                 <span className="text-xs font-bold text-[#831843] shrink-0">{busy === o.id ? 'Saving…' : 'Pick'}</span>
               </button>
             ))}
@@ -87,7 +95,7 @@ const PlanCard: React.FC<{ planId: string; partnerName?: string | null; onChange
 
       {plan.status === 'proposed' && mine && (
         <div className="mt-4 space-y-1.5">
-          {plan.options.map(o => <p key={o.id} className="text-sm text-slate-600 flex items-center gap-2"><Clock size={13} className="text-slate-300" />{o.label ? `${o.label} · ` : ''}{formatOption(o, tz())}</p>)}
+          {plan.options.map(o => <p key={o.id} className="text-sm text-slate-600 flex items-center gap-2"><Clock size={13} className="text-slate-300 shrink-0" /><span>{formatOption(o, tz())}{extraLabel(o) && <span className="text-slate-400"> ({extraLabel(o)})</span>}</span></p>)}
           <div className="pt-2 flex items-center justify-between">
             <p className="text-xs text-slate-400">Waiting for {other} to pick</p>
             <button disabled={!!busy} onClick={cancel} className="text-xs font-bold text-slate-400 hover:text-slate-700">Call it off</button>

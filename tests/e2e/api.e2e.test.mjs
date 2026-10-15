@@ -598,7 +598,7 @@ test('25. Belluh itself works over WhatsApp and SMS: same thread and memory, not
 
   // A plan: Maya asks on WhatsApp, Dan picks by texting "2", Maya hears back on WhatsApp
   await hook('plan a dinner with Dan this week please');
-  assert.match(toDan().at(-1), /^Maya wants to plan "Dinner at the Thai place" with you\. Pick a time:\n1\) .*\n2\) Saturday · .*\n\nReply 1, 2, or NONE/);
+  assert.match(toDan().at(-1), /^Maya wants to plan "Dinner at the Thai place" with you\. Pick a time:\n1\) .*\n2\) \w{3}, \w{3} \d+ at \d+:\d\d [AP]M( \(Saturday\))?\n\nReply 1, 2, or NONE/);
   await sms('2');
   assert.match(toDan().at(-1), /^It's set: "Dinner at the Thai place"/);
   assert.match(toMaya().at(-1).text.body, /^Dan picked .* for "Dinner at the Thai place"/);

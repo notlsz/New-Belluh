@@ -146,7 +146,6 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
               <span className="px-3 py-1 bg-belluh-50 text-belluh-600 rounded-full text-[10px] font-bold uppercase tracking-widest animate-pulse">
                 Real-Time Analysis
               </span>
-              <span className="text-slate-300 text-xs">•</span>
               <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{stats.recentCount} New Signals</span>
            </div>
            <h2 className="text-3xl font-serif text-slate-900 leading-tight">Our Report</h2>

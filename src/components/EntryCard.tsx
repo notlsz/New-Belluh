@@ -96,7 +96,6 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
                     <span className="text-[10px] text-slate-400 font-medium tracking-wide">{timeStr}</span>
                     {showContext && circleName && (
                         <>
-                            <span className="text-[8px] text-slate-300">•</span>
                             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
                                 {circleName}
                             </span>

@@ -15,7 +15,7 @@ await p.getByLabel('Together since').fill('2021-06-14');
 await p.getByLabel('First Date').fill('2020-05-01');
 await p.getByRole('button', { name: /save|done/i }).first().click(); await p.waitForTimeout(2500);
 const t = await p.locator('body').innerText();
-check('Saved dates show the day chosen (no off-by-one)', t.includes('Jun 14') && t.includes('May 1') && t.includes('2021 · ') && t.includes('2020 · '), t.match(/\w+ \d+, 20\d\d/g)?.slice(0, 4).join(' | '));
+check('Saved dates show the day chosen (no off-by-one)', t.includes('Jun 14') && t.includes('May 1') && t.includes('2021 (') && t.includes('2020 ('), t.match(/\w+ \d+, 20\d\d/g)?.slice(0, 4).join(' | '));
 check('Next anniversary counts down', /NEXT ANNIVERSARY\s*\n*\s*\d+/i.test(t));
 const r = await fetch(`${API}/rest/v1/occasions?select=label,month,day,source_message`, { headers: { apikey: jwt('', '', 'anon'), authorization: `Bearer ${jwt(DAN, 'dan@test.com')}` } });
 const occ = await r.json();
