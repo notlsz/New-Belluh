@@ -2,7 +2,7 @@
 // Anything that reaches the partner (a plan to pick, a note, an answer) also goes to their phone if they've connected one.
 
 import {
-  validateToolCall, cleanReply, TOOL_DECLARATIONS, MEDIATE_INSTRUCTION,
+  validateToolCall, cleanReply, TOOL_DECLARATIONS, MEDIATE_INSTRUCTION, type Shape,
 } from './agent.ts';
 import { chatWithTools, type GeminiContent } from './gemini.ts';
 import { db, addMessage, history, weekView, buildSystem, buildUsSystem, type Ctx } from './agentdb.ts';
@@ -61,6 +61,7 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   const askedToForget = /\b(forget|remove|delete|erase|don'?t remember|stop remembering)\b/i.test(text);
   const saved: string[] = [];
   const links: ActionLink[] = [];
+  let shape: Shape | null = null;
   const reply = await chatWithTools({
     system, contents, tools: TOOL_DECLARATIONS,
     runTool: async (name, args) => {
@@ -150,6 +151,10 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           links.push(...l);
           return { ok: true, note: 'The ideas are shown under your reply as links to buy. In one or two lines, say why each fits, from what their partner said. Do not paste links.' };
         }
+        case 'take_shape': {
+          shape = call.shape;
+          return { ok: true, note: channel === 'app' ? 'Your water body is taking that shape as your reply appears. Say one short, playful line about it.' : 'They are texting, so they cannot see your shape right now. Say you will look like that next time they open Belluh.' };
+        }
         case 'draft_note_to_partner': {
           if (!ctx.partnerId) return { ok: false, error: 'No partner is connected yet. Suggest inviting them from the Me tab.' };
           const draft = await addMessage(ctx.userId, 'note_draft', call.text, { to_user: ctx.partnerId, to_name: ctx.partnerName, status: 'draft' });
@@ -164,7 +169,7 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
 
   const final = cleanReply(reply ?? '') || "I'm having trouble thinking right now. Try me again in a moment.";
   // Every new memory is shown under the reply, so nothing is remembered silently
-  created.push(await addMessage(ctx.userId, 'belluh', final, { ...(saved.length ? { saved } : {}), ...(links.length ? { links: links.slice(0, 6) } : {}) }));
+  created.push(await addMessage(ctx.userId, 'belluh', final, { ...(saved.length ? { saved } : {}), ...(links.length ? { links: links.slice(0, 6) } : {}), ...(shape ? { shape } : {}) }));
   return { messages: created };
 }
 

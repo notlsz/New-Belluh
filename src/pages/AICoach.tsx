@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import BelluhOrb from '../components/BelluhOrb';
+import { belluh } from '../lib/belluhPresence';
 import { Insight, ChatMessage, RelationshipArchetype, UserPersona } from '../types';
 import { chatWithBelluh, generateDailyReflection, getRelationshipArchetype, softenConflictMessage, detectPersonaFromEntries } from '../services/geminiService';
 import { belluhAgent, AgentMessage, WeekView } from '../services/belluhAgent';
@@ -31,15 +32,20 @@ interface AICoachProps {
 }
 
 /** A new reply appears word by word, quickly, so it reads like Belluh is talking rather than a block landing. */
+// Belluh's reply appears word by word, and every word moves the water: it's talking.
 const Reveal: React.FC<{ text: string; onTick?: () => void }> = ({ text, onTick }) => {
-  const words = text.split(/(\s+)/);
+  const parts = text.split(/(\s+)/);
   const [n, setN] = useState(0);
+  const stop = useRef<null | (() => void)>(null);
+  useEffect(() => { stop.current = belluh.talk(); return () => stop.current?.(); }, []);
   useEffect(() => {
-    if (n >= words.length) return;
-    const t = setTimeout(() => { setN(x => Math.min(words.length, x + 3)); onTick?.(); }, 28);
+    if (n >= parts.length) { const t = setTimeout(() => stop.current?.(), 350); return () => clearTimeout(t); }
+    const word = parts[n].trim();
+    const delay = word ? 35 + Math.min(10, word.length) * 8 + (/[.,!?;:]$/.test(word) ? 120 : 0) : 0;
+    const t = setTimeout(() => { if (word) belluh.word(word); setN(x => x + 1); onTick?.(); }, delay);
     return () => clearTimeout(t);
-  }, [n, words.length]);
-  return <>{words.slice(0, n).join('')}{n < words.length && <span className="inline-block w-1.5 h-4 align-middle ml-0.5 bg-belluh-300/70 animate-pulse rounded-sm" />}</>;
+  }, [n, parts.length]);
+  return <>{parts.slice(0, n).join('')}{n < parts.length && <span className="inline-block w-1.5 h-4 align-middle ml-0.5 bg-belluh-300/70 animate-pulse rounded-sm" />}</>;
 };
 
 const firstName = (n?: string) => (n ?? '').trim().split(/\s+/)[0] || '';
@@ -134,6 +140,8 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
   const [revealIds, setRevealIds] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => { belluh.prefetch(); }, []);
+
   // Prefer the agent; fall back to the original chat if it isn't available. Runs once per visit to the tab.
   const entryTextsRef = useRef(entryTexts);
   entryTextsRef.current = entryTexts;
@@ -199,6 +207,8 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
 
   const sendAgent = async (text: string, attached: { file: File; preview: string } | null = null) => {
     const mediate = isConflictMode;
+    // Asked to become something Belluh already knows? It changes right away, before the reply.
+    if (!mediate) belluh.fromMessage(text).catch(() => {});
     const temp: AgentMessage = { id: `tmp-${Date.now()}`, role: 'user', body: text, meta: attached ? { photo_preview: attached.preview } : {}, created_at: new Date().toISOString() };
     setAgentMessages(prev => [...prev, temp]);
     trackEvent(mediate ? 'conflict_mode_used' : 'chat_message_sent', { agent: true, photo: !!attached });
@@ -210,6 +220,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
     }
     const res = await belluhAgent.chat(text, mediate ? 'mediate' : 'chat', ref);
     if (res?.messages?.length) setRevealIds(prev => { const n = new Set(prev); res.messages.forEach(m => { if (m.role === 'belluh') n.add(m.id); }); return n; });
+    res?.messages?.forEach(m => { if (m.role === 'belluh' && m.meta?.shape) belluh.applyAgentShape(m.meta.shape); });
     setAgentMessages(prev => {
       const rest = prev.filter(m => m.id !== temp.id);
       if (res?.messages?.length) return [...rest, ...res.messages];
@@ -490,7 +501,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                 <div className={`w-full relative rounded-[2rem] shadow-2xl transition-all duration-300 border flex items-center p-2 pr-3 min-h-[64px] bg-white ${isConflictMode ? 'shadow-rose-100/50 border-rose-100' : 'shadow-slate-200/50 border-slate-200 focus-within:shadow-belluh-200/60 focus-within:border-belluh-200'}`}>
                     <textarea
                         value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
+                        onChange={(e) => { setChatInput(e.target.value); belluh.key(); }}
                         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
                         placeholder={isConflictMode ? "What happened? Be honest..." : "Message Belluh..."}
                         className="w-full bg-transparent border-none px-6 py-3 max-h-32 resize-none focus:outline-none text-slate-800 placeholder:text-slate-400 text-[16px] leading-relaxed self-center"

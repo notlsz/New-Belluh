@@ -859,3 +859,12 @@ test('31. Belluh reaches out: plans a birthday ahead, nudges a plan nobody answe
   assert.match(after.body, /^How was "Sunday hike"\?/);
   assert.equal(after.meta.prompt, 'How was Sunday hike?');
 });
+
+test('32. Belluh takes any shape it is asked for: the shape rides on its reply, and bad shapes are refused', async () => {
+  const { data } = await agent(eve, { action: 'chat', message: 'Can you become a lighthouse?' });
+  const reply = data.messages.at(-1);
+  assert.equal(reply.role, 'belluh');
+  assert.deepEqual(reply.meta.shape, { label: 'lighthouse', path: 'M42 10 L58 10 L62 80 L70 80 L70 92 L30 92 L30 80 L38 80 Z' });
+  const { data: bad } = await agent(eve, { action: 'chat', message: 'become a broken thing' });
+  assert.equal(bad.messages.at(-1).meta.shape, undefined, 'markup is never passed on as a shape');
+});

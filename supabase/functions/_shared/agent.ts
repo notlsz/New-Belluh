@@ -179,6 +179,7 @@ Actions (use the tools; don't just describe them)
 - remind_me: when they ask you to remind them of something, or agree when you offer ("remind me to call his mom Sunday at 5"). Use their local time as at: "YYYY-MM-DDTHH:mm". If they give no time, pick a sensible one (9:00 that morning) and say when.
 - find_table: when a plan involves eating or drinking out. Give what (the kind of place, or the place they named), where (their neighborhood or city if you know it), the start time and how many people. It prepares the booking so they finish it in one tap; never say it's booked.
 - write_entry: when they want something kept in their journal ("journal this", "add that to my journal", or answering your "how was it?" about a plan). Save their own words, lightly cleaned up, never your summary. Private to them unless they say to share it with ${partner}.
+- take_shape: when they ask you to become, turn into or look like something (an animal, an object, a letter, anything). Your body is living light-blue water and it takes that shape while you reply. Give one emoji that clearly shows it; if none fits, a simple filled silhouette as SVG path data in a 0 0 100 100 box. Never a brand logo or a copyrighted character; take the closest generic thing and say so lightly. water: true when they want you back to normal.
 - gift_ideas: when a birthday, anniversary or thank-you is coming up, or they ask what to get ${partner}. One to three specific ideas drawn from things ${partner} has said they love or wished for, as short shopping phrases ("Le Creuset dutch oven", "film camera"). Never invent a wish ${partner} didn't express; if you know nothing, ask one question instead.
 
 How you work (like a great chief of staff for the relationship, never a chatbot)
@@ -373,6 +374,11 @@ export const TOOL_DECLARATIONS = [
     parameters: { type: 'OBJECT', properties: { ideas: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['ideas'] },
   },
   {
+    name: 'take_shape',
+    description: 'Change your water body into a shape the user asked for: one emoji that shows it, or an SVG path silhouette in a 0 0 100 100 box, or water: true to go back to normal.',
+    parameters: { type: 'OBJECT', properties: { label: { type: 'STRING' }, emoji: { type: 'STRING', nullable: true }, path: { type: 'STRING', nullable: true }, water: { type: 'BOOLEAN', nullable: true } }, required: ['label'] },
+  },
+  {
     name: 'draft_note_to_partner',
     description: "Draft a note to the user's partner, in the user's voice. The user approves it before it is sent.",
     parameters: { type: 'OBJECT', properties: { text: { type: 'STRING' } }, required: ['text'] },
@@ -390,8 +396,13 @@ export type ToolCall =
   | { name: 'remind_me'; args: Record<string, unknown> }
   | { name: 'find_table'; args: Record<string, unknown> }
   | { name: 'gift_ideas'; args: Record<string, unknown> }
-  | { name: 'write_entry'; text: string; shared: boolean };
+  | { name: 'write_entry'; text: string; shared: boolean }
+  | { name: 'take_shape'; shape: Shape };
 
+/** A shape Belluh's water body takes: back to water, an emoji's silhouette, or an SVG path in a 100x100 box. */
+export type Shape = { water: true } | { label: string; emoji: string } | { label: string; path: string };
+
+const SVG_PATH = /^[MLCQZHVSTAmlcqzhvsta0-9.,\s-]+$/;
 const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '');
 
 /** Model output is untrusted: validate every tool call before acting on it. */
@@ -409,6 +420,15 @@ export function validateToolCall(name: string, args: Record<string, unknown> | u
     case 'write_entry': {
       const text = typeof a.text === 'string' ? a.text.trim().slice(0, 4000) : '';
       return text.length >= 2 ? { name, text, shared: a.shared === true } : null;
+    }
+    case 'take_shape': {
+      if (a.water === true) return { name, shape: { water: true } };
+      const label = clean(a.label, 40) || 'shape';
+      const emoji = typeof a.emoji === 'string' ? a.emoji.trim() : '';
+      if (emoji && [...emoji].length <= 8 && !/[\w<>]/.test(emoji)) return { name, shape: { label, emoji } };
+      const path = typeof a.path === 'string' ? a.path.trim() : '';
+      if (path.length >= 10 && path.length <= 4000 && SVG_PATH.test(path)) return { name, shape: { label, path } };
+      return null;
     }
     case 'draft_note_to_partner': {
       const text = typeof a.text === 'string' ? a.text.trim().slice(0, 1000) : '';
