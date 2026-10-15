@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import BelluhOrb from './components/BelluhOrb';
 import TabBar from './components/TabBar';
 import Journal from './pages/Journal';
 import Timeline from './pages/Timeline';
@@ -1076,7 +1077,7 @@ const App: React.FC = () => {
       {belluhReply && currentTab !== 'ai-coach' && !isComposeOpen && (
         <div className="fixed bottom-28 left-0 right-0 px-6 z-[55] flex justify-center animate-slide-up">
           <div className="max-w-[360px] w-full bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-900/10 border border-white p-4 flex gap-3">
-            <div className="shrink-0 pt-0.5 text-[#9bbecb]" aria-hidden="true"><Sparkles size={18} strokeWidth={1.75} /></div>
+            <div className="shrink-0 pt-0.5"><BelluhOrb size={24} /></div>
             <button className="text-left flex-1" onClick={() => { setBelluhReply(null); setCurrentTab('ai-coach'); }}>
               <p className="text-xs font-bold text-slate-400">Belluh</p>
               <p className="font-serif text-[15px] leading-snug text-slate-800 line-clamp-3">{belluhReply}</p>

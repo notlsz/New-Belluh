@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import BelluhOrb from '../components/BelluhOrb';
 import { Insight, ChatMessage, RelationshipArchetype, UserPersona } from '../types';
 import { chatWithBelluh, generateDailyReflection, getRelationshipArchetype, softenConflictMessage, detectPersonaFromEntries } from '../services/geminiService';
 import { belluhAgent, AgentMessage, WeekView } from '../services/belluhAgent';
@@ -43,10 +44,8 @@ const Reveal: React.FC<{ text: string; onTick?: () => void }> = ({ text, onTick 
 
 const firstName = (n?: string) => (n ?? '').trim().split(/\s+/)[0] || '';
 
-const BelluhAvatar = () => (
-  <div className="w-8 shrink-0 mt-1.5 flex justify-center text-[#9bbecb]" aria-hidden="true">
-    <Sparkles size={20} strokeWidth={1.75} />
-  </div>
+const BelluhAvatar: React.FC<{ thinking?: boolean }> = ({ thinking }) => (
+  <div className="w-8 shrink-0 mt-1 flex justify-center"><BelluhOrb size={26} thinking={thinking} /></div>
 );
 
 // A note Belluh drafted for your partner. Nothing is sent until you tap Send.
@@ -451,12 +450,9 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
 
                 {isTyping && (
                     <div className="flex gap-4 md:gap-6 animate-fade-in pl-0">
-                        <BelluhAvatar />
-                        <div className="flex items-center gap-1.5 mt-2">
-                            <span className="w-1.5 h-1.5 bg-belluh-300 rounded-full animate-bounce"></span>
-                            <span className="w-1.5 h-1.5 bg-belluh-300 rounded-full animate-bounce" style={{animationDelay: '0.15s'}}></span>
-                            <span className="w-1.5 h-1.5 bg-belluh-300 rounded-full animate-bounce" style={{animationDelay: '0.3s'}}></span>
-                            <span className="ml-2 text-xs font-bold text-slate-300">{agentMessages[agentMessages.length - 1]?.meta?.photo_preview ? 'Looking at your photo' : isConflictMode ? 'Finding the words' : 'Thinking'}</span>
+                        <BelluhAvatar thinking />
+                        <div className="flex items-center mt-2">
+                            <span className="text-xs font-bold text-slate-400">{agentMessages[agentMessages.length - 1]?.meta?.photo_preview ? 'Looking at your photo' : isConflictMode ? 'Finding the words' : 'Thinking'}</span>
                         </div>
                     </div>
                 )}
