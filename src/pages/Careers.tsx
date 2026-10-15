@@ -227,15 +227,15 @@ const Careers: React.FC<CareersProps> = ({ onBack, onGetStarted, onLogin, onShow
 
           {/* The numbers */}
           <section className="relative z-10 px-6 pb-20 md:pb-28">
-              <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="max-w-6xl mx-auto flex flex-wrap gap-x-16 gap-y-8">
                   {[
                       { big: '$50K', small: 'Grants for fellows' },
                       { big: '$200K', small: 'Full-time path for top performers' },
                       { big: 'Nationwide', small: 'Epic missions, hybrid team' },
                   ].map(x => (
-                      <div key={x.big} className="rounded-[2rem] bg-white/80 backdrop-blur-xl border border-white shadow-[0_20px_50px_-25px_rgba(15,23,42,0.18)] p-7 md:p-9">
-                          <p className="font-serif text-5xl md:text-6xl tracking-tight text-slate-900">{x.big}</p>
-                          <p className="mt-3 text-slate-500">{x.small}</p>
+                      <div key={x.big}>
+                          <p className="font-serif text-5xl md:text-7xl tracking-tight text-slate-900">{x.big}</p>
+                          <p className="mt-2 text-slate-500">{x.small}</p>
                       </div>
                   ))}
               </div>

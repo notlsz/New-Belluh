@@ -191,13 +191,13 @@ const MeetBelluh: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =>
               <p className="text-lg md:text-xl text-slate-500 font-light leading-relaxed mb-8 max-w-md mx-auto md:mx-0">
                 Your relationship's assistant, made of living water. You can see it listen, think and talk, and it becomes anything you ask for.
               </p>
-              <div className="grid grid-cols-3 gap-2 md:gap-4 mb-8 text-left">
-                {STATES.map(st => (
-                  <div key={st.key} className={`rounded-2xl px-3 py-3 md:px-4 md:py-4 transition-all duration-500 ${state === st.key ? 'bg-white shadow-[0_12px_30px_-12px_rgba(63,116,134,0.45)] -translate-y-0.5' : 'bg-white/40'}`}>
-                    <p className={`text-[11px] md:text-xs font-bold uppercase tracking-widest transition-colors duration-500 ${state === st.key ? 'text-[#3f7486]' : 'text-slate-400'}`}>{st.label}</p>
-                    <p className="hidden md:block mt-1.5 text-sm text-slate-500 leading-snug">{st.text}</p>
-                  </div>
-                ))}
+              <div className="mb-8">
+                <div className="flex justify-center md:justify-start gap-6 md:gap-8">
+                  {STATES.map(st => (
+                    <span key={st.key} className={`text-xs md:text-sm font-bold uppercase tracking-[0.18em] transition-colors duration-500 ${state === st.key ? 'text-[#3f7486]' : 'text-slate-300'}`}>{st.label}</span>
+                  ))}
+                </div>
+                <p className="mt-3 min-h-[1.5rem] text-slate-500">{(STATES.find(st => st.key === state) ?? { text: 'Type below and watch the water listen.' }).text}</p>
               </div>
               <form onSubmit={submit} className="flex items-center gap-2 bg-white rounded-full border border-slate-100 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.18)] p-1.5 pl-5 focus-within:border-[#CDE9F2] focus-within:shadow-[0_20px_50px_-15px_rgba(155,190,203,0.6)] transition-all">
                 <input
