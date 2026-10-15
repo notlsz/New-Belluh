@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Lock, Eye, EyeOff, Check } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Lock, Eye, EyeOff, Check } from 'lucide-react';
 import BelluhOrb from '../components/BelluhOrb';
 import BelluhSpeech from '../components/BelluhSpeech';
 import { belluh } from '../lib/belluhPresence';
@@ -10,6 +10,7 @@ interface AuthProps {
   onShowLegal: (type: 'tos' | 'privacy') => void;
   onShowToast: (message: string, type: 'success' | 'error' | 'info') => void;
   initialView?: 'login' | 'signup';
+  onBack?: () => void;
 }
 
 // Inline Google Logo for self-containment
@@ -22,12 +23,17 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialView = 'signup' }) => {
+const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialView = 'signup', onBack }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(initialView === 'signup');
+  // Keep the address in step with the form (/signup or /login)
+  useEffect(() => {
+    const path = window.location.pathname;
+    if ((path === '/login' || path === '/signup') && path !== (isSignUp ? '/signup' : '/login')) window.history.replaceState({}, '', isSignUp ? '/signup' : '/login');
+  }, [isSignUp]);
   
   // Update state when initialView changes
   useEffect(() => {
@@ -140,8 +146,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
     <div className="min-h-[100svh] bg-[#fcfcfc] md:grid md:grid-cols-[1.05fr_1fr] relative overflow-hidden">
       <div className="absolute -top-40 -left-32 w-[560px] h-[560px] rounded-full bg-[#CDE9F2]/60 blur-[120px] pointer-events-none animate-float"></div>
       <div className="absolute -bottom-48 -right-24 w-[520px] h-[520px] rounded-full bg-[#f0addd]/25 blur-[120px] pointer-events-none animate-pulse-slow"></div>
+      {onBack && (
+        <button onClick={onBack} aria-label="Back" className="group absolute z-20 top-4 left-3 md:top-7 md:left-7 inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-white/70 transition-colors">
+          <ArrowLeft size={18} className="transition-transform group-hover:-translate-x-0.5" />
+          Back
+        </button>
+      )}
       {/* Belluh's side: the living water, saying hello */}
-      <div className="relative flex flex-col items-center justify-center px-6 pt-12 pb-4 md:p-12 md:bg-gradient-to-br md:from-[#eef7fa] md:via-white md:to-[#fdf2f9] md:overflow-hidden">
+      <div className="relative flex flex-col items-center justify-center px-6 pt-16 pb-4 md:p-12 md:bg-gradient-to-br md:from-[#eef7fa] md:via-white md:to-[#fdf2f9] md:overflow-hidden">
         <div className="relative flex flex-col items-center text-center animate-slide-up">
           <div className="relative">
             <div className="absolute inset-[-25%] rounded-full bg-[radial-gradient(circle,rgba(205,233,242,0.9)_0%,rgba(205,233,242,0)_65%)] blur-2xl pointer-events-none"></div>
