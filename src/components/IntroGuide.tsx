@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { BookHeart, Plus, Sparkles, ArrowRight, Check } from 'lucide-react';
+import { BookHeart, PenLine, ArrowRight, Check } from 'lucide-react';
+import BelluhOrb from './BelluhOrb';
 
 interface IntroGuideProps {
   onClose: () => void;
@@ -11,23 +12,22 @@ const IntroGuide: React.FC<IntroGuideProps> = ({ onClose }) => {
 
   const steps = [
     {
-      icon: <BookHeart size={48} className="text-[#f0addd]" />,
-      title: "Your Timeline",
-      desc: "This is your story. Every memory, note, and photo lives here forever. Scroll up to see your history.",
-      highlight: "Bottom Left Tab"
+      icon: <BookHeart size={52} strokeWidth={1.5} className="text-[#f0addd]" />,
+      title: "Your story",
+      desc: "Every entry, note and photo the two of you keep lives here, newest first.",
+      highlight: "Home"
     },
     {
-      icon: <Plus size={48} className="text-white" />,
-      bg: "bg-slate-900",
-      title: "Capture Moments",
-      desc: "Tap the big plus button to save a memory. Aim for one a day. It takes 30 seconds.",
-      highlight: "Center Button"
+      icon: <PenLine size={52} strokeWidth={1.5} className="text-[#9bbecb]" />,
+      title: "Write a few lines",
+      desc: "Tap the plus to write. Keep it to yourself with Just me, or share it with your partner. A minute a day is plenty.",
+      highlight: "The plus button"
     },
     {
-      icon: <Sparkles size={48} className="text-belluh-500" />,
-      title: "Meet Belluh",
-      desc: "Your AI relationship coach. Ask it anything like 'How are we doing?' or 'Find that restaurant we loved'.",
-      highlight: "Bottom Right Tab"
+      icon: <BelluhOrb size={76} />,
+      title: "Ask Belluh",
+      desc: "Ask anything from the bar on Home. Belluh plans dates, remembers the little things, and becomes anything you ask it to.",
+      highlight: "Ask Belluh, on Home"
     }
   ];
 
@@ -43,15 +43,17 @@ const IntroGuide: React.FC<IntroGuideProps> = ({ onClose }) => {
     <div className="fixed inset-0 z-[200] bg-slate-900/80 backdrop-blur-xl flex items-center justify-center p-6 animate-fade-in">
       <div className="w-full max-w-sm bg-white rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden flex flex-col items-center text-center animate-scale-in">
         
-        {/* Progress Dots */}
-        <div className="flex gap-2 mb-8">
+        {/* Progress */}
+        <div className="flex gap-1.5 w-28 mb-10" aria-label={`Step ${step + 1} of ${steps.length}`}>
           {steps.map((_, i) => (
-            <div key={i} className={`w-2 h-2 rounded-full transition-all duration-300 ${i === step ? 'bg-slate-900 w-6' : 'bg-slate-200'}`} />
+            <div key={i} className="h-1 flex-1 rounded-full bg-slate-100 overflow-hidden">
+              <div className="h-full rounded-full bg-gradient-to-r from-[#9bbecb] to-[#f0addd] transition-all duration-500" style={{ width: i <= step ? '100%' : '0%' }} />
+            </div>
           ))}
         </div>
 
         {/* Icon */}
-        <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-8 shadow-xl transition-all duration-500 ${steps[step].bg || 'bg-slate-50'}`}>
+        <div key={step} className="h-24 flex items-center justify-center mb-6 animate-scale-in">
            {steps[step].icon}
         </div>
 

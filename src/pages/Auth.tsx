@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, ArrowRight, Lock, Eye, EyeOff, Check } from 'lucide-react';
+import { ArrowRight, Lock, Eye, EyeOff, Check } from 'lucide-react';
+import BelluhOrb from '../components/BelluhOrb';
+import BelluhSpeech from '../components/BelluhSpeech';
+import { belluh } from '../lib/belluhPresence';
 import { supabase } from '../lib/supabaseClient';
 
 interface AuthProps {
@@ -72,6 +75,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
     }
 
     setLoading(true);
+    const release = belluh.holdThinking();
 
     try {
       if (isSignUp) {
@@ -86,7 +90,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
         if (data.user && data.user.identities && data.user.identities.length === 0) {
             setIsSignUp(false); 
             onShowToast("Account exists. Please log in.", "info");
-            setLoading(false);
             return;
         }
         
@@ -117,135 +120,124 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
     } catch (error: any) {
       onShowToast(error.message || 'Authentication failed', 'error');
     } finally {
+      release();
       setLoading(false);
     }
   };
 
-  const RequirementItem = ({ met, text }: { met: boolean, text: string }) => (
-      <div className={`flex items-center gap-2 text-xs transition-colors duration-300 ${met ? 'text-green-600' : 'text-slate-400'}`}>
-          {met ? <Check size={12} strokeWidth={3} /> : <div className="w-3 h-3 rounded-full border border-slate-300"></div>}
-          <span className="font-medium">{text}</span>
-      </div>
+  const Requirement = ({ met, text }: { met: boolean; text: string }) => (
+    <span className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors duration-300 ${met ? 'text-[#3f7486]' : 'text-slate-400'}`}>
+      <Check size={13} strokeWidth={3} className={`transition-opacity duration-300 ${met ? 'opacity-100' : 'opacity-25'}`} />
+      {text}
+    </span>
   );
 
-  return (
-    <div className="min-h-screen bg-[#fcfcfc] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-       {/* Background Ambience */}
-       <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-belluh-50/50 rounded-full blur-[120px] pointer-events-none"></div>
+  const type = (set: (v: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => { set(e.target.value); belluh.key(); };
+  const line = isSignUp ? "Write a few lines. I'll remember the rest." : 'Welcome back. I kept your place.';
+  const field = 'w-full bg-white/90 border border-slate-200/80 rounded-2xl px-4 py-3.5 text-[16px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#CDE9F2]/70 focus:border-[#9bbecb] transition-all';
 
-       <div className="w-full max-w-sm relative z-10 animate-slide-up">
-          <div className="flex flex-col items-center mb-10">
-             <div className="w-14 h-14 bg-slate-900 text-white rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-slate-200">
-                <Sparkles size={24} />
-             </div>
-             <h1 className="text-3xl font-serif text-slate-900 mb-2 tracking-tight">
-                {isSignUp ? "Create Account" : "Welcome Back"}
-             </h1>
-             <p className="text-slate-500 text-sm font-medium">Your adaptive AI love journal.</p>
+  return (
+    <div className="min-h-[100svh] bg-[#fcfcfc] md:grid md:grid-cols-[1.05fr_1fr] relative overflow-hidden">
+      <div className="absolute -top-40 -left-32 w-[560px] h-[560px] rounded-full bg-[#CDE9F2]/60 blur-[120px] pointer-events-none animate-float"></div>
+      <div className="absolute -bottom-48 -right-24 w-[520px] h-[520px] rounded-full bg-[#f0addd]/25 blur-[120px] pointer-events-none animate-pulse-slow"></div>
+      {/* Belluh's side: the living water, saying hello */}
+      <div className="relative flex flex-col items-center justify-center px-6 pt-12 pb-4 md:p-12 md:bg-gradient-to-br md:from-[#eef7fa] md:via-white md:to-[#fdf2f9] md:overflow-hidden">
+        <div className="relative flex flex-col items-center text-center animate-slide-up">
+          <div className="relative">
+            <div className="absolute inset-[-25%] rounded-full bg-[radial-gradient(circle,rgba(205,233,242,0.9)_0%,rgba(205,233,242,0)_65%)] blur-2xl pointer-events-none"></div>
+            <span className="md:hidden"><BelluhOrb size={92} onTap={() => {}} label="Belluh" /></span>
+            <span className="hidden md:inline-flex"><BelluhOrb size={230} onTap={() => {}} label="Belluh" /></span>
+          </div>
+          <p className="mt-4 md:mt-8 min-h-[1.75rem] font-serif text-lg md:text-2xl text-slate-600 max-w-xs md:max-w-sm" aria-live="polite">
+            <BelluhSpeech key={line} text={line} delay={400} />
+          </p>
+          <p className="hidden md:block mt-10 font-serif text-4xl lg:text-5xl leading-[1.1] tracking-tight">
+            <span className="text-[#9bbecb]">Your story,</span><br /><span className="text-[#f0addd] italic">kept between you.</span>
+          </p>
+        </div>
+      </div>
+
+      {/* The form */}
+      <div className="relative flex items-start md:items-center justify-center px-6 pb-10 pt-4 md:p-12">
+        <div className="w-full max-w-sm animate-slide-up">
+          <h1 className="text-3xl md:text-4xl font-serif text-slate-900 mb-2 tracking-tight">
+            {isSignUp ? 'Start your story.' : 'Welcome back.'}
+          </h1>
+          <p className="text-slate-500 mb-7">{isSignUp ? 'Free to start. Bring your partner whenever you’re ready.' : 'Pick up where the two of you left off.'}</p>
+
+          <button
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            className="w-full bg-white text-slate-700 border border-slate-200 rounded-2xl py-3.5 font-bold text-sm hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-[0.98] flex items-center justify-center gap-3 shadow-sm disabled:opacity-70"
+          >
+            <GoogleIcon />
+            <span>Continue with Google</span>
+          </button>
+
+          <div className="flex items-center gap-3 my-6 text-xs font-bold uppercase tracking-widest text-slate-300">
+            <span className="h-px flex-1 bg-slate-200"></span>or with email<span className="h-px flex-1 bg-slate-200"></span>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-             <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-900 ml-1">Email address</label>
-                <input 
-                  type="email" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-belluh-100 focus:border-belluh-300 transition-all shadow-sm"
-                  autoFocus
+            <div className="space-y-1.5">
+              <label htmlFor="auth-email" className="text-xs font-bold text-slate-700 ml-1">Email</label>
+              <input id="auth-email" type="email" autoComplete="email" value={email} onChange={type(setEmail)} placeholder="name@example.com" className={field} autoFocus required />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="auth-password" className="text-xs font-bold text-slate-700 ml-1">Password</label>
+              <div className="relative">
+                <input
+                  id="auth-password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                  value={password}
+                  onChange={type(setPassword)}
+                  placeholder={isSignUp ? 'At least 6 characters' : 'Your password'}
+                  className={`${field} pr-12`}
                   required
                 />
-             </div>
-             
-             <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-900 ml-1">Password</label>
-                <div className="relative">
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-belluh-100 focus:border-belluh-300 transition-all shadow-sm pr-12"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+                <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {isSignUp && (
+                <div className="pt-2 px-1 flex flex-wrap gap-x-4 gap-y-1.5 animate-fade-in">
+                  <Requirement met={hasMinLength} text="6+ characters" />
+                  <Requirement met={hasLower} text="Lowercase" />
+                  <Requirement met={hasUpper} text="Uppercase" />
+                  <Requirement met={hasNumber} text="A number" />
                 </div>
+              )}
+            </div>
 
-                {/* Readable Password Requirements */}
-                {isSignUp && (
-                    <div className="pt-3 px-1 grid grid-cols-2 gap-2 animate-fade-in">
-                        <RequirementItem met={hasLower} text="Lowercase (a-z)" />
-                        <RequirementItem met={hasUpper} text="Uppercase (A-Z)" />
-                        <RequirementItem met={hasNumber} text="Number (0-9)" />
-                        <RequirementItem met={hasMinLength} text="6+ Characters" />
-                    </div>
-                )}
-             </div>
-             
-             <button 
-                type="submit" 
-                disabled={loading || !email || !password || (isSignUp && !isPasswordValid)}
-                className="w-full bg-slate-900 text-white rounded-xl py-3.5 font-bold text-sm hover:bg-black transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-slate-200 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
-             >
-                {loading && !email.includes('google') ? ( // Simple check to show spinner on correct button
-                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                ) : (
-                    <>
-                        <span>{isSignUp ? "Sign Up" : "Log In"}</span>
-                        <ArrowRight size={16} />
-                    </>
-                )}
-             </button>
+            <button
+              type="submit"
+              disabled={loading || !email || !password || (isSignUp && !isPasswordValid)}
+              className="w-full bg-[#f0addd] text-white rounded-full py-4 font-bold text-sm hover:bg-[#e57ec3] transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl shadow-[#f0addd]/30 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed !mt-6"
+            >
+              {loading ? <span>{isSignUp ? 'Creating your account...' : 'Logging you in...'}</span> : <><span>{isSignUp ? 'Create account' : 'Log in'}</span><ArrowRight size={16} /></>}
+            </button>
           </form>
 
-          {/* Divider */}
-          <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200"></div>
-              </div>
-              <div className="relative flex justify-center text-xs">
-                  <span className="bg-[#fcfcfc] px-2 text-slate-400 font-medium uppercase tracking-wider">Or</span>
-              </div>
-          </div>
-
-          {/* Google Button */}
-          <button 
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            className="w-full bg-white text-slate-700 border border-slate-200 rounded-xl py-3.5 font-bold text-sm hover:bg-slate-50 transition-all active:scale-[0.98] flex items-center justify-center gap-3 shadow-sm disabled:opacity-70"
-          >
-             <GoogleIcon />
-             <span>Continue with Google</span>
-          </button>
-
           {isSignUp && (
-              <p className="text-center text-[10px] text-slate-400 mt-6 leading-relaxed">
-                  By creating an account, you agree to our <button type="button" onClick={() => onShowLegal('tos')} className="font-bold hover:text-slate-700 underline decoration-slate-300 underline-offset-2 transition-colors">Terms of Service</button> and <button type="button" onClick={() => onShowLegal('privacy')} className="font-bold hover:text-slate-700 underline decoration-slate-300 underline-offset-2 transition-colors">Privacy Policy</button>.
-              </p>
+            <p className="text-center text-xs text-slate-400 mt-5 leading-relaxed">
+              By creating an account, you agree to our <button type="button" onClick={() => onShowLegal('tos')} className="font-bold hover:text-slate-700 underline decoration-slate-300 underline-offset-2">Terms</button> and <button type="button" onClick={() => onShowLegal('privacy')} className="font-bold hover:text-slate-700 underline decoration-slate-300 underline-offset-2">Privacy Policy</button>.
+            </p>
           )}
 
-          <div className="mt-6 text-center">
-              <button 
-                type="button"
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-slate-400 hover:text-slate-600 text-xs font-bold transition-colors"
-              >
-                  {isSignUp ? "Already have an account? Log In" : "Don't have an account? Sign Up"}
-              </button>
-          </div>
+          <p className="mt-6 text-center text-sm text-slate-500">
+            {isSignUp ? 'Already have an account?' : 'New to Belluh?'}{' '}
+            <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="font-bold text-slate-900 hover:text-[#f0addd] transition-colors">
+              {isSignUp ? 'Log in' : 'Create an account'}
+            </button>
+          </p>
 
-          <div className="mt-8 flex items-center justify-center gap-2 opacity-60">
-             <Lock size={12} className="text-slate-400" />
-             <p className="text-[10px] text-slate-400 font-medium">End-to-end encrypted. Private by default.</p>
-          </div>
-       </div>
+          <p className="mt-8 flex items-center justify-center gap-2 text-xs text-slate-400">
+            <Lock size={12} />
+            Private entries stay yours. Encrypted in storage and in transit.
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

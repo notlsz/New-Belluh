@@ -46,7 +46,16 @@ function frame(now: number) {
   requestAnimationFrame(frame);
 }
 
-const BelluhOrb: React.FC<{ size?: number; thinking?: boolean; className?: string }> = ({ size = 24, thinking = false, className = '' }) => {
+type OrbProps = {
+  size?: number;
+  thinking?: boolean;
+  className?: string;
+  /** Makes the orb a button (tapping it ripples the water); give it a label for screen readers. */
+  onTap?: () => void;
+  label?: string;
+};
+
+const BelluhOrb: React.FC<OrbProps> = ({ size = 24, thinking = false, className = '', onTap, label }) => {
   const ref = useRef<HTMLCanvasElement>(null);
   const webgl = !!belluhWater();
   useEffect(() => {
@@ -55,6 +64,7 @@ const BelluhOrb: React.FC<{ size?: number; thinking?: boolean; className?: strin
     const dpr = Math.min(3, window.devicePixelRatio || 1);
     const px = Math.round(size * (webgl ? 1.4 : 1) * dpr); // the water's canvas overhangs the orb so the water itself fills it
     canvas.width = px; canvas.height = px;
+    if (webgl) belluh.ensureResolution(px);
     const entry = { canvas, thinking };
     live.add(entry);
     const release = thinking ? belluh.holdThinking() : null;
@@ -62,7 +72,13 @@ const BelluhOrb: React.FC<{ size?: number; thinking?: boolean; className?: strin
     return () => { live.delete(entry); release?.(); };
   }, [size, thinking, webgl]);
   return (
-    <span className={`belluh-orb ${webgl ? 'is-3d' : ''} ${thinking ? 'is-thinking' : ''} ${className}`} style={{ width: size, height: size }} aria-hidden="true">
+    <span
+      className={`belluh-orb ${webgl ? 'is-3d' : ''} ${thinking ? 'is-thinking' : ''} ${onTap ? 'cursor-pointer' : ''} ${className}`}
+      style={{ width: size, height: size }}
+      {...(onTap
+        ? { role: 'button', tabIndex: 0, 'aria-label': label || 'Belluh', onClick: () => { belluh.key(); onTap(); }, onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); belluh.key(); onTap(); } } }
+        : { 'aria-hidden': true })}
+    >
       <span className="belluh-orb-glow" />
       <canvas ref={ref} className="belluh-orb-water" />
       {!webgl && <span className="belluh-orb-shine" />}
