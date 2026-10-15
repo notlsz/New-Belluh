@@ -87,10 +87,14 @@ const App: React.FC = () => {
     if (path.startsWith('/we-have-been-acquired')) return 'acquisition';
     if (path.startsWith('/careers')) return 'careers';
     if (path === '/about') return 'about';
+    if (path === '/login' || path === '/signup') return 'auth';
     return 'landing';
   };
   const [authView, setAuthView] = useState<'landing' | 'auth' | 'about' | 'careers' | 'acquisition' | 'report'>(getInitialAuthView());
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>(window.location.pathname === '/login' ? 'login' : 'signup');
+  // Where Log in / Start free was pressed, so Back on the login page returns there
+  const lastPublicView = useRef<'landing' | 'about' | 'careers'>('landing');
+  useEffect(() => { if (authView === 'landing' || authView === 'about' || authView === 'careers') lastPublicView.current = authView; }, [authView]);
   
   // App State
   // A notification opens Home with Belluh's panel up (?tab=belluh), then the address is tidied
@@ -229,6 +233,7 @@ const App: React.FC = () => {
       if (path.startsWith('/we-have-been-acquired')) setAuthView('acquisition');
       else if (path.startsWith('/careers')) setAuthView('careers');
       else if (path === '/about') setAuthView('about');
+      else if (path === '/login' || path === '/signup') { setAuthMode(path === '/login' ? 'login' : 'signup'); setAuthView('auth'); }
       else setAuthView('landing');
     };
     window.addEventListener('popstate', handlePopState);
@@ -242,7 +247,12 @@ const App: React.FC = () => {
     else if (authView === 'careers' && !path.startsWith('/careers')) window.history.pushState({}, '', '/careers');
     else if (authView === 'acquisition' && !path.startsWith('/we-have-been-acquired')) window.history.pushState({}, '', '/we-have-been-acquired');
     else if (authView === 'report' && !path.startsWith('/report')) window.history.pushState({}, '', '/report');
+    else if (authView === 'auth' && !isAuthenticated && path !== '/login' && path !== '/signup') window.history.pushState({}, '', authMode === 'login' ? '/login' : '/signup');
   }, [authView]);
+  // Once signed in, the address no longer says /login
+  useEffect(() => {
+    if (isAuthenticated && (window.location.pathname === '/login' || window.location.pathname === '/signup')) window.history.replaceState({}, '', '/');
+  }, [isAuthenticated]);
 
   // --- Auth Helpers ---
 
@@ -1053,6 +1063,7 @@ const App: React.FC = () => {
         <>
             <Auth 
                 initialView={authMode}
+                onBack={() => setAuthView(lastPublicView.current)}
                 onLogin={handleLogin} 
                 onShowLegal={(type) => setLegalModalOpen(type)} 
                 onShowToast={showNotification} 
