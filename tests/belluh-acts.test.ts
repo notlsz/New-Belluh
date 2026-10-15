@@ -126,3 +126,31 @@ test('The morning after: both of them get "how was it?" 8 to 48 hours after a pl
   assert.equal(plansJustHappened([plan({})], 'maya', now).length, 0, 'never happened');
   assert.ok(daytime(10) && daytime(20) && !daytime(21) && !daytime(7));
 });
+
+test('Trips: flights, hotels and an Airbnb, with the dates and travelers filled in; past dates are dropped', async () => {
+  const { tripLinks } = await import('../supabase/functions/_shared/actions.ts');
+  const now = new Date('2026-10-15T12:00:00Z');
+  const l = tripLinks({ to: 'Lisbon', from: 'San Francisco', depart: '2027-05-10', return: '2027-05-17', people: 2 }, now);
+  assert.deepEqual(l.map(x => x.label), ['Flights to Lisbon', 'Hotels in Lisbon', 'Airbnbs in Lisbon']);
+  assert.match(new URL(l[0].url).searchParams.get('q')!, /^Flights to Lisbon from San Francisco on 2027-05-10 through 2027-05-17$/);
+  const b = new URL(l[1].url);
+  assert.equal(b.hostname, 'www.booking.com');
+  assert.equal(b.searchParams.get('checkin'), '2027-05-10');
+  assert.equal(b.searchParams.get('checkout'), '2027-05-17');
+  assert.equal(b.searchParams.get('group_adults'), '2');
+  assert.equal(new URL(l[2].url).searchParams.get('checkout'), '2027-05-17');
+  const past = tripLinks({ to: 'Rome', depart: '2020-01-01', return: '2020-01-05' }, now);
+  assert.equal(new URL(past[1].url).searchParams.get('checkin'), null, 'no dates in the past');
+  assert.deepEqual(tripLinks({ to: '' }, now), []);
+  assert.equal(validateToolCall('plan_trip', { to: 'Kyoto' })?.name, 'plan_trip');
+  assert.equal(validateToolCall('plan_trip', {}), null);
+});
+
+test('Flowers: an order for delivery and florists near where they should go', async () => {
+  const { flowerLinks } = await import('../supabase/functions/_shared/actions.ts');
+  const l = flowerLinks({ what: 'peonies', where: 'Brooklyn', deliver_on: '2026-10-20' });
+  assert.equal(l[0].label, 'Order peonies for delivery');
+  assert.equal(new URL(l[0].url).searchParams.get('q'), 'peonies delivery Brooklyn');
+  assert.equal(new URL(l[1].url).searchParams.get('query'), 'florist near Brooklyn');
+  assert.equal(flowerLinks({})[0].label, 'Order flowers for delivery');
+});

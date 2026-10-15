@@ -10,7 +10,7 @@ import { pairOf } from './weekly.ts';
 import type { CheckinStatus } from './weekly.ts';
 import { validatePlan, formatOption, localDateOf, type PlanOption } from './plans.ts';
 import { notify } from './notify.ts';
-import { validateReminder, tableLinks, giftLinks, type ActionLink } from './actions.ts';
+import { validateReminder, tableLinks, giftLinks, tripLinks, flowerLinks, type ActionLink } from './actions.ts';
 
 export type Channel = 'app' | 'whatsapp' | 'sms' | 'telegram'; // also the source recorded on dates saved this way
 export interface Result { status: number; body: any }
@@ -144,6 +144,17 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           const l = tableLinks(call.args, ctx.timezone);
           links.push(...l);
           return { ok: true, note: 'Booking links are shown under your reply. Say in one line what you set up (place, time, people); they finish the booking with one tap. Never say it is booked.' };
+        }
+        case 'plan_trip': {
+          const l = tripLinks(call.args);
+          if (!l.length) return { ok: false, error: 'Say where they want to go.' };
+          links.push(...l);
+          return { ok: true, note: 'Flight, hotel and Airbnb searches are shown under your reply with the dates filled in. In one or two lines say what you set up and one idea that makes it theirs; they book. Never say it is booked. Do not paste links.' };
+        }
+        case 'send_flowers': {
+          links.push(...flowerLinks(call.args));
+          const when = typeof call.args.deliver_on === 'string' ? call.args.deliver_on : null;
+          return { ok: true, note: `The order and nearby florists are shown under your reply. Say what you'd send and why it fits${when ? `, and that it should arrive ${when}` : ''}. Offer a two-line card message and a reminder the day before. They place the order. Do not paste links.` };
         }
         case 'gift_ideas': {
           const l = giftLinks(call.args);
@@ -355,9 +366,15 @@ export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Pro
   const system = await buildUsSystem(ctx);
   const usLinks: ActionLink[] = [];
   const reply = await chatWithTools({
-    system, contents, tools: TOOL_DECLARATIONS.filter((t: any) => t.name === 'plan_with_partner' || t.name === 'find_table'),
+    system, contents, tools: TOOL_DECLARATIONS.filter((t: any) => ['plan_with_partner', 'find_table', 'plan_trip'].includes(t.name)),
     runTool: async (name, args) => {
       const call = validateToolCall(name, args);
+      if (call?.name === 'plan_trip') {
+        const l = tripLinks(call.args);
+        if (!l.length) return { ok: false, error: 'Say where they want to go.' };
+        usLinks.push(...l);
+        return { ok: true, note: 'Flight, hotel and Airbnb searches are shown under your reply with the dates filled in. Say what you set up in one line; either of them books. Never say it is booked.' };
+      }
       if (call?.name === 'find_table') {
         usLinks.push(...tableLinks(call.args, ctx.timezone));
         return { ok: true, note: 'Booking links are shown under your reply. Say in one line what you set up; either of them finishes the booking with one tap. Never say it is booked.' };

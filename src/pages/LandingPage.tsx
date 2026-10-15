@@ -6,12 +6,14 @@ import { rememberCta } from '../services/analytics';
 import BelluhOrb from '../components/BelluhOrb';
 import BelluhSpeech from '../components/BelluhSpeech';
 import LandingDemos from '../components/LandingDemos';
+import SiteFooter from '../components/SiteFooter';
+import SiteNav from '../components/SiteNav';
 import { belluh, type BelluhState } from '../lib/belluhPresence';
 import { ORGANIZATIONS } from '../constants';
 
 const FAQ = [
   { q: 'Can my partner read my private entries?', a: 'No. Every entry is shared or private, your call. Your partner never sees your private entries, and neither does their Belluh.' },
-  { q: 'What does Belluh actually do?', a: 'It remembers what matters to you both, plans dates your partner can accept with one tap, gets a table ready to book, reminds you before birthdays and anniversaries, sends the reminders you ask for, helps you find the words for a note, and every Sunday gives you one insight and one small thing to try together.' },
+  { q: 'What does Belluh actually do?', a: 'It remembers what matters to you both, plans dates your partner can accept with one tap, gets the date-night reservation, the honeymoon and the flowers ready to book, reminds you before birthdays and anniversaries, sends the reminders you ask for, helps you find the words for a note, and every Sunday gives you one insight and one small thing to try together.' },
   { q: 'Do we both need to sign up?', a: "Belluh is made for two, so it's best together. You can start on your own and send your partner the link whenever you're ready." },
   { q: 'Is Belluh an AI girlfriend or boyfriend?', a: "No. Belluh doesn't flirt or play a partner. It works for the two of you and points you back to each other." },
   { q: 'Can I use it from WhatsApp or text?', a: "Yes. Connect WhatsApp, SMS or Telegram in Settings with one tap and text Belluh like you'd talk to it in the app. Same Belluh, same memory." },
@@ -294,39 +296,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
           <div className="absolute top-[40%] left-[30%] w-[40vw] h-[40vw] bg-white rounded-full blur-[80px] animate-breathing opacity-80 mix-blend-overlay"></div>
       </div>
 
-      {/* Floating Pill Navbar - Scroll Aware */}
-      <div className={`fixed top-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-[min(64rem,calc(100%-3rem))] md:max-w-none z-50 transition-all duration-500 transform ${isNavVisible ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0'}`}>
-        <nav className="bg-white/90 backdrop-blur-xl rounded-full shadow-lg shadow-slate-200/50 border border-white px-6 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                <span className="font-serif text-xl font-bold tracking-tight text-[#9bbecb] drop-shadow-sm" style={{ textShadow: '0 1px 1px rgba(0,0,0,0.1)' }}>Belluh</span>
-            </div>
-
-            <div className="hidden md:flex items-center gap-1 text-sm font-bold text-slate-500">
-                {[['Meet Belluh', 'meet'], ['What it does', 'features'], ['Inside', 'inside'], ['FAQ', 'faq']].map(([label, id]) => (
-                    <button key={id} onClick={() => scrollToSection(id)} className="px-3 py-2 rounded-full hover:text-slate-900 hover:bg-slate-50 transition-colors">{label}</button>
-                ))}
-            </div>
-
-            <div className="flex items-center gap-2">
-            <button onClick={onLogin} className="hidden md:inline-flex h-10 items-center px-4 rounded-full text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">Log in</button>
-            <button
-                onClick={() => { rememberCta('nav'); onGetStarted(); }}
-                tabIndex={pastHero || isDesktop ? 0 : -1}
-                aria-hidden={!pastHero && !isDesktop}
-                className={`overflow-hidden whitespace-nowrap h-10 bg-[#f0addd] text-white rounded-full font-bold text-sm hover:bg-[#e57ec3] shadow-md shadow-[#f0addd]/30 transition-all duration-500 md:max-w-[140px] md:px-5 md:opacity-100 md:pointer-events-auto ${pastHero ? 'max-w-[140px] px-5 opacity-100' : 'max-w-0 px-0 opacity-0 pointer-events-none'}`}
-            >
-                Start free
-            </button>
-            <button 
-                onClick={toggleMenu}
-                aria-label="Open menu"
-                className="md:hidden bg-[#CDE9F2] text-cyan-900 w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md hover:shadow-lg"
-            >
-                <Menu size={20} strokeWidth={2.5} />
-            </button>
-            </div>
-        </nav>
-      </div>
+      {/* Top bar */}
+      <SiteNav
+          links={[
+              { label: 'Meet Belluh', onClick: () => scrollToSection('meet') },
+              { label: 'What it does', onClick: () => scrollToSection('features') },
+              { label: 'Inside', onClick: () => scrollToSection('inside') },
+              { label: 'Stories', onClick: () => scrollToSection('stories') },
+              { label: 'FAQ', onClick: () => scrollToSection('faq') },
+          ]}
+          onHome={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          onLogin={onLogin}
+          onGetStarted={() => { rememberCta('nav'); onGetStarted(); }}
+          onMenu={toggleMenu}
+      />
 
       {/* Full Screen Menu Overlay - Clean Design */}
       <div className={`fixed inset-0 z-[100] bg-white overflow-y-auto overscroll-contain transition-all duration-700 ease-[cubic-bezier(0.32,0.725,0,1)] ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}>
@@ -509,7 +492,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
         </div>
       </section>
       
-      {/* Why Belluh exists, in the founder's words (from the Our Why page) */}
+      {/* Why Belluh exists, in Jimmy's words (from the Our Why page) */}
       <section id="why" className="relative z-10 px-6 py-24 md:py-32 scroll-mt-24">
           <div className="max-w-3xl mx-auto text-center">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-8">Why Belluh exists</p>
@@ -519,7 +502,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
               <p className="mt-8 text-lg md:text-xl text-slate-500 font-light leading-relaxed max-w-2xl mx-auto">
                   "Love isn't always built in the big moments. ... It's built in the supermarket. It's built in how someone listens when you talk about shrimp."
               </p>
-              <p className="mt-6 text-sm font-bold text-slate-700">Jimmy Liu, founder</p>
+              <p className="mt-6 font-serif text-lg italic text-slate-700">— Jimmy</p>
               <button onClick={onGoToAbout} className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#f0addd] transition-colors">
                   Read the whole story <ArrowRight size={15} />
               </button>
@@ -558,43 +541,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
           </div>
       </section>
 
-      <footer className="relative z-10 overflow-hidden bg-[#F8FAFB] border-t border-slate-100">
-          <div className="max-w-7xl mx-auto px-6 pt-16 md:pt-24 pb-10">
-              <div className="grid grid-cols-2 md:grid-cols-12 gap-x-8 gap-y-12">
-                  <div className="col-span-2 md:col-span-5">
-                      <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-2.5" aria-label="Back to top">
-                          <BelluhOrb size={30} />
-                          <span className="font-serif text-2xl font-bold tracking-tight text-[#9bbecb]">Belluh</span>
-                      </button>
-                      <p className="mt-5 max-w-xs text-[15px] leading-relaxed text-slate-500">The AI journal for couples. Write a few lines a day. Belluh remembers, plans, and reminds you both.</p>
-                      <button onClick={() => { rememberCta('footer'); onGetStarted(); }} className="mt-7 inline-flex h-11 items-center gap-2 rounded-full bg-slate-900 px-5 text-sm font-bold text-white transition-colors hover:bg-black">
-                          Start free <ArrowRight size={15} />
-                      </button>
-                  </div>
-                  {[
-                      { title: 'Product', links: [['Meet Belluh', () => scrollToSection('meet')], ['What it does', () => scrollToSection('features')], ['Inside', () => scrollToSection('inside')], ['Stories', () => scrollToSection('stories')], ['FAQ', () => scrollToSection('faq')]] },
-                      { title: 'Company', links: [['Our Why', onGoToAbout], ['Careers', onGoToCareers], ['Log in', onLogin]] },
-                      { title: 'Legal', links: [['Terms of Service', () => onShowLegal('tos')], ['Privacy Policy', () => onShowLegal('privacy')]] },
-                  ].map(col => (
-                      <div key={col.title} className="md:col-span-2 last:md:col-span-3">
-                          <p className="mb-5 text-sm font-bold text-slate-900">{col.title}</p>
-                          <ul className="space-y-3.5">
-                              {col.links.map(([label, go]) => (
-                                  <li key={label as string}><button onClick={go as () => void} className="text-[15px] text-slate-500 transition-colors hover:text-slate-900">{label as string}</button></li>
-                              ))}
-                          </ul>
-                      </div>
-                  ))}
-              </div>
-              <div className="mt-16 md:mt-20 flex flex-col gap-2 border-t border-slate-200/70 pt-6 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
-                  <span>© 2026 Belluh Inc.</span>
-                  <span>Made for two.</span>
-              </div>
-          </div>
-          <div aria-hidden="true" className="pointer-events-none select-none -mb-[0.2em] text-center font-serif font-bold leading-[0.8] tracking-tighter text-[26vw] md:text-[18vw] bg-gradient-to-r from-[#9bbecb]/45 via-[#CDE9F2]/50 to-[#f0addd]/40 bg-clip-text text-transparent [mask-image:linear-gradient(to_bottom,black_35%,transparent)] [-webkit-mask-image:linear-gradient(to_bottom,black_35%,transparent)]">
-              Belluh
-          </div>
-      </footer>
+      <SiteFooter
+          onTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          onSection={scrollToSection}
+          onGetStarted={() => { rememberCta('footer'); onGetStarted(); }}
+          onLogin={onLogin}
+          onShowLegal={onShowLegal}
+          onGoToAbout={onGoToAbout}
+          onGoToCareers={onGoToCareers}
+      />
       
       <style>{`
         .hero-peek { display: none; }

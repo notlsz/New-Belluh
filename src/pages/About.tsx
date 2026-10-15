@@ -1,11 +1,14 @@
 
 import React, { useEffect, useState, useRef, ReactNode } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import SiteFooter from '../components/SiteFooter';
 
 interface AboutProps {
   onBack: () => void;
   onGetStarted: () => void;
   onLogin: () => void;
+  onShowLegal?: (type: 'tos' | 'privacy') => void;
+  onGoToCareers?: () => void;
 }
 
 // Internal Component for Scroll Reveal Animations
@@ -39,7 +42,7 @@ const TextReveal: React.FC<{ children: ReactNode; delay?: number }> = ({ childre
     );
 };
 
-const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin }) => {
+const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin, onShowLegal = () => {}, onGoToCareers = () => {} }) => {
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
@@ -287,6 +290,15 @@ const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin }) => {
              </TextReveal>
           </article>
        </main>
+       <SiteFooter
+           onTop={onBack}
+           onSection={(id) => { onBack(); setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 350); }}
+           onGetStarted={onGetStarted}
+           onLogin={onLogin}
+           onShowLegal={onShowLegal}
+           onGoToAbout={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+           onGoToCareers={onGoToCareers}
+       />
     </div>
   );
 };

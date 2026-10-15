@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, ArrowRight, Menu, X, ChevronLeft, Globe, Zap } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Menu, X, ChevronLeft, Globe, Zap, Mail, Copy, Check } from 'lucide-react';
+import BelluhOrb from '../components/BelluhOrb';
+import SiteFooter from '../components/SiteFooter';
+import SiteNav from '../components/SiteNav';
 
 interface CareersProps {
   onBack: () => void;
@@ -9,7 +12,19 @@ interface CareersProps {
   onGoToAbout: () => void;
 }
 
+const APPLY = 'elizabeth@belluh.com';
+
+const PRINCIPLES = [
+  { title: 'Spikes over résumés', text: "We prioritize life experience over work experience. Skills can be taught, but perspectives are difficult to shape." },
+  { title: 'Reject consensus', text: 'Chase non-obvious secrets, be creative, and hold a unique lens on the world.' },
+  { title: 'Epic missions', text: 'Fellows get grants up to $50K and go on missions nationwide, with a direct path to a full-time role.' },
+];
+
+const SPIKES = ['Top 30 Valorant NA', 'U.S. Boxing Top 3', 'Built a videogame at 12 with 350K+ players', 'Top 100 of 700K in a photography contest', 'Competitive athlete', 'IMO gold', 'Self-taught plumber', 'Ironman 70.3 finisher', 'Florist selling 50+ flower types', 'Philosophy blogger with 30K monthly readers', 'Former YC founders', 'A Thiel fellow', 'A Rhodes scholar', 'A Schwarzman scholar', 'Cycled across continental Europe', '500+ skydives'];
+
 const Careers: React.FC<CareersProps> = ({ onBack, onGetStarted, onLogin, onShowLegal, onGoToAbout }) => {
+  const [copied, setCopied] = useState(false);
+  const copyEmail = async () => { try { await navigator.clipboard.writeText(APPLY); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* the address is on screen */ } };
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<string | null>(
@@ -84,21 +99,18 @@ const Careers: React.FC<CareersProps> = ({ onBack, onGetStarted, onLogin, onShow
           <div className="absolute top-[40%] left-[30%] w-[40vw] h-[40vw] bg-white rounded-full blur-[80px] animate-breathing opacity-80 mix-blend-overlay"></div>
       </div>
 
-      {/* Floating Pill Navbar - Scroll Aware */}
-      <div className={`fixed top-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-2xl z-50 transition-all duration-500 transform ${isNavVisible ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0'}`}>
-        <nav className="bg-white/80 backdrop-blur-xl rounded-full shadow-lg shadow-slate-200/50 border border-white px-6 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={onBack}>
-                <span className="font-serif text-xl font-bold tracking-tight text-[#9bbecb] drop-shadow-sm" style={{ textShadow: '0 1px 1px rgba(0,0,0,0.1)' }}>Belluh</span>
-            </div>
-
-            <button 
-                onClick={toggleMenu}
-                className="bg-[#CDE9F2] text-cyan-900 w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md hover:shadow-lg"
-            >
-                <Menu size={20} strokeWidth={2.5} />
-            </button>
-        </nav>
-      </div>
+      {/* Top bar */}
+      <SiteNav
+          links={[
+              { label: 'Home', onClick: onBack },
+              { label: 'Our Why', onClick: onGoToAbout },
+              { label: 'Careers', onClick: () => { setSelectedRole(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }, current: true },
+          ]}
+          onHome={onBack}
+          onLogin={onLogin}
+          onGetStarted={onGetStarted}
+          onMenu={toggleMenu}
+      />
 
       {/* Full Screen Menu Overlay */}
       <div className={`fixed inset-0 z-[100] bg-white overflow-y-auto overscroll-contain transition-all duration-700 ease-[cubic-bezier(0.32,0.725,0,1)] ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}>
@@ -146,154 +158,156 @@ const Careers: React.FC<CareersProps> = ({ onBack, onGetStarted, onLogin, onShow
       </div>
 
       {selectedRole === 'fellow' ? (
-        <section className="relative z-10 pt-32 pb-32 px-6 flex-1 flex flex-col">
-          <div className="max-w-3xl mx-auto w-full animate-slide-up mt-12">
-              <button 
-                onClick={() => setSelectedRole(null)}
-                className="flex items-center gap-2 text-slate-400 hover:text-slate-900 transition-colors mb-12 font-bold text-sm uppercase tracking-widest"
-              >
-                  <ChevronLeft size={16} /> Back to Roles
+        <section className="relative z-10 pt-36 md:pt-44 pb-28 px-6 flex-1">
+          <div className="max-w-3xl mx-auto w-full animate-slide-up">
+              <button onClick={() => setSelectedRole(null)} className="flex items-center gap-1.5 text-slate-400 hover:text-slate-900 transition-colors mb-14 text-sm font-bold">
+                  <ChevronLeft size={16} /> All roles
               </button>
 
-              <div className="mb-12">
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/80 border border-white rounded-full shadow-sm mb-6">
-                      <div className="w-1.5 h-1.5 bg-[#f0addd] rounded-full animate-pulse"></div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Growth, Marketing, Suggestion Maker</span>
-                  </div>
-                  <h1 className="text-5xl md:text-6xl font-serif font-medium leading-[1.1] mb-6 text-slate-900 tracking-tight">
-                      Belluh Fellow
-                  </h1>
-                  <div className="flex flex-wrap gap-3">
-                      <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-500 flex items-center gap-1.5 shadow-sm">
-                          <Globe size={14} /> Hybrid
-                      </span>
-                      <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-500 flex items-center gap-1.5 shadow-sm">
-                          <Zap size={14} /> Full-time
-                      </span>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-5">Growth, Marketing, Suggestion Maker</p>
+              <h1 className="text-5xl md:text-7xl font-serif leading-[1.05] tracking-tight text-slate-900 mb-7">Belluh Fellow</h1>
+              <div className="flex flex-wrap gap-2 mb-14">
+                  <span className="px-3.5 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 flex items-center gap-1.5"><Globe size={14} /> Hybrid</span>
+                  <span className="px-3.5 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 flex items-center gap-1.5"><Zap size={14} /> Full-time</span>
+                  <span className="px-3.5 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600">Grants up to $50K</span>
+              </div>
+
+              <p className="font-serif text-2xl md:text-3xl leading-snug text-slate-900 mb-10">
+                  We're building Belluh. AI that spots relationship drift 3 weeks early. We work with fun people who excel anywhere.
+              </p>
+              <div className="space-y-6 text-lg text-slate-600 font-light leading-relaxed">
+                  <p>They reject consensus, chase non-obvious secrets, are creative, and hold a unique lens on the world. We prioritize life experience over work experience. Skills can be taught, but perspectives are difficult to shape. We want to see spikes regardless of what you do.</p>
+                  <p className="font-medium text-slate-900">No hard criteria. If you have spikes, you'll know.</p>
+                  <p>We provide grants for fellows up to $50K, sending you on epic missions nationwide. For top performers, there is a direct path to a full-time role with a $200K salary.</p>
+              </div>
+
+              <div className="mt-14">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 mb-5">Previously successful collaborators</p>
+                  <div className="flex flex-wrap gap-2">
+                      {SPIKES.map(x => <span key={x} className="px-3.5 py-2 rounded-full bg-white border border-slate-100 shadow-sm text-sm text-slate-600">{x}</span>)}
                   </div>
               </div>
 
-              <div className="prose prose-lg prose-slate max-w-none font-light leading-relaxed">
-                  <p className="text-xl text-slate-700 font-medium mb-8">
-                      We're building Belluh. AI that spots relationship drift 3 weeks early. We work with fun people who excel anywhere.
-                  </p>
-
-                  <p className="mb-6">
-                      They reject consensus, chase non-obvious secrets, are creative, and hold a unique lens on the world. We prioritize life experience over work experience. Skills can be taught, but perspectives are difficult to shape. We want to see spikes regardless of what you do.
-                  </p>
-
-                  <p className="mb-6">
-                      Examples of previously successful collaborators: Top 30 Valorant NA, U.S. Boxing Top 3, built a videogame at 12 with 350K+ players, Top 100/700K photography contest, competitive athlete, IMO gold, self-taught plumber, Ironman 70.3 finisher, florist selling 50+ flower types, philosophy blogger with 30K monthly readers, former YC founders, a Thiel fellow, a Rhodes scholar, a Schwarzman scholar, cyclist crossing continental Europe, 500+ skydives.
-                  </p>
-
-                  <p className="mb-8 font-medium text-slate-900">
-                      No hard criteria. If you have spikes, you'll know.
-                  </p>
-
-                  <p className="mb-6">
-                      We provide grants for fellows up to $50K, sending you on epic missions nationwide. For top performers, there is a direct path to a full-time role with a $200K salary.
-                  </p>
-
-                  <p className="mb-12 font-medium text-slate-900">
-                      Insanely different? We want to meet you.
-                  </p>
-
-                  <div className="p-8 bg-white rounded-3xl border border-slate-100 shadow-sm">
-                      <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest mb-4">How to apply</h3>
-                      <p className="text-slate-500 mb-6">Send us an email with what makes you uniquely spiked.</p>
-                      <a 
-                        href="mailto:elizabeth@belluh.com"
-                        className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-slate-900 text-white rounded-full font-bold text-sm hover:bg-slate-800 transition-all hover:scale-105 active:scale-95 shadow-xl"
-                      >
-                          Email elizabeth@belluh.com <ArrowRight size={16} />
+              <div className="mt-16 rounded-[2rem] bg-white/90 backdrop-blur-xl border border-white shadow-[0_30px_80px_-30px_rgba(15,23,42,0.25)] p-8 md:p-10">
+                  <p className="font-serif text-2xl md:text-3xl text-slate-900">Insanely different? We want to meet you.</p>
+                  <p className="mt-3 text-slate-500">Send us an email with what makes you uniquely spiked.</p>
+                  <div className="mt-7 flex flex-col sm:flex-row gap-3">
+                      <a href={`mailto:${APPLY}?subject=Belluh%20Fellow`} className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-slate-900 text-white rounded-full font-bold text-sm hover:bg-black transition-colors">
+                          <Mail size={16} /> Email {APPLY}
                       </a>
+                      <button onClick={copyEmail} className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white border border-slate-200 rounded-full font-bold text-sm text-slate-700 hover:border-slate-300 transition-colors">
+                          {copied ? <><Check size={16} /> Copied</> : <><Copy size={16} /> Copy address</>}
+                      </button>
                   </div>
               </div>
           </div>
         </section>
       ) : (
         <>
-          {/* Hero Section */}
-          <section className="relative z-10 pt-44 pb-20 md:pt-56 md:pb-32 px-6">
-             <div className="max-w-4xl mx-auto text-center animate-slide-up">
-                 
-                 <h1 className="text-5xl md:text-7xl font-serif font-medium leading-[1.1] mb-8 text-slate-900 tracking-tight drop-shadow-sm">
-                     <span className="text-[#9bbecb]">Build the future of</span> <br/> <span className="text-[#f0addd] italic">intimacy.</span>
-                 </h1>
-                 
-                 <p className="text-xl md:text-2xl text-slate-500 font-light leading-relaxed max-w-2xl mx-auto mb-12">
-                     Join a small, passionate team dedicated to helping couples connect deeper through thoughtful AI.
-                 </p>
+          {/* Hero */}
+          <section className="relative z-10 pt-40 md:pt-52 pb-20 md:pb-28 px-6">
+             <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-[1fr_auto] items-end gap-10 animate-slide-up">
+                 <div>
+                     <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-6">Careers</p>
+                     <h1 className="text-[2.6rem] sm:text-6xl md:text-8xl font-serif leading-[1.04] tracking-tight">
+                         <span className="text-[#9bbecb]">Build the future of</span><br /><span className="text-[#f0addd] italic">intimacy.</span>
+                     </h1>
+                     <p className="mt-8 text-xl md:text-2xl text-slate-500 font-light leading-relaxed max-w-2xl">
+                         Join a small, passionate team dedicated to helping couples connect deeper through thoughtful AI.
+                     </p>
+                     <button onClick={() => document.getElementById('roles')?.scrollIntoView({ behavior: 'smooth' })} className="mt-10 inline-flex items-center gap-2 h-12 px-6 rounded-full bg-slate-900 text-white text-sm font-bold hover:bg-black transition-colors">
+                         See open roles <ArrowRight size={16} />
+                     </button>
+                 </div>
+                 <div className="hidden md:block pb-4">
+                     <BelluhOrb size={190} onTap={() => {}} label="Belluh. Tap to make a ripple." />
+                 </div>
              </div>
           </section>
 
-          {/* Open Roles Section */}
-          <section className="relative z-10 px-6 pb-32 flex-1">
-              <div className="max-w-4xl mx-auto">
-                  <div className="mb-12 flex items-center gap-4">
-                      <h2 className="text-3xl font-serif font-bold text-slate-900">Open Roles</h2>
-                      <div className="h-px bg-slate-200 flex-1"></div>
-                  </div>
-
-                  {/* Belluh Fellow List Item */}
-                  <div 
-                    onClick={() => setSelectedRole('fellow')}
-                    className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-sm hover:shadow-xl relative overflow-hidden group hover:scale-[1.01] transition-all duration-500 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-6"
-                  >
-                      <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-gradient-to-bl from-[#CDE9F2]/20 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-                      
-                      <div className="relative z-10">
-                          <div className="flex items-center gap-3 mb-4">
-                              <div className="w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center text-[#f0addd]">
-                                  <Sparkles size={14} className="fill-[#f0addd]" />
-                              </div>
-                              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Growth, Marketing, Suggestion Maker</span>
-                          </div>
-                          <h3 className="text-2xl md:text-3xl font-serif text-slate-900 tracking-tight mb-2 group-hover:text-[#9bbecb] transition-colors">
-                              Belluh Fellow
-                          </h3>
-                          <p className="text-slate-500 font-light">We want to see spikes regardless of what you do.</p>
+          {/* The numbers */}
+          <section className="relative z-10 px-6 pb-20 md:pb-28">
+              <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {[
+                      { big: '$50K', small: 'Grants for fellows' },
+                      { big: '$200K', small: 'Full-time path for top performers' },
+                      { big: 'Nationwide', small: 'Epic missions, hybrid team' },
+                  ].map(x => (
+                      <div key={x.big} className="rounded-[2rem] bg-white/80 backdrop-blur-xl border border-white shadow-[0_20px_50px_-25px_rgba(15,23,42,0.18)] p-7 md:p-9">
+                          <p className="font-serif text-5xl md:text-6xl tracking-tight text-slate-900">{x.big}</p>
+                          <p className="mt-3 text-slate-500">{x.small}</p>
                       </div>
+                  ))}
+              </div>
+          </section>
 
-                      <div className="relative z-10 flex items-center justify-between md:justify-end gap-4 w-full md:w-auto mt-4 md:mt-0">
-                          <div className="flex gap-2">
-                              <span className="px-3 py-1 bg-slate-50 border border-slate-100 rounded-full text-xs font-bold text-slate-500 flex items-center gap-1.5">
-                                  <Globe size={14} /> Hybrid
-                              </span>
-                              <span className="px-3 py-1 bg-slate-50 border border-slate-100 rounded-full text-xs font-bold text-slate-500 flex items-center gap-1.5">
-                                  <Zap size={14} /> Full-time
-                              </span>
-                          </div>
-                          <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white transition-colors shrink-0">
-                              <ArrowRight size={18} />
-                          </div>
+          {/* Who has built with us */}
+          <section className="relative z-10 pb-24 md:pb-32 overflow-hidden">
+              <div className="max-w-6xl mx-auto px-6 mb-8">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Previously successful collaborators</p>
+              </div>
+              <div className="space-y-3 [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+                  {[SPIKES.slice(0, 8), SPIKES.slice(8)].map((row, r) => (
+                      <div key={r} className="flex w-max gap-3" style={{ animation: `careers-marquee ${r ? 46 : 38}s linear infinite ${r ? 'reverse' : ''}` }}>
+                          {[...row, ...row, ...row].map((x, i) => (
+                              <span key={i} className="shrink-0 px-5 py-3 rounded-full bg-white border border-slate-100 shadow-sm font-serif text-lg text-slate-700 whitespace-nowrap">{x}</span>
+                          ))}
                       </div>
+                  ))}
+              </div>
+              <style>{`@keyframes careers-marquee { from { transform: translateX(0); } to { transform: translateX(-33.333%); } } @media (prefers-reduced-motion: reduce) { [style*="careers-marquee"] { animation: none !important; } }`}</style>
+          </section>
+
+          {/* How we work */}
+          <section className="relative z-10 px-6 pb-24 md:pb-32">
+              <div className="max-w-6xl mx-auto">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 mb-10">How we work</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
+                      {PRINCIPLES.map((p, i) => (
+                          <div key={p.title}>
+                              <p className="font-serif text-5xl text-[#CDE9F2] leading-none">{i + 1}</p>
+                              <h3 className="mt-5 font-serif text-2xl md:text-3xl text-slate-900 tracking-tight">{p.title}</h3>
+                              <p className="mt-3 text-slate-500 font-light leading-relaxed text-lg">{p.text}</p>
+                          </div>
+                      ))}
                   </div>
+              </div>
+          </section>
+
+          {/* Open roles */}
+          <section id="roles" className="relative z-10 px-6 pb-28 md:pb-36 flex-1 scroll-mt-28">
+              <div className="max-w-6xl mx-auto">
+                  <div className="flex items-baseline justify-between gap-4 mb-8">
+                      <h2 className="text-3xl md:text-5xl font-serif tracking-tight text-slate-900">Open roles</h2>
+                      <span className="text-sm text-slate-400">1 role</span>
+                  </div>
+                  <button onClick={() => setSelectedRole('fellow')} className="w-full text-left group rounded-[2rem] bg-white/90 backdrop-blur-xl border border-white shadow-[0_20px_50px_-20px_rgba(15,23,42,0.18)] hover:shadow-[0_30px_70px_-25px_rgba(63,116,134,0.4)] transition-all duration-500 p-7 md:p-10 grid grid-cols-1 md:grid-cols-[1fr_auto_auto] items-center gap-5 md:gap-10">
+                      <div>
+                          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 mb-3">Growth, Marketing, Suggestion Maker</p>
+                          <h3 className="font-serif text-3xl md:text-4xl tracking-tight text-slate-900 group-hover:text-[#9bbecb] transition-colors">Belluh Fellow</h3>
+                          <p className="mt-2 text-slate-500 font-light">We want to see spikes regardless of what you do.</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                          <span className="px-3 py-1.5 bg-slate-50 rounded-full text-xs font-bold text-slate-500 flex items-center gap-1.5"><Globe size={14} /> Hybrid</span>
+                          <span className="px-3 py-1.5 bg-slate-50 rounded-full text-xs font-bold text-slate-500 flex items-center gap-1.5"><Zap size={14} /> Full-time</span>
+                      </div>
+                      <ArrowUpRight size={28} strokeWidth={1.5} className="text-slate-300 group-hover:text-slate-900 group-hover:-translate-y-1 group-hover:translate-x-1 transition-all duration-300 hidden md:block" />
+                  </button>
+                  <p className="mt-8 text-slate-500">Don't see your role? Write to <a href={`mailto:${APPLY}`} className="font-bold text-slate-800 underline decoration-slate-300 underline-offset-4">{APPLY}</a> anyway.</p>
               </div>
           </section>
         </>
       )}
 
-      <footer className="relative z-10 py-10 bg-white border-t border-slate-50 mt-auto">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-               <button 
-                  onClick={onBack}
-                  className="flex items-center gap-2 group transition-all duration-300 hover:opacity-80"
-               >
-                    <Sparkles size={18} className="text-[#f0addd] fill-[#f0addd]/20 transition-transform group-hover:rotate-12" />
-                    <span className="font-serif font-bold text-slate-600 tracking-tight group-hover:text-slate-900 transition-colors">Belluh AI</span>
-               </button>
-
-               <div className="flex gap-8 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                   <button onClick={() => onShowLegal('tos')} className="hover:text-slate-600 transition-colors">Terms</button>
-                   <button onClick={() => onShowLegal('privacy')} className="hover:text-slate-600 transition-colors">Privacy</button>
-               </div>
-
-               <div className="text-xs text-slate-400 font-bold tracking-wide">
-                   © 2026 Belluh Inc.
-               </div>
-          </div>
-      </footer>
+      <SiteFooter
+          onTop={onBack}
+          onSection={(id) => { onBack(); setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 350); }}
+          onGetStarted={onGetStarted}
+          onLogin={onLogin}
+          onShowLegal={onShowLegal}
+          onGoToAbout={onGoToAbout}
+          onGoToCareers={() => { setSelectedRole(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+      />
     </div>
   );
 };

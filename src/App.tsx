@@ -1012,16 +1012,22 @@ const App: React.FC = () => {
       
       if (authView === 'about') {
           return (
+            <>
             <About 
                 onBack={() => setAuthView('landing')} 
                 onGetStarted={() => { setAuthMode('signup'); setAuthView('auth'); }} 
                 onLogin={() => { setAuthMode('login'); setAuthView('auth'); }} 
+                onShowLegal={(type) => setLegalModalOpen(type)}
+                onGoToCareers={() => setAuthView('careers')}
             />
+            {legalModalOpen && <LegalModal type={legalModalOpen} onClose={() => setLegalModalOpen(null)} />}
+            </>
           );
       }
 
       if (authView === 'careers') {
           return (
+            <>
             <Careers 
                 onBack={() => setAuthView('landing')} 
                 onGetStarted={() => { setAuthMode('signup'); setAuthView('auth'); }} 
@@ -1029,6 +1035,8 @@ const App: React.FC = () => {
                 onShowLegal={(type) => setLegalModalOpen(type)}
                 onGoToAbout={() => setAuthView('about')}
             />
+            {legalModalOpen && <LegalModal type={legalModalOpen} onClose={() => setLegalModalOpen(null)} />}
+            </>
           );
       }
 
