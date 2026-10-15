@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { MessageCircle, MessageSquare, Trash2, Copy, Check } from 'lucide-react';
+import { MessageCircle, MessageSquare, Send, Trash2, Copy, Check } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 // Belluh's WhatsApp Business number, digits only, e.g. 15551234567. Set VITE_BELLUH_WHATSAPP_NUMBER in Vercel.
@@ -9,6 +9,10 @@ const BELLUH_NUMBER: string = ((import.meta as any).env?.VITE_BELLUH_WHATSAPP_NU
 const SMS_NUMBER: string = (() => { const d = ((import.meta as any).env?.VITE_BELLUH_SMS_NUMBER || '').replace(/\D/g, ''); return d ? '+' + d : ''; })();
 const smsHref = (code: string) => `sms:${SMS_NUMBER}?&body=${encodeURIComponent(`LINK ${code}`)}`;
 const waHref = (code: string) => `https://wa.me/${BELLUH_NUMBER}?text=${encodeURIComponent(`LINK ${code}`)}`;
+
+// Belluh's Telegram bot username (from @BotFather), e.g. BelluhBot. Set VITE_BELLUH_TELEGRAM_BOT in Vercel. No business number needed.
+const TG_BOT: string = ((import.meta as any).env?.VITE_BELLUH_TELEGRAM_BOT || '').replace(/^@/, '').replace(/[^A-Za-z0-9_]/g, '');
+const tgHref = (code: string) => `https://t.me/${TG_BOT}?start=${code}`;
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -20,7 +24,7 @@ interface Occasion {
   day: number;
   year: number | null;
   repeats_yearly: boolean;
-  source: 'app' | 'whatsapp' | 'sms';
+  source: 'app' | 'whatsapp' | 'sms' | 'telegram';
   mentioned_at: string;
 }
 
@@ -46,7 +50,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
   const [code, setCode] = useState<string | null>(null);
   const [occasions, setOccasions] = useState<Occasion[]>([]);
   const [copied, setCopied] = useState(false);
-  const [via, setVia] = useState<'whatsapp' | 'sms'>('whatsapp');
+  const [via, setVia] = useState<'whatsapp' | 'sms' | 'telegram'>('whatsapp');
 
   const load = useCallback(async () => {
     const [{ data: link, error: linkErr }, { data: occ, error: occErr }] = await Promise.all([
@@ -78,13 +82,13 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
     if (!error && data) setReadyCode(data as string);
   }, []);
   useEffect(() => {
-    if (!available || phone || (!BELLUH_NUMBER && !SMS_NUMBER)) return;
+    if (!available || phone || (!BELLUH_NUMBER && !SMS_NUMBER && !TG_BOT)) return;
     prepare();
     const t = setInterval(prepare, 25 * 60 * 1000); // codes last 30 minutes
     return () => clearInterval(t);
   }, [available, phone, prepare]);
 
-  const connect = async (channel: 'whatsapp' | 'sms' = 'whatsapp') => {
+  const connect = async (channel: 'whatsapp' | 'sms' | 'telegram' = 'whatsapp') => {
     setVia(channel);
     if (readyCode) { setCode(readyCode); return; } // the link itself opens WhatsApp or Messages
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -113,8 +117,8 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
     .filter(x => x.days !== null)
     .sort((a, b) => (a.days as number) - (b.days as number));
 
-  const openLink = !code ? null : via === 'sms' && SMS_NUMBER ? smsHref(code) : BELLUH_NUMBER ? waHref(code) : null;
-  const appName = via === 'sms' ? 'Messages' : 'WhatsApp';
+  const openLink = !code ? null : via === 'telegram' && TG_BOT ? tgHref(code) : via === 'sms' && SMS_NUMBER ? smsHref(code) : BELLUH_NUMBER ? waHref(code) : null;
+  const appName = via === 'telegram' ? 'Telegram' : via === 'sms' ? 'Messages' : 'WhatsApp';
   const btn = 'shrink-0 px-5 py-3 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-all';
 
   return (
@@ -128,10 +132,10 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
         {!phone && !code && (
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
             <div>
-              <p className="font-serif text-lg text-slate-900">{SMS_NUMBER ? 'Text Belluh your dates.' : 'Text Belluh your dates on WhatsApp.'}</p>
-              <p className="text-sm text-slate-500 mt-1">Or just tell Belluh in the app. Either way, Belluh reminds you a week before and on the day.</p>
+              <p className="font-serif text-lg text-slate-900">Text Belluh like you'd text a friend.</p>
+              <p className="text-sm text-slate-500 mt-1">Dates, plans, "remind me to call his mom Sunday". Belluh texts you first when something's coming up, and replies where you are.</p>
             </div>
-            {BELLUH_NUMBER || SMS_NUMBER ? (
+            {BELLUH_NUMBER || SMS_NUMBER || TG_BOT ? (
               <div className="flex flex-wrap gap-2 shrink-0">
                 {BELLUH_NUMBER && (readyCode ? (
                   <a href={waHref(readyCode)} target="_blank" rel="noreferrer" onClick={() => connect('whatsapp')} className={`${btn} bg-[#25D366] text-white hover:brightness-105`}>
@@ -139,6 +143,13 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
                   </a>
                 ) : (
                   <button onClick={() => connect('whatsapp')} className={`${btn} bg-[#25D366] text-white hover:brightness-105`}><MessageCircle size={16} /> Connect WhatsApp</button>
+                ))}
+                {TG_BOT && (readyCode ? (
+                  <a href={tgHref(readyCode)} target="_blank" rel="noreferrer" onClick={() => connect('telegram')} className={`${btn} bg-[#229ED9] text-white hover:brightness-105`}>
+                    <Send size={16} /> Connect Telegram
+                  </a>
+                ) : (
+                  <button onClick={() => connect('telegram')} className={`${btn} bg-[#229ED9] text-white hover:brightness-105`}><Send size={16} /> Connect Telegram</button>
                 ))}
                 {SMS_NUMBER && (readyCode ? (
                   <a href={smsHref(readyCode)} onClick={() => connect('sms')} className={`${btn} bg-slate-900 text-white hover:bg-slate-800`}>
@@ -156,7 +167,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
 
         {!phone && code && (
           <div className="text-center py-2">
-            <p className="text-sm text-slate-500">{openLink ? `${appName} should have opened with this message ready. Just tap send:` : `Send this to Belluh on ${appName}:`}</p>
+            <p className="text-sm text-slate-500">{openLink && via === 'telegram' ? 'Telegram should have opened. Tap Start and you\'re connected. Or send this:' : openLink ? `${appName} should have opened with this message ready. Just tap send:` : `Send this to Belluh on ${appName}:`}</p>
             <div className="mt-3 flex items-center justify-center gap-3">
               <span className="font-mono text-3xl font-bold tracking-[0.2em] text-slate-900">LINK {code}</span>
               <button
@@ -168,7 +179,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
               </button>
             </div>
             {openLink && (
-              <a href={openLink} target={via === 'sms' ? undefined : '_blank'} rel="noreferrer" className={`inline-flex mt-5 px-6 py-3 ${via === 'sms' ? 'bg-slate-900' : 'bg-[#25D366]'} text-white rounded-full font-bold text-sm items-center gap-2 hover:brightness-105`}>
+              <a href={openLink} target={via === 'sms' ? undefined : '_blank'} rel="noreferrer" className={`inline-flex mt-5 px-6 py-3 ${via === 'sms' ? 'bg-slate-900' : via === 'telegram' ? 'bg-[#229ED9]' : 'bg-[#25D366]'} text-white rounded-full font-bold text-sm items-center gap-2 hover:brightness-105`}>
                 <MessageCircle size={16} /> Open {appName}
               </a>
             )}
@@ -178,7 +189,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
 
         {phone && (
           <p className="text-sm text-slate-500 mb-2">
-            Connected to {phone}. Text Belluh any date, like "Maya's birthday is May 12". Send LIST anytime to see them all.
+            Connected to {phone.startsWith('tg:') ? 'Telegram' : phone}. Text Belluh anything: a date, a plan, "remind me to book dinner Friday". Send LIST anytime to see your dates.
           </p>
         )}
 

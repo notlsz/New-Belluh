@@ -12,14 +12,24 @@ Belluh is the same Belluh tab, now with a memory and the ability to act. It is b
 - **Front and center.** Belluh's latest word sits at the top of Home. Once Belluh is live it replaces the older one-off forecast and pattern cards, so there is one Belluh with one memory.
 - **Carries notes to your partner, with your approval.** Ask it to help you say something to your partner; it drafts the note in your voice and shows **Send to Dan / Don't send**. Nothing is sent until you tap Send. Your partner sees it in their Belluh tab as "From Maya, via Belluh", with a pink dot on the tab.
 - **Replies after you write, when it has something to add.** A small Belluh card appears after you save an entry, linking it to something earlier or asking one question. If it has nothing specific to say, it stays quiet.
-- **A weekly loop, the one proactive thing it does.**
+- **Does things, not just suggests (and asks before anything that reaches your partner or costs money).**
+  - **Reminders it sends itself:** "remind me to call his mom Sunday at 5" and it does, in the app, as a notification and by text.
+  - **A table, ready to book:** for any dinner or drinks plan it prepares OpenTable (time and party size filled in) and Maps links. You finish the booking with one tap; it never claims something is booked.
+  - **Gift ideas:** one to three, from things your partner said they love or wished for, each a link to buy.
+  - **Your words in your journal:** text it how last night went and say "journal this"; it saves your own words as a private entry (only your words: anything you didn't say is refused).
+- **Comes to you.** A job runs every 5 minutes (`belluh-nudges`) and, in the daytime, Belluh reaches out on its own, each at most once:
+  - 10 to 14 days before a birthday or anniversary with nothing planned, it offers to plan it, in one line drawn from your journal. **Help me plan it** (or texting PLAN IT) runs it like a request; **Not now** closes it.
+  - A plan your partner proposed that you haven't answered in 36 hours gets one nudge, with the times.
+  - The morning after a plan you made together: "How was it?", with **Write about it**.
+  These sit at the top of Home with their buttons, in the Belluh tab, as notifications and by text. Pausing reminders pauses them too.
+- **A weekly loop.**
   - **Sunday morning:** each of you gets a short private insight in the Belluh tab, and you share one small thing to try together that week. The suggestion is written only from entries you both chose to share, because both of you see it.
   - **Wednesday evening:** a one-tap check-in for whoever hasn't answered.
   - **The next Sunday:** the suggestion builds on how it went, and goes lighter if you skipped.
 
   The shared suggestion also sits at the top of the home feed. One tap answers it, and the card then folds to a single line showing where each of you is. There's nothing to set up: the app saves your time zone when it opens, and Belluh only writes to people who've journaled in the last two weeks.
 - **Us: one thread for both of you and Belluh.** In the Belluh tab, switch from Just you to Us. You, your partner and Belluh talk together; Belluh answers when asked (or named), can plan right in the thread, and your partner picks the time there. In Us, Belluh only gets what both of you can see: shared entries, the facts you both wrote, plans and the weekly loop. Never anyone's private entries, one-to-one memories or notes, and a daily answer only once you've both answered. Only the server writes the thread, so every message belongs to a real, connected couple.
-- **Text it, too.** Connect WhatsApp or SMS in Me → Settings and texting Belluh is the same Belluh: same thread, memory and tools. Plans and notes from your partner arrive on your phone; reply 1/2/3 to pick a time, SEND to send a note Belluh drafted, DID IT for the weekly check-in. See `docs/whatsapp-occasions.md`.
+- **Text it, too.** Connect Telegram, WhatsApp or SMS in Me → Settings and texting Belluh is the same Belluh: same thread, memory and tools. Plans and notes from your partner arrive on your phone; reply 1/2/3 to pick a time, SEND to send a note Belluh drafted, DID IT for the weekly check-in. See `docs/whatsapp-occasions.md`.
 - **Plans things with your partner.** Ask "plan a dinner with Dan this week" and Belluh proposes up to three times (from what it knows: your entries, dates, and what's coming up), sends them to your partner as a card, and your partner picks one with a tap or says none work. The confirmed plan becomes a date for both of you with reminders, appears on Home, in **Our weeks**, and in your own calendar (one tap for Google, an .ics for Apple or Outlook, or a private subscription link in Me → Settings that keeps all plans and dates in sync). Belluh knows what you've planned next time either of you talks to it.
 - **Mediate Conflict** still works; it now helps find words and can turn them into a note to send.
 
@@ -41,6 +51,7 @@ It doesn't flirt, play a romantic role or try to replace the partner. Grok's com
 3. `supabase functions deploy belluh-agent` (keep JWT verification on).
 4. For the weekly loop: apply `20261012030000_weekly_loop.sql`, deploy `belluh-weekly --no-verify-jwt`, and schedule it hourly (see `docs/DEPLOY.md`).
 5. For plans and calendars: apply `20261013020000_plans_calendar.sql` and deploy `belluh-calendar --no-verify-jwt`.
+6. For reminders and reaching out: apply `20261015000000_belluh_acts.sql`, deploy `belluh-nudges --no-verify-jwt`, and schedule it every 5 minutes. The deploy workflow does all of this.
 
 Until it is deployed, the Belluh tab falls back to the original chat. That chat also needs the `gemini-proxy` function (all AI now runs on the server), so deploy both together.
 

@@ -7,11 +7,12 @@
 //            { action: 'send_note', draft_id: string, text?: string }
 //            { action: 'discard_note', draft_id: string }
 //            { action: 'checkin', action_id: string, status: 'done' | 'not_yet' | 'skipped' }
+//            { action: 'offer_respond', message_id: string, accept: boolean }
 
 import { cleanReply, REACT_INSTRUCTION } from '../_shared/agent.ts';
 import { jsonAnswer } from '../_shared/gemini.ts';
 import { db, loadCtx, buildSystem, addMessage, history, weekView, type Ctx } from '../_shared/agentdb.ts';
-import { chat, underLimit, sendNote, planRespond, planCancel, checkin, ownPhoto, usHistory, usSend, type Result } from '../_shared/agentcore.ts';
+import { chat, underLimit, sendNote, planRespond, planCancel, checkin, ownPhoto, usHistory, usSend, offerRespond, type Result } from '../_shared/agentcore.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -66,6 +67,7 @@ Deno.serve(async (req) => {
       case 'plan_cancel': return out(await planCancel(ctx, String(body.plan_id ?? '')));
       case 'chat': return json(await chat(ctx, String(body.message ?? ''), body.mode === 'mediate' ? 'mediate' : 'chat', 'app', typeof body.photo === 'string' ? body.photo : null));
       case 'react': return json(await react(ctx, String(body.entry_id ?? '')));
+      case 'offer_respond': return out(await offerRespond(ctx, String(body.message_id ?? ''), body.accept === true));
       case 'us_history': return out(await usHistory(ctx));
       case 'us_send': return out(await usSend(ctx, String(body.message ?? ''), body.ask_belluh !== false));
       case 'send_note': return out(await sendNote(ctx, String(body.draft_id ?? ''), typeof body.text === 'string' ? body.text : undefined));

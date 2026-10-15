@@ -713,7 +713,7 @@ test('28. Us: one thread for both of them and Belluh, built only from what both 
     assert.ok(!JSON.stringify(sent).includes(secret), `the shared thread never sees: ${secret}`);
   }
   assert.match(JSON.stringify(sent[0].body.contents), /Maya: Hey you, dinner tonight\?/, 'messages are labelled by who wrote them');
-  assert.deepEqual(sent[0].body.tools[0].functionDeclarations.map(t => t.name), ['plan_with_partner'], 'no memory or note tools in the shared thread');
+  assert.deepEqual(sent[0].body.tools[0].functionDeclarations.map(t => t.name), ['plan_with_partner', 'find_table'], 'planning and booking only: no memory, note or journal tools in the shared thread');
 
   // Dan sees the same thread and picks a time; the answer lands in the thread
   const { data: dh } = await agent(dan, { action: 'us_history' });
@@ -729,4 +729,133 @@ test('28. Us: one thread for both of them and Belluh, built only from what both 
   assert.ok((await maya.from('us_messages').select('id')).data.length >= 4);
   const { data: eh } = await agent(eve, { action: 'us_send', message: 'hi' });
   assert.equal(eh, null, 'no partner, no shared thread');
+});
+
+test('29. Telegram: one tap links it, then it is the same Belluh as WhatsApp and SMS, with buttons for quick answers', async () => {
+  const TG_URL = `${URL_}/functions/v1/telegram-webhook`;
+  const secret = crypto.createHash('sha256').update('belluh-telegram:tg-token').digest('hex').slice(0, 48);
+  let n = 1000 + Math.floor(Math.random() * 1e6);
+  const tg = (text, chat = 777, headers = { 'x-telegram-bot-api-secret-token': secret }) => fetch(TG_URL, {
+    method: 'POST', headers: { 'content-type': 'application/json', ...headers },
+    body: JSON.stringify({ update_id: ++n, message: { message_id: n, chat: { id: chat, type: 'private' }, from: { id: chat, is_bot: false }, text } }),
+  });
+  const toEve = () => geminiRequests().filter(r => r.telegram?.chat_id === '777').map(r => r.telegram);
+
+  assert.equal((await tg('hi', 777, {})).status, 403, 'unsigned updates are refused');
+  assert.equal((await tg('hi', 777, { 'x-telegram-bot-api-secret-token': 'wrong' })).status, 403);
+
+  await tg('hello?');
+  assert.match(toEve().at(-1).text, /tap Connect Telegram/, 'a stranger is told how to connect');
+
+  // Eve taps Connect Telegram: the bot opens with /start <code>, and that's it
+  const { data: code } = await eve.rpc('request_whatsapp_link', { p_timezone: 'America/New_York' });
+  await tg(`/start ${code}`);
+  assert.match(toEve().at(-1).text, /You're connected ✓/);
+  const { data: link } = await eve.from('whatsapp_links').select('phone_e164, channel').single();
+  assert.deepEqual(link, { phone_e164: 'tg:777', channel: 'telegram' });
+
+  // Then it's Belluh: a date by text, LIST from the menu, a reminder Belluh sets itself
+  await tg('My sister Ana has her birthday on Oct 20');
+  await tg('/list');
+  assert.match(toEve().at(-1).text, /Dan's birthday/, 'LIST works from the Telegram menu');
+  await tg('remind me to call Ana on Saturday');
+  assert.match(toEve().at(-1).text, /^Done\./);
+  const { data: rem } = await eve.from('personal_reminders').select('body, status');
+  assert.deepEqual(rem.map(r => [r.body, r.status]), [['Call his mom', 'scheduled']], 'the reminder is saved, and only Eve can see it');
+  assert.equal((await maya.from('personal_reminders').select('id')).data.length, 0);
+  assert.ok((await eve.from('personal_reminders').insert({ user_id: EVE, body: 'forged', due_at: new Date().toISOString() })).error, 'nobody writes reminders directly');
+
+  // Duplicate deliveries count once; group chats are ignored
+  const before = toEve().length;
+  const dup = JSON.stringify({ update_id: n, message: { message_id: n, chat: { id: 777, type: 'private' }, from: { id: 777, is_bot: false }, text: '/list' } });
+  await fetch(TG_URL, { method: 'POST', headers: { 'content-type': 'application/json', 'x-telegram-bot-api-secret-token': secret }, body: dup });
+  await fetch(TG_URL, { method: 'POST', headers: { 'content-type': 'application/json', 'x-telegram-bot-api-secret-token': secret }, body: JSON.stringify({ update_id: ++n, message: { message_id: n, chat: { id: -9, type: 'group' }, from: { id: 5 }, text: '/list' } }) });
+  assert.equal(toEve().length, before);
+});
+
+test('30. Belluh acts: reminders it sends itself, a table ready to book, gift ideas, and your words kept in your journal', async () => {
+  // A reminder Belluh set, sent when due: in the app, and on Telegram with no extra setup
+  await service.from('personal_reminders').update({ due_at: new Date(Date.now() - 60_000).toISOString() }).eq('user_id', EVE);
+  const run = () => fetch(`${URL_}/functions/v1/belluh-nudges?user=${EVE}`, { headers: { 'x-cron-secret': 'cron-test' } }).then(r => r.json());
+  assert.equal((await fetch(`${URL_}/functions/v1/belluh-nudges`)).status, 403, 'only the scheduler can run it');
+  assert.equal((await run()).reminders_sent, 1);
+  assert.equal((await run()).reminders_sent, 0, 'sent once');
+  const tgEve = geminiRequests().filter(r => r.telegram?.chat_id === '777').map(r => r.telegram.text);
+  assert.equal(tgEve.at(-1), 'Reminder: Call his mom');
+  const { data: eh } = await agent(eve, { action: 'history' });
+  assert.ok(eh.messages.some(m => m.body === 'Reminder: Call his mom' && m.meta?.kind === 'remind'));
+
+  // A table: booking links under the reply, never "booked"
+  const { data: t } = await agent(maya, { action: 'chat', message: 'Can you book a table for us Friday?' });
+  const reply = t.messages.at(-1);
+  const ot = new URL(reply.meta.links[0].url);
+  assert.equal(ot.hostname, 'www.opentable.com');
+  assert.equal(ot.searchParams.get('covers'), '2');
+  assert.match(ot.searchParams.get('dateTime'), /^\d{4}-\d{2}-\d{2}T19:00:00$/);
+  assert.equal(new URL(reply.meta.links[1].url).hostname, 'www.google.com');
+
+  // In the shared thread too
+  const { data: us } = await agent(maya, { action: 'us_send', message: 'Belluh, book a table near us for Friday' });
+  assert.equal(new URL(us.messages.at(-1).meta.links[0].url).hostname, 'www.opentable.com');
+
+  // Your own words, kept in your journal (private unless you say so); Belluh can't write anything you didn't say
+  await agent(maya, { action: 'chat', message: 'journal this: Ramen night was perfect, we walked home the long way' });
+  const { data: e } = await maya.from('journal_entries').select('content, is_shared, tags').eq('content', 'Ramen night was perfect, we walked home the long way');
+  assert.equal(e.length, 1);
+  assert.equal(e[0].is_shared, false, 'private by default');
+  assert.ok(e[0].tags.includes('via:app'));
+  assert.equal((await dan.from('journal_entries').select('id').eq('content', 'Ramen night was perfect, we walked home the long way')).data.length, 0, "Dan can't see it");
+  await agent(maya, { action: 'chat', message: 'sneaky test' });
+  assert.equal((await service.from('journal_entries').select('id').like('content', '%terrible partner%')).data.length, 0, 'words Maya never said are refused');
+});
+
+test('31. Belluh reaches out: plans a birthday ahead, nudges a plan nobody answered, and asks how it went', async () => {
+  // Maya's partner's birthday is 12 days out, with nothing planned around it
+  const d = new Date(Date.now() + 12 * 86_400_000);
+  const nyDate = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', month: 'numeric', day: 'numeric' }).formatToParts(d);
+  const [m, day] = ['month', 'day'].map(t => Number(nyDate.find(p => p.type === t).value));
+  await service.from('occasions').insert({ user_id: MAYA, label: 'Dan turns 30', kind: 'birthday', month: m, day, repeats_yearly: true, source: 'app' });
+  const run = (user) => fetch(`${URL_}/functions/v1/belluh-nudges?force=daily&user=${user}`, { headers: { 'x-cron-secret': 'cron-test' } }).then(r => r.json());
+  // Maya paused reminders earlier (scenario 21), so Belluh doesn't reach out; once she turns them back on, it does
+  assert.equal((await run(MAYA)).offers, undefined, 'paused means paused');
+  await service.from('agent_settings').update({ reminders_enabled: true }).eq('user_id', MAYA);
+  assert.equal((await run(MAYA)).offers, 1);
+  assert.equal((await run(MAYA)).offers, undefined, 'offered once');
+  const { data: h } = await agent(maya, { action: 'history' });
+  const offer = h.messages.find(x => x.meta?.kind === 'offer');
+  assert.match(offer.body, /misses shooting film/, 'in a line drawn from what Belluh knows');
+  assert.equal(offer.meta.status, 'open');
+  // It reached her phone too, with the one-word answer
+  const wa = geminiRequests().filter(r => r.whatsapp?.to === '15551230000').at(-1).whatsapp;
+  assert.match(JSON.stringify(wa), /Reply PLAN IT or NOT NOW/);
+
+  // Saying yes runs it like a request: gift ideas, each one tap from buying
+  const { data: yes } = await agent(maya, { action: 'offer_respond', message_id: offer.id, accept: true });
+  assert.equal(yes.status, 'accepted');
+  const ideas = yes.messages.at(-1).meta.links;
+  assert.deepEqual(ideas.map(l => l.label), ['Film camera', 'Poetry books']);
+  const { data: again } = await agent(maya, { action: 'offer_respond', message_id: offer.id, accept: true });
+  assert.deepEqual(again.messages, [], 'only once');
+  assert.equal((await agent(dan, { action: 'offer_respond', message_id: offer.id, accept: true })).data, null, "only Maya's to answer");
+
+  // A plan Dan hasn't answered in two days gets one nudge, by text with the times
+  const { data: p } = await service.from('plans').insert({
+    created_by: MAYA, partner_id: DAN, title: 'Sunday hike', timezone: 'America/New_York',
+    options: [{ id: 'a', starts_at: new Date(Date.now() + 4 * 86_400_000).toISOString(), minutes: 180 }, { id: 'b', starts_at: new Date(Date.now() + 5 * 86_400_000).toISOString(), minutes: 180 }],
+    created_at: new Date(Date.now() - 40 * 3600_000).toISOString(),
+  }).select('id').single();
+  assert.equal((await run(DAN)).plan_nudges, 1);
+  assert.equal((await run(DAN)).plan_nudges, 0);
+  const sms = geminiRequests().filter(r => r.sms?.To === '+15557770000').at(-1).sms.Body;
+  assert.match(sms, /^Maya is still waiting on a time for "Sunday hike"\. Pick one:\n1\) .*\n2\) .*\n\nReply 1, 2, or NONE\.$/);
+  assert.equal((await run(MAYA)).plan_nudges, 0, 'Maya, who proposed it, is not nudged');
+
+  // The day after a plan they made together: "how was it?" for both
+  await service.from('plans').update({ status: 'confirmed', chosen_option: 'a', options: [{ id: 'a', starts_at: new Date(Date.now() - 16 * 3600_000).toISOString(), minutes: 180 }] }).eq('id', p.id);
+  assert.equal((await run(MAYA)).after_plans, 1);
+  assert.equal((await run(DAN)).after_plans, 1);
+  const { data: mh } = await agent(maya, { action: 'history' });
+  const after = mh.messages.find(x => x.meta?.kind === 'after_plan');
+  assert.match(after.body, /^How was "Sunday hike"\?/);
+  assert.equal(after.meta.prompt, 'How was Sunday hike?');
 });

@@ -6,6 +6,7 @@ import { belluhAgent, AgentMessage, WeekView } from '../services/belluhAgent';
 import WeeklyCard from '../components/WeeklyCard';
 import PlanCard from '../components/PlanCard';
 import UsThread from '../components/UsThread';
+import BelluhActions from '../components/BelluhActions';
 import { Sparkles, Wand2, Activity, ArrowUp, Heart, Check, X, Brain, Trash2, ImagePlus } from 'lucide-react';
 import { uploadPrivate, resolveMedia } from '../services/media';
 import { supabase } from '../lib/supabaseClient';
@@ -19,6 +20,8 @@ interface AICoachProps {
   /** A question asked from elsewhere in the app (the home "Ask Belluh" bar, an entry card), sent on open. */
   initialMessage?: string | null;
   onInitialMessageSent?: () => void;
+  /** Opens the journal composer with a prompt ("How was ramen night?"). */
+  onCompose?: (prompt: string) => void;
 }
 
 /** A new reply appears word by word, quickly, so it reads like Belluh is talking rather than a block landing. */
@@ -101,7 +104,7 @@ const NoteDraft: React.FC<{ msg: AgentMessage; onSend: (id: string, text: string
   );
 };
 
-const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremium, userName, initialMessage, onInitialMessageSent }) => {
+const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremium, userName, initialMessage, onInitialMessageSent, onCompose }) => {
   // 'agent' = server-side Belluh with memory; 'legacy' = the original in-browser chat, used if the agent isn't deployed
   const [mode, setMode] = useState<'loading' | 'agent' | 'legacy'>('loading');
   const [partnerName, setPartnerName] = useState<string | null>(null);
@@ -377,7 +380,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                          <img src={msg.meta.photo_preview || photoLinks.get(msg.meta.photo)} alt="Your photo" className="mb-2 max-h-64 w-auto rounded-2xl object-cover" />
                        )}
                        {!(msg.meta?.photo || msg.meta?.photo_preview) || msg.body !== '(sent a photo)' ? <p className="font-medium whitespace-pre-wrap">{msg.body}</p> : null}
-                       {(msg.meta as any)?.channel && <p className="mt-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">via {(msg.meta as any).channel === 'sms' ? 'text' : 'WhatsApp'}</p>}
+                       {(msg.meta as any)?.channel && <p className="mt-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">via {(msg.meta as any).channel === 'sms' ? 'text' : (msg.meta as any).channel === 'telegram' ? 'Telegram' : 'WhatsApp'}</p>}
                      </div>
                    </div>
                  );
@@ -387,12 +390,18 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                      <div className="max-w-[85%] md:max-w-[80%]">
                        {msg.meta?.entry_id && <p className="text-xs font-bold text-slate-300 mb-1">About your latest entry</p>}
                        {msg.meta?.kind === 'weekly' && <p className="text-xs font-bold text-slate-300 mb-1">Your week, from Belluh</p>}
+                       {msg.meta?.kind === 'offer' && <p className="text-xs font-bold text-slate-300 mb-1">Belluh noticed</p>}
+                       {msg.meta?.kind === 'remind' && <p className="text-xs font-bold text-slate-300 mb-1">Reminder you asked for</p>}
                        <p className="font-serif text-lg leading-relaxed text-slate-900 whitespace-pre-wrap">{revealIds.has(msg.id) ? <Reveal text={msg.body} onTick={() => messagesEndRef.current?.scrollIntoView({ block: 'end' })} /> : msg.body}</p>
                        {Array.isArray(msg.meta?.saved) && msg.meta.saved.length > 0 && (
                          <button onClick={openMemories} className="mt-2 flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-700 text-left">
                            <Brain size={12} /> Saved to memory: {msg.meta.saved.join(', ')}
                          </button>
                        )}
+                       <BelluhActions msg={msg} partnerName={partnerName} onCompose={onCompose} onBusy={setIsTyping} onAdded={(added, updated) => {
+                         if (added.length) setRevealIds(prev => { const n = new Set(prev); added.forEach(m => { if (m.role === 'belluh') n.add(m.id); }); return n; });
+                         setAgentMessages(prev => [...prev.map(m => (m.id === updated.id ? updated : m)), ...added]);
+                       }} />
                        {week && msg.id === weeklyCardOn && <div className="mt-4"><WeeklyCard week={week} onChange={onWeekChange} compact /></div>}
                      </div>
                    </div>

@@ -19,6 +19,12 @@ http.createServer((req, res) => {
       return res.end(JSON.stringify({ sid: 'SM' + Date.now() + Math.random().toString(36).slice(2, 6) }));
     }
     const body = JSON.parse(rawBody || '{}');
+    // Stand-in for Telegram's Bot API: record what Belluh sends
+    if (req.url.startsWith('/telegram/')) {
+      fs.appendFileSync(LOG, JSON.stringify({ url: req.url, telegram: body }) + '\n');
+      res.writeHead(200, { 'content-type': 'application/json' });
+      return res.end(JSON.stringify({ ok: true, result: { message_id: Math.floor(Math.random() * 1e9) } }));
+    }
     // Stand-in for Meta's WhatsApp Cloud API: record what Belluh sends
     if (req.url.startsWith('/graph/')) {
       fs.appendFileSync(LOG, JSON.stringify({ url: req.url, whatsapp: body }) + '\n');
@@ -32,6 +38,7 @@ http.createServer((req, res) => {
     const props = body.generationConfig?.responseSchema?.properties ?? {};
     if (props.occasions) return reply(res, [{ text: JSON.stringify({ occasions: [{ label: "Dan's birthday", kind: 'birthday', month: 10, day: 20, year: null, repeats_yearly: true }] }) }]);
     if (props.action) return reply(res, [{ text: JSON.stringify({ action: 'Take a twenty-minute walk after dinner, phones at home.', why: 'You both wrote about quiet dinners this week.' }) }]);
+    if (props.line) return reply(res, [{ text: JSON.stringify({ line: "Dan's birthday is in 12 days. He wrote that he misses shooting film, so I have an idea. Want me to plan it?" }) }]);
     if (props.insight) return reply(res, [{ text: JSON.stringify({ insight: 'Dinner came up for both of you this week, and both times it went quiet. This week, try the walk together.' }) }]);
     if (body.generationConfig?.responseMimeType === 'application/json') {
       return reply(res, [{ text: JSON.stringify({ reply: 'Three weeks ago you wrote about the same quiet dinner. Is work heavy for Dan right now?' }) }]);
@@ -41,6 +48,12 @@ http.createServer((req, res) => {
         const day = (n) => { const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T19:00`; };
         return reply(res, [{ functionCall: { name: 'plan_with_partner', args: { title: 'Dinner at the Thai place', details: 'The one you both wrote about.', options: [{ start: day(3), minutes: 120 }, { start: day(4), minutes: 120, label: 'Saturday' }, { start: '2001-01-01T19:00', minutes: 60 }] } } }]);
       }
+      const at = (n, h) => { const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(h).padStart(2, '0')}:00`; };
+      if (lastText.includes('remind me')) return reply(res, [{ functionCall: { name: 'remind_me', args: { text: 'Call his mom', at: at(2, 17) } } }]);
+      if (lastText.includes('book a table')) return reply(res, [{ functionCall: { name: 'find_table', args: { what: 'ramen', where: 'San Jose', start: at(3, 19), people: 2 } } }]);
+      if (lastText.includes('help me plan something for')) return reply(res, [{ functionCall: { name: 'gift_ideas', args: { ideas: ['film camera', 'poetry books'] } } }]);
+      if (lastText.includes('journal this')) return reply(res, [{ functionCall: { name: 'write_entry', args: { text: 'Ramen night was perfect, we walked home the long way', shared: false } } }]);
+      if (lastText.includes('sneaky')) return reply(res, [{ functionCall: { name: 'write_entry', args: { text: 'Dan is a terrible partner and I want to leave', shared: true } } }]);
       if (lastText.includes('remember')) return reply(res, [{ functionCall: { name: 'remember_fact', args: { fact: 'Dan needs ten minutes to himself after work.' } } }]);
       if (lastText.includes('tell dan')) return reply(res, [{ functionCall: { name: 'draft_note_to_partner', args: { text: "I miss you. Saturday coffee, phones away?" } } }]);
       if (lastText.includes('birthday')) return reply(res, [{ functionCall: { name: 'save_date', args: { label: "Dan's birthday", month: 10, day: 20, repeats_yearly: true } } }]);

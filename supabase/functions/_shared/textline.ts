@@ -1,24 +1,33 @@
-// Belluh by text, shared by WhatsApp and SMS. After a one-tap link, texting Belluh is talking to the same Belluh as in the app
+// Belluh by text, shared by WhatsApp, SMS and Telegram. After a one-tap link, texting Belluh is talking to the same Belluh as in the app
 // (same thread, memory and tools), plus short replies: SEND/DISCARD a note, 1-3/NONE for a plan, DID IT/NOT YET/SKIP,
 // LIST/FORGET dates, STOP/START. Each webhook verifies its provider's signature, then hands every message here.
 
 import {
-  parseCommand, localDateParts, listReply, HELP_TEXT, NOT_LINKED_TEXT, NOT_LINKED_SMS_TEXT, type StoredOccasion,
+  parseCommand, localDateParts, listReply, HELP_TEXT, NOT_LINKED_TEXT, NOT_LINKED_SMS_TEXT, NOT_LINKED_TELEGRAM_TEXT, type StoredOccasion,
 } from './occasions.ts';
 import { sendText } from './whatsapp.ts';
 import { sendSms } from './sms.ts';
+import { sendTelegram, telegramChat } from './telegram.ts';
 import { db, loadCtx, weekAction } from './agentdb.ts';
-import { chat, sendNote, planRespond, checkin } from './agentcore.ts';
+import { chat, sendNote, planRespond, checkin, offerRespond } from './agentcore.ts';
 
-export type Channel = 'whatsapp' | 'sms';
+export type Channel = 'whatsapp' | 'sms' | 'telegram';
 export interface Inbound { channel: Channel; id: string; phone: string; sentAt: string; text: string; kind: string }
 
 interface Link { user_id: string; timezone: string; reminders_enabled: boolean }
 
-const CONNECT_AGAIN: Record<Channel, string> = { whatsapp: 'Connect WhatsApp', sms: 'Connect by text' };
+const CONNECT_AGAIN: Record<Channel, string> = { whatsapp: 'Connect WhatsApp', sms: 'Connect by text', telegram: 'Connect Telegram' };
+const NOT_LINKED: Record<Channel, string> = { whatsapp: NOT_LINKED_TEXT, sms: NOT_LINKED_SMS_TEXT, telegram: NOT_LINKED_TELEGRAM_TEXT };
+
+/** Sends on whichever app the person is using; a Telegram chat is stored as "tg:<chat id>". */
+export async function sendOn(channel: string | null, to: string, body: string): Promise<string | null> {
+  const tg = telegramChat(to);
+  if (channel === 'telegram' || tg) return tg ? sendTelegram(tg, body) : null;
+  return channel === 'sms' ? sendSms(to, body) : sendText(to, body);
+}
 
 async function reply_(m: Inbound, userId: string | null, body: string) {
-  const id = m.channel === 'sms' ? await sendSms(m.phone, body) : await sendText(m.phone, body);
+  const id = await sendOn(m.channel, m.phone, body);
   await db.from('whatsapp_messages').insert({ user_id: userId, direction: 'out', wa_message_id: id, phone_e164: m.phone, body, channel: m.channel });
 }
 
@@ -44,7 +53,10 @@ async function talk(m: Inbound, link: Link, text: string) {
   const reply = [...messages].reverse().find(x => x?.role === 'belluh')?.body ?? "I'm having trouble thinking right now. Try me again in a moment.";
   const draft = messages.find(x => x?.role === 'note_draft');
   const extra = draft ? `\n\nNote to ${ctx.partnerName ?? 'your partner'}:\n"${draft.body}"\n\nReply SEND to send it, or DISCARD.` : '';
-  return reply_(m, link.user_id, reply + extra);
+  // Links Belluh found (a table to book, gift ideas) come after the reply, one per line
+  const links = (([...messages].reverse().find(x => x?.role === 'belluh')?.meta?.links ?? []) as { label: string; url: string }[])
+    .map(l => `${l.label}: ${l.url}`).join('\n');
+  return reply_(m, link.user_id, reply + (links ? `\n\n${links}` : '') + extra);
 }
 
 /** SEND / DISCARD: the note Belluh just drafted. */
@@ -85,6 +97,20 @@ async function weekAnswer(m: Inbound, link: Link, status: string) {
   return reply_(m, link.user_id, text);
 }
 
+/** PLAN IT / NOT NOW: Belluh's latest offer (a birthday coming up, say). */
+async function offerAnswer(m: Inbound, link: Link, accept: boolean) {
+  const { data: o } = await db.from('agent_messages').select('id').eq('user_id', link.user_id).eq('meta->>kind', 'offer')
+    .eq('meta->>status', 'open').gte('created_at', new Date(Date.now() - 7 * 864e5).toISOString())
+    .order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (!o) return talk(m, link, m.text);
+  const ctx = await loadCtx(link.user_id, link.timezone);
+  const r = await offerRespond(ctx, o.id, accept, m.channel);
+  const msgs = (r.body?.messages ?? []) as any[];
+  const reply = [...msgs].reverse().find(x => x?.role === 'belluh');
+  const links = ((reply?.meta?.links ?? []) as { label: string; url: string }[]).map(l => `${l.label}: ${l.url}`).join('\n');
+  return reply_(m, link.user_id, (reply?.body ?? (accept ? 'On it.' : "Okay. I'll leave it.")) + (links ? `\n\n${links}` : ''));
+}
+
 async function handleForget(m: Inbound, link: Link, query: string) {
   const { data: matches } = await db.from('occasions')
     .select('id, label, month, day').eq('user_id', link.user_id).ilike('label', `%${query.replace(/[%_\\]/g, '')}%`);
@@ -109,13 +135,13 @@ export async function handleInbound(m: Inbound) {
 
   const { data: link } = await db.from('whatsapp_links')
     .select('user_id, timezone, reminders_enabled').eq('phone_e164', m.phone).maybeSingle<Link>();
-  if (!link) return reply_(m, null, m.channel === 'sms' ? NOT_LINKED_SMS_TEXT : NOT_LINKED_TEXT);
+  if (!link) return reply_(m, null, NOT_LINKED[m.channel]);
 
   // Replies and reminders go to whichever app they texted from last
   await db.from('whatsapp_links').update({ last_inbound_at: new Date().toISOString(), channel: m.channel }).eq('user_id', link.user_id);
   await db.from('whatsapp_messages').update({ user_id: link.user_id }).eq('wa_message_id', m.id);
 
-  if (!m.text) return reply_(m, link.user_id, 'I can only read text for now. Type the date and what it is, like "Maya\'s birthday is May 12".');
+  if (!m.text) return reply_(m, link.user_id, 'I can only read text here for now. Photos and voice notes work in the Belluh app.');
 
   switch (cmd.type) {
     case 'help': return reply_(m, link.user_id, HELP_TEXT);
@@ -136,6 +162,7 @@ export async function handleInbound(m: Inbound) {
     case 'pick': return planAnswer(m, link, cmd.option, '');
     case 'none': return planAnswer(m, link, null, cmd.note);
     case 'checkin': return weekAnswer(m, link, cmd.status);
+    case 'offer': return offerAnswer(m, link, cmd.accept);
     case 'capture': return talk(m, link, cmd.text);
   }
 }

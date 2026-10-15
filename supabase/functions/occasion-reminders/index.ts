@@ -9,6 +9,7 @@ import {
 } from '../_shared/occasions.ts';
 import { sendTemplate } from '../_shared/whatsapp.ts';
 import { sendSms, smsReminder } from '../_shared/sms.ts';
+import { sendTelegram, telegramChat } from '../_shared/telegram.ts';
 import { sameSecret } from '../_shared/secret.ts';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
@@ -53,7 +54,9 @@ Deno.serve(async (req) => {
 
       // Reminders go wherever they last texted Belluh from
       const params = reminderParams(o, stage, link.timezone);
-      const id = link.channel === 'sms' ? await sendSms(link.phone_e164, smsReminder(params)) : await sendTemplate(link.phone_e164, TEMPLATE, params, TEMPLATE_LANG);
+      const tg = telegramChat(link.phone_e164);
+      const id = tg ? await sendTelegram(tg, smsReminder(params).replace(' Reply STOP to pause reminders.', ' Send STOP to pause reminders.'))
+        : link.channel === 'sms' ? await sendSms(link.phone_e164, smsReminder(params)) : await sendTemplate(link.phone_e164, TEMPLATE, params, TEMPLATE_LANG);
       if (id) {
         sent++;
         await db.from('reminders_sent').update({ wa_message_id: id })

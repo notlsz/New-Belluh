@@ -66,6 +66,8 @@ export const belluhAgent = {
   react: (entryId: string) => call<{ message: AgentMessage | null }>({ action: 'react', entry_id: entryId }),
   sendNote: (draftId: string, text?: string) => call<{ ok: boolean }>({ action: 'send_note', draft_id: draftId, text }),
   discardNote: (draftId: string) => call<{ ok: boolean }>({ action: 'discard_note', draft_id: draftId }),
+  /** Yes or not now to something Belluh offered on its own (a birthday coming up, say). Yes runs it like a request. */
+  offerRespond: (messageId: string, accept: boolean) => call<{ messages: AgentMessage[]; status: string }>({ action: 'offer_respond', message_id: messageId, accept }),
 
   async memories(): Promise<{ id: string; fact: string }[]> {
     const { data, error } = await supabase.from('agent_memories').select('id, fact').order('created_at', { ascending: false });
@@ -124,16 +126,20 @@ export const belluhAgent = {
   /** Belluh's latest word to you, for the top of Home. `live` is false before Belluh's server is set up. */
   async latest(): Promise<{ live: boolean; message: AgentMessage | null }> {
     const { data, error } = await supabase.from('agent_messages').select('id, role, body, meta, created_at')
-      .eq('role', 'belluh').order('created_at', { ascending: false }).limit(1);
+      .eq('role', 'belluh').order('created_at', { ascending: false }).limit(20);
     if (error) return { live: false, message: null };
-    return { live: true, message: (data?.[0] as AgentMessage) ?? null };
+    const rows = (data ?? []) as AgentMessage[];
+    // Something Belluh is waiting on you for (an offer, a plan to pick, how last night went) stays on top for a few days
+    const recent = (m: AgentMessage) => Date.now() - new Date(m.created_at).getTime() < 3 * 86_400_000;
+    const waiting = rows.find(m => recent(m) && ((m.meta?.kind === 'offer' && m.meta?.status === 'open') || m.meta?.kind === 'plan_nudge' || m.meta?.kind === 'after_plan' || m.meta?.kind === 'remind'));
+    return { live: true, message: waiting ?? rows[0] ?? null };
   },
   /** True when Belluh has posted a weekly insight or check-in since you last opened the Belluh tab. */
   async hasNewFromBelluh(): Promise<boolean> {
     let since = '';
     try { since = localStorage.getItem(SEEN_KEY) ?? ''; } catch { /* ignore */ }
     let q = supabase.from('agent_messages').select('id', { count: 'exact', head: true })
-      .or('role.eq.plan,and(role.eq.belluh,meta->>kind.in.(weekly,checkin,reminder,plan_confirmed,plan_declined,plan_cancelled))');
+      .or('role.eq.plan,and(role.eq.belluh,meta->>kind.in.(weekly,checkin,reminder,plan_confirmed,plan_declined,plan_cancelled,offer,remind,plan_nudge,after_plan))');
     if (since) q = q.gt('created_at', since);
     const { count, error } = await q;
     return !error && (count ?? 0) > 0;

@@ -176,6 +176,17 @@ Actions (use the tools; don't just describe them)
 - When they ask what dates you remember, list them from "Their saved dates", with when they told you.
 - plan_with_partner: when they want to plan something with ${partner} (a date night, a walk, a trip, a hard conversation). Offer one to three concrete times as start: "YYYY-MM-DDTHH:mm" in their local time, using what you know about their week. ${partner} gets the plan in Belluh and picks a time; once picked, it's in both calendars with reminders. If you don't know roughly when they're free, ask one short question first.
 - draft_note_to_partner: when they want to tell ${partner} something, or you've helped them find words they want to send. This only drafts it; ${c.myName} approves before anything is sent. Write it in ${c.myName}'s voice, first person.
+- remind_me: when they ask you to remind them of something, or agree when you offer ("remind me to call his mom Sunday at 5"). Use their local time as at: "YYYY-MM-DDTHH:mm". If they give no time, pick a sensible one (9:00 that morning) and say when.
+- find_table: when a plan involves eating or drinking out. Give what (the kind of place, or the place they named), where (their neighborhood or city if you know it), the start time and how many people. It prepares the booking so they finish it in one tap; never say it's booked.
+- write_entry: when they want something kept in their journal ("journal this", "add that to my journal", or answering your "how was it?" about a plan). Save their own words, lightly cleaned up, never your summary. Private to them unless they say to share it with ${partner}.
+- gift_ideas: when a birthday, anniversary or thank-you is coming up, or they ask what to get ${partner}. One to three specific ideas drawn from things ${partner} has said they love or wished for, as short shopping phrases ("Le Creuset dutch oven", "film camera"). Never invent a wish ${partner} didn't express; if you know nothing, ask one question instead.
+
+How you work (like a great chief of staff for the relationship, never a chatbot)
+- Notice the next step in what they say and take it. A date coming up, a promise they made, something ${partner} wished for, a plan nobody followed up on: offer to handle it, or just do it when it only affects ${c.myName} (a reminder for themselves, saving a date).
+- Anything that reaches ${partner} or costs money waits for ${c.myName}'s yes: you draft the note, propose the times, prepare the booking or the gift links, and they tap to finish.
+- Use what you know before asking. Ask at most one short question, and only when the answer changes what you'd do.
+- When they're upset with ${partner}, first acknowledge the feeling in a sentence, then help them say it without blame, and offer to draft it.
+- After you act, say what you did in one line. Don't explain your tools or repeat links; they appear under your reply.
 
 Safety
 - If anyone describes being hurt, threatened, controlled or afraid of ${partner}, take it seriously, don't coach them to smooth it over, and encourage them to reach out to someone they trust or a domestic violence hotline (in the US, 1-800-799-7233).
@@ -237,6 +248,8 @@ Privacy (strict)
 
 Actions
 - plan_with_partner: when they want to plan something together. Offer one to three concrete times as start "YYYY-MM-DDTHH:mm" in local time. The person who asked proposes; the other picks a time right in this chat. If you don't know when they're free, ask one short question first.
+- find_table: when the plan involves eating or drinking out: prepares the booking (OpenTable and Maps links with time and party size) so either of them finishes it in one tap. Never say it's booked.
+- Take the next step without being asked twice: if they settle on a dinner, propose the times and get the table ready in the same reply.
 
 Safety
 - If either of them describes being hurt, threatened or controlled, take it seriously and suggest reaching out to someone they trust or a domestic violence hotline (in the US, 1-800-799-7233). If someone mentions wanting to harm themselves, point them to 988 (call or text, US).
@@ -327,6 +340,39 @@ export const TOOL_DECLARATIONS = [
     },
   },
   {
+    name: 'remind_me',
+    description: 'Set a reminder for the user; Belluh sends it at that local time (in the app, as a notification, and by text if connected).',
+    parameters: {
+      type: 'OBJECT',
+      properties: { text: { type: 'STRING', description: 'What to remind them of, short' }, at: { type: 'STRING', description: 'Local time, YYYY-MM-DDTHH:mm' } },
+      required: ['text', 'at'],
+    },
+  },
+  {
+    name: 'find_table',
+    description: 'Prepare a restaurant or bar booking: links that open OpenTable and Google Maps with the time and party size filled in.',
+    parameters: {
+      type: 'OBJECT',
+      properties: {
+        what: { type: 'STRING', description: 'Kind of place or a named place, e.g. "ramen" or "Nopa"' },
+        where: { type: 'STRING', nullable: true, description: 'Neighborhood or city' },
+        start: { type: 'STRING', nullable: true, description: 'Local time, YYYY-MM-DDTHH:mm' },
+        people: { type: 'INTEGER', nullable: true },
+      },
+      required: ['what'],
+    },
+  },
+  {
+    name: 'write_entry',
+    description: "Save the user's own words as an entry in their journal. Private unless shared is true.",
+    parameters: { type: 'OBJECT', properties: { text: { type: 'STRING' }, shared: { type: 'BOOLEAN', nullable: true } }, required: ['text'] },
+  },
+  {
+    name: 'gift_ideas',
+    description: "Show 1-3 gift ideas for the user's partner, each with a link to buy it.",
+    parameters: { type: 'OBJECT', properties: { ideas: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['ideas'] },
+  },
+  {
     name: 'draft_note_to_partner',
     description: "Draft a note to the user's partner, in the user's voice. The user approves it before it is sent.",
     parameters: { type: 'OBJECT', properties: { text: { type: 'STRING' } }, required: ['text'] },
@@ -340,7 +386,11 @@ export type ToolCall =
   | { name: 'draft_note_to_partner'; text: string }
   | { name: 'forget_date'; query: string }
   | { name: 'set_reminders'; on: boolean }
-  | { name: 'plan_with_partner'; args: Record<string, unknown> };
+  | { name: 'plan_with_partner'; args: Record<string, unknown> }
+  | { name: 'remind_me'; args: Record<string, unknown> }
+  | { name: 'find_table'; args: Record<string, unknown> }
+  | { name: 'gift_ideas'; args: Record<string, unknown> }
+  | { name: 'write_entry'; text: string; shared: boolean };
 
 const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '');
 
@@ -353,6 +403,13 @@ export function validateToolCall(name: string, args: Record<string, unknown> | u
     case 'forget_date': { const query = clean(a.query, 100); return query.length >= 2 ? { name, query } : null; }
     case 'set_reminders': return typeof a.on === 'boolean' ? { name, on: a.on } : null;
     case 'plan_with_partner': return typeof a.title === 'string' && Array.isArray(a.options) ? { name, args: a } : null; // times are checked by validatePlan
+    case 'remind_me': return typeof a.text === 'string' && typeof a.at === 'string' ? { name, args: a } : null; // checked by validateReminder
+    case 'find_table': return { name, args: a }; // turned into links by tableLinks
+    case 'gift_ideas': return Array.isArray(a.ideas) && a.ideas.length ? { name, args: a } : null;
+    case 'write_entry': {
+      const text = typeof a.text === 'string' ? a.text.trim().slice(0, 4000) : '';
+      return text.length >= 2 ? { name, text, shared: a.shared === true } : null;
+    }
     case 'draft_note_to_partner': {
       const text = typeof a.text === 'string' ? a.text.trim().slice(0, 1000) : '';
       return text ? { name, text } : null;

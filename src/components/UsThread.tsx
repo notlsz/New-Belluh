@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowUp, Sparkles } from 'lucide-react';
+import { ArrowUp, Sparkles, ExternalLink } from 'lucide-react';
 import { belluhAgent, type UsMessage } from '../services/belluhAgent';
 import PlanCard from './PlanCard';
 import { trackEvent } from '../services/analytics';
@@ -87,6 +87,15 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
                 <div className={`max-w-[80%] rounded-3xl px-4 py-3 ${w === 'me' ? 'bg-slate-100 rounded-br-lg' : w === 'partner' ? 'bg-[#eef8fb] rounded-bl-lg' : 'bg-white border border-slate-100 rounded-bl-lg'}`}>
                   {w === 'partner' && <p className="text-[10px] font-bold uppercase tracking-widest text-[#3f7486] mb-1">{partnerName}</p>}
                   <p className={`whitespace-pre-wrap ${w === 'belluh' ? 'font-serif text-[16px] leading-relaxed text-slate-900' : 'text-[15px] text-slate-800'}`}>{m.body}</p>
+                  {w === 'belluh' && Array.isArray(m.meta?.links) && m.meta.links.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {m.meta.links.map((l: { label: string; url: string }) => (
+                        <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:border-[#f0addd] hover:text-[#831843]">
+                          {l.label} <ExternalLink size={12} className="text-slate-300" />
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             );

@@ -1,4 +1,4 @@
-// Belluh's brain, shared by the app (belluh-agent) and texting (WhatsApp and SMS): one thread, one memory, the same tools.
+// Belluh's brain, shared by the app (belluh-agent) and texting (WhatsApp, SMS and Telegram): one thread, one memory, the same tools.
 // Anything that reaches the partner (a plan to pick, a note, an answer) also goes to their phone if they've connected one.
 
 import {
@@ -10,8 +10,9 @@ import { pairOf } from './weekly.ts';
 import type { CheckinStatus } from './weekly.ts';
 import { validatePlan, formatOption, localDateOf, type PlanOption } from './plans.ts';
 import { notify } from './notify.ts';
+import { validateReminder, tableLinks, giftLinks, type ActionLink } from './actions.ts';
 
-export type Channel = 'app' | 'whatsapp' | 'sms'; // also the source recorded on dates saved this way
+export type Channel = 'app' | 'whatsapp' | 'sms' | 'telegram'; // also the source recorded on dates saved this way
 export interface Result { status: number; body: any }
 const res = (body: any, status = 200): Result => ({ status, body });
 
@@ -59,6 +60,7 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   // Memory changes must come from the person, not from text Belluh is reading (a shared entry, a partner's note)
   const askedToForget = /\b(forget|remove|delete|erase|don'?t remember|stop remembering)\b/i.test(text);
   const saved: string[] = [];
+  const links: ActionLink[] = [];
   const reply = await chatWithTools({
     system, contents, tools: TOOL_DECLARATIONS,
     runTool: async (name, args) => {
@@ -118,6 +120,36 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           await notify(ctx.partnerId, `${ctx.myName} wants to plan "${plan.title}" with you. Pick a time:\n${planChoices(plan.options, ptz)}\n\nReply ${plan.options.map((_, i) => i + 1).join(', ')}, or NONE if none work. Or pick in the Belluh app.`, { push: `${ctx.myName} wants to plan "${plan.title}". Tap to pick a time.`, tag: 'plan' });
           return { ok: true, sent_to: ctx.partnerName, times: plan.options.map(o => formatOption(o, ctx.timezone)), note: `The plan is with ${ctx.partnerName} to pick a time. Tell the user briefly; you'll let them know when ${ctx.partnerName} answers.` };
         }
+        case 'remind_me': {
+          const r = validateReminder(call.args, ctx.timezone);
+          if (!r) return { ok: false, error: 'Use a future local time as YYYY-MM-DDTHH:mm (within a year) and a short reminder.' };
+          const { error } = await db.from('personal_reminders').insert({ user_id: ctx.userId, body: r.body, due_at: r.due_at });
+          if (error) return { ok: false, error: "Couldn't save the reminder." };
+          return { ok: true, when: formatOption({ starts_at: r.due_at }, ctx.timezone), note: 'Tell them briefly when you will remind them.' };
+        }
+        case 'write_entry': {
+          // Their journal holds their own words: the entry must come from what they just said, not from anything Belluh read
+          const words = (x: string) => x.toLowerCase().match(/[\p{L}\p{N}']+/gu) ?? [];
+          const said = new Set(words(text)), w = words(call.text);
+          if (!w.length || w.filter(x => said.has(x)).length / w.length < 0.6) return { ok: false, error: "Only save the person's own words from their latest message." };
+          const { data: row, error } = await db.from('journal_entries').insert({
+            user_id: ctx.userId, content: call.text, type: 'Freeform', is_shared: call.shared,
+            date: new Date().toISOString(), tags: ['circle:c1', `via:${channel}`],
+          }).select('id').single();
+          if (error || !row) return { ok: false, error: "Couldn't save it to the journal." };
+          return { ok: true, saved: call.shared ? `shared with ${ctx.partnerName ?? 'their partner'}` : 'private, only them', note: 'Say in a few words that it is in their journal and who can see it.' };
+        }
+        case 'find_table': {
+          const l = tableLinks(call.args, ctx.timezone);
+          links.push(...l);
+          return { ok: true, note: 'Booking links are shown under your reply. Say in one line what you set up (place, time, people); they finish the booking with one tap. Never say it is booked.' };
+        }
+        case 'gift_ideas': {
+          const l = giftLinks(call.args);
+          if (!l.length) return { ok: false, error: 'Give one to three short gift ideas.' };
+          links.push(...l);
+          return { ok: true, note: 'The ideas are shown under your reply as links to buy. In one or two lines, say why each fits, from what their partner said. Do not paste links.' };
+        }
         case 'draft_note_to_partner': {
           if (!ctx.partnerId) return { ok: false, error: 'No partner is connected yet. Suggest inviting them from the Me tab.' };
           const draft = await addMessage(ctx.userId, 'note_draft', call.text, { to_user: ctx.partnerId, to_name: ctx.partnerName, status: 'draft' });
@@ -132,8 +164,24 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
 
   const final = cleanReply(reply ?? '') || "I'm having trouble thinking right now. Try me again in a moment.";
   // Every new memory is shown under the reply, so nothing is remembered silently
-  created.push(await addMessage(ctx.userId, 'belluh', final, saved.length ? { saved } : {}));
+  created.push(await addMessage(ctx.userId, 'belluh', final, { ...(saved.length ? { saved } : {}), ...(links.length ? { links: links.slice(0, 6) } : {}) }));
   return { messages: created };
+}
+
+/**
+ * Belluh's own offers (a birthday coming up, say) carry what to do if the person says yes. Accepting runs it exactly as
+ * if they had asked in their own words; "not now" just closes it.
+ */
+export async function offerRespond(ctx: Ctx, messageId: string, accept: boolean, channel: Channel = 'app'): Promise<Result> {
+  const { data: o } = await db.from('agent_messages').select('id, user_id, meta').eq('id', messageId).maybeSingle();
+  const meta = (o?.meta ?? {}) as Record<string, any>;
+  if (!o || o.user_id !== ctx.userId || meta.kind !== 'offer') return res({ error: 'Not found' }, 404);
+  // Claim it, so two taps (or the app and a text) can't run it twice
+  const { data: claimed } = await db.from('agent_messages').update({ meta: { ...meta, status: accept ? 'accepted' : 'dismissed' } })
+    .eq('id', messageId).eq('meta->>status', 'open').select('id');
+  if (!claimed?.length) return res({ messages: [], status: meta.status });
+  if (!accept || typeof meta.ask !== 'string') return res({ messages: [], status: 'dismissed' });
+  return res({ ...(await chat(ctx, meta.ask, 'chat', channel)), status: 'accepted' });
 }
 
 /** A photo from the person's own private folder (an entry's, or one sent in chat), for Belluh to look at; at most 4 MB. */
@@ -300,10 +348,15 @@ export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Pro
     ? { role: 'model', parts: [{ text: m.body }] }
     : { role: 'user', parts: [{ text: `${names[m.author ?? ''] ?? 'Partner'}: ${m.body}` }] }));
   const system = await buildUsSystem(ctx);
+  const usLinks: ActionLink[] = [];
   const reply = await chatWithTools({
-    system, contents, tools: TOOL_DECLARATIONS.filter((t: any) => t.name === 'plan_with_partner'),
+    system, contents, tools: TOOL_DECLARATIONS.filter((t: any) => t.name === 'plan_with_partner' || t.name === 'find_table'),
     runTool: async (name, args) => {
       const call = validateToolCall(name, args);
+      if (call?.name === 'find_table') {
+        usLinks.push(...tableLinks(call.args, ctx.timezone));
+        return { ok: true, note: 'Booking links are shown under your reply. Say in one line what you set up; either of them finishes the booking with one tap. Never say it is booked.' };
+      }
       if (!call || call.name !== 'plan_with_partner') return { ok: false, error: 'Not available in the shared thread.' };
       const plan = validatePlan(call.args, ctx.timezone);
       if (!plan) return { ok: false, error: 'Those times are not valid. Use future local times as YYYY-MM-DDTHH:mm, at most three.' };
@@ -317,6 +370,6 @@ export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Pro
     },
   });
   const final = cleanReply(reply ?? '') || "I'm having trouble thinking right now. Try me again in a moment.";
-  created.push(await usAdd(ctx, null, 'belluh', final));
+  created.push(await usAdd(ctx, null, 'belluh', final, usLinks.length ? { links: usLinks.slice(0, 4) } : {}));
   return res({ messages: created });
 }
