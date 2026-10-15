@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Lock, ArrowRight, Heart, Mail, UserPlus, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Sparkles, Lock, ArrowRight, Heart, Mail, UserPlus, CheckCircle2, RefreshCw, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 interface OnboardingProps {
@@ -28,14 +28,6 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   // Invite State
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteStatus, setInviteStatus] = useState<'idle' | 'searching' | 'sent' | 'error' | 'not-found'>('idle');
-
-  // Auto-advance step 0
-  useEffect(() => {
-    if (step === 0) {
-      const timer = setTimeout(() => setStep(1), 3500); 
-      return () => clearTimeout(timer);
-    }
-  }, [step]);
 
   // Rotating Placeholders Logic
   useEffect(() => {
@@ -115,31 +107,46 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   };
 
   return (
-    <div className="min-h-screen bg-paper flex flex-col items-center justify-center p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-paper flex flex-col items-center justify-center p-6 md:p-8 relative overflow-hidden">
+      {/* Soft brand light, the same as the landing page */}
+      <div className="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full bg-[#CDE9F2]/50 blur-[110px] pointer-events-none"></div>
+      <div className="absolute -bottom-40 -right-32 w-[520px] h-[520px] rounded-full bg-[#f0addd]/25 blur-[120px] pointer-events-none"></div>
+      <div className="relative z-10 w-full flex flex-col items-center">
+
       {/* Step 0: Welcome & Trust */}
       {step === 0 && (
-        <div className="text-center animate-fade-in max-w-lg mx-auto">
-          <div className="w-24 h-24 rounded-full bg-white border border-slate-100 flex items-center justify-center mx-auto mb-8 shadow-float">
-            <Lock size={36} className="text-belluh-300" />
-          </div>
-          
-          <h1 className="text-4xl md:text-5xl font-serif text-slate-900 mb-8 tracking-tight leading-tight">
-            Your Private Story.
+        <div className="w-full max-w-md md:max-w-lg mx-auto text-center animate-slide-up">
+          <h1 className="text-[2.6rem] md:text-6xl font-serif leading-[1.1] tracking-tight mb-5">
+            <span className="text-[#9bbecb]">Your story,</span><br />
+            <span className="text-[#f0addd] italic">kept between you.</span>
           </h1>
-          
-          <div className="space-y-6">
-            <p className="text-slate-600 text-xl font-medium leading-relaxed font-serif">
-              Belluh is a safe space for your relationship.
-            </p>
-            
-            <div className="flex items-center justify-center gap-4 opacity-70">
-                <div className="h-px w-8 bg-slate-300"></div>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.2em] leading-loose">
-                  Private by default.<br/>Shared only when you choose.
-                </p>
-                <div className="h-px w-8 bg-slate-300"></div>
-            </div>
+          <p className="text-lg text-slate-500 font-light leading-relaxed mb-8 max-w-sm mx-auto">
+            A private journal for the two of you, and an AI that knows you both.
+          </p>
+
+          <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] px-2 text-left mb-8 divide-y divide-slate-100">
+            {[
+              { icon: <Lock size={18} strokeWidth={1.75} />, title: 'Just me, when you want', text: 'Mark any entry Just me and only you can read it.' },
+              { icon: <Heart size={18} strokeWidth={1.75} />, title: 'Shared with your partner', text: 'Everything else lands in the story you write together.' },
+              { icon: <EyeOff size={18} strokeWidth={1.75} />, title: 'Belluh keeps secrets too', text: 'It never tells your partner what you wrote privately.' },
+            ].map(r => (
+              <div key={r.title} className="flex items-start gap-4 px-5 py-4 [@media(max-height:720px)]:py-3">
+                <div className="w-5 pt-0.5 text-[#9bbecb] shrink-0">{r.icon}</div>
+                <div className="min-w-0">
+                  <p className="text-[15px] font-bold text-slate-900">{r.title}</p>
+                  <p className="text-sm text-slate-500 leading-relaxed mt-0.5">{r.text}</p>
+                </div>
+              </div>
+            ))}
           </div>
+
+          <button
+            onClick={() => setStep(1)}
+            className="w-full bg-[#f0addd] text-white py-4 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-[#e57ec3] transition-all shadow-xl shadow-[#f0addd]/30 hover:-translate-y-0.5 active:scale-[0.98]"
+          >
+            <span>Begin</span>
+            <ArrowRight size={16} />
+          </button>
         </div>
       )}
 
@@ -314,6 +321,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         </div>
       )}
 
+      </div>
     </div>
   );
 };
