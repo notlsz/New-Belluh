@@ -16,9 +16,9 @@ const FAQ = [
 ];
 
 const STEPS = [
-  { n: '01', title: 'Write a few lines', text: 'A minute a day each. Keep it private, or share it with your partner.' },
-  { n: '02', title: 'Belluh connects the dots', text: 'Every Sunday, one small thing to try, drawn from what you both wrote.' },
-  { n: '03', title: 'Plan it together', text: 'Ask in your shared thread. Belluh suggests times, and your partner picks one.' },
+  { n: '1', title: 'Write a few lines', text: 'A minute a day each. Keep it private, or share it with your partner.' },
+  { n: '2', title: 'Belluh connects the dots', text: 'Every Sunday, one small thing to try, drawn from what you both wrote.' },
+  { n: '3', title: 'Plan it together', text: 'Ask in your shared thread. Belluh suggests times, and your partner picks one.' },
 ];
 
 // A real app screen in a phone frame; sizes scale with the phone's width
