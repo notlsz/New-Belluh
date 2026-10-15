@@ -46,7 +46,7 @@ const WeeklyCard: React.FC<{
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-serif text-[15px] text-slate-700 truncate">{week.action}</p>
-          <p className="text-xs text-slate-400 mt-0.5">You: {WORDS[week.mine]}{partnerLine ? ` · ${partnerLine}` : ''}</p>
+          <p className="text-xs text-slate-400 mt-0.5">You: {WORDS[week.mine]}{partnerLine ? `, ${partnerLine}` : ''}</p>
         </div>
         <button onClick={() => setEditing(true)} className="text-xs font-bold text-slate-400 hover:text-slate-700 shrink-0">Change</button>
       </div>

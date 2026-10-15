@@ -15,6 +15,12 @@ const FAQ = [
   { q: 'Is it free?', a: 'Yes, Belluh is free to start.' },
 ];
 
+const SCREENS = [
+  { src: '/screens/us.webp', title: 'Plan it together', text: 'Ask Belluh in your shared thread. It suggests a plan, and your partner picks the time.', alt: 'Belluh planning a ramen night for Maya and Dan in their shared thread' },
+  { src: '/screens/week.webp', title: 'One thing to try', text: 'Every Sunday, one small idea drawn from what you both wrote.', alt: "Belluh's suggestion for the week: a twenty-minute walk after dinner" },
+  { src: '/screens/belluh.webp', title: 'Your own Belluh', text: "Ask about your week. It knows what you've both shared, never your partner's private entries.", alt: "Maya asking Belluh about Dan's week" },
+];
+
 const FaqItem: React.FC<{ q: string; a: string; open: boolean; onToggle: () => void }> = ({ q, a, open, onToggle }) => (
   <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
     <button onClick={onToggle} aria-expanded={open} className="w-full flex items-center justify-between gap-4 text-left px-6 md:px-8 py-5 md:py-6">
@@ -137,6 +143,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
 
   const menuItems = [
       { label: 'Features', action: () => scrollToSection('features') },
+      { label: 'Inside', action: () => scrollToSection('inside') },
       { label: 'FAQ', action: () => scrollToSection('faq') },
       { label: 'Privacy', action: () => { toggleMenu(); onShowLegal('privacy'); } },
       { label: 'Stories', action: () => scrollToSection('stories') },
@@ -330,6 +337,29 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
           </div>
       </section>
 
+      {/* Real app screens */}
+      <section id="inside" className="relative z-10 px-6 pb-28 scroll-mt-24">
+          <div className="max-w-5xl mx-auto">
+              <h2 className="text-3xl md:text-5xl font-serif text-center leading-tight mb-4 drop-shadow-sm">
+                  <span className="text-[#9bbecb]">Inside</span> <span className="text-[#f0addd] italic">Belluh.</span>
+              </h2>
+              <p className="text-center text-lg text-slate-500 font-light mb-12">Real screens from the app, with a sample couple.</p>
+              <div className="flex md:grid md:grid-cols-3 gap-6 md:gap-10 overflow-x-auto md:overflow-visible snap-x snap-mandatory -mx-6 px-6 md:mx-0 md:px-0 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {SCREENS.map(s => (
+                      <figure key={s.src} className="snap-center shrink-0 w-[75%] sm:w-[55%] md:w-auto">
+                          <div className="bg-white rounded-[2.5rem] p-2 border border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)]">
+                              <img src={s.src} alt={s.alt} width={390} height={844} loading="lazy" className="w-full h-auto rounded-[2rem]" />
+                          </div>
+                          <figcaption className="mt-6 px-2">
+                              <p className="font-serif text-xl text-slate-900">{s.title}</p>
+                              <p className="mt-1 text-slate-500 font-light leading-relaxed">{s.text}</p>
+                          </figcaption>
+                      </figure>
+                  ))}
+              </div>
+          </div>
+      </section>
+
       {/* Marquee Section */}
       <LogoMarquee title="Works with" orgs={INTEGRATIONS} note="* Trademarks belong to their owners." repeat={6} />
 
@@ -473,7 +503,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                               "Two years today. Still the same booth."}
                          </p>
                          <div className="flex items-center gap-2 pt-4 border-t border-black/5">
-                             <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                              <div className="text-[10px] font-bold uppercase text-[#831843] tracking-widest">Entry #{100 + idx}</div>
                          </div>
                      </div>

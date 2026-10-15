@@ -90,7 +90,7 @@ async function handleForget(m: Inbound, link: Link, query: string) {
     .select('id, label, month, day').eq('user_id', link.user_id).ilike('label', `%${query.replace(/[%_\\]/g, '')}%`);
   if (!matches?.length) return talk(m, link, m.text); // not a date: maybe a memory, which Belluh handles
   if (matches.length > 1) {
-    const names = matches.slice(0, 10).map(x => `• ${x.label}`).join('\n');
+    const names = matches.slice(0, 10).map(x => x.label).join('\n');
     return reply_(m, link.user_id, `A few dates match "${query}":\n${names}\n\nSend FORGET with the full name of the one to remove.`);
   }
   await db.from('occasions').delete().eq('id', matches[0].id);

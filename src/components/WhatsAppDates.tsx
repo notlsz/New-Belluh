@@ -190,8 +190,8 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
                   <p className="font-serif text-slate-900 truncate">{o.label}</p>
                   <p className="text-xs text-slate-400 mt-0.5">
                     {MONTHS[o.month - 1]} {o.day}{!o.repeats_yearly && o.year ? `, ${o.year}` : ''}
-                    {' · '}{days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`}
-                    {' · '}{o.source_message === 'Planned together in Belluh' ? 'planned together' : o.source_message === 'From your About us dates' ? 'from your facts' : `you told us ${new Date(o.mentioned_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                    {', '}{days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`}
+                    {'. '}{o.source_message === 'Planned together in Belluh' ? 'Planned together.' : o.source_message === 'From your About us dates' ? 'From your facts.' : `You told us ${new Date(o.mentioned_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}.`}
                   </p>
                 </div>
                 <button aria-label={`Remove ${o.label}`} onClick={() => remove(o)} className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50">

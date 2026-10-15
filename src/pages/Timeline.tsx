@@ -377,7 +377,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                          <div className="absolute top-0 left-0 w-1 h-full bg-[#f0addd]"></div>
                          <div className="w-10 h-10 rounded-full bg-belluh-600 flex items-center justify-center text-white shrink-0"><Sparkles size={16} /></div>
                          <div className="min-w-0">
-                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{latest.meta?.kind === 'weekly' ? 'Belluh · your week' : latest.meta?.kind === 'checkin' ? 'Belluh · check-in' : latest.meta?.kind === 'reminder' ? 'Belluh · reminder' : 'Belluh'}</span>
+                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{latest.meta?.kind === 'weekly' ? 'Your week from Belluh' : latest.meta?.kind === 'checkin' ? 'Check-in from Belluh' : latest.meta?.kind === 'reminder' ? 'Reminder from Belluh' : 'Belluh'}</span>
                              <p className="mt-1 text-[15px] font-serif text-slate-800 leading-snug line-clamp-3">{latest.body}</p>
                              <span className="mt-2 inline-block text-xs font-bold text-belluh-500">Reply</span>
                          </div>

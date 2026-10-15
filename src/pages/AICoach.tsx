@@ -293,7 +293,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
   const spaceSwitch = (
     <div role="tablist" aria-label="Conversation" className="flex items-center bg-slate-100 rounded-full p-0.5 text-xs font-bold">
       <button role="tab" aria-selected={space === 'me'} onClick={() => pickSpace('me')} className={`px-3 py-1.5 rounded-full transition-colors ${space === 'me' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>Just you</button>
-      <button role="tab" aria-selected={space === 'us'} onClick={() => { pickSpace('us'); trackEvent('us_opened'); }} className={`px-3 py-1.5 rounded-full transition-colors ${space === 'us' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>Us · {partnerName}</button>
+      <button role="tab" aria-selected={space === 'us'} onClick={() => { pickSpace('us'); trackEvent('us_opened'); }} className={`px-3 py-1.5 rounded-full transition-colors ${space === 'us' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>You &amp; {partnerName}</button>
     </div>
   );
 
@@ -390,7 +390,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                        <p className="font-serif text-lg leading-relaxed text-slate-900 whitespace-pre-wrap">{revealIds.has(msg.id) ? <Reveal text={msg.body} onTick={() => messagesEndRef.current?.scrollIntoView({ block: 'end' })} /> : msg.body}</p>
                        {Array.isArray(msg.meta?.saved) && msg.meta.saved.length > 0 && (
                          <button onClick={openMemories} className="mt-2 flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-700 text-left">
-                           <Brain size={12} /> Saved to memory: {msg.meta.saved.join(' · ')}
+                           <Brain size={12} /> Saved to memory: {msg.meta.saved.join(', ')}
                          </button>
                        )}
                        {week && msg.id === weeklyCardOn && <div className="mt-4"><WeeklyCard week={week} onChange={onWeekChange} compact /></div>}

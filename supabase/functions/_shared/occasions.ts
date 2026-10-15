@@ -254,7 +254,7 @@ export function listReply(occasions: StoredOccasion[], today: LocalDate, timeZon
   const lines = upcoming.slice(0, 20).map(({ o, next }) => {
     const days = daysBetween(today, next);
     const soon = days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
-    return `• ${o.label}: ${formatMonthDay(o.month, o.day)} (${soon}). You told me on ${formatShortDate(o.mentioned_at, timeZone)}.`;
+    return `${o.label}: ${formatMonthDay(o.month, o.day)} (${soon}). You told me on ${formatShortDate(o.mentioned_at, timeZone)}.`;
   });
   if (upcoming.length > 20) lines.push(`…and ${upcoming.length - 20} more in the app.`);
   return 'Here is everything I remember, soonest first:\n\n' + lines.join('\n');

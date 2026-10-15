@@ -19,8 +19,12 @@ const res = (body: any, status = 200): Result => ({ status, body });
 const TEXTING = "\n\nRight now they're texting you from their phone, not the app. Reply in plain text, one to three short sentences, no markdown or lists. Everything you do still shows up in the app." +
   " By text, stay on what Belluh is for: the two of them, their journal, dates, plans and notes to each other. If they ask for something unrelated (general knowledge, homework, code, news), say in one line that by text you can only help with things between them, and offer something you can do.";
 
-/** "1) Fri, Oct 16 · 7:00 PM" lines for a plan, in the reader's time zone. */
-export const planChoices = (opts: PlanOption[], tz: string) => opts.map((o, i) => `${i + 1}) ${o.label ? `${o.label} · ` : ''}${formatOption(o, tz)}`).join('\n');
+/** "1) Fri, Oct 16 at 7:00 PM" lines for a plan, in the reader's time zone. */
+export const planChoices = (opts: PlanOption[], tz: string) => opts.map((o, i) => {
+  const when = formatOption(o, tz), l = (o.label ?? '').trim();
+  // "Saturday evening" only repeats "Sat, Oct 17 at 7:00 PM"; "After work" adds something
+  return `${i + 1}) ${when}${l && l.slice(0, 3).toLowerCase() !== when.slice(0, 3).toLowerCase() ? ` (${l})` : ''}`;
+}).join('\n');
 
 async function tzOf(userId: string, fallback: string): Promise<string> {
   const { data } = await db.from('agent_settings').select('timezone').eq('user_id', userId).maybeSingle();

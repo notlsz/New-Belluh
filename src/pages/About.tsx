@@ -95,7 +95,6 @@ const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin }) => {
           {/* Hero Section */}
           <div className="max-w-3xl mx-auto mb-16 md:mb-20">
               <div className="flex items-center gap-3 mb-8 animate-slide-up">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#1a1a1a]"></div>
                   <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Founding Story</span>
               </div>
               

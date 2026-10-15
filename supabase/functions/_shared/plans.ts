@@ -49,12 +49,12 @@ export function validatePlan(raw: unknown, timeZone: string, now = new Date()): 
   return options.length ? { title, details, options } : null;
 }
 
-/** "Sat, Oct 17 · 7:00 PM" in the person's own time zone. */
+/** "Sat, Oct 17 at 7:00 PM" in the person's own time zone. */
 export function formatOption(o: Pick<PlanOption, 'starts_at'>, timeZone: string): string {
   const d = new Date(o.starts_at);
   const day = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'short', month: 'short', day: 'numeric' }).format(d);
   const time = new Intl.DateTimeFormat('en-US', { timeZone, hour: 'numeric', minute: '2-digit' }).format(d);
-  return `${day} · ${time}`;
+  return `${day} at ${time}`;
 }
 
 /** Local calendar date of an option, for saving it as a date with reminders. */
