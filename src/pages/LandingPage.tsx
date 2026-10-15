@@ -1,9 +1,29 @@
 
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, ArrowRight, Activity, TrendingUp, Lock, Menu, X, Heart } from 'lucide-react';
+import { Sparkles, ArrowRight, Activity, TrendingUp, Lock, Menu, X, Heart, ChevronDown } from 'lucide-react';
 import { rememberCta } from '../services/analytics';
 import { ORGANIZATIONS } from '../constants';
+
+const FAQ = [
+  { q: 'Can my partner read my private entries?', a: 'No. Every entry is shared or private, your call. Your partner never sees your private entries, and neither does their Belluh.' },
+  { q: 'What does Belluh actually do?', a: 'It remembers what matters to you both, plans dates your partner can accept with one tap, reminds you before birthdays and anniversaries, helps you find the words for a note, and every Sunday gives you one insight and one small thing to try together.' },
+  { q: 'Do we both need to sign up?', a: "Belluh is made for two, so it's best together. You can start on your own and send your partner the link whenever you're ready." },
+  { q: 'Is Belluh an AI girlfriend or boyfriend?', a: "No. Belluh doesn't flirt or play a partner. It works for the two of you and points you back to each other." },
+  { q: 'Can I use it from WhatsApp or text?', a: "Yes. Connect in Settings with one tap and text Belluh like you'd talk to it in the app. Same Belluh, same memory." },
+  { q: 'What happens to my data?', a: "Your entries are encrypted in storage and in transit, and never sold. Belluh's replies are written by Google's Gemini models, which process your entries to write them." },
+  { q: 'Is it free?', a: 'Yes, Belluh is free to start.' },
+];
+
+const FaqItem: React.FC<{ q: string; a: string; open: boolean; onToggle: () => void }> = ({ q, a, open, onToggle }) => (
+  <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+    <button onClick={onToggle} aria-expanded={open} className="w-full flex items-center justify-between gap-4 text-left px-6 md:px-8 py-5 md:py-6">
+      <span className="font-serif text-lg md:text-xl text-slate-900">{q}</span>
+      <ChevronDown size={20} className={`shrink-0 text-[#9bbecb] transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
+    </button>
+    {open && <p className="px-6 md:px-8 pb-6 -mt-1 text-slate-500 leading-relaxed">{a}</p>}
+  </div>
+);
 
 // What Belluh connects to, shown in the second scrolling strip
 const INTEGRATIONS = [
@@ -113,8 +133,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       }
   };
 
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+
   const menuItems = [
       { label: 'Features', action: () => scrollToSection('features') },
+      { label: 'FAQ', action: () => scrollToSection('faq') },
       { label: 'Privacy', action: () => { toggleMenu(); onShowLegal('privacy'); } },
       { label: 'Stories', action: () => scrollToSection('stories') },
       { label: 'Our Why', action: () => { toggleMenu(); onGoToAbout(); } },
@@ -459,6 +482,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
         </div>
       </section>
       
+      {/* FAQ */}
+      <section id="faq" className="relative z-10 pt-24 px-6 scroll-mt-24">
+          <div className="max-w-3xl mx-auto">
+              <h2 className="text-3xl md:text-5xl font-serif text-center leading-tight mb-12 drop-shadow-sm">
+                  <span className="text-[#9bbecb]">Questions,</span> <span className="text-[#f0addd] italic">answered.</span>
+              </h2>
+              <div className="space-y-3">
+                  {FAQ.map((f, i) => <FaqItem key={f.q} q={f.q} a={f.a} open={openFaq === i} onToggle={() => setOpenFaq(openFaq === i ? null : i)} />)}
+              </div>
+          </div>
+      </section>
+
       <section className="relative z-10 py-24 px-6 text-center">
           <div className="max-w-3xl mx-auto">
               <div className="w-16 h-16 bg-[#f0addd]/10 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse-slow">
