@@ -101,9 +101,9 @@ const Careers: React.FC<CareersProps> = ({ onBack, onGetStarted, onLogin, onShow
       </div>
 
       {/* Full Screen Menu Overlay */}
-      <div className={`fixed inset-0 z-[100] bg-white transition-all duration-700 ease-[cubic-bezier(0.32,0.725,0,1)] ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}>
-          <div className="flex flex-col h-full p-6 md:p-12 relative max-w-7xl mx-auto w-full">
-               <div className="flex justify-between items-center mb-12">
+      <div className={`fixed inset-0 z-[100] bg-white overflow-y-auto overscroll-contain transition-all duration-700 ease-[cubic-bezier(0.32,0.725,0,1)] ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}>
+          <div className="flex flex-col min-h-full p-6 md:p-10 relative max-w-7xl mx-auto w-full">
+               <div className="flex justify-between items-center mb-6 md:mb-8">
                    <span className="font-serif text-2xl font-bold tracking-tight text-[#9bbecb]">Belluh</span>
                    <button 
                     onClick={toggleMenu}
@@ -113,31 +113,31 @@ const Careers: React.FC<CareersProps> = ({ onBack, onGetStarted, onLogin, onShow
                    </button>
                </div>
 
-               <div className="flex-1 flex flex-col justify-center items-start gap-4 md:gap-8 animate-slide-up pl-2">
+               <div className="flex-1 flex flex-col justify-center items-start gap-3 md:gap-5 py-2 animate-slide-up pl-2">
                    {menuItems.map((item, idx) => (
                        <button 
                          key={idx}
                          onClick={item.action}
                          className="group relative flex items-start gap-6 text-left transition-all duration-500 w-full md:w-auto"
                        >
-                           <span className="text-xs font-bold font-sans text-slate-200 group-hover:text-[#9bbecb] mt-2 md:mt-4 transition-colors duration-300">0{idx + 1}</span>
-                           <span className="text-5xl md:text-8xl font-serif font-medium text-slate-300 group-hover:text-[#9bbecb] tracking-tighter transition-colors duration-300 leading-[0.9] group-hover:translate-x-2 transform">
+                           <span className="text-xs font-bold font-sans text-slate-200 group-hover:text-[#9bbecb] mt-1 md:mt-2 transition-colors duration-300">{idx + 1}</span>
+                           <span style={{ fontSize: 'clamp(2rem, min(9vw, 6vh), 6rem)' }} className="font-serif font-medium text-slate-300 group-hover:text-[#9bbecb] tracking-tighter transition-colors duration-300 leading-[0.9] group-hover:translate-x-2 transform">
                                {item.label}
                            </span>
                        </button>
                    ))}
                </div>
 
-               <div className="flex flex-col gap-4 mt-auto pt-8 w-full max-w-md animate-fade-in">
+               <div className="flex flex-col md:flex-row gap-3 md:gap-4 mt-auto pt-6 w-full max-w-md md:max-w-xl animate-fade-in">
                    <button 
                        onClick={() => { toggleMenu(); onLogin(); }}
-                       className="w-full py-4 rounded-full bg-slate-50 font-bold text-slate-900 hover:bg-slate-100 transition-colors text-lg border border-slate-100"
+                       className="w-full py-3.5 md:py-4 rounded-full bg-slate-50 font-bold text-slate-900 hover:bg-slate-100 transition-colors text-lg border border-slate-100"
                    >
                        Sign In
                    </button>
                    <button 
                        onClick={() => { toggleMenu(); onGetStarted(); }}
-                       className="w-full py-4 rounded-full bg-[#9bbecb] text-white font-bold hover:bg-[#8aaab7] transition-colors shadow-xl text-lg flex items-center justify-center gap-2"
+                       className="w-full py-3.5 md:py-4 rounded-full bg-[#9bbecb] text-white font-bold hover:bg-[#8aaab7] transition-colors shadow-xl text-lg flex items-center justify-center gap-2"
                    >
                        Join Belluh <ArrowRight size={18} />
                    </button>
