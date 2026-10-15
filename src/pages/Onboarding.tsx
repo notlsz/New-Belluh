@@ -116,13 +116,6 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       {/* Step 0: Welcome & Trust */}
       {step === 0 && (
         <div className="w-full max-w-md md:max-w-lg mx-auto text-center animate-slide-up">
-          <div className="relative w-20 h-20 mx-auto mb-8 [@media(max-height:720px)]:hidden">
-            <div className="absolute inset-0 rounded-full bg-[#f0addd]/40 blur-xl animate-pulse"></div>
-            <div className="relative w-20 h-20 rounded-full bg-white border border-white shadow-[0_20px_50px_-12px_rgba(240,173,221,0.6)] flex items-center justify-center">
-              <Lock size={28} strokeWidth={1.75} className="text-[#f0addd]" />
-            </div>
-          </div>
-
           <h1 className="text-[2.6rem] md:text-6xl font-serif leading-[1.1] tracking-tight mb-5">
             <span className="text-[#9bbecb]">Your story,</span><br />
             <span className="text-[#f0addd] italic">kept between you.</span>
@@ -133,12 +126,12 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
           <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] px-2 text-left mb-8 divide-y divide-slate-100">
             {[
-              { icon: <Lock size={16} />, title: 'Just me, when you want', text: 'Mark any entry Just me and only you can read it.' },
-              { icon: <Heart size={16} />, title: 'Shared with your partner', text: 'Everything else lands in the story you write together.' },
-              { icon: <EyeOff size={16} />, title: 'Belluh keeps secrets too', text: 'It never tells your partner what you wrote privately.' },
+              { icon: <Lock size={18} strokeWidth={1.75} />, title: 'Just me, when you want', text: 'Mark any entry Just me and only you can read it.' },
+              { icon: <Heart size={18} strokeWidth={1.75} />, title: 'Shared with your partner', text: 'Everything else lands in the story you write together.' },
+              { icon: <EyeOff size={18} strokeWidth={1.75} />, title: 'Belluh keeps secrets too', text: 'It never tells your partner what you wrote privately.' },
             ].map(r => (
-              <div key={r.title} className="flex items-start gap-4 px-4 py-4 [@media(max-height:720px)]:py-3">
-                <div className="w-10 h-10 rounded-full bg-[#CDE9F2]/60 text-[#3f7486] flex items-center justify-center shrink-0">{r.icon}</div>
+              <div key={r.title} className="flex items-start gap-4 px-5 py-4 [@media(max-height:720px)]:py-3">
+                <div className="w-5 pt-0.5 text-[#9bbecb] shrink-0">{r.icon}</div>
                 <div className="min-w-0">
                   <p className="text-[15px] font-bold text-slate-900">{r.title}</p>
                   <p className="text-sm text-slate-500 leading-relaxed mt-0.5">{r.text}</p>
