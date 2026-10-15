@@ -526,7 +526,7 @@ const App: React.FC = () => {
             const authorProfile = allProfiles?.find((p: any) => p.id === e.user_id);
             if (authorProfile) {
                 authorName = isMine ? (myProfile?.full_name || 'Me') : authorProfile.full_name;
-                authorAvatar = authorProfile.avatar_url;
+                authorAvatar = authorProfile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${e.user_id}`;
             } else {
                 authorName = isMine ? 'Me' : 'Friend';
                 authorAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${e.user_id}`;
