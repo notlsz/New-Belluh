@@ -1,10 +1,11 @@
 
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, ArrowRight, Activity, TrendingUp, Lock, Menu, X, Heart, ChevronDown } from 'lucide-react';
+import { ArrowRight, Lock, Menu, X, ChevronDown } from 'lucide-react';
 import { rememberCta } from '../services/analytics';
 import BelluhOrb from '../components/BelluhOrb';
 import BelluhSpeech from '../components/BelluhSpeech';
+import LandingDemos from '../components/LandingDemos';
 import { belluh, type BelluhState } from '../lib/belluhPresence';
 import { ORGANIZATIONS } from '../constants';
 
@@ -111,6 +112,23 @@ const LogoMarquee = ({ title, orgs, note, repeat = 2 }: { title: string; orgs: {
 );
 
 
+// Tap Belluh and it becomes something else, then back to water
+const FUN_SHAPES: { emoji: string; label: string }[] = [
+  { emoji: '🦒', label: 'giraffe' }, { emoji: '🐈', label: 'cat' }, { emoji: '🐬', label: 'dolphin' }, { emoji: '🦋', label: 'butterfly' },
+  { emoji: '🦖', label: 'dinosaur' }, { emoji: '🌻', label: 'sunflower' }, { emoji: '🚀', label: 'rocket' }, { emoji: '❤️', label: 'heart' },
+];
+function useShapeTap() {
+  const [n, setN] = useState(-1);
+  const cur = useRef(-1);
+  const tap = () => {
+    const next = cur.current + 1 >= FUN_SHAPES.length ? -1 : cur.current + 1;
+    if (next < 0) belluh.become('water', 'water', false);
+    else belluh.become({ emoji: FUN_SHAPES[next].emoji }, FUN_SHAPES[next].label, false);
+    cur.current = next; setN(next);
+  };
+  return { tap, label: n < 0 ? null : FUN_SHAPES[n].label };
+}
+
 const TRY_EXAMPLES = ['turn into a cat', 'become a sunflower', 'turn into the letter J', 'become a rocket', 'turn into a dolphin', 'become a heart'];
 const withArticle = (thing: string) => (/^(the|a|an)\s/i.test(thing) ? thing : `${/^[aeiou]/i.test(thing) ? 'an' : 'a'} ${thing}`);
 
@@ -205,6 +223,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pastHero, setPastHero] = useState(false);
+  const heroTap = useShapeTap();
+  const ctaTap = useShapeTap();
+  const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
+  useEffect(() => { const onR = () => setIsDesktop(window.innerWidth >= 768); window.addEventListener('resize', onR); return () => window.removeEventListener('resize', onR); }, []);
   const [heroOrb, setHeroOrb] = useState(() => (typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerHeight >= 760 ? 150 : 104));
   useEffect(() => {
     const onR = () => setHeroOrb(window.innerWidth >= 768 && window.innerHeight >= 760 ? 150 : 104);
@@ -253,11 +275,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
 
   const menuItems = [
       { label: 'Meet Belluh', action: () => scrollToSection('meet') },
-      { label: 'Features', action: () => scrollToSection('features') },
+      { label: 'What it does', action: () => scrollToSection('features') },
       { label: 'Inside', action: () => scrollToSection('inside') },
       { label: 'FAQ', action: () => scrollToSection('faq') },
       { label: 'Privacy', action: () => { toggleMenu(); onShowLegal('privacy'); } },
-      { label: 'Stories', action: () => scrollToSection('stories') },
       { label: 'Our Why', action: () => { toggleMenu(); onGoToAbout(); } },
       { label: 'Careers', action: () => { toggleMenu(); onGoToCareers(); } }
   ];
@@ -273,25 +294,32 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       </div>
 
       {/* Floating Pill Navbar - Scroll Aware */}
-      <div className={`fixed top-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-2xl z-50 transition-all duration-500 transform ${isNavVisible ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0'}`}>
+      <div className={`fixed top-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-[min(64rem,calc(100%-3rem))] md:max-w-none z-50 transition-all duration-500 transform ${isNavVisible ? 'translate-y-0 opacity-100' : '-translate-y-[150%] opacity-0'}`}>
         <nav className="bg-white/90 backdrop-blur-xl rounded-full shadow-lg shadow-slate-200/50 border border-white px-6 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                 <span className="font-serif text-xl font-bold tracking-tight text-[#9bbecb] drop-shadow-sm" style={{ textShadow: '0 1px 1px rgba(0,0,0,0.1)' }}>Belluh</span>
             </div>
 
+            <div className="hidden md:flex items-center gap-1 text-sm font-bold text-slate-500">
+                {[['Meet Belluh', 'meet'], ['What it does', 'features'], ['Inside', 'inside'], ['FAQ', 'faq']].map(([label, id]) => (
+                    <button key={id} onClick={() => scrollToSection(id)} className="px-3 py-2 rounded-full hover:text-slate-900 hover:bg-slate-50 transition-colors">{label}</button>
+                ))}
+            </div>
+
             <div className="flex items-center gap-2">
+            <button onClick={onLogin} className="hidden md:inline-flex h-10 items-center px-4 rounded-full text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">Log in</button>
             <button
                 onClick={() => { rememberCta('nav'); onGetStarted(); }}
-                tabIndex={pastHero ? 0 : -1}
-                aria-hidden={!pastHero}
-                className={`overflow-hidden whitespace-nowrap h-10 bg-[#f0addd] text-white rounded-full font-bold text-sm hover:bg-[#e57ec3] shadow-md shadow-[#f0addd]/30 transition-all duration-500 ${pastHero ? 'max-w-[140px] px-5 opacity-100' : 'max-w-0 px-0 opacity-0 pointer-events-none'}`}
+                tabIndex={pastHero || isDesktop ? 0 : -1}
+                aria-hidden={!pastHero && !isDesktop}
+                className={`overflow-hidden whitespace-nowrap h-10 bg-[#f0addd] text-white rounded-full font-bold text-sm hover:bg-[#e57ec3] shadow-md shadow-[#f0addd]/30 transition-all duration-500 md:max-w-[140px] md:px-5 md:opacity-100 md:pointer-events-auto ${pastHero ? 'max-w-[140px] px-5 opacity-100' : 'max-w-0 px-0 opacity-0 pointer-events-none'}`}
             >
                 Start free
             </button>
             <button 
                 onClick={toggleMenu}
                 aria-label="Open menu"
-                className="bg-[#CDE9F2] text-cyan-900 w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md hover:shadow-lg"
+                className="md:hidden bg-[#CDE9F2] text-cyan-900 w-10 h-10 rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md hover:shadow-lg"
             >
                 <Menu size={20} strokeWidth={2.5} />
             </button>
@@ -347,8 +375,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       {/* Hero Section */}
       <section className="relative z-10 min-h-[100svh] flex flex-col items-center justify-center pt-28 pb-24 px-6">
          <div className="w-full max-w-4xl mx-auto text-center animate-slide-up">
-             <div className="flex justify-center mb-4 md:mb-6">
-                 <BelluhOrb size={heroOrb} onTap={() => {}} label="Belluh. Tap to make a ripple." />
+             <div className="flex flex-col items-center mb-4 md:mb-6">
+                 <BelluhOrb size={heroOrb} onTap={heroTap.tap} label="Belluh. Tap to change its shape." />
+                 <p className="mt-2 h-5 text-xs font-bold tracking-wide text-slate-400 transition-opacity" aria-live="polite">
+                     {heroTap.label ? `A ${heroTap.label}. Tap again.` : 'Tap me'}
+                 </p>
              </div>
              <h1 className="text-5xl md:text-7xl font-serif font-medium leading-[1.1] mb-6 text-slate-900 tracking-tight drop-shadow-sm">
                  <span className="text-[#9bbecb]">The AI journal</span> <br /> <span className="text-[#f0addd] italic">for couples.</span>
@@ -373,6 +404,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                      I have an account
                  </button>
              </div>
+             <p className="mt-5 text-sm text-slate-400">Free to start. Bring your partner whenever you're ready.</p>
          </div>
          <div className="absolute bottom-6 md:bottom-8 inset-x-0 flex justify-center">
              <button onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })} aria-label="Scroll down" className="w-11 h-11 rounded-full flex items-center justify-center text-[#9bbecb] hover:text-[#f0addd] transition-colors animate-bounce">
@@ -386,74 +418,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
 
       <MeetBelluh onGetStarted={onGetStarted} />
 
-      {/* Visual Demo Section */}
-      <section id="example" className="relative z-10 px-6 pt-16 pb-28 scroll-mt-24">
-          <div className="max-w-7xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                  
-                  {/* Card 1: The AI Analysis */}
-                  <div className="md:col-span-8 bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] flex flex-col justify-between relative overflow-hidden group hover:scale-[1.005] transition-all duration-700 min-h-[400px]">
-                      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-[#CDE9F2]/30 to-transparent rounded-bl-full opacity-50 pointer-events-none"></div>
-                      
-                      <div className="relative z-10">
-                          <div className="flex items-center gap-3 mb-6">
-                              <BelluhOrb size={34} />
-                              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Weekly Insight</span>
-                          </div>
-
-                          <h3 className="text-3xl md:text-5xl font-serif text-slate-900 leading-[1.15] mb-6 tracking-tight">
-                              "You navigate conflict with silence. But this week, you chose <span className="text-[#f0addd] underline decoration-[#f0addd]/30 underline-offset-4 decoration-4">words</span>."
-                          </h3>
-                          
-                          <p className="text-lg text-slate-500 leading-relaxed max-w-2xl font-light">
-                              On Tuesday you said what you were afraid of instead of going quiet. Belluh noticed, because it read both of your entries.
-                          </p>
-                      </div>
-
-                      <div className="relative z-10 mt-12 md:mt-0 flex flex-col md:flex-row md:items-center gap-6">
-                          <button onClick={() => { rememberCta('insight_card'); onGetStarted(); }} className="px-8 py-4 bg-slate-50 hover:bg-slate-100 rounded-full text-sm font-bold text-slate-900 transition-colors flex items-center justify-center gap-2 border border-slate-100">
-                              Get your first insight <ArrowRight size={16} />
-                          </button>
-                          <div className="flex items-center gap-2 text-slate-400">
-                              <Activity size={16} className="text-[#CDE9F2]" />
-                              <span className="text-xs font-medium">Example insight, written from 14 entries</span>
-                          </div>
-                      </div>
-                  </div>
-
-                  {/* Right Column Stack */}
-                  <div className="md:col-span-4 flex flex-col gap-6">
-                      
-                      {/* Card 2: The Metric */}
-                      <div className="flex-1 bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] flex flex-col justify-between relative overflow-hidden group hover:scale-[1.01] transition-transform duration-500 min-h-[250px]">
-                          
-                          <div className="relative z-10 flex justify-between items-start">
-                              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">This week</span>
-                              <div className="px-3 py-1 bg-[#f0addd]/10 text-[#c06ba5] rounded-full text-[10px] font-bold flex items-center gap-1">
-                                  <TrendingUp size={12} /> Streak
-                              </div>
-                          </div>
-
-                          <div className="relative z-10 flex items-end gap-2 h-24 mb-2 mt-4">
-                              {[20, 45, 30, 60, 45, 80, 70, 50, 90, 85].map((h, i) => (
-                                  <div 
-                                    key={i} 
-                                    className={`flex-1 rounded-t-sm transition-all duration-700 hover:opacity-100 ${i % 2 === 0 ? 'bg-[#CDE9F2]' : 'bg-[#f0addd]'}`} 
-                                    style={{ height: `${h}%`, opacity: 0.6 + (i/20) }}
-                                  ></div>
-                              ))}
-                          </div>
-
-                          <div className="relative z-10">
-                              <div className="text-6xl font-sans font-semibold tracking-tighter text-slate-900">3</div>
-                              <p className="text-sm text-slate-500 mt-1 font-medium">weeks in a row, together</p>
-                          </div>
-                      </div>
-
-                  </div>
-              </div>
-          </div>
-      </section>
+      <LandingDemos onShowPrivacy={() => onShowLegal('privacy')} />
 
       {/* Real app screens */}
       <section id="inside" className="relative z-10 px-6 pb-28 scroll-mt-24">
@@ -470,7 +435,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                   <div className="absolute inset-x-0 top-10 md:top-16 flex justify-center">
                       <div className="relative w-[220px] md:w-[330px]">
                           <PhoneFrame src="/screens/write.webp" alt="Maya writing a few lines about her day" className="absolute top-12 md:top-20 right-[58%] md:right-[68%] w-[80%] -rotate-[7deg] origin-bottom-right transition-transform duration-700 group-hover:-rotate-[9deg] group-hover:-translate-x-2" />
-                          <PhoneFrame src="/screens/week.webp" alt="Belluh's idea for the week: a twenty-minute walk after dinner" className="absolute top-12 md:top-20 left-[58%] md:left-[68%] w-[80%] rotate-[7deg] origin-bottom-left transition-transform duration-700 group-hover:rotate-[9deg] group-hover:translate-x-2" />
+                          <PhoneFrame src="/screens/home.webp" alt="Home, where Belluh offers to plan an anniversary, asks how a date went, and shows a reminder" className="absolute top-12 md:top-20 left-[58%] md:left-[68%] w-[80%] rotate-[7deg] origin-bottom-left transition-transform duration-700 group-hover:rotate-[9deg] group-hover:translate-x-2" />
                           <PhoneFrame src="/screens/us.webp" alt="Belluh planning a ramen night for Maya and Dan in their shared thread" className="relative z-10 transition-transform duration-700 group-hover:-translate-y-2" />
                       </div>
                   </div>
@@ -479,7 +444,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                       <div className="shrink-0 pt-0.5"><BelluhOrb size={34} /></div>
                       <div className="min-w-0">
                           <div className="flex items-center justify-between gap-3"><span className="text-sm font-bold text-slate-900">Belluh</span><span className="text-xs text-slate-400">now</span></div>
-                          <p className="text-[13px] md:text-sm text-slate-600 leading-snug mt-0.5">Dan picked Fri, Oct 16 at 7:00 PM for "Ramen, then the night market".</p>
+                          <p className="text-[13px] md:text-sm text-slate-600 leading-snug mt-0.5">Dan picked Friday at 7:00 PM for "Ramen, then the night market".</p>
                       </div>
                   </div>
 
@@ -504,151 +469,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       {/* Marquee Section */}
       <LogoMarquee title="Works with" orgs={INTEGRATIONS} note="* Trademarks belong to their owners." repeat={6} />
 
-      {/* Visual Demo Section - Apple Style Immersive Cards */}
-      <section id="features" className="relative z-10 py-32 px-6 bg-slate-50/50">
-        <div className="max-w-7xl mx-auto space-y-32">
-            
-            {/* Feature 1: Intelligence - The "Hero" Feature */}
-            <div className="group relative bg-white rounded-[3rem] p-8 md:p-20 shadow-2xl shadow-slate-200/50 border border-white overflow-hidden transition-transform duration-700 hover:scale-[1.01]">
-                {/* Subtle Theme Glow */}
-                <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-b from-[#f0addd]/20 to-transparent rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3 opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
-                
-                <div className="relative z-10 md:w-2/3">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full mb-8">
-                         <Sparkles size={14} className="text-[#f0addd]" />
-                         <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Pattern Recognition</span>
-                    </div>
-                    <h2 className="text-5xl md:text-7xl font-serif font-semibold tracking-tighter text-slate-900 mb-6">
-                        It sees what <br/> <span className="text-[#9bbecb]">you might miss.</span>
-                    </h2>
-                    <p className="text-xl md:text-2xl text-slate-500 leading-relaxed font-light max-w-lg">
-                        Belluh reads both sides of your week and names the pattern neither of you can see from inside it.
-                    </p>
-                </div>
-                
-                {/* Visual: Simulated Interface */}
-                <div className="mt-16 md:absolute md:top-1/2 md:right-20 md:-translate-y-1/2 md:w-96">
-                     <div className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 rounded-3xl shadow-apple transform rotate-3 transition-transform duration-700 group-hover:rotate-0 group-hover:scale-105">
-                          <div className="flex items-center gap-3 mb-4">
-                              <BelluhOrb size={28} />
-                              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Insight Detected</div>
-                          </div>
-                          <p className="font-serif text-lg leading-relaxed text-slate-800">
-                              "You withdraw when stressed, but your partner responds best to shared quiet time. Try sitting together in silence."
-                          </p>
-                     </div>
-                </div>
-            </div>
-
-            {/* Feature 2: Privacy - Light Blue Cloud Theme */}
-            <div className="group relative bg-[#CDE9F2] rounded-[3rem] p-8 md:p-20 shadow-2xl overflow-hidden text-slate-900 transition-transform duration-700 hover:scale-[1.01]">
-                 {/* Cloud Animations - Background */}
-                 <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-white/40 rounded-full blur-[80px] pointer-events-none animate-float"></div>
-                 <div className="absolute bottom-[-10%] left-[-20%] w-[500px] h-[500px] bg-white/30 rounded-full blur-[60px] pointer-events-none animate-pulse-slow"></div>
-
-                 <div className="relative z-10 flex flex-col md:flex-row items-center gap-12 md:gap-24">
-                     <div className="flex-1 text-center md:text-left">
-                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm rounded-full mb-8 border border-white/40 shadow-sm">
-                             <Lock size={14} className="text-cyan-700" />
-                             <span className="text-xs font-bold uppercase tracking-widest text-cyan-900">Private Vault</span>
-                         </div>
-                         <h2 className="text-5xl md:text-7xl font-serif font-semibold tracking-tighter text-cyan-950 mb-6">
-                             Your safe <br/> <span className="text-cyan-700">haven.</span>
-                         </h2>
-                         <p className="text-xl md:text-2xl text-cyan-900/80 leading-relaxed font-light mb-6">
-                             Every entry is shared or private, your call. Your partner never sees your private entries, and neither does their Belluh. Encrypted in storage and in transit, and never sold.
-                         </p>
-                         <p className="text-base text-cyan-900/70 leading-relaxed">
-                             Insights are written by Google's Gemini models, which process your entries to write them.{' '}
-                             <button onClick={() => onShowLegal('privacy')} className="font-bold underline decoration-cyan-900/30 underline-offset-4 hover:text-cyan-950">Privacy policy</button>
-                         </p>
-                     </div>
-                     
-                     <div className="relative w-80 h-80 flex items-center justify-center">
-                          <div className="relative animate-float">
-                                {/* Glow */}
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-white/50 blur-[70px] rounded-full"></div>
-                                
-                                {/* Cloud Body */}
-                                <div className="relative z-10 filter drop-shadow-[0_15px_35px_rgba(50,120,160,0.15)]">
-                                    <div className="relative w-72 h-56">
-                                        {/* Layer 1: Base Puffs */}
-                                        <div className="absolute bottom-0 left-4 w-32 h-32 bg-white rounded-full"></div>
-                                        <div className="absolute bottom-2 right-4 w-36 h-36 bg-white rounded-full"></div>
-                                        
-                                        {/* Layer 2: Top Puffs */}
-                                        <div className="absolute bottom-12 left-16 w-40 h-40 bg-white rounded-full"></div>
-                                        <div className="absolute bottom-8 right-24 w-28 h-28 bg-white rounded-full"></div>
-
-                                        {/* Layer 3: Soften Edges */}
-                                        <div className="absolute bottom-4 left-10 w-52 h-20 bg-white blur-lg rounded-full"></div>
-                                    </div>
-                                </div>
-                                
-                                {/* Aesthetic Sparkles */}
-                                <Sparkles className="absolute -top-4 right-10 text-white w-8 h-8 animate-pulse fill-white/60 drop-shadow-sm" />
-                                <Sparkles className="absolute bottom-10 -left-6 text-white w-5 h-5 animate-pulse delay-700 fill-white/60 drop-shadow-sm" />
-                          </div>
-                     </div>
-                 </div>
-            </div>
-
-            {/* Feature 3: Adaptive Persona */}
-            <div className="w-full">
-                 {/* Card A: Adaptation */}
-                 <div className="bg-[#fcfcfc] rounded-[3rem] p-10 md:p-16 border border-slate-100 shadow-xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500">
-                      <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#f0addd]/20 to-transparent rounded-bl-full opacity-0 transition-opacity group-hover:opacity-100 duration-700"></div>
-                      
-                      <Heart size={26} strokeWidth={1.75} className="text-[#f0addd] mb-8" />
-
-                      <h3 className="text-3xl md:text-4xl font-serif font-semibold text-slate-900 mb-4 tracking-tight">It doesn't just suggest. It does.</h3>
-                      <p className="text-lg text-slate-500 leading-relaxed mb-8 max-w-3xl">
-                          Ask once and Belluh handles it: a plan your partner accepts with one tap, a table ready to book, gift ideas from what they said they love, a reminder at the right moment. Anything that reaches your partner waits for your yes.
-                      </p>
-                      
-                      <div className="flex gap-2 flex-wrap">
-                          {['Plans the date', 'Books the table', 'Gift ideas', 'Reminders', 'One insight every Sunday', 'WhatsApp, SMS and Telegram'].map(c => (
-                              <span key={c} className="px-4 py-2 bg-white border border-slate-100 rounded-full text-xs font-bold text-slate-500 shadow-sm">{c}</span>
-                          ))}
-                      </div>
-                 </div>
-            </div>
-
-        </div>
-      </section>
-
-      {/* Infinite Marquee Section */}
-      <section id="stories" className="relative z-10 py-24 overflow-hidden bg-white/50 backdrop-blur-sm border-t border-slate-50">
-        <div className="max-w-7xl mx-auto px-6 mb-16 text-center">
-            <h2 className="text-4xl md:text-6xl font-serif font-semibold text-slate-900 mb-6 tracking-tighter">Every moment counts.</h2>
-            <p className="text-slate-500 text-lg max-w-2xl mx-auto leading-relaxed">
-                From the big milestones to the quiet Sunday mornings, Belluh keeps your story alive.
-            </p>
-        </div>
-        
-        <div className="relative w-full overflow-hidden mask-gradient-x py-4">
-             <div className="flex gap-8 animate-marquee whitespace-nowrap mb-8">
-                 {[1,2,3,4,5,1,2,3,4,5].map((i, idx) => (
-                     <div key={idx} className="w-[340px] h-[220px] bg-[#f7d8ee] rounded-3xl border border-black/5 flex-shrink-0 p-8 flex flex-col justify-between hover:scale-[1.02] transition-all cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] group">
-                         <div className="flex justify-between items-start">
-                             <span className="text-5xl opacity-40 text-white font-serif leading-none">❝</span>
-                         </div>
-                         <p className="font-serif text-[#5e1c43] text-lg leading-relaxed whitespace-normal line-clamp-3 group-hover:text-black transition-colors">
-                             {i === 1 ? "He remembered the oat milk. After this week, that was everything." :
-                              i === 2 ? "We argued about nothing, then laughed about it at 1am." :
-                              i === 3 ? "She texted 'drive safe' and I believed her." :
-                              i === 4 ? "First Sunday walk with no phones. We talked the whole way." :
-                              "Two years today. Still the same booth."}
-                         </p>
-                         <div className="flex items-center gap-2 pt-4 border-t border-black/5">
-                             <div className="text-[10px] font-bold uppercase text-[#831843] tracking-widest">Entry #{100 + idx}</div>
-                         </div>
-                     </div>
-                 ))}
-             </div>
-        </div>
-      </section>
-      
       {/* FAQ */}
       <section id="faq" className="relative z-10 pt-24 px-6 scroll-mt-24">
           <div className="max-w-3xl mx-auto">
@@ -664,7 +484,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       <section className="relative z-10 py-24 px-6 text-center">
           <div className="max-w-3xl mx-auto">
               <div className="flex justify-center mb-8">
-                  <BelluhOrb size={88} onTap={() => {}} label="Belluh. Tap to make a ripple." />
+                  <BelluhOrb size={88} onTap={ctaTap.tap} label="Belluh. Tap to change its shape." />
               </div>
               <h2 className="text-3xl md:text-5xl font-serif text-slate-900 leading-tight mb-6 drop-shadow-sm">
                   <span className="text-[#9bbecb]">Start tonight.</span> <span className="text-[#f0addd] italic">Together.</span>

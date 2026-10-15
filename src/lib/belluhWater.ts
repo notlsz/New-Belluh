@@ -11,6 +11,7 @@ uniform float think, talk, listen, shapeA, shapeB, morphK, rotY, rotX;
 uniform vec4 pulse[6];
 uniform float pamp[6];
 uniform sampler2D texA, texB;
+uniform float bound;
 
 float hash(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
 float noise(vec3 x){ vec3 i = floor(x); vec3 f = fract(x); f = f * f * (3.0 - 2.0 * f);
@@ -71,21 +72,26 @@ float shape(vec3 p, float kind, sampler2D tex){
   return max(d2, abs(p.z) - 0.62 * sqrt(max(-d2, 0.0)));
 }
 
-float sdf(vec3 p){
+// The surface, in two levels of detail. Far from the water the ray only needs the overall shape (the fine ripples
+// move the surface by less than DETAIL), so it skips the expensive rings, grain and word pulses until it's close.
+const float DETAIL = 0.09;
+float sdfAt(vec3 p, bool fine){
   float cy = cos(rotY), sy = sin(rotY);
   p = vec3(cy * p.x + sy * p.z, p.y, -sy * p.x + cy * p.z);
   float cx = cos(rotX), sx = sin(rotX);
   p = vec3(p.x, cx * p.y - sx * p.z, sx * p.y + cx * p.z);
   vec3 n = normalize(p);
-  float base = mix(shape(p, shapeA, texA), shape(p, shapeB, texB), morphK);
+  float base = morphK < 0.001 ? shape(p, shapeA, texA) : mix(shape(p, shapeA, texA), shape(p, shapeB, texB), morphK);
   float water = (shapeA < 0.5 ? 1.0 - morphK : 0.0) + (shapeB < 0.5 ? morphK : 0.0);
   float splash = sin(morphK * 3.14159);
   float disp = morph(n) * mix(0.3, 1.0, water) + splash * 0.16 * (noise(n * 2.6 + t * 1.3) - 0.5);
-  disp += 0.017 * rings(n) * mix(0.55, 1.0, water) + 0.007 * grain(n) + 0.022 * pulses(n);
   disp += 0.014 * sin(t * 1.1) * (1.0 - think) - 0.05 * think;
   disp += talk * 0.075 * smoothstep(-0.3, 1.0, n.z) + listen * 0.02 * smoothstep(0.0, 1.0, n.z);
+  if (!fine) return (base - disp - DETAIL) * 0.55;
+  disp += 0.017 * rings(n) * mix(0.55, 1.0, water) + 0.007 * grain(n) + 0.022 * pulses(n);
   return (base - disp) * 0.55;
 }
+float sdf(vec3 p){ return sdfAt(p, true); }
 
 vec3 env(vec3 d){
   float y = d.y * 0.5 + 0.5;
@@ -101,20 +107,27 @@ void main(){
   float px = 2.0 / res.x;
   vec3 ro = vec3(0.0, 0.0, 3.0);
   vec3 rd = normalize(vec3(uv * 1.17, -3.0));
-  float tt = 1.5, minD = 1e3, hit = 0.0;
-  for (int i = 0; i < 80; i++) {
-    float d = sdf(ro + rd * tt);
+  // Only rays that pass near the water are traced; the rest of the square is empty
+  float bb = dot(ro, rd), hh = bb * bb - (dot(ro, ro) - bound * bound);
+  if (hh < 0.0) { gl_FragColor = vec4(0.0); return; }
+  float tt = -bb - sqrt(hh), tEnd = -bb + sqrt(hh);
+  float minD = 1e3, hit = 0.0;
+  for (int i = 0; i < 72; i++) {
+    vec3 q = ro + rd * tt;
+    float d = sdfAt(q, false);
+    if (d < 0.02) d = sdfAt(q, true);
     minD = min(minD, d / (tt * 0.39));
     if (d < 0.0007) { hit = 1.0; break; }
     tt += d;
-    if (tt > 4.5) break;
+    if (tt > tEnd) break;
   }
   float cover = hit > 0.5 ? 1.0 : 1.0 - smoothstep(0.0, px * 1.4, minD);
   if (cover <= 0.0) { gl_FragColor = vec4(0.0); return; }
 
   vec3 p = ro + rd * tt;
   vec2 e = vec2(0.0025, 0.0);
-  vec3 N = normalize(vec3(sdf(p + e.xyy) - sdf(p - e.xyy), sdf(p + e.yxy) - sdf(p - e.yxy), sdf(p + e.yyx) - sdf(p - e.yyx)));
+  const vec2 k = vec2(1.0, -1.0);
+  vec3 N = normalize(k.xyy * sdf(p + k.xyy * e.x) + k.yyx * sdf(p + k.yyx * e.x) + k.yxy * sdf(p + k.yxy * e.x) + k.xxx * sdf(p + k.xxx * e.x));
   if (hit < 0.5) N = normalize(vec3(uv, 0.05));
   vec3 V = -rd;
   float ndv = clamp(dot(N, V), 0.0, 1.0);
@@ -246,7 +259,7 @@ export function createBelluhWater(initialSize: number): BelluhWater | null {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   let gl: WebGLRenderingContext | null;
-  try { gl = canvas.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false, preserveDrawingBuffer: true }); } catch { gl = null; }
+  try { gl = canvas.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false, preserveDrawingBuffer: false, powerPreference: 'low-power' }); } catch { gl = null; }
   if (!gl) return null;
   const sh = (type: number, src: string) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
   const prog = gl.createProgram();
@@ -261,7 +274,7 @@ export function createBelluhWater(initialSize: number): BelluhWater | null {
   gl.enableVertexAttribArray(loc);
   gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
   const u: Record<string, WebGLUniformLocation | null> = {};
-  for (const n of ['t', 'res', 'think', 'talk', 'listen', 'shapeA', 'shapeB', 'morphK', 'rotY', 'rotX', 'pulse', 'pamp', 'texA', 'texB']) u[n] = gl.getUniformLocation(prog, n);
+  for (const n of ['t', 'res', 'think', 'talk', 'listen', 'shapeA', 'shapeB', 'morphK', 'rotY', 'rotX', 'pulse', 'pamp', 'texA', 'texB', 'bound']) u[n] = gl.getUniformLocation(prog, n);
   gl.uniform1i(u.texA, 0); gl.uniform1i(u.texB, 1);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   const makeTex = (data: Uint8Array, n: number) => {
@@ -348,6 +361,7 @@ export function createBelluhWater(initialSize: number): BelluhWater | null {
       gl.uniform1f(u.think, s.think); gl.uniform1f(u.talk, Math.min(1, s.talk)); gl.uniform1f(u.listen, s.listen);
       gl.uniform1f(u.shapeA, s.a.kind); gl.uniform1f(u.shapeB, s.b.kind); gl.uniform1f(u.morphK, s.morphK);
       gl.uniform1f(u.rotY, rotY); gl.uniform1f(u.rotX, rotX);
+      gl.uniform1f(u.bound, shaped ? 1.65 : 1.2);
       gl.uniform4fv(u.pulse, s.pulses); gl.uniform1fv(u.pamp, s.pamp);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     },

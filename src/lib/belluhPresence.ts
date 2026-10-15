@@ -3,6 +3,12 @@
 import { createBelluhWater, type BelluhWater, type ShapeSpec } from './belluhWater';
 
 const RENDER = 200; // px: the largest orb (48px, drawn 1.4x for the overhang) on a 3x screen
+
+/** Phones and tablets get a lighter water: fewer pixels and 30 frames a second, so pages never stutter. */
+export const lightWater = (() => {
+  try { return window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768 || (navigator.hardwareConcurrency || 8) <= 4; } catch { return false; }
+})();
+const MAX_RENDER = lightWater ? 300 : 560;
 const KEY = 'belluh_shape';
 
 /** A shape Belluh chose (from the take_shape tool): back to water, an emoji, or an SVG path in a 100x100 box. */
@@ -63,7 +69,7 @@ function softwareOnly(): boolean {
 /** The shared water body, or null if this device can't draw it (then orbs fall back to the 2D pond). */
 export function belluhWater(): BelluhWater | null {
   if (water !== undefined) return water;
-  try { water = softwareOnly() ? null : createBelluhWater(RENDER); } catch { water = null; }
+  try { water = softwareOnly() ? null : createBelluhWater(Math.min(RENDER, MAX_RENDER)); } catch { water = null; }
   if (water) {
     try {
       const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
@@ -95,7 +101,7 @@ export const belluh = {
   /** Make sure the shared water is drawn sharply enough for an orb this many device pixels wide. */
   ensureResolution(px: number) {
     const w = belluhWater();
-    const want = Math.min(640, Math.round(px));
+    const want = Math.min(MAX_RENDER, Math.round(px));
     if (w && w.size < want) w.resize(want);
   },
   /** Belluh starts saying something; every word() moves the water. Returns the stop. */
