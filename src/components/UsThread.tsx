@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import BelluhOrb from './BelluhOrb';
 import { ArrowUp, Sparkles, ExternalLink } from 'lucide-react';
 import { belluhAgent, type UsMessage } from '../services/belluhAgent';
 import PlanCard from './PlanCard';
@@ -64,7 +65,7 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
           {messages === null && <div className="h-20 rounded-3xl bg-slate-50 animate-pulse" />}
           {messages !== null && messages.length === 0 && (
             <div className="text-center py-10 px-6">
-              <div className="mx-auto w-fit text-[#9bbecb]" aria-hidden="true"><Sparkles size={30} strokeWidth={1.5} /></div>
+              <div className="mx-auto w-fit"><BelluhOrb size={48} /></div>
               <p className="mt-4 font-serif text-xl text-slate-900">You, {partnerName} and Belluh</p>
               <p className="mt-2 text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">Plan together, decide together, ask Belluh together. Belluh here only knows what you've both shared, never anyone's private entries.</p>
               <div className="mt-5 flex flex-wrap justify-center gap-2">
@@ -80,7 +81,7 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
             return (
               <div key={m.id} className={`flex items-end gap-2 animate-slide-up ${w === 'me' ? 'justify-end' : ''}`}>
                 {w === 'belluh' && (
-                  <div className="w-8 shrink-0 pb-3 flex justify-center text-[#9bbecb]" aria-hidden="true"><Sparkles size={18} strokeWidth={1.75} /></div>
+                  <div className="w-8 shrink-0 pb-3 flex justify-center"><BelluhOrb size={22} /></div>
                 )}
                 <div className={`max-w-[80%] rounded-3xl px-4 py-3 ${w === 'me' ? 'bg-slate-100 rounded-br-lg' : w === 'partner' ? 'bg-[#eef8fb] rounded-bl-lg' : 'bg-white border border-slate-100 rounded-bl-lg'}`}>
                   {w === 'partner' && <p className="text-[10px] font-bold uppercase tracking-widest text-[#3f7486] mb-1">{partnerName}</p>}
@@ -99,8 +100,8 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
             );
           })}
           {busy && ask && (
-            <div className="flex items-center gap-2 pl-10 text-xs font-bold text-slate-300">
-              <span className="w-1.5 h-1.5 bg-belluh-300 rounded-full animate-bounce" /><span className="w-1.5 h-1.5 bg-belluh-300 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }} /> Belluh is thinking
+            <div className="flex items-center gap-3 pl-1.5 text-xs font-bold text-slate-400">
+              <BelluhOrb size={20} thinking /> Belluh is thinking
             </div>
           )}
           <div ref={end} className="h-64" aria-hidden="true" />

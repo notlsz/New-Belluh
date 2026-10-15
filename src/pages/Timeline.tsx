@@ -1,5 +1,6 @@
 import BelluhActions from '../components/BelluhActions';
 import React, { useMemo, useState, useEffect } from 'react';
+import BelluhOrb from '../components/BelluhOrb';
 import { JournalEntry, Circle, Insight, CircleStatus, RelationshipForecast } from '../types';
 import EntryCard from '../components/EntryCard';
 import WeeklyReport from '../components/WeeklyReport';
@@ -395,7 +396,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                              <div key={m.id} className="w-full animate-scale-in group">
                                  <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-float flex items-start gap-4 relative overflow-hidden group-hover:shadow-lg transition-shadow">
                                      <div className="absolute top-0 left-0 w-1 h-full bg-[#f0addd]"></div>
-                                     <div className="shrink-0 pt-0.5 text-[#9bbecb]" aria-hidden="true"><Sparkles size={20} strokeWidth={1.75} /></div>
+                                     <div className="shrink-0 pt-0.5"><BelluhOrb size={26} /></div>
                                      <div className="min-w-0 flex-1">
                                          <button type="button" onClick={() => onOpenBelluh?.()} className="w-full text-left">
                                              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{LABEL[m.meta?.kind] ?? 'Belluh'}</span>
@@ -448,7 +449,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                     : 'shadow-float hover:shadow-lg border border-transparent'
                 }`}
              >
-                <div className="mr-3">{isSearching ? <Loader2 size={18} className="animate-spin text-belluh-400" /> : <Sparkles size={18} strokeWidth={1.75} className="text-[#9bbecb]" />}</div>
+                <div className="mr-3">{isSearching ? <Loader2 size={18} className="animate-spin text-belluh-400" /> : <BelluhOrb size={20} />}</div>
                 <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={isArchived ? "Search past memories..." : isConstellation ? "Search across all constellations..." : "Ask Belluh..."} className="flex-1 bg-transparent text-[16px] focus:outline-none font-normal placeholder:text-slate-400" />
                 {searchQuery && <button type="button" onClick={() => { setSearchQuery(''); setSearchAnswer(null); }}><X size={16} className="text-slate-400" /></button>}
              </form>
@@ -639,7 +640,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                         />
                         {replies[entry.id] && (
                             <div className="mt-3 ml-3 flex items-start gap-3 animate-slide-up">
-                                <div className="shrink-0 mt-3 text-[#9bbecb]" aria-hidden="true"><Sparkles size={16} strokeWidth={1.75} /></div>
+                                <div className="shrink-0 mt-3"><BelluhOrb size={20} /></div>
                                 <div className="min-w-0 rounded-2xl rounded-tl-md bg-white border border-slate-100 px-4 py-3 shadow-sm">
                                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Belluh</p>
                                     <p className="mt-0.5 font-serif text-[15px] leading-snug text-slate-700">{replies[entry.id].body}</p>
