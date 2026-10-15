@@ -713,7 +713,7 @@ test('28. Us: one thread for both of them and Belluh, built only from what both 
     assert.ok(!JSON.stringify(sent).includes(secret), `the shared thread never sees: ${secret}`);
   }
   assert.match(JSON.stringify(sent[0].body.contents), /Maya: Hey you, dinner tonight\?/, 'messages are labelled by who wrote them');
-  assert.deepEqual(sent[0].body.tools[0].functionDeclarations.map(t => t.name), ['plan_with_partner', 'find_table'], 'planning and booking only: no memory, note or journal tools in the shared thread');
+  assert.deepEqual(sent[0].body.tools[0].functionDeclarations.map(t => t.name), ['plan_with_partner', 'find_table', 'plan_trip'], 'planning and booking only: no memory, note or journal tools in the shared thread');
 
   // Dan sees the same thread and picks a time; the answer lands in the thread
   const { data: dh } = await agent(dan, { action: 'us_history' });
@@ -867,4 +867,15 @@ test('32. Belluh takes any shape it is asked for: the shape rides on its reply, 
   assert.deepEqual(reply.meta.shape, { label: 'lighthouse', path: 'M42 10 L58 10 L62 80 L70 80 L70 92 L30 92 L30 80 L38 80 Z' });
   const { data: bad } = await agent(eve, { action: 'chat', message: 'become a broken thing' });
   assert.equal(bad.messages.at(-1).meta.shape, undefined, 'markup is never passed on as a shape');
+});
+
+test('33. Belluh gets the honeymoon and the flowers ready: searches with dates filled in, never "booked"', async () => {
+  const { data: t } = await agent(eve, { action: 'chat', message: 'Can you plan our honeymoon in Lisbon?' });
+  const links = t.messages.at(-1).meta.links;
+  assert.deepEqual(links.map(l => l.label), ['Flights to Lisbon', 'Hotels in Lisbon', 'Airbnbs in Lisbon']);
+  assert.match(new URL(links[1].url).searchParams.get('checkin'), /^\d{4}-\d{2}-\d{2}$/);
+  const { data: f } = await agent(eve, { action: 'chat', message: 'Please send flowers to my sister for her birthday week' });
+  const fl = f.messages.at(-1).meta.links;
+  assert.equal(fl[0].label, 'Order peonies for delivery');
+  assert.equal(new URL(fl[1].url).hostname, 'www.google.com');
 });

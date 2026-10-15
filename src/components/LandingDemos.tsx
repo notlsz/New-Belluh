@@ -171,8 +171,8 @@ const PrivacyDemo: React.FC = () => {
 };
 
 const ROWS: { label: string; title: string; text: string; demo: React.ReactNode }[] = [
-  { label: 'Plans', title: 'Plans the date you both say yes to.', text: 'Ask in your shared thread. Belluh suggests times from what it knows about your week, your partner picks one with a tap, and it lands in both calendars.', demo: <PlanDemo /> },
-  { label: 'Comes to you', title: 'Texts you before the big days.', text: "Birthdays, anniversaries, the plan nobody answered. Belluh reaches out on WhatsApp, SMS or Telegram and gets the table and the gift ideas ready.", demo: <TextDemo /> },
+  { label: 'Plans', title: 'Plans the date you both say yes to.', text: 'From date night to the honeymoon. Ask in your shared thread: Belluh suggests times from what it knows about your week, your partner picks one with a tap, it lands in both calendars, and the reservation or the trip is a tap from booked.', demo: <PlanDemo /> },
+  { label: 'Comes to you', title: 'Texts you before the big days.', text: "Birthdays, anniversaries, the plan nobody answered. Belluh reaches out on WhatsApp, SMS or Telegram and gets the table, the flowers and the gift ideas ready.", demo: <TextDemo /> },
   { label: 'Notices', title: 'Sees what you might miss.', text: 'Every Sunday it reads both sides of your week and brings one insight and one small thing to try together. You each check it off with one tap.', demo: <WeekDemo /> },
   { label: 'Private', title: 'Private when you want it.', text: "Every entry is shared or Just me, your call. Your partner never sees your private entries, and neither does their Belluh. Encrypted in storage and in transit, and never sold.", demo: <PrivacyDemo /> },
 ];
