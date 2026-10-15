@@ -10,6 +10,7 @@ import SiteFooter from '../components/SiteFooter';
 import SiteNav from '../components/SiteNav';
 import { belluh, type BelluhState } from '../lib/belluhPresence';
 import { ORGANIZATIONS } from '../constants';
+import { BRAND_MARKS } from '../data/brandMarks';
 
 const FAQ = [
   { q: 'Can my partner read my private entries?', a: 'No. Every entry is shared or private, your call. Your partner never sees your private entries, and neither does their Belluh.' },
@@ -47,6 +48,16 @@ const FaqItem: React.FC<{ q: string; a: string; open: boolean; onToggle: () => v
   </div>
 );
 
+// Example entries for the stories strip, each with what Belluh does with it
+const MOMENTS = [
+  { when: 'Tuesday, 8:12 pm', text: "The way you look at me when I'm cooking... it felt like home.", belluh: 'saved it to what matters to you' },
+  { when: 'Saturday, 4:47 pm', text: 'I never want to forget the sound of your laugh in the rain.', belluh: 'kept it for your anniversary' },
+  { when: 'Sunday, 11:03 am', text: 'Found that old ticket stub from our first date.', belluh: 'added it to your first date' },
+  { when: 'Saturday, 9:20 am', text: 'Just a quiet morning with coffee and you. Perfect.', belluh: 'kept it for your week in review' },
+  { when: 'Friday, 1:14 am', text: 'We stayed up way too late talking about the future.', belluh: 'remembered the plans you made' },
+];
+const MOMENT_TONES = ['bg-white', 'bg-[#fdf0f8]', 'bg-[#eef7fa]'];
+
 // What Belluh connects to, shown in the second scrolling strip
 const INTEGRATIONS = [
   { name: 'WhatsApp', domain: 'whatsapp.com' },
@@ -64,54 +75,55 @@ interface LandingPageProps {
   onGoToCareers: () => void;
 }
 
+// Logos are drawn inline (no network), so the strip never shows a broken image or a blurry favicon.
+// Companies get their mark and name; universities get their name set in serif, the way they set it themselves.
+const isUniversity = (domain: string) => /\.(edu|ac\.uk|ca)$/.test(domain);
+
 const LogoItem = ({ org }: { org: { name: string; domain: string } }) => {
-  const [error, setError] = useState(false);
-
-  if (error) {
-    return (
-      <span className="text-sm font-bold text-slate-300 uppercase tracking-widest whitespace-nowrap px-4 font-sans opacity-60 hover:opacity-100 transition-opacity">
-        {org.name}
-      </span>
-    );
+  const mark = BRAND_MARKS[org.domain];
+  if (isUniversity(org.domain)) {
+    return <span className="font-serif text-[1.6rem] md:text-[1.85rem] tracking-tight whitespace-nowrap">{org.name}</span>;
   }
-
   return (
-    <img 
-      src={`https://www.google.com/s2/favicons?domain=${org.domain}&sz=128`} 
-      alt={org.name} 
-      onError={() => setError(true)}
-      className="max-h-12 max-w-full w-auto opacity-40 hover:opacity-100 hover:scale-110 transition-all duration-500 grayscale hover:grayscale-0 object-contain" 
-    />
+    <span className="inline-flex items-center gap-2.5 whitespace-nowrap">
+      {mark && <svg viewBox="0 0 24 24" className="h-6 w-6 md:h-7 md:w-7 shrink-0 fill-current" aria-hidden="true"><path d={mark} /></svg>}
+      <span className="text-lg md:text-xl font-semibold tracking-tight">{org.name}</span>
+    </span>
   );
 };
 
-const LogoMarquee = ({ title, orgs, note, repeat = 2 }: { title: string; orgs: { name: string; domain: string }[]; note: string; repeat?: number }) => (
-  <div className="w-full py-20 overflow-hidden relative z-20 bg-[#F8FDFF]/80 backdrop-blur-md border-y border-[#CDE9F2]">
-    <div className="text-center mb-10 px-4">
-      <span className="text-[10px] md:text-xs font-bold text-slate-400 tracking-[0.2em] md:tracking-[0.3em] uppercase md:border-b md:border-[#CDE9F2] md:pb-3">
-        {title}
-      </span>
-    </div>
-    
-    <div className="relative flex overflow-hidden group">
-      <div className="absolute inset-y-0 left-0 w-24 md:w-32 bg-gradient-to-r from-[#F8FDFF] z-10" />
-      <div className="absolute inset-y-0 right-0 w-24 md:w-32 bg-gradient-to-l from-[#F8FDFF] z-10" />
-      <div className="flex animate-marquee items-center w-max group-hover:[animation-play-state:paused]">
-        {Array.from({ length: repeat }, () => orgs).flat().map((org, i) => (
-          <div key={i} className="mx-8 md:mx-12 shrink-0 flex items-center justify-center h-16 w-32">
-             <LogoItem org={org} />
+const FADE_X = { WebkitMaskImage: 'linear-gradient(to right, transparent, #000 12%, #000 88%, transparent)', maskImage: 'linear-gradient(to right, transparent, #000 12%, #000 88%, transparent)' } as React.CSSProperties;
+
+const MarqueeRow = ({ orgs, reverse = false, speed = 60 }: { orgs: { name: string; domain: string }[]; reverse?: boolean; speed?: number }) => {
+  // Two identical halves, so sliding by half loops without a seam; short lists are repeated to fill wide screens
+  const half = Array.from({ length: Math.max(1, Math.ceil(12 / orgs.length)) }, () => orgs).flat();
+  return (
+    <div className="relative flex overflow-hidden group" style={FADE_X}>
+      <div className={`flex items-center w-max ${reverse ? 'animate-marquee-reverse' : 'animate-marquee'} group-hover:[animation-play-state:paused]`} style={{ animationDuration: `${speed}s` }}>
+        {[...half, ...half].map((org, i) => (
+          <div key={i} aria-hidden={i >= half.length ? true : undefined} className="shrink-0 px-7 md:px-10 flex items-center h-14 text-slate-400 hover:text-slate-900 transition-colors duration-300">
+            <LogoItem org={org} />
           </div>
         ))}
       </div>
     </div>
+  );
+};
 
-    <div className="text-center mt-8">
-      <span className="text-[10px] text-slate-300 font-medium tracking-wide uppercase">
-        {note}
-      </span>
-    </div>
-  </div>
-);
+const LogoMarquee = ({ title, orgs, note }: { title: string; orgs: { name: string; domain: string }[]; note: string; repeat?: number }) => {
+  const schools = orgs.filter(o => isUniversity(o.domain));
+  const others = orgs.filter(o => !isUniversity(o.domain));
+  return (
+    <section className="w-full py-20 md:py-24 relative z-20" aria-label={title}>
+      <p className="text-center mb-10 md:mb-12 px-4 text-[11px] md:text-xs font-bold text-slate-400 tracking-[0.25em] uppercase">{title}</p>
+      <div className="space-y-6 md:space-y-8">
+        {schools.length > 0 && <MarqueeRow orgs={schools} reverse speed={70} />}
+        {others.length > 0 && <MarqueeRow orgs={others} speed={schools.length ? 80 : 45} />}
+      </div>
+      <p className="text-center mt-10 px-4 text-[10px] text-slate-300 font-medium tracking-wide uppercase">{note}</p>
+    </section>
+  );
+};
 
 
 // Tap Belluh and it becomes something else, then back to water
@@ -299,11 +311,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       {/* Top bar */}
       <SiteNav
           links={[
-              { label: 'Meet Belluh', onClick: () => scrollToSection('meet') },
-              { label: 'What it does', onClick: () => scrollToSection('features') },
-              { label: 'Inside', onClick: () => scrollToSection('inside') },
-              { label: 'Stories', onClick: () => scrollToSection('stories') },
-              { label: 'FAQ', onClick: () => scrollToSection('faq') },
+              { label: 'Meet Belluh', onClick: () => scrollToSection('meet'), section: 'meet' },
+              { label: 'What it does', onClick: () => scrollToSection('features'), section: 'features' },
+              { label: 'Inside', onClick: () => scrollToSection('inside'), section: 'inside' },
+              { label: 'Stories', onClick: () => scrollToSection('stories'), section: 'stories' },
+              { label: 'FAQ', onClick: () => scrollToSection('faq'), section: 'faq' },
           ]}
           onHome={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           onLogin={onLogin}
@@ -461,34 +473,31 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       <LogoMarquee title="Works with" orgs={INTEGRATIONS} note="* Trademarks belong to their owners." repeat={6} />
 
       {/* Infinite Marquee Section */}
-      <section id="stories" className="relative z-10 py-24 overflow-hidden bg-white/50 backdrop-blur-sm border-t border-slate-50">
-        <div className="max-w-7xl mx-auto px-6 mb-16 text-center">
-            <h2 className="text-4xl md:text-6xl font-serif font-semibold text-slate-900 mb-6 tracking-tighter">Every moment counts.</h2>
-            <p className="text-slate-500 text-lg max-w-2xl mx-auto leading-relaxed">
+      <section id="stories" className="relative z-10 py-24 md:py-32 overflow-hidden scroll-mt-20">
+        <div className="max-w-6xl mx-auto px-6 mb-14 md:mb-20 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-5">The kind of thing you'll write</p>
+                <h2 className="font-serif text-5xl md:text-7xl tracking-tight text-slate-900 leading-[1.02]">Every <span className="italic text-[#f0addd]">moment</span><br className="hidden md:block" /> counts.</h2>
+            </div>
+            <p className="text-slate-500 text-lg md:text-xl font-light leading-relaxed max-w-sm md:text-right">
                 From the big milestones to the quiet Sunday mornings, Belluh keeps your story alive.
             </p>
         </div>
-        
-        <div className="relative w-full overflow-hidden mask-gradient-x py-4">
-             <div className="flex gap-8 animate-marquee whitespace-nowrap mb-8">
-                 {[1,2,3,4,5,1,2,3,4,5].map((i, idx) => (
-                     <div key={idx} className="w-[340px] min-h-[220px] bg-[#f7d8ee] rounded-3xl border border-black/5 flex-shrink-0 p-8 flex flex-col justify-between hover:scale-[1.02] transition-all cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] group">
-                         <div className="flex justify-between items-start">
-                             <span className="text-5xl opacity-40 text-white font-serif leading-none">❝</span>
-                         </div>
-                         <p className="font-serif text-[#5e1c43] text-lg leading-relaxed whitespace-normal group-hover:text-black transition-colors">
-                             {i === 1 ? "He remembered the oat milk. After this week, that was everything." :
-                              i === 2 ? "We argued about nothing, then laughed about it at 1am." :
-                              i === 3 ? "She texted 'drive safe' and I believed her." :
-                              i === 4 ? "First Sunday walk with no phones. We talked the whole way." :
-                              "Two years today. Still the same booth."}
-                         </p>
-                         <div className="flex items-center gap-2 pt-4 border-t border-black/5">
-                             <div className="text-[10px] font-bold uppercase text-[#831843] tracking-widest">Entry #{100 + idx}</div>
-                         </div>
-                     </div>
-                 ))}
-             </div>
+
+        <div>
+            {[MOMENTS].map((row, r) => (
+                <div key={r} className="relative flex overflow-hidden group py-12 -my-9" style={FADE_X}>
+                    <div className={`flex w-max ${r ? 'animate-marquee-reverse' : 'animate-marquee'} group-hover:[animation-play-state:paused]`} style={{ animationDuration: r ? '75s' : '65s' }}>
+                        {[...row, ...row].map((m, i) => (
+                            <article key={i} aria-hidden={i >= row.length ? true : undefined} className={`shrink-0 mx-3 md:mx-4 w-[290px] md:w-[360px] rounded-[1.75rem] p-7 md:p-8 flex flex-col shadow-[0_18px_40px_-24px_rgba(15,23,42,0.25)] transition-transform duration-500 hover:-translate-y-1.5 hover:rotate-0 ${MOMENT_TONES[i % 3]} ${i % 2 ? 'rotate-[0.8deg]' : '-rotate-[0.8deg]'}`}>
+                                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">{m.when}</p>
+                                <p className="mt-5 flex-1 font-serif text-xl md:text-[1.4rem] leading-snug text-slate-800 whitespace-normal">{m.text}</p>
+                                <p className="mt-7 text-sm text-slate-500 whitespace-normal"><span className="font-serif font-bold text-[#7fa7b6]">Belluh</span>&ensp;{m.belluh}</p>
+                            </article>
+                        ))}
+                    </div>
+                </div>
+            ))}
         </div>
       </section>
       
