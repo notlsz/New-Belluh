@@ -45,7 +45,7 @@ const Reveal: React.FC<{ text: string; onTick?: () => void }> = ({ text, onTick 
 const firstName = (n?: string) => (n ?? '').trim().split(/\s+/)[0] || '';
 
 const BelluhAvatar: React.FC<{ thinking?: boolean }> = ({ thinking }) => (
-  <div className="w-8 shrink-0 mt-1 flex justify-center"><BelluhOrb size={26} thinking={thinking} /></div>
+  <div className="w-8 shrink-0 mt-0.5 flex justify-center"><BelluhOrb size={30} thinking={thinking} /></div>
 );
 
 // A note Belluh drafted for your partner. Nothing is sent until you tap Send.

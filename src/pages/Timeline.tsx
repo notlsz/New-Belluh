@@ -396,7 +396,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                              <div key={m.id} className="w-full animate-scale-in group">
                                  <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-float flex items-start gap-4 relative overflow-hidden group-hover:shadow-lg transition-shadow">
                                      <div className="absolute top-0 left-0 w-1 h-full bg-[#f0addd]"></div>
-                                     <div className="shrink-0 pt-0.5"><BelluhOrb size={26} /></div>
+                                     <div className="shrink-0 pt-0.5"><BelluhOrb size={32} /></div>
                                      <div className="min-w-0 flex-1">
                                          <button type="button" onClick={() => onOpenBelluh?.()} className="w-full text-left">
                                              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{LABEL[m.meta?.kind] ?? 'Belluh'}</span>
