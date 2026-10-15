@@ -4,7 +4,7 @@
   "description": "The AI journal for couples.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fcfcfc",
+  "background_color": "#ffffff",
   "theme_color": "#fcfcfc",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
