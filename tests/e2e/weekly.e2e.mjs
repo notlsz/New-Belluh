@@ -43,7 +43,7 @@ const MAYA = '11111111-1111-1111-1111-111111111111', DAN = '22222222-2222-2222-2
   const body = await p.locator('body').innerText();
   check('Maya sees Dan did it', body.includes('Dan: did it'));
   check('Belluh tab shows a dot for the new weekly message', await p.locator('[aria-label="New note"]').count() > 0);
-  await p.getByRole('button', { name: 'Belluh', exact: true }).click(); await p.waitForTimeout(3000);
+  await p.getByRole('button', { name: /^(Belluh|Us)$/ }).click(); await p.waitForTimeout(3000);
   const t = await p.locator('body').innerText();
   check('Belluh thread shows the Sunday insight', t.includes('Your week, from Belluh') && t.includes('Dinner came up'));
   check('The check-in card sits under it', await p.getByText('This week, together').count() === 1);

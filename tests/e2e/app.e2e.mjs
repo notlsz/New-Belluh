@@ -54,6 +54,8 @@ const MAYA = '11111111-1111-1111-1111-111111111111', DAN = '22222222-2222-2222-2
   // Belluh tab
   const tabs = p.locator('nav button');
   await tabs.nth(2).click(); await p.waitForTimeout(2500);
+  check('With a partner connected, the tab is Us', await p.locator('nav button[aria-label="Us"]').count() === 1);
+  await p.getByRole('tab', { name: 'Just you' }).click(); await p.waitForTimeout(2000);
   const t4 = await p.locator('body').innerText();
   check('Belluh tab loads the ongoing conversation', /You & Dan/.test(t4) && /Note to Dan|Sent to Dan/i.test(t4), t4.slice(0, 80).replace(/\n/g, ' '));
   await p.screenshot({ path: `${OUT}/4-maya-belluh.png` });

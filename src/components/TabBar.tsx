@@ -6,13 +6,15 @@ interface TabBarProps {
   onTabChange: (tab: string) => void;
   onCompose: () => void;
   badges?: Record<string, boolean>;
+  /** With a partner connected, the Belluh tab is "Us": the two of you and Belluh. */
+  usTab?: boolean;
 }
 
-const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose, badges = {} }) => {
+const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose, badges = {}, usTab = false }) => {
   const tabs = [
     { id: 'timeline', icon: BookHeart, label: 'Story' }, // Main Home
     { id: 'compose', icon: Plus, label: 'Capture', isAction: true },
-    { id: 'ai-coach', icon: Sparkles, label: 'Belluh' },
+    usTab ? { id: 'ai-coach', icon: Infinity, label: 'Us' } : { id: 'ai-coach', icon: Sparkles, label: 'Belluh' },
     { id: 'profile', icon: User, label: 'Me' },
   ];
 
