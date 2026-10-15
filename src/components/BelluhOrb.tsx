@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { belluh, belluhWater } from '../lib/belluhPresence';
+import { belluh, belluhWater, lightWater } from '../lib/belluhPresence';
 import { createPond, type Pond } from '../lib/pond';
 
 /**
@@ -9,13 +9,21 @@ import { createPond, type Pond } from '../lib/pond';
  * Without WebGL it falls back to the 2D pond; with reduced motion it moves slowly.
  */
 
-const live = new Set<{ canvas: HTMLCanvasElement; thinking: boolean }>();
+type Entry = { canvas: HTMLCanvasElement; thinking: boolean; visible: boolean };
+const live = new Set<Entry>();
+const byCanvas = new Map<Element, Entry>();
 const ponds: Partial<Record<'calm' | 'thinking', Pond>> = {};
 const pond = (kind: 'calm' | 'thinking') => (ponds[kind] ??= createPond(110, kind === 'thinking' ? 650 : 2000));
 let running = false;
-let last = 0;
-let slow = 0, frames = 0;
+let last = 0, lastDraw = 0;
+let cost = 0, costFrames = 0;
+const FRAME_GAP = lightWater ? 1000 / 30 - 2 : 0; // phones: 30 frames a second is plenty for water, and half the work
 const reduced = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } };
+
+// Only orbs on screen are drawn; when none are, the water rests
+const seen = typeof IntersectionObserver !== 'undefined'
+  ? new IntersectionObserver(items => items.forEach(it => { const e = byCanvas.get(it.target); if (e) e.visible = it.isIntersecting; }), { rootMargin: '120px' })
+  : null;
 
 function paint(canvas: HTMLCanvasElement, img: CanvasImageSource) {
   const c = canvas.getContext('2d');
@@ -27,23 +35,28 @@ function paint(canvas: HTMLCanvasElement, img: CanvasImageSource) {
 
 function frame(now: number) {
   if (!live.size) { running = false; last = 0; return; }
-  const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
-  last = now;
-  if (!document.hidden) {
-    const water = belluhWater();
-    if (water) {
-      water.frame(reduced() ? dt * 0.3 : dt);
-      // Keep it smooth on slower phones: draw fewer pixels if frames keep running long
-      if (dt > 0.034) slow++;
-      if (++frames % 90 === 0) { if (slow > 45 && water.size > 130) water.resize(water.size * 0.8); slow = 0; }
-      live.forEach(o => paint(o.canvas, water.canvas));
-    } else {
-      const used = new Set([...live].map(o => (o.thinking ? 'thinking' : 'calm') as 'calm' | 'thinking'));
-      used.forEach(k => pond(k).tick(now));
-      live.forEach(o => paint(o.canvas, pond(o.thinking ? 'thinking' : 'calm').canvas));
-    }
-  }
   requestAnimationFrame(frame);
+  if (document.hidden || now - lastDraw < FRAME_GAP) return;
+  const shown = [...live].filter(o => o.visible);
+  if (!shown.length) { last = now; return; }
+  const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
+  last = now; lastDraw = now;
+  const water = belluhWater();
+  if (water) {
+    const t0 = performance.now();
+    water.frame(reduced() ? dt * 0.3 : dt);
+    shown.forEach(o => paint(o.canvas, water.canvas));
+    // If drawing takes too long on this device, draw fewer pixels (checked every 30 frames)
+    cost += performance.now() - t0;
+    if (++costFrames === 30) {
+      if (cost / 30 > (lightWater ? 14 : 10) && water.size > 150) water.resize(water.size * 0.8);
+      cost = 0; costFrames = 0;
+    }
+  } else {
+    const used = new Set(shown.map(o => (o.thinking ? 'thinking' : 'calm') as 'calm' | 'thinking'));
+    used.forEach(k => pond(k).tick(now));
+    shown.forEach(o => paint(o.canvas, pond(o.thinking ? 'thinking' : 'calm').canvas));
+  }
 }
 
 type OrbProps = {
@@ -65,11 +78,13 @@ const BelluhOrb: React.FC<OrbProps> = ({ size = 24, thinking = false, className 
     const px = Math.round(size * (webgl ? 1.4 : 1) * dpr); // the water's canvas overhangs the orb so the water itself fills it
     canvas.width = px; canvas.height = px;
     if (webgl) belluh.ensureResolution(px);
-    const entry = { canvas, thinking };
+    const entry: Entry = { canvas, thinking, visible: !seen };
     live.add(entry);
+    byCanvas.set(canvas, entry);
+    seen?.observe(canvas);
     const release = thinking ? belluh.holdThinking() : null;
     if (!running) { running = true; requestAnimationFrame(frame); }
-    return () => { live.delete(entry); release?.(); };
+    return () => { live.delete(entry); byCanvas.delete(canvas); seen?.unobserve(canvas); release?.(); };
   }, [size, thinking, webgl]);
   return (
     <span

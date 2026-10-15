@@ -35,7 +35,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
   }, [initialView]);
   
   // Requirement States
-  const hasMinLength = password.length >= 6;
+  const hasMinLength = password.length >= 8;
   const hasLower = /[a-z]/.test(password);
   const hasUpper = /[A-Z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
@@ -165,19 +165,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
           </h1>
           <p className="text-slate-500 mb-7">{isSignUp ? 'Free to start. Bring your partner whenever you’re ready.' : 'Pick up where the two of you left off.'}</p>
 
-          <button
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            className="w-full bg-white text-slate-700 border border-slate-200 rounded-2xl py-3.5 font-bold text-sm hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-[0.98] flex items-center justify-center gap-3 shadow-sm disabled:opacity-70"
-          >
-            <GoogleIcon />
-            <span>Continue with Google</span>
-          </button>
-
-          <div className="flex items-center gap-3 my-6 text-xs font-bold uppercase tracking-widest text-slate-300">
-            <span className="h-px flex-1 bg-slate-200"></span>or with email<span className="h-px flex-1 bg-slate-200"></span>
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <label htmlFor="auth-email" className="text-xs font-bold text-slate-700 ml-1">Email</label>
@@ -192,7 +179,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
                   autoComplete={isSignUp ? 'new-password' : 'current-password'}
                   value={password}
                   onChange={type(setPassword)}
-                  placeholder={isSignUp ? 'At least 6 characters' : 'Your password'}
+                  placeholder={isSignUp ? 'At least 8 characters' : 'Your password'}
                   className={`${field} pr-12`}
                   required
                 />
@@ -202,7 +189,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
               </div>
               {isSignUp && (
                 <div className="pt-2 px-1 flex flex-wrap gap-x-4 gap-y-1.5 animate-fade-in">
-                  <Requirement met={hasMinLength} text="6+ characters" />
+                  <Requirement met={hasMinLength} text="8+ characters" />
                   <Requirement met={hasLower} text="Lowercase" />
                   <Requirement met={hasUpper} text="Uppercase" />
                   <Requirement met={hasNumber} text="A number" />
@@ -218,6 +205,20 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
               {loading ? <span>{isSignUp ? 'Creating your account...' : 'Logging you in...'}</span> : <><span>{isSignUp ? 'Create account' : 'Log in'}</span><ArrowRight size={16} /></>}
             </button>
           </form>
+
+          <div className="flex items-center gap-3 my-6 text-xs font-bold uppercase tracking-widest text-slate-300">
+            <span className="h-px flex-1 bg-slate-200"></span>or<span className="h-px flex-1 bg-slate-200"></span>
+          </div>
+
+          <button
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            className="w-full bg-white text-slate-700 border border-slate-200 rounded-full py-3.5 font-bold text-sm hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-[0.98] flex items-center justify-center gap-3 shadow-sm disabled:opacity-70"
+          >
+            <GoogleIcon />
+            <span>Continue with Google</span>
+          </button>
+
 
           {isSignUp && (
             <p className="text-center text-xs text-slate-400 mt-5 leading-relaxed">
