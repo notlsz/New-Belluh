@@ -84,9 +84,20 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
   const [homePlans, setHomePlans] = useState<{ id: string }[]>([]);
   useEffect(() => { belluhAgent.homePlans().then(setHomePlans).catch(() => {}); }, [currentUserId, tick]);
   const [latest, setLatest] = useState<AgentMessage | null>(null);
+  // Belluh's reply to an entry sits right under it, like a comment, instead of somewhere else
+  const [replies, setReplies] = useState<Record<string, AgentMessage>>({});
+  useEffect(() => { belluhAgent.entryReplies().then(setReplies).catch(() => {}); }, [currentUserId, tick]);
+  useEffect(() => {
+    const onReply = (e: Event) => { const m = (e as CustomEvent<AgentMessage>).detail; if (m?.meta?.entry_id) setReplies(prev => ({ ...prev, [m.meta.entry_id]: m })); };
+    window.addEventListener('belluh:entry-reply', onReply);
+    return () => window.removeEventListener('belluh:entry-reply', onReply);
+  }, []);
+
+  // What Belluh is waiting on you for (an offer, a plan to pick, how it went, a reminder), stacked at the top of Home
+  const [waiting, setWaiting] = useState<AgentMessage[]>([]);
   useEffect(() => {
     let cancelled = false;
-    belluhAgent.latest().then(r => { if (!cancelled) { setBelluhLive(r.live); setLatest(r.message); } }).catch(() => setBelluhLive(false));
+    belluhAgent.latest().then(r => { if (!cancelled) { setBelluhLive(r.live); setLatest(r.message); setWaiting(r.waiting); } }).catch(() => setBelluhLive(false));
     return () => { cancelled = true; };
   }, [currentUserId, week?.id, week?.mine, tick]);
 
@@ -372,25 +383,42 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
              </div>
 
              {/* Belluh's latest word to you */}
-             {belluhLive && latest && !(latest.meta?.kind === 'weekly' && week) && !isConstellation && !isArchived && showPatterns && (
-                 <div className="w-full mb-6 animate-scale-in group">
-                     <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-float flex items-start gap-4 relative overflow-hidden group-hover:shadow-lg transition-shadow">
-                         <div className="absolute top-0 left-0 w-1 h-full bg-[#f0addd]"></div>
-                         <div className="w-10 h-10 rounded-full bg-belluh-600 flex items-center justify-center text-white shrink-0"><Sparkles size={16} /></div>
-                         <div className="min-w-0 flex-1">
-                             <button type="button" onClick={() => onOpenBelluh?.()} className="w-full text-left">
-                                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{({ weekly: 'Your week from Belluh', checkin: 'Check-in from Belluh', reminder: 'Reminder from Belluh', remind: 'Reminder you asked for', offer: 'Belluh noticed', plan_nudge: 'Waiting on you', after_plan: 'From Belluh' } as Record<string, string>)[latest.meta?.kind] ?? 'Belluh'}</span>
-                                 <p className="mt-1 text-[15px] font-serif text-slate-800 leading-snug line-clamp-3">{latest.body}</p>
-                             </button>
-                             <BelluhActions key={latest.id} msg={latest} partnerName={partnerName} onCompose={(p) => onCompose(p)}
-                                 onAdded={(added, updated) => { setLatest(added.length ? added[added.length - 1] : updated); if (added.length) onOpenBelluh?.(); }} />
-                             {!['offer', 'after_plan', 'plan_nudge'].includes(latest.meta?.kind) && !(Array.isArray(latest.meta?.links) && latest.meta.links.length) && (
-                                 <button type="button" onClick={() => onOpenBelluh?.()} className="mt-2 inline-block text-xs font-bold text-belluh-500">Reply</button>
-                             )}
-                         </div>
+             {belluhLive && !isConstellation && !isArchived && showPatterns && (() => {
+                 const cards = waiting.length ? waiting : (latest && !(latest.meta?.kind === 'weekly' && week) ? [latest] : []);
+                 if (!cards.length) return null;
+                 const LABEL: Record<string, string> = { weekly: 'Your week from Belluh', checkin: 'Check-in from Belluh', reminder: 'Reminder from Belluh', remind: 'Reminder you asked for', offer: 'Belluh noticed', plan_nudge: 'Waiting on you', after_plan: 'From Belluh' };
+                 const update = (id: string, next: AgentMessage | null) => setWaiting(prev => next ? prev.map(m => (m.id === id ? next : m)) : prev.filter(m => m.id !== id));
+                 return (
+                     <div className="mb-6 space-y-3">
+                         {cards.length > 1 && <p className="pl-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Belluh has {cards.length} things for you</p>}
+                         {cards.map(m => (
+                             <div key={m.id} className="w-full animate-scale-in group">
+                                 <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-float flex items-start gap-4 relative overflow-hidden group-hover:shadow-lg transition-shadow">
+                                     <div className="absolute top-0 left-0 w-1 h-full bg-[#f0addd]"></div>
+                                     <div className="w-10 h-10 rounded-full bg-belluh-600 flex items-center justify-center text-white shrink-0"><Sparkles size={16} /></div>
+                                     <div className="min-w-0 flex-1">
+                                         <button type="button" onClick={() => onOpenBelluh?.()} className="w-full text-left">
+                                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{LABEL[m.meta?.kind] ?? 'Belluh'}</span>
+                                             <p className="mt-1 text-[15px] font-serif text-slate-800 leading-snug line-clamp-3">{m.meta?.kind === 'remind' ? m.body.replace(/^Reminder:\s*/, '') : m.body}</p>
+                                         </button>
+                                         <BelluhActions key={m.id + (m.meta?.status ?? '')} msg={m} partnerName={partnerName} onCompose={(p) => onCompose(p)}
+                                             onAdded={(added, updated) => {
+                                                 if (waiting.length) update(m.id, updated.meta?.status === 'open' ? updated : null); else setLatest(added.length ? added[added.length - 1] : updated);
+                                                 if (added.length) onOpenBelluh?.();
+                                             }} />
+                                         {!['offer', 'after_plan', 'plan_nudge'].includes(m.meta?.kind) && !(Array.isArray(m.meta?.links) && m.meta.links.length) && (
+                                             <button type="button" onClick={() => onOpenBelluh?.()} className="mt-2 inline-block text-xs font-bold text-belluh-500">Reply</button>
+                                         )}
+                                     </div>
+                                     {waiting.length > 0 && m.meta?.kind !== 'offer' && (
+                                         <button type="button" aria-label="Dismiss" onClick={() => { belluhAgent.dismiss(m.id); update(m.id, null); }} className="shrink-0 -mr-1 -mt-1 w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-slate-600 hover:bg-slate-50"><X size={14} /></button>
+                                     )}
+                                 </div>
+                             </div>
+                         ))}
                      </div>
-                 </div>
-             )}
+                 );
+             })()}
 
              {/* Forecast (before Belluh is live) */}
              {belluhLive === false && forecast && !isConstellation && !isArchived && showPatterns && (
@@ -609,6 +637,16 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                             circleName={sourceCircle?.name}
                             circleColor={sourceCircle?.themeColor}
                         />
+                        {replies[entry.id] && (
+                            <div className="mt-3 ml-3 flex items-start gap-3 animate-slide-up">
+                                <div className="w-7 h-7 rounded-full bg-belluh-600 flex items-center justify-center text-white shrink-0 mt-0.5"><Sparkles size={12} /></div>
+                                <div className="min-w-0 rounded-2xl rounded-tl-md bg-white border border-slate-100 px-4 py-3 shadow-sm">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Belluh</p>
+                                    <p className="mt-0.5 font-serif text-[15px] leading-snug text-slate-700">{replies[entry.id].body}</p>
+                                    <button type="button" onClick={() => onOpenBelluh?.()} className="mt-1.5 text-xs font-bold text-belluh-500">Reply</button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                   </div>
               );

@@ -51,7 +51,7 @@ await fetch(`${API}/functions/v1/belluh-agent`, { method: 'POST', headers: { 'co
   await p.screenshot({ path: `${OUT}/compose.png` });
   await p.getByText("Answer today's question instead").click(); await p.waitForTimeout(400);
   check('tapping it shows the question', /today's question/i.test(await p.locator('body').innerText()));
-  await p.locator('button:has(svg.lucide-x)').first().click().catch(() => {}); await p.waitForTimeout(600);
+  await p.locator('.fixed.inset-0 button:has(svg.lucide-x)').first().click().catch(() => {}); await p.waitForTimeout(600); // the composer's close
 
   // Me: calendar subscription and honest stats
   await tab(p, 'Me'); await p.waitForTimeout(2500);
@@ -74,7 +74,7 @@ await fetch(`${API}/functions/v1/belluh-agent`, { method: 'POST', headers: { 'co
   const t = await p.locator('body').innerText();
   check("Maya's home shows the confirmed plan", /It's a plan/i.test(t) && t.includes('Dinner at the Thai place'));
   await p.screenshot({ path: `${OUT}/maya-desktop-home.png` });
-  await tab(p, 'Belluh'); await p.waitForTimeout(2500);
+  await p.locator('nav button[aria-label="Us"], nav button[aria-label="Belluh"]').first().click(); await p.waitForTimeout(2500);
   check('Belluh tells Maya which time Dan picked', /Dan picked .* for "Dinner at the Thai place"/.test(await p.locator('body').innerText()));
   await p.screenshot({ path: `${OUT}/maya-desktop-belluh.png` });
   check('No JavaScript errors for Maya', errs.length === 0, errs.join('; ').slice(0, 160));

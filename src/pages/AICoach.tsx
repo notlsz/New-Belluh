@@ -22,6 +22,11 @@ interface AICoachProps {
   onInitialMessageSent?: () => void;
   /** Opens the journal composer with a prompt ("How was ramen night?"). */
   onCompose?: (prompt: string) => void;
+  /** Which conversation to open: "me" (just you and Belluh) or "us" (with your partner). Defaults to the last one used. */
+  initialSpace?: 'me' | 'us';
+  /** Shown as a panel over Home (from the Ask Belluh bar) rather than as its own tab. */
+  inSheet?: boolean;
+  onClose?: () => void;
 }
 
 /** A new reply appears word by word, quickly, so it reads like Belluh is talking rather than a block landing. */
@@ -104,12 +109,12 @@ const NoteDraft: React.FC<{ msg: AgentMessage; onSend: (id: string, text: string
   );
 };
 
-const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremium, userName, initialMessage, onInitialMessageSent, onCompose }) => {
+const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremium, userName, initialMessage, onInitialMessageSent, onCompose, initialSpace, inSheet, onClose }) => {
   // 'agent' = server-side Belluh with memory; 'legacy' = the original in-browser chat, used if the agent isn't deployed
   const [mode, setMode] = useState<'loading' | 'agent' | 'legacy'>('loading');
   const [partnerName, setPartnerName] = useState<string | null>(null);
   // "Just you" (your own conversation with Belluh) or "Us" (you, your partner and Belluh together)
-  const [space, setSpace] = useState<'me' | 'us'>(() => { try { return localStorage.getItem('belluh_space') === 'us' ? 'us' : 'me'; } catch { return 'me'; } });
+  const [space, setSpace] = useState<'me' | 'us'>(() => { if (initialSpace) return initialSpace; try { return localStorage.getItem('belluh_space') === 'us' ? 'us' : 'me'; } catch { return 'me'; } });
   const pickSpace = (s: 'me' | 'us') => { setSpace(s); try { localStorage.setItem('belluh_space', s); } catch { /* ignore */ } };
   const [agentMessages, setAgentMessages] = useState<AgentMessage[]>([]);
   const [memories, setMemories] = useState<{ id: string; fact: string }[] | null>(null);
@@ -295,10 +300,14 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
   const me = firstName(userName);
   const spaceSwitch = (
     <div role="tablist" aria-label="Conversation" className="flex items-center bg-slate-100 rounded-full p-0.5 text-xs font-bold">
-      <button role="tab" aria-selected={space === 'me'} onClick={() => pickSpace('me')} className={`px-3 py-1.5 rounded-full transition-colors ${space === 'me' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>Just you</button>
-      <button role="tab" aria-selected={space === 'us'} onClick={() => { pickSpace('us'); trackEvent('us_opened'); }} className={`px-3 py-1.5 rounded-full transition-colors ${space === 'us' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>You &amp; {partnerName}</button>
+      <button role="tab" aria-selected={space === 'me'} onClick={() => pickSpace('me')} className={`px-3 py-1.5 rounded-full whitespace-nowrap transition-colors ${space === 'me' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>Just you</button>
+      <button role="tab" aria-selected={space === 'us'} onClick={() => { pickSpace('us'); trackEvent('us_opened'); }} className={`px-3 py-1.5 rounded-full whitespace-nowrap transition-colors ${space === 'us' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>You &amp; {partnerName}</button>
     </div>
   );
+
+  const closeBtn = inSheet && onClose ? (
+    <button aria-label="Close" onClick={onClose} className="ml-auto w-9 h-9 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900"><X size={16} /></button>
+  ) : null;
 
   const greeting = partnerName
     ? `Hi${me ? ` ${me}` : ''}. I've read your journal, and the entries ${partnerName} shares with you. Tell me what's on your mind, ask me about a pattern, or ask me to help you say something to ${partnerName}.`
@@ -308,21 +317,22 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
     return <UsThread partnerName={partnerName} myName={userName} header={
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-2">
-          <span className="text-sm font-bold font-serif text-belluh-900">Belluh</span><span className="text-belluh-200">/</span>{spaceSwitch}
+          {!inSheet && <><span className="text-sm font-bold font-serif text-belluh-900">Belluh</span><span className="text-belluh-200">/</span></>}{spaceSwitch}
+          {closeBtn}
         </div>
       </div>
-    } />;
+    } inSheet={inSheet} />;
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white text-slate-900 font-sans selection:bg-belluh-100">
+    <div className={`flex flex-col ${inSheet ? 'h-full' : 'h-screen'} bg-white text-slate-900 font-sans selection:bg-belluh-100`}>
 
        {/* Minimal Header */}
        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-transparent">
          <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2 p-1.5 rounded-lg">
-                <span className="text-sm font-bold font-serif text-belluh-900">Belluh</span>
-                <span className="text-belluh-200">/</span>
+                {!inSheet && <><span className="text-sm font-bold font-serif text-belluh-900">Belluh</span>
+                <span className="text-belluh-200">/</span></>}
                 {mode === 'agent' && partnerName ? spaceSwitch : (
                 <span className="text-sm font-medium text-slate-500">
                   {mode === 'agent' ? 'Just you' : `${detectedPersona} Mode`}
@@ -339,6 +349,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                   <Brain size={14} /> Memory
                 </button>
               )}
+              {closeBtn}
             </div>
          </div>
        </div>
@@ -455,7 +466,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
        </div>
 
        {/* Input Area */}
-       <div className="fixed bottom-0 left-0 right-0 p-4 pb-28 bg-gradient-to-t from-white via-white to-transparent pt-12 z-40">
+       <div className={`fixed bottom-0 left-0 right-0 p-4 ${inSheet ? 'pb-6' : 'pb-28'} bg-gradient-to-t from-white via-white to-transparent pt-12 z-40`}>
             <div className="max-w-2xl mx-auto relative flex flex-col">
                 <div className="flex flex-wrap items-center gap-2 mb-3 pl-1">
                     {starters.map(t => (

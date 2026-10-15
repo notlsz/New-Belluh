@@ -92,16 +92,17 @@ const App: React.FC = () => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
   
   // App State
-  // A notification opens straight to the Belluh tab (?tab=belluh), then the address is tidied
-  const [currentTab, setCurrentTab] = useState(() => {
+  // A notification opens Home with Belluh's panel up (?tab=belluh), then the address is tidied
+  const [openedFromLink] = useState(() => {
     try {
       const url = new URL(window.location.href);
-      if (url.searchParams.get('tab') !== 'belluh') return 'timeline';
+      if (url.searchParams.get('tab') !== 'belluh') return false;
       url.searchParams.delete('tab');
       window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
-      return 'ai-coach';
-    } catch { return 'timeline'; }
+      return true;
+    } catch { return false; }
   });
+  const [currentTab, setCurrentTab] = useState('timeline');
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [composePrompt, setComposePrompt] = useState<string | undefined>(undefined);
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -124,7 +125,19 @@ const App: React.FC = () => {
   const [newFromBelluh, setNewFromBelluh] = useState(false);
   // A question asked from Home or an entry card, waiting for the Belluh tab to send it
   const [belluhAsk, setBelluhAsk] = useState<string | null>(null);
-  const askBelluh = (message: string) => { setBelluhAsk(message || null); setBelluhReply(null); setNewFromBelluh(false); setCurrentTab('ai-coach'); };
+  // Asking Belluh from Home opens the conversation as a panel over Home, instead of sending you to another tab
+  const [belluhSheet, setBelluhSheet] = useState(openedFromLink);
+  const askBelluh = (message: string) => { setBelluhAsk(message || null); setBelluhReply(null); setNewFromBelluh(false); setBelluhSheet(true); };
+  useEffect(() => {
+    if (!belluhSheet) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setBelluhSheet(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [belluhSheet]);
+  // With a partner connected, the tab is "Us": the two of you and Belluh together
+  const [hasPartner, setHasPartner] = useState(false);
+  // The tab opens where the news is: your own thread when a note or something from Belluh is waiting, otherwise Us
+  const [tabSpace, setTabSpace] = useState<'me' | 'us'>('us');
   const [inviteOffer, setInviteOffer] = useState<{ token: string; name: string } | null>(null);
   const currentTabRef = useRef(currentTab);
   useEffect(() => { currentTabRef.current = currentTab; if (currentTab === 'ai-coach') setBelluhReply(null); }, [currentTab]);
@@ -149,6 +162,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated) return;
     supabase.auth.getUser().then(({ data: { user: u } }) => { if (u) belluhAgent.saveTimeZone(u.id); });
+    supabase.from('partner_connections').select('id').eq('status', 'connected').limit(1).then(({ data }) => setHasPartner(!!data?.length));
     const check = () => {
       belluhAgent.unreadNotes().then(setUnreadNotes);
       belluhAgent.hasNewFromBelluh().then(setNewFromBelluh);
@@ -921,7 +935,12 @@ const App: React.FC = () => {
         setComposePrompt(undefined);
         showNotification('Memory captured!', 'success');
         // Belluh may have something to add. Quietly skipped if it doesn't, or if the agent isn't deployed.
-        belluhAgent.react(data.id).then(res => { if (res?.message?.body && currentTabRef.current !== 'ai-coach') setBelluhReply(res.message.body); });
+        belluhAgent.react(data.id).then(res => {
+          if (!res?.message?.body) return;
+          // On Home it appears right under the entry; elsewhere, as a small card
+          window.dispatchEvent(new CustomEvent('belluh:entry-reply', { detail: res.message }));
+          if (currentTabRef.current !== 'ai-coach' && currentTabRef.current !== 'timeline') setBelluhReply(res.message.body);
+        });
     } else {
         showNotification('Failed to save.', 'error');
     }
@@ -1044,7 +1063,12 @@ const App: React.FC = () => {
   return (
     <div className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in">
       {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} partnerName={user.partnerName} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} onAskBelluh={askBelluh} onOpenBelluh={() => askBelluh('')} />}
-      {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => handleCompose(prompt)} />}
+      {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => handleCompose(prompt)} initialSpace={hasPartner ? tabSpace : undefined} />}
+      {belluhSheet && (
+        <div className="fixed inset-0 z-[70] bg-white animate-slide-up" role="dialog" aria-label="Belluh">
+          <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => { setBelluhSheet(false); handleCompose(prompt); }} initialSpace="me" inSheet onClose={() => setBelluhSheet(false)} />
+        </div>
+      )}
       {currentTab === 'profile' && <Profile user={user} entries={readableEntries} streak={streak} onCircleChange={handleCircleChange} onCreateCircle={handleCreateCircle} onArchiveCircle={handleArchiveCircle} onRenameCircle={handleRenameCircle} onLogout={handleLogout} onUpdateUser={handleUpdateUser} onShowLegal={(type) => setLegalModalOpen(type)} onViewArtifact={(type) => setArtifactModalOpen(type)} onShowToast={showNotification} pendingInvites={pendingInvites} onAcceptInvite={handleAcceptInvite} onDeclineInvite={handleDeclineInvite} />}
       
       {notification && <Toast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
@@ -1062,7 +1086,7 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
-      <TabBar currentTab={currentTab} badges={{ 'ai-coach': unreadNotes > 0 || newFromBelluh }} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); if (tab === 'ai-coach') { setUnreadNotes(0); setNewFromBelluh(false); setBelluhReply(null); } setCurrentTab(tab); }} onCompose={() => handleCompose()} />
+      <TabBar currentTab={currentTab} usTab={hasPartner} badges={{ 'ai-coach': unreadNotes > 0 || newFromBelluh }} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); if (tab === 'ai-coach') { setTabSpace(unreadNotes > 0 || newFromBelluh ? 'me' : 'us'); setUnreadNotes(0); setNewFromBelluh(false); setBelluhReply(null); } setCurrentTab(tab); }} onCompose={() => handleCompose()} />
       {isComposeOpen && <div className="fixed inset-0 z-[60] bg-paper animate-slide-up"><button onClick={() => setIsComposeOpen(false)} className="absolute top-6 right-6 w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 z-50 transition-colors"><X size={20} /></button><Journal onAddEntry={handleAddEntry} partnerName={user.partnerName || 'Partner'} onTriggerPremium={handleTriggerPremium} initialPrompt={composePrompt} userName={user.name} partnerHasEntry={partnerHasEntry} /></div>}
       
       {showIntro && <IntroGuide onClose={() => setShowIntro(false)} />}

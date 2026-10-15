@@ -39,6 +39,7 @@ export function localWeekStart(now = new Date()): string {
 }
 
 const SEEN_KEY = 'belluh_seen_at';
+const DISMISSED_KEY = 'belluh_dismissed';
 
 const tz = () => {
   try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return 'America/New_York'; }
@@ -124,15 +125,37 @@ export const belluhAgent = {
     return { https, webcal, google: `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}` };
   },
   /** Belluh's latest word to you, for the top of Home. `live` is false before Belluh's server is set up. */
-  async latest(): Promise<{ live: boolean; message: AgentMessage | null }> {
+  /** Belluh's reply to each of your entries, by entry id (shown under the entry on Home). */
+  async entryReplies(): Promise<Record<string, AgentMessage>> {
     const { data, error } = await supabase.from('agent_messages').select('id, role, body, meta, created_at')
-      .eq('role', 'belluh').order('created_at', { ascending: false }).limit(20);
-    if (error) return { live: false, message: null };
-    const rows = (data ?? []) as AgentMessage[];
-    // Something Belluh is waiting on you for (an offer, a plan to pick, how last night went) stays on top for a few days
-    const recent = (m: AgentMessage) => Date.now() - new Date(m.created_at).getTime() < 3 * 86_400_000;
-    const waiting = rows.find(m => recent(m) && ((m.meta?.kind === 'offer' && m.meta?.status === 'open') || m.meta?.kind === 'plan_nudge' || m.meta?.kind === 'after_plan' || m.meta?.kind === 'remind'));
-    return { live: true, message: waiting ?? rows[0] ?? null };
+      .eq('role', 'belluh').not('meta->>entry_id', 'is', null).order('created_at', { ascending: false }).limit(60);
+    if (error || !data) return {};
+    const out: Record<string, AgentMessage> = {};
+    for (const m of data as AgentMessage[]) if (!out[m.meta.entry_id]) out[m.meta.entry_id] = m;
+    return out;
+  },
+  /** Hide a card from Home's stack (only on this device). */
+  dismiss(id: string) {
+    try {
+      const seen = JSON.parse(localStorage.getItem(DISMISSED_KEY) ?? '[]') as string[];
+      localStorage.setItem(DISMISSED_KEY, JSON.stringify([id, ...seen].slice(0, 200)));
+    } catch { /* ignore */ }
+  },
+  async latest(): Promise<{ live: boolean; message: AgentMessage | null; waiting: AgentMessage[] }> {
+    const since = new Date(Date.now() - 3 * 86_400_000).toISOString();
+    const [last, open] = await Promise.all([
+      supabase.from('agent_messages').select('id, role, body, meta, created_at').eq('role', 'belluh').order('created_at', { ascending: false }).limit(1),
+      // Something Belluh is waiting on you for (an offer, a plan to pick, how last night went, a reminder) stays on Home for a few days
+      supabase.from('agent_messages').select('id, role, body, meta, created_at').eq('role', 'belluh').gte('created_at', since)
+        .in('meta->>kind', ['offer', 'plan_nudge', 'after_plan', 'remind']).order('created_at', { ascending: false }).limit(12),
+    ]);
+    if (last.error) return { live: false, message: null, waiting: [] };
+    let dismissed: string[] = [];
+    try { dismissed = JSON.parse(localStorage.getItem(DISMISSED_KEY) ?? '[]'); } catch { /* ignore */ }
+    const waiting = ((open.data ?? []) as AgentMessage[])
+      .filter(m => !dismissed.includes(m.id) && (m.meta?.kind !== 'offer' || m.meta?.status === 'open')).slice(0, 3);
+    const rows = (last.data ?? []) as AgentMessage[];
+    return { live: true, message: waiting[0] ?? rows[0] ?? null, waiting };
   },
   /** True when Belluh has posted a weekly insight or check-in since you last opened the Belluh tab. */
   async hasNewFromBelluh(): Promise<boolean> {

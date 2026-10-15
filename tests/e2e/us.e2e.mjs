@@ -12,7 +12,7 @@ const open = async (sub, email) => {
   await ctx.addInitScript(([s]) => { localStorage.setItem('sb-127-auth-token', s); localStorage.removeItem('belluh_space'); }, [session(sub, email)]);
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto(APP); await p.waitForTimeout(3000);
-  await p.locator('nav button[aria-label="Belluh"]').click(); await p.waitForTimeout(2000);
+  await p.locator('nav button[aria-label="Us"]').click(); await p.waitForTimeout(2000);
   return { p, errs };
 };
 const maya = await open(MAYA, 'maya@test.com');

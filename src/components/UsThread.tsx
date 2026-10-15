@@ -5,7 +5,7 @@ import PlanCard from './PlanCard';
 import { trackEvent } from '../services/analytics';
 
 /** "Us": the two of you and Belluh in one conversation. Belluh only knows what you both share. */
-const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: React.ReactNode }> = ({ partnerName, myName, header }) => {
+const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: React.ReactNode; inSheet?: boolean }> = ({ partnerName, myName, header, inSheet }) => {
   const [messages, setMessages] = useState<UsMessage[] | null>(null);
   const [me, setMe] = useState<string | null>(null);
   const [text, setText] = useState('');
@@ -57,7 +57,7 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
   const myFirst = (myName || 'You').split(' ')[0];
 
   return (
-    <div className="flex flex-col h-screen bg-white text-slate-900">
+    <div className={`flex flex-col ${inSheet ? 'h-full' : 'h-screen'} bg-white text-slate-900`}>
       {header}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-4 md:px-6 pt-6 space-y-4">
@@ -108,7 +108,7 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
           <div ref={end} className="h-64" aria-hidden="true" />
         </div>
       </div>
-      <div className="fixed bottom-24 md:bottom-28 left-0 right-0 z-20 px-4 pt-8 bg-gradient-to-t from-white via-white to-white/0">
+      <div className={`fixed ${inSheet ? 'bottom-4' : 'bottom-24 md:bottom-28'} left-0 right-0 z-20 px-4 pt-8 bg-gradient-to-t from-white via-white to-white/0`}>
         <div className="max-w-3xl mx-auto">
           <p className="text-center text-[10px] text-slate-400 mb-2">{myFirst} and {partnerName} both see this. Belluh only knows what you've both shared.</p>
           <div className="w-full rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-200 bg-white flex items-center p-2 pr-3 min-h-[60px] focus-within:border-belluh-200">
