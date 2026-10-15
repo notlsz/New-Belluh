@@ -133,6 +133,8 @@
       .belluh-orb-water { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 2px 8px rgba(63,116,134,0.2); }
       .belluh-orb-shine { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; background: radial-gradient(ellipse 34% 22% at 33% 22%, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0) 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5); }
       .belluh-orb.is-thinking .belluh-orb-glow { animation-duration: 1.2s; }
+      .belluh-orb.is-3d .belluh-orb-water { inset: -20%; width: 140%; height: 140%; border-radius: 0; box-shadow: none; filter: drop-shadow(0 2px 3px rgba(63,116,134,0.16)); }
+      .belluh-orb.is-3d .belluh-orb-glow { inset: -30%; opacity: 0.85; }
       @keyframes belluh-orb-breathe { 0%, 100% { transform: scale(0.92); opacity: 0.7; } 50% { transform: scale(1.06); opacity: 1; } }
       @media (prefers-reduced-motion: reduce) { .belluh-orb-glow { animation: none !important; } }
     </style>

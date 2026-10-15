@@ -49,6 +49,8 @@ http.createServer((req, res) => {
         return reply(res, [{ functionCall: { name: 'plan_with_partner', args: { title: 'Dinner at the Thai place', details: 'The one you both wrote about.', options: [{ start: day(3), minutes: 120 }, { start: day(4), minutes: 120, label: 'Saturday' }, { start: '2001-01-01T19:00', minutes: 60 }] } } }]);
       }
       const at = (n, h) => { const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(h).padStart(2, '0')}:00`; };
+      if (lastText.includes('become a lighthouse')) return reply(res, [{ functionCall: { name: 'take_shape', args: { label: 'lighthouse', path: 'M42 10 L58 10 L62 80 L70 80 L70 92 L30 92 L30 80 L38 80 Z' } } }]);
+      if (lastText.includes('become a broken thing')) return reply(res, [{ functionCall: { name: 'take_shape', args: { label: 'x', emoji: '<img src=x>' } } }]);
       if (lastText.includes('remind me')) return reply(res, [{ functionCall: { name: 'remind_me', args: { text: 'Call his mom', at: at(2, 17) } } }]);
       if (lastText.includes('book a table')) return reply(res, [{ functionCall: { name: 'find_table', args: { what: 'ramen', where: 'San Jose', start: at(3, 19), people: 2 } } }]);
       if (lastText.includes('help me plan something for')) return reply(res, [{ functionCall: { name: 'gift_ideas', args: { ideas: ['film camera', 'poetry books'] } } }]);

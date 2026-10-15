@@ -32,7 +32,9 @@ await fetch(`${API}/functions/v1/belluh-agent`, { method: 'POST', headers: { 'co
   const t2 = await p.locator('body').innerText();
   check('One tap confirms it', /It's a plan/i.test(t2));
   check('Add to Google Calendar and Apple/Outlook appear', t2.includes('Google Calendar') && t2.includes('Apple or Outlook'));
-  const gHref = await p.locator('a', { hasText: 'Google Calendar' }).first().getAttribute('href');
+  // Other plans may be on screen too (which comes first depends on today's date), so look at this plan's link
+  const gHrefs = await p.locator('a', { hasText: 'Google Calendar' }).evaluateAll(as => as.map(a => a.getAttribute('href') ?? ''));
+  const gHref = gHrefs.find(h => /Dinner/.test(h)) ?? gHrefs[0];
   check('Google link carries the plan', /calendar\.google\.com.*Dinner/.test(gHref ?? ''), (gHref ?? '').slice(0, 80));
   await p.screenshot({ path: `${OUT}/plan-dan-confirmed.png` });
 
