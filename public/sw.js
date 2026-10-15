@@ -8,7 +8,7 @@ self.addEventListener('push', (event) => {
   const title = typeof m.title === 'string' ? m.title.slice(0, 80) : 'Belluh';
   event.waitUntil(self.registration.showNotification(title, {
     body: typeof m.body === 'string' ? m.body.slice(0, 300) : '',
-    icon: '/favicon.svg', badge: '/favicon.svg',
+    icon: '/icon-192.png', badge: '/badge-96.png',
     tag: typeof m.tag === 'string' ? m.tag : undefined,
     data: { url: typeof m.url === 'string' && m.url.startsWith('/') ? m.url : '/' },
   }));
