@@ -277,6 +277,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       { label: 'Meet Belluh', action: () => scrollToSection('meet') },
       { label: 'What it does', action: () => scrollToSection('features') },
       { label: 'Inside', action: () => scrollToSection('inside') },
+      { label: 'Stories', action: () => scrollToSection('stories') },
       { label: 'FAQ', action: () => scrollToSection('faq') },
       { label: 'Privacy', action: () => { toggleMenu(); onShowLegal('privacy'); } },
       { label: 'Our Why', action: () => { toggleMenu(); onGoToAbout(); } },
@@ -476,6 +477,38 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       {/* Marquee Section */}
       <LogoMarquee title="Works with" orgs={INTEGRATIONS} note="* Trademarks belong to their owners." repeat={6} />
 
+      {/* Infinite Marquee Section */}
+      <section id="stories" className="relative z-10 py-24 overflow-hidden bg-white/50 backdrop-blur-sm border-t border-slate-50">
+        <div className="max-w-7xl mx-auto px-6 mb-16 text-center">
+            <h2 className="text-4xl md:text-6xl font-serif font-semibold text-slate-900 mb-6 tracking-tighter">Every moment counts.</h2>
+            <p className="text-slate-500 text-lg max-w-2xl mx-auto leading-relaxed">
+                From the big milestones to the quiet Sunday mornings, Belluh keeps your story alive.
+            </p>
+        </div>
+        
+        <div className="relative w-full overflow-hidden mask-gradient-x py-4">
+             <div className="flex gap-8 animate-marquee whitespace-nowrap mb-8">
+                 {[1,2,3,4,5,1,2,3,4,5].map((i, idx) => (
+                     <div key={idx} className="w-[340px] min-h-[220px] bg-[#f7d8ee] rounded-3xl border border-black/5 flex-shrink-0 p-8 flex flex-col justify-between hover:scale-[1.02] transition-all cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] group">
+                         <div className="flex justify-between items-start">
+                             <span className="text-5xl opacity-40 text-white font-serif leading-none">❝</span>
+                         </div>
+                         <p className="font-serif text-[#5e1c43] text-lg leading-relaxed whitespace-normal group-hover:text-black transition-colors">
+                             {i === 1 ? "He remembered the oat milk. After this week, that was everything." :
+                              i === 2 ? "We argued about nothing, then laughed about it at 1am." :
+                              i === 3 ? "She texted 'drive safe' and I believed her." :
+                              i === 4 ? "First Sunday walk with no phones. We talked the whole way." :
+                              "Two years today. Still the same booth."}
+                         </p>
+                         <div className="flex items-center gap-2 pt-4 border-t border-black/5">
+                             <div className="text-[10px] font-bold uppercase text-[#831843] tracking-widest">Entry #{100 + idx}</div>
+                         </div>
+                     </div>
+                 ))}
+             </div>
+        </div>
+      </section>
+      
       {/* Why Belluh exists, in the founder's words (from the Our Why page) */}
       <section id="why" className="relative z-10 px-6 py-24 md:py-32 scroll-mt-24">
           <div className="max-w-3xl mx-auto text-center">
@@ -525,26 +558,41 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
           </div>
       </section>
 
-      <footer className="relative z-10 py-10 bg-white border-t border-slate-50">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-               <button 
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  className="flex items-center gap-2 group transition-all duration-300 hover:opacity-80"
-               >
-                    <BelluhOrb size={20} />
-                    <span className="font-serif font-bold text-slate-600 tracking-tight group-hover:text-slate-900 transition-colors">Belluh</span>
-               </button>
-
-               <div className="flex gap-8 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                   <button onClick={onGoToCareers} className="hover:text-slate-600 transition-colors">Careers</button>
-                   <button onClick={onGoToAbout} className="hover:text-slate-600 transition-colors">About</button>
-                   <button onClick={() => onShowLegal('tos')} className="hover:text-slate-600 transition-colors">Terms</button>
-                   <button onClick={() => onShowLegal('privacy')} className="hover:text-slate-600 transition-colors">Privacy</button>
-               </div>
-
-               <div className="text-xs text-slate-400 font-bold tracking-wide">
-                   © 2026 Belluh Inc.
-               </div>
+      <footer className="relative z-10 overflow-hidden bg-[#F8FAFB] border-t border-slate-100">
+          <div className="max-w-7xl mx-auto px-6 pt-16 md:pt-24 pb-10">
+              <div className="grid grid-cols-2 md:grid-cols-12 gap-x-8 gap-y-12">
+                  <div className="col-span-2 md:col-span-5">
+                      <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-2.5" aria-label="Back to top">
+                          <BelluhOrb size={30} />
+                          <span className="font-serif text-2xl font-bold tracking-tight text-[#9bbecb]">Belluh</span>
+                      </button>
+                      <p className="mt-5 max-w-xs text-[15px] leading-relaxed text-slate-500">The AI journal for couples. Write a few lines a day. Belluh remembers, plans, and reminds you both.</p>
+                      <button onClick={() => { rememberCta('footer'); onGetStarted(); }} className="mt-7 inline-flex h-11 items-center gap-2 rounded-full bg-slate-900 px-5 text-sm font-bold text-white transition-colors hover:bg-black">
+                          Start free <ArrowRight size={15} />
+                      </button>
+                  </div>
+                  {[
+                      { title: 'Product', links: [['Meet Belluh', () => scrollToSection('meet')], ['What it does', () => scrollToSection('features')], ['Inside', () => scrollToSection('inside')], ['Stories', () => scrollToSection('stories')], ['FAQ', () => scrollToSection('faq')]] },
+                      { title: 'Company', links: [['Our Why', onGoToAbout], ['Careers', onGoToCareers], ['Log in', onLogin]] },
+                      { title: 'Legal', links: [['Terms of Service', () => onShowLegal('tos')], ['Privacy Policy', () => onShowLegal('privacy')]] },
+                  ].map(col => (
+                      <div key={col.title} className="md:col-span-2 last:md:col-span-3">
+                          <p className="mb-5 text-sm font-bold text-slate-900">{col.title}</p>
+                          <ul className="space-y-3.5">
+                              {col.links.map(([label, go]) => (
+                                  <li key={label as string}><button onClick={go as () => void} className="text-[15px] text-slate-500 transition-colors hover:text-slate-900">{label as string}</button></li>
+                              ))}
+                          </ul>
+                      </div>
+                  ))}
+              </div>
+              <div className="mt-16 md:mt-20 flex flex-col gap-2 border-t border-slate-200/70 pt-6 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
+                  <span>© 2026 Belluh Inc.</span>
+                  <span>Made for two.</span>
+              </div>
+          </div>
+          <div aria-hidden="true" className="pointer-events-none select-none -mb-[0.2em] text-center font-serif font-bold leading-[0.8] tracking-tighter text-[26vw] md:text-[18vw] bg-gradient-to-r from-[#9bbecb]/45 via-[#CDE9F2]/50 to-[#f0addd]/40 bg-clip-text text-transparent [mask-image:linear-gradient(to_bottom,black_35%,transparent)] [-webkit-mask-image:linear-gradient(to_bottom,black_35%,transparent)]">
+              Belluh
           </div>
       </footer>
       
