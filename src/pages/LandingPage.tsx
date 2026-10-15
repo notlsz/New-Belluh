@@ -15,11 +15,20 @@ const FAQ = [
   { q: 'Is it free?', a: 'Yes, Belluh is free to start.' },
 ];
 
-const SCREENS = [
-  { src: '/screens/us.webp', title: 'Plan it together', text: 'Ask Belluh in your shared thread. It suggests a plan, and your partner picks the time.', alt: 'Belluh planning a ramen night for Maya and Dan in their shared thread' },
-  { src: '/screens/week.webp', title: 'One thing to try', text: 'Every Sunday, one small idea drawn from what you both wrote.', alt: "Belluh's suggestion for the week: a twenty-minute walk after dinner" },
-  { src: '/screens/belluh.webp', title: 'Your own Belluh', text: "Ask about your week. It knows what you've both shared, never your partner's private entries.", alt: "Maya asking Belluh about Dan's week" },
+const STEPS = [
+  { n: '01', title: 'Write a few lines', text: 'A minute a day each. Keep it private, or share it with your partner.' },
+  { n: '02', title: 'Belluh connects the dots', text: 'Every Sunday, one small thing to try, drawn from what you both wrote.' },
+  { n: '03', title: 'Plan it together', text: 'Ask in your shared thread. Belluh suggests times, and your partner picks one.' },
 ];
+
+// A real app screen in a phone frame; sizes scale with the phone's width
+const PhoneFrame: React.FC<{ src: string; alt: string; className?: string }> = ({ src, alt, className = '' }) => (
+  <div className={`[container-type:inline-size] ${className}`}>
+    <div className="rounded-[15cqw] bg-[#0f172a] p-[2.6cqw] shadow-[0_50px_100px_-30px_rgba(15,23,42,0.45),0_30px_80px_-30px_rgba(240,173,221,0.55)] ring-1 ring-black/5">
+      <img src={src} alt={alt} width={390} height={898} loading="lazy" className="block w-full h-auto rounded-[12.6cqw]" />
+    </div>
+  </div>
+);
 
 const FaqItem: React.FC<{ q: string; a: string; open: boolean; onToggle: () => void }> = ({ q, a, open, onToggle }) => (
   <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
@@ -339,22 +348,45 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
 
       {/* Real app screens */}
       <section id="inside" className="relative z-10 px-6 pb-28 scroll-mt-24">
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-6xl mx-auto">
               <h2 className="text-3xl md:text-5xl font-serif text-center leading-tight mb-4 drop-shadow-sm">
                   <span className="text-[#9bbecb]">Inside</span> <span className="text-[#f0addd] italic">Belluh.</span>
               </h2>
               <p className="text-center text-lg text-slate-500 font-light mb-12">Real screens from the app, with a sample couple.</p>
-              <div className="flex md:grid md:grid-cols-3 gap-6 md:gap-10 overflow-x-auto md:overflow-visible snap-x snap-mandatory -mx-6 px-6 md:mx-0 md:px-0 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {SCREENS.map(s => (
-                      <figure key={s.src} className="snap-center shrink-0 w-[75%] sm:w-[55%] md:w-auto">
-                          <div className="bg-white rounded-[2.5rem] p-2 border border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)]">
-                              <img src={s.src} alt={s.alt} width={390} height={844} loading="lazy" className="w-full h-auto rounded-[2rem]" />
-                          </div>
-                          <figcaption className="mt-6 px-2">
-                              <p className="font-serif text-xl text-slate-900">{s.title}</p>
-                              <p className="mt-1 text-slate-500 font-light leading-relaxed">{s.text}</p>
-                          </figcaption>
-                      </figure>
+
+              <div className="group relative h-[560px] md:h-[780px] rounded-[2.5rem] md:rounded-[3rem] overflow-hidden border border-white bg-gradient-to-b from-white/70 to-[#fdf2f9]/60 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.06)]">
+                  <div className="absolute -top-40 -left-32 w-[560px] h-[560px] rounded-full bg-[#CDE9F2]/70 blur-[110px] pointer-events-none"></div>
+                  <div className="absolute -bottom-48 -right-32 w-[620px] h-[620px] rounded-full bg-[#f0addd]/35 blur-[120px] pointer-events-none"></div>
+
+                  <div className="absolute inset-x-0 top-10 md:top-16 flex justify-center">
+                      <div className="relative w-[220px] md:w-[330px]">
+                          <PhoneFrame src="/screens/write.webp" alt="Maya writing a few lines about her day" className="absolute top-12 md:top-20 right-[58%] md:right-[68%] w-[80%] -rotate-[7deg] origin-bottom-right transition-transform duration-700 group-hover:-rotate-[9deg] group-hover:-translate-x-2" />
+                          <PhoneFrame src="/screens/week.webp" alt="Belluh's idea for the week: a twenty-minute walk after dinner" className="absolute top-12 md:top-20 left-[58%] md:left-[68%] w-[80%] rotate-[7deg] origin-bottom-left transition-transform duration-700 group-hover:rotate-[9deg] group-hover:translate-x-2" />
+                          <PhoneFrame src="/screens/us.webp" alt="Belluh planning a ramen night for Maya and Dan in their shared thread" className="relative z-10 transition-transform duration-700 group-hover:-translate-y-2" />
+                      </div>
+                  </div>
+
+                  <div className="absolute z-20 bottom-6 inset-x-5 mx-auto max-w-[290px] md:max-w-[320px] md:inset-x-auto md:bottom-auto md:top-28 md:right-[6%] md:mx-0 rounded-3xl bg-white/85 backdrop-blur-xl border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.18)] p-3 md:p-4 flex gap-3">
+                      <div className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-[#f0addd] flex items-center justify-center shrink-0"><Sparkles size={18} className="text-white fill-white" /></div>
+                      <div className="min-w-0">
+                          <div className="flex items-center justify-between gap-3"><span className="text-sm font-bold text-slate-900">Belluh</span><span className="text-xs text-slate-400">now</span></div>
+                          <p className="text-[13px] md:text-sm text-slate-600 leading-snug mt-0.5">Dan picked Fri, Oct 16 at 7:00 PM for "Ramen, then the night market".</p>
+                      </div>
+                  </div>
+
+                  <div className="hidden md:flex absolute z-20 bottom-24 left-[6%] items-center gap-3 rounded-full bg-white/85 backdrop-blur-xl border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] pl-2 pr-5 py-2">
+                      <div className="w-9 h-9 rounded-full bg-[#CDE9F2] flex items-center justify-center"><Lock size={15} className="text-[#3f7486]" /></div>
+                      <span className="text-sm font-bold text-slate-700">Private entries stay private</span>
+                  </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mt-14 px-2">
+                  {STEPS.map(s => (
+                      <div key={s.n}>
+                          <p className="text-xs font-bold tracking-widest text-[#f0addd]">{s.n}</p>
+                          <p className="mt-2 font-serif text-2xl text-slate-900">{s.title}</p>
+                          <p className="mt-2 text-slate-500 font-light leading-relaxed">{s.text}</p>
+                      </div>
                   ))}
               </div>
           </div>
