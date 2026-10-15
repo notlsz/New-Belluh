@@ -102,83 +102,43 @@ const getRelativeDisplay = (date: Date, type: 'past' | 'future' | 'auto') => {
     return `${Math.abs(diffDays)} Days Ago`;
 };
 
-// --- FactCard & StatCard Components (Unchanged) ---
-const FactCard = ({ id, label, date, setDate, isEditing, icon: Icon, theme, config, onToggleHidden, onCycleSize, mode = 'past', onAdd }: any) => {
-    // ... (same as previous)
-    const themes: any = {
-        blue: "bg-blue-50 border-blue-100 text-blue-900 hover:shadow-blue-100/50",
-        rose: "bg-rose-50 border-rose-100 text-rose-900 hover:shadow-rose-100/50",
-        purple: "bg-purple-50 border-purple-100 text-purple-900 hover:shadow-purple-100/50",
-        amber: "bg-amber-50 border-amber-100 text-amber-900 hover:shadow-amber-100/50",
-        orange: "bg-orange-50 border-orange-100 text-orange-900 hover:shadow-orange-100/50",
-        slate: "bg-slate-900 border-slate-800 text-white hover:shadow-slate-200/50"
-    };
-    const currentTheme = themes[theme] || themes.blue;
-    let sizeClasses = "col-span-1 h-48"; 
-    if (config.size === 'wide') sizeClasses = "col-span-2 h-48";
-    if (config.size === 'tall') sizeClasses = "col-span-1 h-[25rem] row-span-2";
-    if (config.size === 'big') sizeClasses = "col-span-2 h-[25rem] row-span-2";
+// --- Relationship facts: a plain list of dates and two big numbers, no tiles ---
+const FactCard = ({ id, label, date, setDate, isEditing, icon: Icon, config, onToggleHidden, mode = 'past', onAdd }: any) => {
     if (config.hidden && !isEditing) return null;
+    const rel = getRelativeDisplay(date, mode);
+    const short = (r: string) => r.replace(' years ago', ' yrs ago').replace(' year ago', ' yr ago').replace(' months ago', ' mo ago');
     return (
-        <div className={`relative overflow-hidden rounded-[2rem] p-6 flex flex-col justify-between transition-all duration-500 hover:scale-[1.02] hover:shadow-xl border ${currentTheme} ${sizeClasses} group ${config.hidden ? 'opacity-50 grayscale border-dashed' : ''}`}>
-            <div className="absolute -right-6 -top-6 w-32 h-32 bg-white/20 rounded-full blur-2xl transition-all group-hover:scale-150"></div>
-            <Icon className="absolute -bottom-6 -right-6 w-32 h-32 opacity-[0.08] group-hover:opacity-[0.15] transition-all duration-500 rotate-12" />
-            <div className="relative z-10 flex justify-between items-start">
-                <span className="text-[10px] font-bold uppercase tracking-widest opacity-70 flex items-center gap-2">{label} {isEditing && <div className="w-1.5 h-1.5 bg-current rounded-full animate-pulse"></div>}</span>
-                {isEditing && (
-                    <div className="flex gap-1">
-                        <button onClick={() => onCycleSize(id)} className="p-1.5 bg-black/10 hover:bg-black/20 rounded-full text-current transition-colors"><MoveDiagonal size={12} /></button>
-                        <button onClick={() => onToggleHidden(id)} className="p-1.5 bg-black/10 hover:bg-black/20 rounded-full text-current transition-colors">{config.hidden ? <EyeOff size={12} /> : <Eye size={12} />}</button>
-                    </div>
-                )}
-            </div>
-            <div className="relative z-10">
-                {isEditing ? (
-                    <div className="bg-white/30 backdrop-blur-md p-2 rounded-xl border border-white/20 shadow-sm mt-2">
-                        <input type="date" aria-label={label} value={toInput(date)} onChange={(e) => setDate(fromInput(e.target.value))} className="w-full bg-transparent border-none text-lg font-bold outline-none text-inherit p-0 focus:ring-0 cursor-pointer font-serif"/>
-                    </div>
-                ) : (
-                    !isSet(date) ? (
-                        <button type="button" onClick={onAdd} className="text-lg font-serif font-medium opacity-60 hover:opacity-100 underline-offset-4 hover:underline">Add date</button>
-                    ) : (
-                    <>
-                        {/* Past dates lead with the day itself; upcoming ones lead with the countdown */}
-                        <div className={`${config.size === 'big' || config.size === 'wide' ? 'text-4xl md:text-5xl' : 'text-3xl md:text-4xl'} font-serif font-medium tracking-tight leading-tight mb-1`}>{mode === 'past' ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : getRelativeDisplay(date, mode)}</div>
-                        <div className="text-sm font-medium opacity-70">{mode === 'past' ? `${date.getFullYear()} (${getRelativeDisplay(date, mode).replace(' years ago', ' yrs ago').replace(' year ago', ' yr ago').replace(' months ago', ' mo ago')})` : date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
-                    </>
-                    )
-                )}
-            </div>
+        <div className={`flex items-center gap-4 py-4 transition-opacity ${config.hidden ? 'opacity-40' : ''}`}>
+            <Icon size={18} className="shrink-0 text-[#9bbecb]" />
+            <span className="flex-1 min-w-0 text-[11px] font-bold uppercase tracking-widest text-slate-400">{label}</span>
+            {isEditing ? (
+                <>
+                    <input type="date" aria-label={label} value={toInput(date)} onChange={(e) => setDate(fromInput(e.target.value))} className="min-w-0 bg-transparent border-none text-right font-serif text-lg text-slate-900 outline-none p-0 focus:ring-0 cursor-pointer" />
+                    <button onClick={() => onToggleHidden(id)} aria-label={config.hidden ? "Show" : "Hide"} title={config.hidden ? `Show ${label}` : `Hide ${label}`} className="shrink-0 p-1.5 text-slate-400 hover:text-slate-900 transition-colors">{config.hidden ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+                </>
+            ) : !isSet(date) ? (
+                <button type="button" onClick={onAdd} className="font-serif text-lg text-slate-400 hover:text-slate-900 transition-colors">Add date</button>
+            ) : (
+                <div className="text-right">
+                    {/* Past dates lead with the day itself; upcoming ones lead with the countdown */}
+                    <p className="font-serif text-xl text-slate-900 leading-tight">{mode === 'past' ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : rel}</p>
+                    <p className="text-sm text-slate-400">{mode === 'past' ? `${date.getFullYear()} (${short(rel)})` : date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                </div>
+            )}
         </div>
     );
 };
 
-const StatCard = ({ id, label, value, subtext, icon: Icon, theme, config, onToggleHidden, onCycleSize, isEditing }: any) => {
-    // ... (same as previous)
-    const themes: any = { slate: "bg-slate-900 text-white shadow-xl shadow-slate-200/50", white: "bg-white text-slate-900 border border-slate-100 shadow-sm" };
-    const currentTheme = themes[theme] || themes.white;
-    let sizeClasses = "col-span-1 h-48"; 
-    if (config.size === 'wide') sizeClasses = "col-span-2 h-48";
-    if (config.size === 'tall') sizeClasses = "col-span-1 h-[25rem] row-span-2";
-    if (config.size === 'big') sizeClasses = "col-span-2 h-[25rem] row-span-2";
+const StatCard = ({ id, label, value, subtext, config, onToggleHidden, isEditing }: any) => {
     if (config.hidden && !isEditing) return null;
     return (
-        <div className={`relative overflow-hidden rounded-[2rem] p-6 flex flex-col justify-between transition-all duration-500 hover:scale-[1.02] hover:shadow-xl ${currentTheme} ${sizeClasses} group ${config.hidden ? 'opacity-50 grayscale border-dashed border-2 border-slate-300' : ''}`}>
-             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/10 to-transparent rounded-bl-full pointer-events-none"></div>
-             <Icon className={`absolute -bottom-4 -right-4 w-24 h-24 transition-all duration-500 rotate-12 ${theme === 'slate' ? 'opacity-[0.05] text-white' : 'opacity-[0.05] text-slate-900'}`} />
-             <div className="relative z-10 flex justify-between items-start">
-                <span className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'slate' ? 'text-slate-400' : 'text-slate-400'}`}>{label}</span>
-                {isEditing && (
-                    <div className="flex gap-1">
-                        <button onClick={() => onCycleSize(id)} className="p-1.5 bg-white/20 hover:bg-white/30 rounded-full text-current transition-colors"><MoveDiagonal size={12} /></button>
-                        <button onClick={() => onToggleHidden(id)} className="p-1.5 bg-white/20 hover:bg-white/30 rounded-full text-current transition-colors">{config.hidden ? <EyeOff size={12} /> : <Eye size={12} />}</button>
-                    </div>
-                )}
-             </div>
-             <div className="relative z-10">
-                 <div className={`${config.size === 'big' || config.size === 'wide' ? 'text-5xl md:text-6xl' : 'text-4xl md:text-5xl'} font-serif font-medium tracking-tighter leading-none mb-2`}>{value}</div>
-                 <div className={`text-xs font-bold uppercase tracking-wider ${theme === 'slate' ? 'text-slate-400' : 'text-slate-400'}`}>{subtext}</div>
-             </div>
+        <div className={`transition-opacity ${config.hidden ? 'opacity-40' : ''}`}>
+            <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                {label}
+                {isEditing && <button onClick={() => onToggleHidden(id)} aria-label={config.hidden ? "Show" : "Hide"} title={config.hidden ? `Show ${label}` : `Hide ${label}`} className="p-1 text-slate-400 hover:text-slate-900 transition-colors">{config.hidden ? <EyeOff size={14} /> : <Eye size={14} />}</button>}
+            </p>
+            <p className="mt-2 font-serif text-5xl md:text-6xl tracking-tight text-slate-900 leading-none">{value}</p>
+            <p className="mt-2 text-sm text-slate-400">{subtext}</p>
         </div>
     );
 };
@@ -499,9 +459,11 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                                       {isEditingFacts ? <><Check size={14} /> Done</> : <><Edit3 size={14} /> Customize</>}
                                   </button>
                               </div>
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-auto">
-                                  <StatCard id="timeTogether" label="Time Together" value={!isNaN(facts.firstMet.getTime()) ? `${Math.floor((new Date().getTime() - facts.firstMet.getTime()) / (1000 * 60 * 60 * 24))}d` : '--'} subtext="And counting" icon={Clock} theme="slate" config={factConfigs.timeTogether} onToggleHidden={toggleHidden} onCycleSize={cycleSize} isEditing={isEditingFacts} />
+                              <div className="flex flex-wrap gap-x-14 gap-y-8 px-1 mb-8">
+                                  <StatCard id="timeTogether" label="Time Together" value={(() => { const from = isSet(facts.firstMet) ? facts.firstMet : facts.anniversary; return isSet(from) ? Math.floor((Date.now() - from.getTime()) / 86400000).toLocaleString('en-US') : '--'; })()} subtext="Days and counting" icon={Clock} theme="slate" config={factConfigs.timeTogether} onToggleHidden={toggleHidden} onCycleSize={cycleSize} isEditing={isEditingFacts} />
                                   <StatCard id="nextAnniversary" label="Next Anniversary" value={(() => { if (isNaN(facts.anniversary.getTime())) return '--'; const now = new Date(); const next = new Date(facts.anniversary); next.setFullYear(now.getFullYear()); if (next < now) next.setFullYear(now.getFullYear() + 1); return `${Math.ceil((next.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))}`; })()} subtext="Days Away" icon={Infinity} theme="white" config={factConfigs.nextAnniversary} onToggleHidden={toggleHidden} onCycleSize={cycleSize} isEditing={isEditingFacts} />
+                              </div>
+                              <div className="rounded-[2rem] bg-white border border-slate-100 shadow-sm px-6 py-1">
                                   <FactCard id="firstMet" onAdd={() => setIsEditingFacts(true)} label="First Met" date={facts.firstMet} setDate={(d: Date) => setFacts({...facts, firstMet: d})} isEditing={isEditingFacts} icon={Users} theme="blue" config={factConfigs.firstMet} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
                                   <FactCard id="firstKiss" onAdd={() => setIsEditingFacts(true)} label="First Kiss" date={facts.firstKiss} setDate={(d: Date) => setFacts({...facts, firstKiss: d})} isEditing={isEditingFacts} icon={Heart} theme="rose" config={factConfigs.firstKiss} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
                                   <FactCard id="firstDate" onAdd={() => setIsEditingFacts(true)} label="First Date" date={facts.firstDate} setDate={(d: Date) => setFacts({...facts, firstDate: d})} isEditing={isEditingFacts} icon={Calendar} theme="purple" config={factConfigs.firstDate} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
@@ -531,34 +493,21 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                       
                       {/* Keepsakes */}
                       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 mb-4">Keepsakes</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                          <div onClick={() => onViewArtifact('letter')} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col aspect-square justify-between cursor-pointer hover:shadow-md transition-shadow">
-                              <Mail size={24} className="text-[#f0addd]" />
-                              <div>
-                                  <h4 className="font-serif text-lg text-slate-900 font-bold">Future Letter</h4>
-                                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Unlock 2030</p>
-                              </div>
-                          </div>
-                          <div onClick={() => onViewArtifact('reel')} className="bg-slate-900 p-6 rounded-[2rem] shadow-lg flex flex-col aspect-square justify-between cursor-pointer hover:scale-[1.02] transition-transform">
-                              <Film size={24} className="text-white" />
-                              <div>
-                                  <h4 className="font-serif text-lg text-white font-bold">Chapter Reel</h4>
-                                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Highlights</p>
-                              </div>
-                          </div>
-                          <div onClick={handleGenerateReceipt} className="col-span-2 bg-[#f0addd] p-6 rounded-[2rem] shadow-lg flex items-center justify-between cursor-pointer hover:bg-[#e57ec3] transition-colors relative overflow-hidden group">
-                               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div>
-                               <div className="relative z-10 flex items-center gap-4">
-                                   <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-sm">
-                                       <Receipt size={24} />
-                                   </div>
-                                   <div className="text-white">
-                                       <h4 className="font-serif text-xl font-bold">Print Receipt</h4>
-                                       <p className="text-xs font-medium opacity-80">Generate your relationship invoice</p>
-                                   </div>
-                               </div>
-                               <ArrowRight className="text-white" size={20} />
-                          </div>
+                      <div className="rounded-[2rem] bg-white border border-slate-100 shadow-sm px-6 py-1">
+                          {[
+                              { icon: Mail, title: 'Future Letter', sub: 'Opens in 2030', go: () => onViewArtifact('letter') },
+                              { icon: Film, title: 'Chapter Reel', sub: 'Your highlights', go: () => onViewArtifact('reel') },
+                              { icon: Receipt, title: 'Print Receipt', sub: 'Your relationship, itemized', go: handleGenerateReceipt },
+                          ].map(k => (
+                              <button key={k.title} onClick={k.go} className="w-full flex items-center gap-4 py-4 text-left group">
+                                  <k.icon size={20} className="shrink-0 text-[#f0addd]" />
+                                  <span className="flex-1 min-w-0">
+                                      <span className="block font-serif text-lg text-slate-900">{k.title}</span>
+                                      <span className="block text-sm text-slate-400">{k.sub}</span>
+                                  </span>
+                                  <ChevronRight size={18} className="shrink-0 text-slate-300 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all" />
+                              </button>
+                          ))}
                       </div>
                   </div>
               )}
