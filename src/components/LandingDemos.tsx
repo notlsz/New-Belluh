@@ -159,10 +159,10 @@ const PrivacyDemo: React.FC = () => {
 };
 
 const ROWS: { label: string; title: string; text: string; where: string; demo: () => React.ReactNode }[] = [
-  { label: 'Plans', where: 'You & Dan', title: 'Plans the date you both say yes to.', text: 'From date night to the honeymoon. Belluh suggests times from what it knows about your week, your partner picks one with a tap, and it lands in both calendars.', demo: () => <PlanDemo /> },
-  { label: 'Comes to you', where: 'WhatsApp', title: 'Texts you before the big days.', text: 'Birthdays, anniversaries, the plan nobody answered. Belluh reaches out on WhatsApp, SMS or Telegram and gets the table, the flowers and the gift ideas ready.', demo: () => <TextDemo /> },
-  { label: 'Notices', where: 'Sunday', title: 'Sees what you might miss.', text: 'Every Sunday it reads both sides of your week and brings one insight and one small thing to try together.', demo: () => <WeekDemo /> },
-  { label: 'Private', where: 'Today', title: 'Private when you want it.', text: "Every entry is shared or Just me, your call. Your partner never sees your private entries, and neither does their Belluh.", demo: () => <PrivacyDemo /> },
+  { label: 'Plans', where: 'You & Dan', title: 'The date nobody gets around to planning.', text: 'Everyone says "we should go out." Belluh finds times that fit both your weeks, your partner picks one with a tap, and it lands in both calendars.', demo: () => <PlanDemo /> },
+  { label: 'Comes to you', where: 'WhatsApp', title: 'The birthday that sneaks up on you.', text: 'Birthdays, anniversaries, the plan nobody answered. Belluh texts you on WhatsApp, SMS or Telegram days ahead, with the table, the flowers and the gift ideas ready.', demo: () => <TextDemo /> },
+  { label: 'Notices', where: 'Sunday', title: 'The quiet drift you never notice.', text: 'Couples rarely fall apart in one night. Every Sunday Belluh reads both sides of your week and brings one insight and one small thing to try together.', demo: () => <WeekDemo /> },
+  { label: 'Private', where: 'Today', title: "The things you're not ready to say.", text: "Every entry is shared or Just me, your call. Your partner never sees your private entries, and neither does their Belluh.", demo: () => <PrivacyDemo /> },
 ];
 
 const SLIDE_MS = 11000;
@@ -192,8 +192,8 @@ const LandingDemos: React.FC<{ onShowPrivacy: () => void }> = ({ onShowPrivacy }
       <div className="max-w-6xl mx-auto">
         <div className="max-w-2xl mb-12 md:mb-16">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-4">What Belluh does</p>
-          <h2 className="text-4xl md:text-6xl font-serif tracking-tight leading-[1.05] text-slate-900">Not a chatbot. <span className="text-[#9bbecb]">It does things.</span></h2>
-          <p className="mt-5 text-lg md:text-xl text-slate-500 font-light leading-relaxed">Planning, remembering, reminding. Anything that reaches your partner or costs money waits for your yes.</p>
+          <h2 className="text-4xl md:text-6xl font-serif tracking-tight leading-[1.05] text-slate-900">You meant to.<br /><span className="text-[#9bbecb]">Life got in the way.</span></h2>
+          <p className="mt-5 text-lg md:text-xl text-slate-500 font-light leading-relaxed [text-wrap:pretty]">The date night nobody booked, the birthday that snuck up. Belluh catches what falls through, and anything that reaches your partner or costs money waits for your yes.</p>
         </div>
 
         <div ref={box} className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-8 lg:gap-14 items-start">
