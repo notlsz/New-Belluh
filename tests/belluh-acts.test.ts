@@ -190,3 +190,23 @@ test('Groceries, rides and things to do', async () => {
   assert.equal(new URL(e[1].url).searchParams.get('query'), 'cooking class');
   for (const n of ['order_food', 'buy_item', 'order_groceries', 'book_ride', 'find_experience']) assert.equal(validateToolCall(n, { what: 'x' })?.name, n);
 });
+
+test('Shopify: only dollar-priced products with a real checkout link, priced plainly', async () => {
+  const { parseCatalog, searchShopify } = await import('../supabase/functions/_shared/shopify.ts');
+  const fixture = JSON.parse((await import('node:fs')).readFileSync(new URL('./fixtures-shopify-catalog.json', import.meta.url), 'utf8'));
+  const got = parseCatalog(fixture, 'USD', 5);
+  assert.equal(got.length, 2, 'the pound-priced camera is left out');
+  assert.deepEqual(got.map(p => p.price), ['$69', '$6']);
+  assert.ok(got.every(p => p.url.startsWith('https://') && p.seller && p.title));
+  assert.equal(parseCatalog(fixture, 'USD', 1).length, 1);
+  assert.deepEqual(parseCatalog(null), []);
+  assert.deepEqual(parseCatalog({ result: { structuredContent: { products: [{ title: 'x', price_range: { min: { amount: 500, currency: 'USD' } }, variants: [{ checkout_url: 'javascript:alert(1)' }] }] } } }), []);
+  // A failing or slow catalog means no Shopify results, never an error
+  assert.deepEqual(await searchShopify('film camera', 100, 3, (async () => { throw new Error('down'); }) as any), []);
+  let sent: any = null;
+  const ok = await searchShopify('film camera', 100, 3, (async (_u: string, init: any) => { sent = JSON.parse(init.body); return new Response(JSON.stringify(fixture)); }) as any);
+  assert.equal(ok.length, 2);
+  assert.equal(sent.params.name, 'search_catalog');
+  assert.equal(sent.params.arguments.catalog.query, 'film camera');
+  assert.equal(sent.params.arguments.catalog.filters.price.max, 10000, 'the budget goes in cents');
+});

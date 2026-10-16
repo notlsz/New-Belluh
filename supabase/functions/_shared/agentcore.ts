@@ -10,6 +10,7 @@ import { pairOf } from './weekly.ts';
 import type { CheckinStatus } from './weekly.ts';
 import { validatePlan, formatOption, localDateOf, type PlanOption } from './plans.ts';
 import { notify } from './notify.ts';
+import { searchShopify, type ShopProduct } from './shopify.ts';
 import { validateReminder, tableLinks, giftLinks, tripLinks, flowerLinks, foodLinks, buyLinks, groceryLinks, rideLinks, experienceLinks, type ActionLink } from './actions.ts';
 
 export type Channel = 'app' | 'whatsapp' | 'sms' | 'telegram'; // also the source recorded on dates saved this way
@@ -61,6 +62,9 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   const askedToForget = /\b(forget|remove|delete|erase|don'?t remember|stop remembering)\b/i.test(text);
   const saved: string[] = [];
   const links: ActionLink[] = [];
+  // Real products from Shopify brands, shown as cards in the app (and as links when texting)
+  const products: ShopProduct[] = [];
+  const addProducts = (ps: ShopProduct[]) => { for (const p of ps) { if (products.length >= 4 || products.some(x => x.url === p.url)) continue; products.push(p); links.push({ label: `${p.title}, ${p.price} at ${p.seller}`, url: p.url }); } };
   let shape: Shape | null = null;
   const reply = await chatWithTools({
     system, contents, tools: TOOL_DECLARATIONS,
@@ -157,17 +161,21 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           return { ok: true, note: `The order and nearby florists are shown under your reply. Say what you'd send and why it fits${when ? `, and that it should arrive ${when}` : ''}. Offer a two-line card message and a reminder the day before. They place the order. Do not paste links.` };
         }
         case 'order_food': case 'buy_item': case 'order_groceries': case 'book_ride': case 'find_experience': {
+          if (call.name === 'buy_item' && typeof call.args.item === 'string') addProducts(await searchShopify(call.args.item, Number(call.args.max_price) || null, 3));
           const l = call.name === 'order_food' ? foodLinks(call.args) : call.name === 'buy_item' ? buyLinks(call.args) : call.name === 'order_groceries' ? groceryLinks(call.args) : call.name === 'book_ride' ? rideLinks(call.args) : experienceLinks(call.args);
           if (!l.length) return { ok: false, error: call.name === 'order_groceries' ? 'List the groceries.' : call.name === 'book_ride' ? 'Say where they are going.' : 'Say what it is.' };
           links.push(...l);
           const what = { order_food: 'The order is ready on DoorDash and Uber Eats', buy_item: 'It is ready to buy on Amazon and Target, with a price comparison', order_groceries: 'Each item is one tap from their Instacart cart', book_ride: 'Uber and Lyft are ready with the destination filled in', find_experience: 'Tickets and experiences are shown' }[call.name];
-          return { ok: true, note: `${what}, under your reply. In one or two lines say what you chose and why it fits them; they finish it with a tap. Never say it is ordered, bought or booked. Do not paste links.` };
+          const found = call.name === 'buy_item' && products.length ? ` Also ${products.length} real products from independent Shopify shops, each with its checkout ready: ${products.map(p => `${p.title} (${p.price}, ${p.seller})`).join('; ')}. You may name the one you'd pick and why.` : '';
+          return { ok: true, note: `${what}, under your reply.${found} In one or two lines say what you chose and why it fits them; they finish it with a tap. Never say it is ordered, bought or booked. Do not paste links.` };
         }
         case 'gift_ideas': {
           const l = giftLinks(call.args);
           if (!l.length) return { ok: false, error: 'Give one to three short gift ideas.' };
+          // The real thing from a Shopify brand first, checkout ready; Amazon after
+          for (const ps of await Promise.all(l.map(x => searchShopify(x.label, null, 1)))) addProducts(ps);
           links.push(...l);
-          return { ok: true, note: 'The ideas are shown under your reply as links to buy. In one or two lines, say why each fits, from what their partner said. Do not paste links.' };
+          return { ok: true, note: `The ideas are shown under your reply as links to buy${products.length ? `, with real products from independent Shopify shops, checkout ready: ${products.map(p => `${p.title} (${p.price}, ${p.seller})`).join('; ')}` : ''}. In one or two lines, say why each fits, from what their partner said. Do not paste links.` };
         }
         case 'take_shape': {
           shape = call.shape;
@@ -187,7 +195,7 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
 
   const final = cleanReply(reply ?? '') || "I'm having trouble thinking right now. Try me again in a moment.";
   // Every new memory is shown under the reply, so nothing is remembered silently
-  created.push(await addMessage(ctx.userId, 'belluh', final, { ...(saved.length ? { saved } : {}), ...(links.length ? { links: links.slice(0, 6) } : {}), ...(shape ? { shape } : {}) }));
+  created.push(await addMessage(ctx.userId, 'belluh', final, { ...(saved.length ? { saved } : {}), ...(links.length ? { links: links.slice(0, 7) } : {}), ...(products.length ? { products } : {}), ...(shape ? { shape } : {}) }));
   return { messages: created };
 }
 

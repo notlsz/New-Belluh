@@ -197,7 +197,7 @@ const MeetBelluh: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =>
   return (
     <section id="meet" className="relative z-10 px-6 pt-20 pb-8 scroll-mt-24">
       <div className="max-w-7xl mx-auto">
-        <div className="relative rounded-[2.5rem] md:rounded-[3rem] overflow-hidden border border-white bg-gradient-to-br from-white via-[#F4FAFC] to-[#fdf2f9] shadow-[0_30px_80px_-30px_rgba(63,116,134,0.35)]">
+        <div className="relative rounded-[2.5rem] md:rounded-[3rem] overflow-hidden bg-gradient-to-br from-[#F8FBFC] via-[#F4FAFC] to-[#fdf5fa]">
           <div className="absolute -top-40 -left-24 w-[520px] h-[520px] rounded-full bg-[#CDE9F2]/70 blur-[110px] pointer-events-none"></div>
           <div className="absolute -bottom-48 right-[-10%] w-[560px] h-[560px] rounded-full bg-[#f0addd]/25 blur-[120px] pointer-events-none"></div>
           <div className="relative grid grid-cols-1 md:grid-cols-2 items-center gap-6 md:gap-10 p-8 md:p-16">
@@ -236,7 +236,7 @@ const MeetBelluh: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =>
                   maxLength={80}
                   className="flex-1 min-w-0 bg-transparent py-2.5 text-[16px] text-slate-800 placeholder:text-slate-400 focus:outline-none"
                 />
-                <button type="submit" disabled={busy || !text.trim()} className="shrink-0 h-11 px-5 rounded-full bg-slate-900 text-white text-sm font-bold hover:bg-black disabled:opacity-30 transition-all active:scale-95">Ask</button>
+                <button type="submit" disabled={busy || !text.trim()} className="shrink-0 h-11 px-5 rounded-full bg-slate-900 text-white text-sm font-bold hover:bg-black disabled:bg-[#EAF4F8] disabled:text-[#7fa6b4] disabled:hover:bg-[#EAF4F8] transition-all active:scale-95">Ask</button>
               </form>
               <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-2">
                 {['a cat', 'a sunflower', 'the letter J', 'a rocket', 'a heart'].map(t => (

@@ -832,8 +832,10 @@ test('31. Belluh reaches out: plans a birthday ahead, nudges a plan nobody answe
   // Saying yes runs it like a request: gift ideas, each one tap from buying
   const { data: yes } = await agent(maya, { action: 'offer_respond', message_id: offer.id, accept: true });
   assert.equal(yes.status, 'accepted');
-  const ideas = yes.messages.at(-1).meta.links;
+  const ideas = yes.messages.at(-1).meta.links.filter(l => new URL(l.url).hostname === 'www.amazon.com');
   assert.deepEqual(ideas.map(l => l.label), ['Film camera', 'Poetry books']);
+  // and a real product from an independent Shopify shop, its checkout one tap away
+  assert.equal(yes.messages.at(-1).meta.products?.[0]?.seller, 'Retrospekt');
   const { data: again } = await agent(maya, { action: 'offer_respond', message_id: offer.id, accept: true });
   assert.deepEqual(again.messages, [], 'only once');
   assert.equal((await agent(dan, { action: 'offer_respond', message_id: offer.id, accept: true })).data, null, "only Maya's to answer");
@@ -885,7 +887,33 @@ test('34. Belluh gets dinner and a gift ready to order, never "ordered"', async 
   const dl = d.messages.at(-1).meta.links;
   assert.deepEqual(dl.map(l => l.label), ['Order pho on DoorDash', 'Order pho on Uber Eats']);
   const { data: g } = await agent(eve, { action: 'chat', message: 'buy a film camera for Dan, under 150' });
-  const gl = g.messages.at(-1).meta.links;
-  assert.equal(gl[0].label, 'Buy film camera on Amazon');
-  assert.equal(new URL(gl[0].url).searchParams.get('rh'), 'p_36:-15000');
+  const gm = g.messages.at(-1).meta;
+  // Real products from Shopify brands first, in dollars, each straight to that shop's checkout
+  assert.deepEqual(gm.products.map(p => [p.price, p.seller]), [['$69', 'Retrospekt'], ['$6', 'Analogue Shop']]);
+  assert.ok(gm.products.every(p => p.url.startsWith('https://') && gm.links.some(l => l.url === p.url)));
+  assert.match(gm.links[0].label, /, \$69 at Retrospekt$/);
+  const amazon = gm.links.find(l => l.label === 'Buy film camera on Amazon');
+  assert.equal(new URL(amazon.url).searchParams.get('rh'), 'p_36:-15000');
+  // Belluh asked Shopify for the item, within budget (in cents), shipping to the US
+  const asked = geminiRequests().filter(l => l.shopify).at(-1).shopify;
+  assert.equal(asked.params.arguments.catalog.query, 'film camera');
+  assert.equal(asked.params.arguments.catalog.filters.price.max, 15000);
+});
+
+test('35. Belluh runs on the newest model, falls back on its own, and always talks like a person', async () => {
+  const before = geminiRequests().length;
+  const { data: a } = await agent(eve, { action: 'chat', message: 'how are we doing this week?' });
+  assert.ok(a.messages.at(-1).body.length > 0);
+  const models = geminiRequests().slice(before).filter(r => r.url?.includes('generateContent')).map(r => r.url.match(/models\/([^:]+)/)?.[1]);
+  assert.equal(models[0], 'gemini-3.8-flash', 'the agent asks the newest Flash first');
+  assert.equal(geminiRequests().slice(before).find(r => r.url?.includes('gemini-3.8')).body.generationConfig.temperature, 1);
+
+  const mid = geminiRequests().length;
+  const { data: b } = await agent(eve, { action: 'chat', message: 'on an older key, are you there?' });
+  const tried = geminiRequests().slice(mid).filter(r => r.url?.includes('generateContent')).map(r => r.url.match(/models\/([^:]+)/)?.[1]);
+  assert.deepEqual(tried.slice(0, 2), ['gemini-3.8-flash', 'gemini-2.5-flash'], 'falls back when the newest model is missing');
+  assert.ok(b.messages.at(-1).body.length > 0 && !/trouble thinking/.test(b.messages.at(-1).body));
+
+  const { data: c } = await agent(eve, { action: 'chat', message: 'talk like a person please' });
+  assert.equal(c.messages.at(-1).body, 'Sure! Here is the plan:\nRamen on 5th\nThen a walk, home');
 });

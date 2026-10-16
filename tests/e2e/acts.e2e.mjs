@@ -32,6 +32,9 @@ const tab = await maya.p.locator('body').innerText();
 check('Yes takes you to Belluh, which already did it: gift ideas ready to buy', tab.includes('Film camera') && tab.includes('Poetry books'));
 const giftHref = await maya.p.getByRole('link', { name: /Film camera/ }).first().getAttribute('href');
 check('each one a real store link', /^https:\/\/www\.amazon\.com\/s\?k=film\+camera$/.test(giftHref ?? ''), giftHref);
+const shopCard = maya.p.getByRole('link', { name: /Retrospekt/ }).first();
+check('and a real product from a Shopify shop, price and seller shown, straight to its checkout',
+  /^https:\/\/retrospekt\.com\/cart\//.test(await shopCard.getAttribute('href') ?? '') && /\$69/.test(await shopCard.innerText()) && /Checkout/.test(await shopCard.innerText()));
 const otHref = await maya.p.getByRole('link', { name: /Book a table on OpenTable/ }).first().getAttribute('href');
 check('a table it prepared is one tap from booked', /^https:\/\/www\.opentable\.com\/s\?dateTime=\d{4}-\d{2}-\d{2}T19%3A00%3A00&covers=2&term=ramen\+San\+Jose$/.test(otHref ?? ''), otHref);
 check('the offer is answered, so it does not ask again', await maya.p.getByRole('button', { name: 'Help me plan it' }).count() === 0);
