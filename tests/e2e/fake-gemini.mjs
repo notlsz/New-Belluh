@@ -62,6 +62,9 @@ http.createServer((req, res) => {
       const at = (n, h) => { const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(h).padStart(2, '0')}:00`; };
       if (lastText.includes('honeymoon')) return reply(res, [{ functionCall: { name: 'plan_trip', args: { to: 'Lisbon', from: 'San Jose', depart: at(200, 9).slice(0, 10), return: at(207, 9).slice(0, 10), people: 2 } } }]);
       if (lastText.includes('order us dinner')) return reply(res, [{ functionCall: { name: 'order_food', args: { what: 'pho', where: 'San Jose' } } }]);
+      if (lastText.includes('get groceries for scampi')) return reply(res, [{ functionCall: { name: 'order_groceries', args: { items: ['shrimp', 'linguine', 'garlic'] } } }]);
+      if (lastText.includes('get us a ride')) return reply(res, [{ functionCall: { name: 'book_ride', args: { to: 'Ramen Nagi, Palo Alto' } } }]);
+      if (lastText.includes('something fun to do')) return reply(res, [{ functionCall: { name: 'find_experience', args: { what: 'jazz concert', where: 'San Francisco, CA', on: at(5, 9).slice(0, 10) } } }]);
       if (lastText.includes('buy a film camera')) return reply(res, [{ functionCall: { name: 'buy_item', args: { item: 'film camera', max_price: 150 } } }]);
       if (lastText.includes('send flowers')) return reply(res, [{ functionCall: { name: 'send_flowers', args: { what: 'peonies', where: 'Brooklyn', deliver_on: at(5, 9).slice(0, 10) } } }]);
       if (lastText.includes('become a lighthouse')) return reply(res, [{ functionCall: { name: 'take_shape', args: { label: 'lighthouse', path: 'M42 10 L58 10 L62 80 L70 80 L70 92 L30 92 L30 80 L38 80 Z' } } }]);
@@ -85,7 +88,7 @@ http.createServer((req, res) => {
       if (said.includes('parrot') || said.includes('mute')) return reply(res, [{ text: 'Done. ok: true, note: ' + (fr.response.private_guidance ?? '').slice(0, 80) }]);
       if (fr.response.already_saved) return reply(res, [{ text: 'Done. I already had that one saved, so nothing new to add.' }]);
       if (fr.response.status !== 'done') return reply(res, [{ text: `I couldn't do that one. ${fr.response.private_guidance ?? ''}`.trim() }]);
-      return reply(res, [{ text: `Done. ${{ find_table: 'Your table is ready to book below.', order_food: 'Dinner is ready to order below.', buy_item: 'The best options are below, each one tap from checkout.', gift_ideas: 'A few gifts that fit him are below.', remind_me: "I'll remind you.", save_date: "Saved, I'll remind you before.", draft_note_to_partner: 'Your note is drafted for you to look over.' }[fr.name] ?? 'All set.'}` }]);
+      return reply(res, [{ text: `Done. ${{ order_groceries: 'Your groceries are each one tap from the cart, below.', book_ride: 'Your ride is ready below.', find_experience: 'A few things you two could do are below.', find_table: 'Your table is ready to book below.', order_food: 'Dinner is ready to order below.', buy_item: 'The best options are below, each one tap from checkout.', gift_ideas: 'A few gifts that fit him are below.', remind_me: "I'll remind you.", save_date: "Saved, I'll remind you before.", draft_note_to_partner: 'Your note is drafted for you to look over.' }[fr.name] ?? 'All set.'}` }]);
     }
     return reply(res, [{ text: 'Plain reply from the model.' }]);
   });

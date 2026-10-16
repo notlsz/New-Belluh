@@ -79,7 +79,7 @@ export const Receipt: React.FC = () => (
 const Chapter: React.FC<{ n: number; id: string; title: string }> = ({ n, id, title }) => (
   <TextReveal>
     <h2 className="pt-20 md:pt-28 mb-8 flex items-baseline gap-4 font-serif text-3xl md:text-4xl tracking-tight text-slate-900">
-      <span className="text-[#f0addd] text-2xl md:text-3xl tabular-nums">{n}</span>{title}
+      {title}
     </h2>
   </TextReveal>
 );
@@ -163,8 +163,9 @@ const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin, onShowLega
 
       <main>
         {/* Hero: the original Supermarket Moment opening */}
-        <section className="px-6 md:px-12 pt-32 md:pt-40">
-          <div className="max-w-3xl mx-auto mb-16 md:mb-20">
+        <section className="px-6 md:px-8 pt-32 md:pt-40">
+          <div className="max-w-6xl mx-auto lg:grid lg:grid-cols-[220px_1fr] lg:gap-x-20">
+          <div className="lg:col-start-2 max-w-[680px] mb-16 md:mb-20">
             <div className="flex items-center gap-3 mb-8 animate-slide-up">
               <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Founding Story</span>
             </div>
@@ -177,12 +178,12 @@ const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin, onShowLega
           </div>
 
           {/* Visual anchor, drifting slowly as you scroll */}
-          <div className="max-w-4xl mx-auto mb-6 md:mb-8 overflow-hidden rounded-[2px] animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <div className="lg:col-span-2 mb-6 md:mb-8 overflow-hidden rounded-[2px] animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <div className="aspect-[4/3] sm:aspect-[21/9] w-full overflow-hidden">
               <img
                 src="/images/supermarket-1800.webp"
                 srcSet="/images/supermarket-900.webp 900w, /images/supermarket-1800.webp 1800w"
-                sizes="(min-width: 960px) 896px, 100vw"
+                sizes="(min-width: 1216px) 1152px, 100vw"
                 width={1800} height={1350}
                 alt="A long supermarket aisle under bright lights, in black and white"
                 {...({ fetchpriority: "high" } as any)}
@@ -191,6 +192,7 @@ const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin, onShowLega
               />
             </div>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-4 text-center">Acme Market, C. 2025</p>
+          </div>
           </div>
         </section>
 
@@ -203,7 +205,7 @@ const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin, onShowLega
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-5">Chapters</p>
                 {CHAPTERS.map((c, i) => (
                   <button key={c.id} onClick={() => go(c.id)} className={`w-full text-left flex gap-3 py-2 text-[15px] transition-colors ${active === c.id ? 'text-slate-900 font-medium' : 'text-slate-400 hover:text-slate-700'}`}>
-                    <span className={`w-4 font-serif tabular-nums ${active === c.id ? 'text-[#f0addd]' : 'text-[#9bbecb]'}`}>{i + 1}</span>{c.title}
+                    {c.title}
                   </button>
                 ))}
               </nav>

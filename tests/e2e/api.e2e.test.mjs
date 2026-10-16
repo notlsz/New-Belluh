@@ -931,3 +931,16 @@ test('36. When the model parrots tool output, Belluh asks again and answers like
   const { data: b } = await agent(eve, { action: 'chat', message: 'order us dinner tonight, mute' });
   assert.equal(b.messages.at(-1).body, 'Dinner is ready to order below, you just check out.');
 });
+
+test('37. Groceries, a ride and something to do: each one ready, links that land, words without symbols', async () => {
+  const run = async (m) => (await agent(eve, { action: 'chat', message: m })).data.messages.at(-1);
+  const g = await run('Can you get groceries for scampi tonight?');
+  assert.deepEqual(g.meta.links.map(l => l.label), ['Add shrimp', 'Add linguine', 'Add garlic']);
+  assert.ok(g.meta.links.every(l => new URL(l.url).hostname === 'www.instacart.com'));
+  const r = await run('get us a ride to dinner');
+  assert.deepEqual(r.meta.links.map(l => new URL(l.url).hostname), ['m.uber.com', 'ride.lyft.com']);
+  assert.equal(new URL(r.meta.links[0].url).searchParams.get('dropoff[formatted_address]'), 'Ramen Nagi, Palo Alto');
+  const e = await run('find us something fun to do this weekend');
+  assert.ok(e.meta.links[0].url.startsWith('https://www.eventbrite.com/d/ca--san-francisco/jazz-concert/'), e.meta.links[0].url);
+  for (const m of [g, r, e]) assert.doesNotMatch(m.body, /[{}*#•·→]|ok:|note:|https?:/, m.body);
+});
