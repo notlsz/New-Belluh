@@ -1,0 +1,97 @@
+{
+ "jsonrpc": "2.0",
+ "id": 1,
+ "result": {
+  "structuredContent": {
+   "products": [
+    {
+     "title": "Peanuts Beagle Scouts 35mm Film Camera",
+     "price_range": {
+      "min": {
+       "amount": 6900,
+       "currency": "USD"
+      },
+      "max": {
+       "amount": 6900,
+       "currency": "USD"
+      }
+     },
+     "media": [
+      {
+       "url": "https://cdn.shopify.com/s/files/1/0881/4568/files/BeagleScoutsFC11-Straight.jpg",
+       "alt_text": ""
+      }
+     ],
+     "variants": [
+      {
+       "id": "gid://shopify/ProductVariant/40798300831823",
+       "checkout_url": "https://retrospekt.com/cart/40798300831823:1?_gsid=kRigrJLoob5P&utm_source=shopify&utm_medium=catalog",
+       "seller": {
+        "name": "Retrospekt",
+        "domain": "retrospekt.myshopify.com"
+       }
+      }
+     ]
+    },
+    {
+     "title": "Kodak EC35 35mm Reloadable Film Camera",
+     "price_range": {
+      "min": {
+       "amount": 3353,
+       "currency": "GBP"
+      },
+      "max": {
+       "amount": 3353,
+       "currency": "GBP"
+      }
+     },
+     "media": [
+      {
+       "url": "https://cdn.shopify.com/s/files/1/0005/1435/9356/files/KodakEC3535mmReloadableFilmCamera-VanillaWhite_2.png",
+       "alt_text": ""
+      }
+     ],
+     "variants": [
+      {
+       "id": "gid://shopify/ProductVariant/54463806210323",
+       "checkout_url": "https://analoguewonderland.co.uk/cart/54463806210323:1?_gsid=kRigrJLoob5P&utm_source=shopify&utm_medium=catalog",
+       "seller": {
+        "name": "Analogue Wonderland",
+        "domain": "analogue-in-wonderland.myshopify.com"
+       }
+      }
+     ]
+    },
+    {
+     "title": "Analogue aF-1",
+     "price_range": {
+      "min": {
+       "amount": 600,
+       "currency": "USD"
+      },
+      "max": {
+       "amount": 600,
+       "currency": "USD"
+      }
+     },
+     "media": [
+      {
+       "url": "https://cdn.shopify.com/s/files/1/0325/8040/3339/files/AF-1-1_ddb5de02-980c-4210-8d44-1eb890dbde9b.jpg",
+       "alt_text": ""
+      }
+     ],
+     "variants": [
+      {
+       "id": "gid://shopify/ProductVariant/49560802066768",
+       "checkout_url": "https://analogueshop.com/cart/49560802066768:1?_gsid=kRigrJLoob5P&utm_source=shopify&utm_medium=catalog",
+       "seller": {
+        "name": "Analogue Shop",
+        "domain": "analogue-amsterdam.myshopify.com"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

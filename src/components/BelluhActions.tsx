@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExternalLink, PenLine } from 'lucide-react';
+import { ExternalLink, PenLine, ArrowUpRight } from 'lucide-react';
 import { belluhAgent, AgentMessage } from '../services/belluhAgent';
 import PlanCard from './PlanCard';
 import { trackEvent } from '../services/analytics';
@@ -17,7 +17,9 @@ const BelluhActions: React.FC<{
 }> = ({ msg, partnerName, onAdded, onCompose, onBusy }) => {
   const [status, setStatus] = useState<string | undefined>(msg.meta?.status);
   const [busy, setBusy] = useState(false);
-  const links: { label: string; url: string }[] = Array.isArray(msg.meta?.links) ? msg.meta.links : [];
+  // Real products Belluh found (Shopify brands), each opening the shop's checkout with it in the cart
+  const products: { title: string; price: string; seller: string; image: string | null; url: string }[] = Array.isArray(msg.meta?.products) ? msg.meta.products.filter((p: any) => typeof p?.url === 'string' && p.url.startsWith('https://')) : [];
+  const links: { label: string; url: string }[] = (Array.isArray(msg.meta?.links) ? msg.meta.links : []).filter((l: any) => !products.some(p => p.url === l.url));
   const kind = msg.meta?.kind;
 
   const answer = async (accept: boolean) => {
@@ -32,6 +34,26 @@ const BelluhActions: React.FC<{
 
   return (
     <>
+      {products.length > 0 && (
+        <div className="mt-2 -mx-2 px-2 pt-1 pb-5 -mb-3 flex gap-3 overflow-x-auto no-scrollbar">
+          {products.map(p => (
+            <a key={p.url} href={p.url} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent('belluh_product_opened', { seller: p.seller.slice(0, 40) })}
+              className="group shrink-0 w-[220px] rounded-2xl bg-white border border-slate-100 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.35)] hover:shadow-[0_16px_36px_-18px_rgba(63,116,134,0.45)] transition-shadow overflow-hidden">
+              <div className="aspect-[4/3] bg-[#F8FAFB] overflow-hidden">
+                {p.image ? <img src={p.image} alt="" loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" /> : null}
+              </div>
+              <div className="p-3.5">
+                <p className="text-[13px] font-semibold text-slate-900 leading-snug line-clamp-2">{p.title}</p>
+                <p className="mt-1 text-xs text-slate-400 truncate">{p.seller}</p>
+                <div className="mt-2.5 flex items-center justify-between">
+                  <span className="font-serif text-base text-slate-900">{p.price}</span>
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-[#3f7486]">Checkout <ArrowUpRight size={13} /></span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
       {links.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
           {links.map(l => (

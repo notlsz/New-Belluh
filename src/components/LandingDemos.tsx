@@ -8,10 +8,11 @@ import BelluhSpeech from './BelluhSpeech';
 
 const reducedMotion = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } };
 
-/** How far a demo has played: 0 until it's on screen, then counts up through its steps on a schedule. */
+/** How far a demo has played: its first message is there from the start (never an empty stage), then it counts up
+ *  through the rest of its steps on a schedule once it's on screen. */
 function useScript(times: number[]) {
   const ref = useRef<HTMLDivElement>(null);
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(1);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -20,7 +21,7 @@ function useScript(times: number[]) {
     const io = new IntersectionObserver(([e]) => {
       if (!e.isIntersecting) return;
       io.disconnect();
-      timers = times.map((t, i) => setTimeout(() => setStep(i + 1), t));
+      timers = times.slice(1).map((t, i) => setTimeout(() => setStep(i + 2), Math.max(200, t - times[0] - 300)));
     }, { threshold: 0.35 });
     io.observe(el);
     return () => { io.disconnect(); timers.forEach(clearTimeout); };

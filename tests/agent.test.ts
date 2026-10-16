@@ -63,6 +63,19 @@ test('tool calls from the model are validated', () => {
 
 test('markdown is stripped from replies', () => {
   assert.equal(cleanReply('## Hey\n**Bold** and *soft* words\n\n\n\nEnd'), 'Hey\nBold and soft words\n\nEnd');
+  // Belluh talks like a person: no list bullets, emoji, dashes, arrows, leaked tool output or pasted links
+  assert.equal(cleanReply('Here are two ideas:\n- A film camera 📷\n• Poetry books ✨'), 'Here are two ideas:\nA film camera\nPoetry books');
+  assert.equal(cleanReply('Saturday works — dinner at 7 → then a walk 💕'), 'Saturday works, dinner at 7, then a walk');
+  assert.equal(cleanReply('Done. {"ok":true,"note":"The ideas are shown under your reply"}'), 'Done.');
+  assert.equal(cleanReply('Book it [on OpenTable](https://www.opentable.com/s?x=1) or here: https://maps.google.com/x.'), 'Book it on OpenTable or here.');
+  assert.equal(cleanReply('Belluh: Open 5–7pm · closes early'), 'Open 5 to 7pm, closes early');
+  assert.equal(cleanReply('1. Call his mom\n2) Pick up the cake'), 'Call his mom\nPick up the cake');
+  assert.equal(cleanReply('Use `code` and _this_ ~~not~~ here\n---\n> quoted'), 'Use code and this not here\n\nquoted');
+  assert.equal(cleanReply('| Day | Plan |\n|---|---|\n| Sat | Ramen |'), 'Day, Plan\nSat, Ramen');
+  // ordinary writing is left alone
+  const plain = "Dan's birthday is in 12 days. He wrote that he misses shooting film, so I'd start there. Want me to find a table for Saturday at 7?";
+  assert.equal(cleanReply(plain), plain);
+  assert.equal(cleanReply('It costs $69 at Retrospekt, and ships in 2-3 days.'), 'It costs $69 at Retrospekt, and ships in 2-3 days.');
 });
 
 import { buildGeminiBody } from '../supabase/functions/_shared/proxy.ts';

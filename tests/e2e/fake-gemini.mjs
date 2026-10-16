@@ -12,6 +12,12 @@ http.createServer((req, res) => {
       res.writeHead(req.url.startsWith('/push/gone') ? 410 : 201); return res.end();
     }
     // Stand-in for Twilio's SMS API (form-encoded): record what Belluh sends
+    // Shopify's Global Catalog: answers with the trimmed real response in tests/fixtures-shopify-catalog.json
+    if (req.url.startsWith('/shopify')) {
+      fs.appendFileSync(LOG, JSON.stringify({ url: req.url, shopify: JSON.parse(Buffer.concat(chunks).toString() || '{}') }) + '\n');
+      res.writeHead(200, { 'content-type': 'application/json' });
+      return res.end(fs.readFileSync(new URL('../fixtures-shopify-catalog.json', import.meta.url)));
+    }
     if (req.url.startsWith('/twilio/')) {
       const form = Object.fromEntries(new URLSearchParams(rawBody));
       fs.appendFileSync(LOG, JSON.stringify({ url: req.url, sms: form, auth: req.headers.authorization }) + '\n');
@@ -35,6 +41,9 @@ http.createServer((req, res) => {
     const last = body.contents?.at(-1)?.parts ?? [];
     const lastText = last.map(p => p.text ?? '').join(' ').toLowerCase();
     const hasToolResult = last.some(p => p.functionResponse);
+    // A key without the newest model: Google answers 404 for it, and Belluh should finish on the steady one
+    if (lastText.includes('older key') && !req.url.includes('gemini-2.5')) { res.writeHead(404, { 'content-type': 'application/json' }); return res.end('{"error":{"code":404,"message":"model not found"}}'); }
+    if (lastText.includes('talk like a person')) return reply(res, [{ text: '**Sure!** Here is the plan:\n- Ramen on 5th 🍜\n- Then a walk → home' }]);
     const props = body.generationConfig?.responseSchema?.properties ?? {};
     if (props.occasions) return reply(res, [{ text: JSON.stringify({ occasions: [{ label: "Dan's birthday", kind: 'birthday', month: 10, day: 20, year: null, repeats_yearly: true }] }) }]);
     if (props.action) return reply(res, [{ text: JSON.stringify({ action: 'Take a twenty-minute walk after dinner, phones at home.', why: 'You both wrote about quiet dinners this week.' }) }]);
@@ -67,7 +76,7 @@ http.createServer((req, res) => {
       if (lastText.includes('remove the date')) return reply(res, [{ functionCall: { name: 'forget_date', args: { query: 'Lisbon trip' } } }]);
       if (lastText.includes('forget')) return reply(res, [{ functionCall: { name: 'forget_memory', args: { query: 'e' } } }]);
     }
-    if (hasToolResult) return reply(res, [{ text: 'Done. ' + JSON.stringify(last[0].functionResponse.response).slice(0, 120) }]);
+    if (hasToolResult) return reply(res, [{ text: 'Done. ' + JSON.stringify(last[0].functionResponse.response).replace(/[{}"]/g, ' ').slice(0, 120) }]);
     return reply(res, [{ text: 'Plain reply from the model.' }]);
   });
 }).listen(3002, () => console.log('fake gemini on 3002'));
