@@ -15,7 +15,7 @@ import { BRAND_MARKS } from '../data/brandMarks';
 
 const FAQ = [
   { q: 'Can my partner read my private entries?', a: 'No. Every entry is shared or private, your call. Your partner never sees your private entries, and neither does their Belluh.' },
-  { q: 'What does Belluh actually do?', a: 'It remembers what matters to you both, plans dates your partner can accept with one tap, gets the date-night reservation, the honeymoon and the flowers ready to book, reminds you before birthdays and anniversaries, sends the reminders you ask for, helps you find the words for a note, and every Sunday gives you one insight and one small thing to try together.' },
+  { q: 'What does Belluh actually do?', a: 'It remembers what matters to you both, plans dates your partner can accept with one tap, and gets things ready to finish in a tap: the date-night table, dinner delivered, the gift, the groceries, a ride, tickets, the honeymoon and the flowers. It reminds you before birthdays and anniversaries, sends the reminders you ask for, helps you find the words for a note, and every Sunday gives you one insight and one small thing to try together.' },
   { q: 'Do we both need to sign up?', a: "Belluh is made for two, so it's best together. You can start on your own and send your partner the link whenever you're ready." },
   { q: 'Is Belluh an AI girlfriend or boyfriend?', a: "No. Belluh doesn't flirt or play a partner. It works for the two of you and points you back to each other." },
   { q: 'Can I use it from WhatsApp or text?', a: "Yes. Connect WhatsApp, SMS or Telegram in Settings with one tap and text Belluh like you'd talk to it in the app. Same Belluh, same memory." },
@@ -259,7 +259,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
   const ctaTap = useShapeTap();
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
   useEffect(() => { const onR = () => setIsDesktop(window.innerWidth >= 768); window.addEventListener('resize', onR); return () => window.removeEventListener('resize', onR); }, []);
-  const heroSize = () => (typeof window === 'undefined' ? 200 : window.innerWidth >= 1024 ? 260 : window.innerWidth >= 640 ? 230 : 168);
+  const heroSize = () => (typeof window === 'undefined' ? 200 : window.innerWidth >= 1024 ? Math.min(260, Math.round(window.innerHeight * 0.3)) : window.innerWidth >= 640 ? 230 : 112);
   const [heroOrb, setHeroOrb] = useState(heroSize);
   useEffect(() => {
     const onR = () => setHeroOrb(heroSize());
@@ -388,25 +388,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       </div>
 
       {/* Hero: what it is on the left, Belluh doing it on the right */}
-      <section className="relative z-10 pt-28 md:pt-36 pb-16 md:pb-24 px-6">
-         <div className="max-w-7xl mx-auto md:px-6 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] items-center gap-12 lg:gap-6">
+      <section className="relative z-10 min-h-[100svh] flex items-center pt-[68px] pb-5 md:pt-24 md:pb-12 px-6">
+         <div className="w-full max-w-7xl mx-auto md:px-6 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] items-center gap-6 sm:gap-12 lg:gap-6">
              <div className="text-center lg:text-left" style={{ animation: 'slideUp 0.9s cubic-bezier(0.16,1,0.3,1) both' }}>
                  <h1 className="font-serif tracking-tight leading-[0.98] text-[2.85rem] sm:text-7xl xl:text-[5.6rem]">
                      <span className="text-[#9bbecb]">The AI journal</span><br />
                      <span className="text-[#f0addd] italic">for couples.</span>
                  </h1>
-                 <p className="mt-7 text-lg md:text-[1.35rem] text-slate-500 font-light leading-relaxed max-w-xl mx-auto lg:mx-0 min-h-[5.6rem] md:min-h-[4.4rem]">
+                 <p className="mt-5 sm:mt-7 text-[17px] md:text-[1.35rem] text-slate-500 font-light leading-relaxed max-w-xl mx-auto lg:mx-0 min-h-[5.4rem] md:min-h-[4.4rem]">
                      <BelluhSpeech text="You each write a few lines a day. Belluh remembers what matters, plans the date and reminds you both." delay={500} />
                  </p>
-                 <div className="mt-9 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
+                 <div className="mt-7 sm:mt-9 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-1.5 sm:gap-3">
                      <button onClick={() => { rememberCta('hero'); onGetStarted(); }} className="group w-full sm:w-auto h-14 px-8 rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 hover:bg-black transition-colors shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)]">
                          Start free <ArrowRight size={17} className="transition-transform group-hover:translate-x-0.5" />
                      </button>
-                     <button onClick={onLogin} className="w-full sm:w-auto h-14 px-7 rounded-full text-[15px] font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/80 transition-colors">
+                     <button onClick={onLogin} className="w-full sm:w-auto h-11 sm:h-14 px-7 rounded-full text-[15px] font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/80 transition-colors">
                          I have an account
                      </button>
                  </div>
-                 <div className="mt-9 flex flex-wrap justify-center lg:justify-start gap-x-7 gap-y-3 text-sm text-slate-500">
+                 <div className="mt-5 sm:mt-9 flex flex-wrap justify-center lg:justify-start gap-x-5 sm:gap-x-7 gap-y-2 text-[13px] sm:text-sm text-slate-500">
                      <span className="inline-flex items-center gap-2"><Heart size={15} className="text-[#f0addd]" /> Free to start</span>
                      <span className="inline-flex items-center gap-2"><Lock size={15} className="text-[#9bbecb]" /> Private by default</span>
                      <span className="inline-flex items-center gap-2"><MessageCircle size={15} className="text-[#9bbecb]" /> Works over text</span>
@@ -414,15 +414,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
              </div>
 
              {/* Belluh, live, with what it's doing for a couple floating around it */}
-             <div className="relative mx-auto w-full max-w-[560px]" style={{ animation: 'slideUp 1s 0.15s cubic-bezier(0.16,1,0.3,1) both' }}>
-                 <div className="relative aspect-[1/1.35] sm:aspect-square">
+             <div className="relative order-first lg:order-none mx-auto w-full max-w-[min(560px,72svh)]" style={{ animation: 'slideUp 1s 0.15s cubic-bezier(0.16,1,0.3,1) both' }}>
+                 <div className="relative h-[150px] sm:h-auto sm:aspect-square">
                      <div className="absolute inset-[8%] rounded-full bg-[radial-gradient(circle,rgba(205,233,242,0.95)_0%,rgba(240,173,221,0.18)_45%,rgba(255,255,255,0)_70%)] blur-2xl animate-breathing pointer-events-none" />
-                     <div className="absolute inset-0 flex flex-col items-center justify-center pb-[6%]">
+                     <div className="absolute inset-0 flex flex-col items-center justify-center sm:pb-[6%]">
                          <BelluhOrb size={heroOrb} onTap={heroTap.tap} label="Belluh. Tap to change its shape." />
-                         <p className="mt-3 h-5 text-xs font-semibold tracking-wide text-slate-400" aria-live="polite">{heroTap.label ? `A ${heroTap.label}. Tap again.` : 'Tap Belluh'}</p>
+                         <p className="mt-2 sm:mt-3 h-5 text-xs font-semibold tracking-wide text-slate-400" aria-live="polite">{heroTap.label ? `A ${heroTap.label}. Tap again.` : 'Tap Belluh'}</p>
                      </div>
 
-                     <div className="absolute left-0 top-0 sm:top-[6%] w-[72%] sm:w-[60%] max-w-[300px]" style={{ animation: 'slideUp 0.8s 0.9s cubic-bezier(0.16,1,0.3,1) both' }}>
+                     <div className="hidden sm:block absolute left-0 top-[6%] w-[60%] max-w-[300px]" style={{ animation: 'slideUp 0.8s 0.9s cubic-bezier(0.16,1,0.3,1) both' }}>
                          <div className="animate-float rounded-3xl bg-white/90 backdrop-blur-xl border border-white shadow-[0_24px_60px_-24px_rgba(15,23,42,0.35)] p-4">
                              <div className="flex items-center gap-2"><BelluhOrb size={22} /><span className="text-[13px] font-bold text-slate-900">Belluh</span><span className="ml-auto text-[11px] text-slate-400">now</span></div>
                              <p className="mt-2 font-serif text-[14px] sm:text-[15px] leading-snug text-slate-800">Dan's birthday is in 12 days. He wrote that he misses shooting film. Want me to plan it?</p>
@@ -430,7 +430,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                          </div>
                      </div>
 
-                     <div className="absolute right-0 bottom-0 sm:-bottom-[2%] w-[72%] sm:w-[56%] max-w-[290px]" style={{ animation: 'slideUp 0.8s 1.5s cubic-bezier(0.16,1,0.3,1) both' }}>
+                     <div className="hidden sm:block absolute right-0 -bottom-[2%] w-[56%] max-w-[290px]" style={{ animation: 'slideUp 0.8s 1.5s cubic-bezier(0.16,1,0.3,1) both' }}>
                          <div className="animate-float rounded-3xl bg-white/90 backdrop-blur-xl border border-white shadow-[0_24px_60px_-24px_rgba(15,23,42,0.35)] p-4" style={{ animationDelay: '-3s' }}>
                              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#e58fc9]">Plan for you &amp; Dan</p>
                              <p className="mt-1.5 font-serif text-[15px] sm:text-base text-slate-900">Ramen, then the night market</p>

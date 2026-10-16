@@ -154,3 +154,39 @@ test('Flowers: an order for delivery and florists near where they should go', as
   assert.equal(new URL(l[1].url).searchParams.get('query'), 'florist near Brooklyn');
   assert.equal(flowerLinks({})[0].label, 'Order flowers for delivery');
 });
+
+test('Dinner delivered: DoorDash and Uber Eats with the dish and the address', async () => {
+  const { foodLinks } = await import('../supabase/functions/_shared/actions.ts');
+  const l = foodLinks({ what: 'pho', where: 'San Jose' });
+  assert.equal(l.length, 2);
+  assert.ok(l[0].url.startsWith('https://www.doordash.com/search/store/pho/'));
+  assert.equal(new URL(l[1].url).searchParams.get('q'), 'pho');
+  assert.equal(new URL(l[1].url).searchParams.get('pl'), 'San Jose');
+  assert.deepEqual(foodLinks({}), []);
+});
+
+test('Buying something: Amazon under the budget, Target, and a price comparison', async () => {
+  const { buyLinks } = await import('../supabase/functions/_shared/actions.ts');
+  const l = buyLinks({ item: 'film camera', max_price: 150 });
+  assert.equal(l.length, 3);
+  assert.equal(new URL(l[0].url).searchParams.get('k'), 'film camera');
+  assert.equal(new URL(l[0].url).searchParams.get('rh'), 'p_36:-15000');
+  assert.equal(new URL(l[1].url).searchParams.get('searchTerm'), 'film camera');
+  assert.equal(new URL(l[2].url).searchParams.get('q'), 'film camera under $150');
+  assert.deepEqual(buyLinks({ item: 'x' }), []);
+});
+
+test('Groceries, rides and things to do', async () => {
+  const { groceryLinks, rideLinks, experienceLinks, } = await import('../supabase/functions/_shared/actions.ts');
+  const { validateToolCall } = await import('../supabase/functions/_shared/agent.ts');
+  const g = groceryLinks({ items: ['basil', 'fresh pasta', '', 'parmesan', 'a', 'lemons', 'butter', 'wine'] });
+  assert.deepEqual(g.map(x => x.label), ['Add basil', 'Add fresh pasta', 'Add parmesan', 'Add lemons', 'Add butter']);
+  const r = rideLinks({ to: 'Nopa, San Francisco' });
+  assert.equal(new URL(r[0].url).searchParams.get('dropoff[formatted_address]'), 'Nopa, San Francisco');
+  assert.equal(new URL(r[1].url).searchParams.get('destination[address]'), 'Nopa, San Francisco');
+  const e = experienceLinks({ what: 'cooking class', where: 'San Jose', on: '2026-11-07' });
+  assert.ok(e[0].url.startsWith('https://www.eventbrite.com/d/san-jose/cooking-class/'));
+  assert.equal(new URL(e[0].url).searchParams.get('start_date'), '2026-11-07');
+  assert.equal(new URL(e[1].url).searchParams.get('query'), 'cooking class');
+  for (const n of ['order_food', 'buy_item', 'order_groceries', 'book_ride', 'find_experience']) assert.equal(validateToolCall(n, { what: 'x' })?.name, n);
+});

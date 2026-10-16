@@ -105,3 +105,93 @@ export function flowerLinks(raw: unknown): ActionLink[] {
     { label: where ? `Florists near ${where}` : 'Florists near you', url: maps.toString() },
   ];
 }
+
+/**
+ * Dinner, delivered: the dish or restaurant ready to order on DoorDash and Uber Eats, delivered to where they are.
+ * Belluh can't check out for them (neither app takes orders from a third party), so the order is one tap from placed.
+ */
+export function foodLinks(raw: unknown): ActionLink[] {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const what = clean(r.what, 60);
+  if (what.length < 2) return [];
+  const where = clean(r.where, 80);
+  const dd = new URL(`https://www.doordash.com/search/store/${encodeURIComponent(what)}/`);
+  const ue = new URL('https://www.ubereats.com/search');
+  ue.searchParams.set('q', what);
+  if (where) ue.searchParams.set('pl', where);
+  return [
+    { label: `Order ${what} on DoorDash`, url: dd.toString() },
+    { label: `Order ${what} on Uber Eats`, url: ue.toString() },
+  ];
+}
+
+/**
+ * Something to buy (a gift, a replacement, something for the house): the item ready to buy at Amazon and Target, and
+ * compared across stores. Budget narrows the search. The person checks out.
+ */
+export function buyLinks(raw: unknown): ActionLink[] {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const item = clean(r.item, 80);
+  if (item.length < 2) return [];
+  const max = Math.round(Number(r.max_price));
+  const amazon = new URL('https://www.amazon.com/s');
+  amazon.searchParams.set('k', item);
+  if (max > 0) amazon.searchParams.set('rh', `p_36:-${max * 100}`);
+  const target = new URL('https://www.target.com/s');
+  target.searchParams.set('searchTerm', item);
+  const shop = new URL('https://www.google.com/search');
+  shop.searchParams.set('tbm', 'shop');
+  shop.searchParams.set('q', max > 0 ? `${item} under $${max}` : item);
+  return [
+    { label: `Buy ${item} on Amazon`, url: amazon.toString() },
+    { label: `Buy ${item} at Target`, url: target.toString() },
+    { label: 'Compare prices', url: shop.toString() },
+  ];
+}
+
+/** Groceries: each item ready to add to an Instacart cart from stores near them. */
+export function groceryLinks(raw: unknown): ActionLink[] {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const items = (Array.isArray(r.items) ? r.items : []).map(i => clean(i, 50)).filter(i => i.length >= 2).slice(0, 5);
+  return items.map(i => {
+    const u = new URL('https://www.instacart.com/store/s');
+    u.searchParams.set('k', i);
+    return { label: `Add ${i}`, url: u.toString() };
+  });
+}
+
+/** A ride there: Uber with the destination filled in, and Lyft. Pickup is where they are when they open it. */
+export function rideLinks(raw: unknown): ActionLink[] {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const to = clean(r.to, 120);
+  if (to.length < 2) return [];
+  const uber = new URL('https://m.uber.com/ul/');
+  uber.searchParams.set('action', 'setPickup');
+  uber.searchParams.set('pickup', 'my_location');
+  uber.searchParams.set('dropoff[formatted_address]', to);
+  const lyft = new URL('https://ride.lyft.com/');
+  lyft.searchParams.set('destination[address]', to);
+  return [
+    { label: `Uber to ${to}`, url: uber.toString() },
+    { label: `Lyft to ${to}`, url: lyft.toString() },
+  ];
+}
+
+/** Something to do together (a concert, a class, a tasting): tickets and experiences near them, on the day if given. */
+export function experienceLinks(raw: unknown): ActionLink[] {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const what = clean(r.what, 60);
+  if (what.length < 2) return [];
+  const where = clean(r.where, 60);
+  const day = dateOnly(r.on);
+  const slug = (where || 'online').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const eb = new URL(`https://www.eventbrite.com/d/${slug}/${encodeURIComponent(what.toLowerCase().replace(/\s+/g, '-'))}/`);
+  if (day) { eb.searchParams.set('start_date', day); eb.searchParams.set('end_date', day); }
+  const ab = new URL(`https://www.airbnb.com/s/${encodeURIComponent(where || 'nearby')}/experiences`);
+  ab.searchParams.set('query', what);
+  if (day) { ab.searchParams.set('checkin', day); ab.searchParams.set('checkout', day); }
+  return [
+    { label: `Tickets for ${what}`, url: eb.toString() },
+    { label: `${what.charAt(0).toUpperCase() + what.slice(1)} experiences`, url: ab.toString() },
+  ];
+}

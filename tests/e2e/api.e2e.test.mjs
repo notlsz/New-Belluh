@@ -713,7 +713,7 @@ test('28. Us: one thread for both of them and Belluh, built only from what both 
     assert.ok(!JSON.stringify(sent).includes(secret), `the shared thread never sees: ${secret}`);
   }
   assert.match(JSON.stringify(sent[0].body.contents), /Maya: Hey you, dinner tonight\?/, 'messages are labelled by who wrote them');
-  assert.deepEqual(sent[0].body.tools[0].functionDeclarations.map(t => t.name), ['plan_with_partner', 'find_table', 'plan_trip'], 'planning and booking only: no memory, note or journal tools in the shared thread');
+  assert.deepEqual(sent[0].body.tools[0].functionDeclarations.map(t => t.name), ['plan_with_partner', 'find_table', 'plan_trip', 'order_food', 'find_experience'], 'planning and booking only: no memory, note or journal tools in the shared thread');
 
   // Dan sees the same thread and picks a time; the answer lands in the thread
   const { data: dh } = await agent(dan, { action: 'us_history' });
@@ -878,4 +878,14 @@ test('33. Belluh gets the honeymoon and the flowers ready: searches with dates f
   const fl = f.messages.at(-1).meta.links;
   assert.equal(fl[0].label, 'Order peonies for delivery');
   assert.equal(new URL(fl[1].url).hostname, 'www.google.com');
+});
+
+test('34. Belluh gets dinner and a gift ready to order, never "ordered"', async () => {
+  const { data: d } = await agent(eve, { action: 'chat', message: 'Can you order us dinner tonight?' });
+  const dl = d.messages.at(-1).meta.links;
+  assert.deepEqual(dl.map(l => l.label), ['Order pho on DoorDash', 'Order pho on Uber Eats']);
+  const { data: g } = await agent(eve, { action: 'chat', message: 'buy a film camera for Dan, under 150' });
+  const gl = g.messages.at(-1).meta.links;
+  assert.equal(gl[0].label, 'Buy film camera on Amazon');
+  assert.equal(new URL(gl[0].url).searchParams.get('rh'), 'p_36:-15000');
 });

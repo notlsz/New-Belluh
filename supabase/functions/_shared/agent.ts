@@ -180,6 +180,11 @@ Actions (use the tools; don't just describe them)
 - find_table: when they want a reservation (date night, a birthday dinner) or a plan involves eating or drinking out. Give what (the kind of place, or the place they named), where (their neighborhood or city if you know it), the start time and how many people. It prepares the booking so they finish it in one tap; never say it's booked.
 - plan_trip: when they want to go somewhere together (a honeymoon, an anniversary trip, a weekend away). Use what you know (where they've said they want to go, when they're free); if you don't know where, ask one short question first. Dates as YYYY-MM-DD. It prepares the flight, hotel and Airbnb searches; they book. Never say it's booked.
 - send_flowers: when they want to send flowers (a birthday, an apology, just because). Choose the arrangement from what ${partner} has said they love, give where it should go if you know it, and the day it should arrive. Offer a two-line card message in their voice, and offer to remind them the day before. It prepares the order; they finish it.
+- order_food: when they want dinner (or any meal) delivered: "order us thai", "get Dan soup, he's sick". Choose the dish or place from what they both like, deliver where they are if you know it. It gets the order ready on DoorDash and Uber Eats; they check out. Never say it's ordered.
+- buy_item: when they want to buy something (a gift, something for home, something that broke). Be specific (brand, size) from what you know; add a budget if they gave one. It gets it ready on Amazon and Target with a price comparison; they check out. Never say it's bought.
+- order_groceries: when they want groceries (a recipe for date night, the basics). Up to five items. It puts each one tap from an Instacart cart; they check out.
+- book_ride: when they need to get somewhere (the restaurant you just found, the airport). It opens Uber or Lyft with the destination filled in.
+- find_experience: when they want something to do together (a concert, a cooking class, a wine tasting, a show). Use their city and the day; it finds tickets and experiences; they book.
 - write_entry: when they want something kept in their journal ("journal this", "add that to my journal", or answering your "how was it?" about a plan). Save their own words, lightly cleaned up, never your summary. Private to them unless they say to share it with ${partner}.
 - take_shape: when they ask you to become, turn into or look like something (an animal, an object, a letter, anything). Your body is living light-blue water and it takes that shape while you reply. Give one emoji that clearly shows it; if none fits, a simple filled silhouette as SVG path data in a 0 0 100 100 box. Never a brand logo or a copyrighted character; take the closest generic thing and say so lightly. water: true when they want you back to normal.
 - gift_ideas: when a birthday, anniversary or thank-you is coming up, or they ask what to get ${partner}. One to three specific ideas drawn from things ${partner} has said they love or wished for, as short shopping phrases ("Le Creuset dutch oven", "film camera"). Never invent a wish ${partner} didn't express; if you know nothing, ask one question instead.
@@ -252,6 +257,8 @@ Privacy (strict)
 Actions
 - plan_with_partner: when they want to plan something together. Offer one to three concrete times as start "YYYY-MM-DDTHH:mm" in local time. The person who asked proposes; the other picks a time right in this chat. If you don't know when they're free, ask one short question first.
 - find_table: when the plan involves eating or drinking out: prepares the booking (OpenTable and Maps links with time and party size) so either of them finishes it in one tap. Never say it's booked.
+- order_food: when they want to eat in tonight: gets the order ready on DoorDash and Uber Eats for either of them to place. Never say it's ordered.
+- find_experience: when they want something to do together (a concert, a class, a tasting): tickets and experiences near them.
 - Take the next step without being asked twice: if they settle on a dinner, propose the times and get the table ready in the same reply.
 
 Safety
@@ -394,6 +401,31 @@ export const TOOL_DECLARATIONS = [
     },
   },
   {
+    name: 'order_food',
+    description: 'Get a delivery order ready: the dish or restaurant on DoorDash and Uber Eats, to where they are.',
+    parameters: { type: 'OBJECT', properties: { what: { type: 'STRING', description: 'Dish, cuisine or restaurant, e.g. "pho" or "Tartine"' }, where: { type: 'STRING', nullable: true, description: 'Delivery address, neighborhood or city' } }, required: ['what'] },
+  },
+  {
+    name: 'buy_item',
+    description: 'Get something ready to buy (a gift, something for home, a replacement): Amazon, Target and a price comparison, under a budget if given.',
+    parameters: { type: 'OBJECT', properties: { item: { type: 'STRING', description: 'Specific item, e.g. "Le Creuset dutch oven 5.5 qt"' }, max_price: { type: 'NUMBER', nullable: true, description: 'Budget in dollars' } }, required: ['item'] },
+  },
+  {
+    name: 'order_groceries',
+    description: 'Put groceries one tap from an Instacart cart: up to five items.',
+    parameters: { type: 'OBJECT', properties: { items: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['items'] },
+  },
+  {
+    name: 'book_ride',
+    description: 'Get a ride ready: Uber and Lyft with the destination filled in.',
+    parameters: { type: 'OBJECT', properties: { to: { type: 'STRING', description: 'Destination address or place name' } }, required: ['to'] },
+  },
+  {
+    name: 'find_experience',
+    description: 'Find something to do together (a concert, a class, a tasting, a show): tickets and experiences near them, on the day if given.',
+    parameters: { type: 'OBJECT', properties: { what: { type: 'STRING' }, where: { type: 'STRING', nullable: true, description: 'City' }, on: { type: 'STRING', nullable: true, description: 'YYYY-MM-DD' } }, required: ['what'] },
+  },
+  {
     name: 'write_entry',
     description: "Save the user's own words as an entry in their journal. Private unless shared is true.",
     parameters: { type: 'OBJECT', properties: { text: { type: 'STRING' }, shared: { type: 'BOOLEAN', nullable: true } }, required: ['text'] },
@@ -428,6 +460,7 @@ export type ToolCall =
   | { name: 'plan_trip'; args: Record<string, unknown> }
   | { name: 'send_flowers'; args: Record<string, unknown> }
   | { name: 'gift_ideas'; args: Record<string, unknown> }
+  | { name: 'order_food' | 'buy_item' | 'order_groceries' | 'book_ride' | 'find_experience'; args: Record<string, unknown> }
   | { name: 'write_entry'; text: string; shared: boolean }
   | { name: 'take_shape'; shape: Shape };
 
@@ -450,6 +483,7 @@ export function validateToolCall(name: string, args: Record<string, unknown> | u
     case 'find_table': return { name, args: a }; // turned into links by tableLinks
     case 'plan_trip': return typeof a.to === 'string' && a.to.trim().length >= 2 ? { name, args: a } : null; // turned into links by tripLinks
     case 'send_flowers': return { name, args: a }; // turned into links by flowerLinks
+    case 'order_food': case 'buy_item': case 'order_groceries': case 'book_ride': case 'find_experience': return { name, args: a }; // turned into links in actions.ts
     case 'gift_ideas': return Array.isArray(a.ideas) && a.ideas.length ? { name, args: a } : null;
     case 'write_entry': {
       const text = typeof a.text === 'string' ? a.text.trim().slice(0, 4000) : '';
