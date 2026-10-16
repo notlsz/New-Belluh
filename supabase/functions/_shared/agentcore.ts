@@ -10,7 +10,7 @@ import { pairOf } from './weekly.ts';
 import type { CheckinStatus } from './weekly.ts';
 import { validatePlan, formatOption, localDateOf, type PlanOption } from './plans.ts';
 import { notify } from './notify.ts';
-import { validateReminder, tableLinks, giftLinks, tripLinks, flowerLinks, type ActionLink } from './actions.ts';
+import { validateReminder, tableLinks, giftLinks, tripLinks, flowerLinks, foodLinks, buyLinks, groceryLinks, rideLinks, experienceLinks, type ActionLink } from './actions.ts';
 
 export type Channel = 'app' | 'whatsapp' | 'sms' | 'telegram'; // also the source recorded on dates saved this way
 export interface Result { status: number; body: any }
@@ -155,6 +155,13 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           links.push(...flowerLinks(call.args));
           const when = typeof call.args.deliver_on === 'string' ? call.args.deliver_on : null;
           return { ok: true, note: `The order and nearby florists are shown under your reply. Say what you'd send and why it fits${when ? `, and that it should arrive ${when}` : ''}. Offer a two-line card message and a reminder the day before. They place the order. Do not paste links.` };
+        }
+        case 'order_food': case 'buy_item': case 'order_groceries': case 'book_ride': case 'find_experience': {
+          const l = call.name === 'order_food' ? foodLinks(call.args) : call.name === 'buy_item' ? buyLinks(call.args) : call.name === 'order_groceries' ? groceryLinks(call.args) : call.name === 'book_ride' ? rideLinks(call.args) : experienceLinks(call.args);
+          if (!l.length) return { ok: false, error: call.name === 'order_groceries' ? 'List the groceries.' : call.name === 'book_ride' ? 'Say where they are going.' : 'Say what it is.' };
+          links.push(...l);
+          const what = { order_food: 'The order is ready on DoorDash and Uber Eats', buy_item: 'It is ready to buy on Amazon and Target, with a price comparison', order_groceries: 'Each item is one tap from their Instacart cart', book_ride: 'Uber and Lyft are ready with the destination filled in', find_experience: 'Tickets and experiences are shown' }[call.name];
+          return { ok: true, note: `${what}, under your reply. In one or two lines say what you chose and why it fits them; they finish it with a tap. Never say it is ordered, bought or booked. Do not paste links.` };
         }
         case 'gift_ideas': {
           const l = giftLinks(call.args);
@@ -366,7 +373,7 @@ export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Pro
   const system = await buildUsSystem(ctx);
   const usLinks: ActionLink[] = [];
   const reply = await chatWithTools({
-    system, contents, tools: TOOL_DECLARATIONS.filter((t: any) => ['plan_with_partner', 'find_table', 'plan_trip'].includes(t.name)),
+    system, contents, tools: TOOL_DECLARATIONS.filter((t: any) => ['plan_with_partner', 'find_table', 'plan_trip', 'order_food', 'find_experience'].includes(t.name)),
     runTool: async (name, args) => {
       const call = validateToolCall(name, args);
       if (call?.name === 'plan_trip') {
@@ -378,6 +385,12 @@ export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Pro
       if (call?.name === 'find_table') {
         usLinks.push(...tableLinks(call.args, ctx.timezone));
         return { ok: true, note: 'Booking links are shown under your reply. Say in one line what you set up; either of them finishes the booking with one tap. Never say it is booked.' };
+      }
+      if (call?.name === 'order_food' || call?.name === 'find_experience') {
+        const l = call.name === 'order_food' ? foodLinks(call.args) : experienceLinks(call.args);
+        if (!l.length) return { ok: false, error: 'Say what it is.' };
+        usLinks.push(...l);
+        return { ok: true, note: `${call.name === 'order_food' ? 'The order is ready on DoorDash and Uber Eats' : 'Tickets and experiences are shown'} under your reply. Say in one line what you chose for the two of them; either of them finishes it with a tap. Never say it is ordered or booked.` };
       }
       if (!call || call.name !== 'plan_with_partner') return { ok: false, error: 'Not available in the shared thread.' };
       const plan = validatePlan(call.args, ctx.timezone);

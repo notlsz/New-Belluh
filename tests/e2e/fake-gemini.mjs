@@ -50,6 +50,8 @@ http.createServer((req, res) => {
       }
       const at = (n, h) => { const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(h).padStart(2, '0')}:00`; };
       if (lastText.includes('honeymoon')) return reply(res, [{ functionCall: { name: 'plan_trip', args: { to: 'Lisbon', from: 'San Jose', depart: at(200, 9).slice(0, 10), return: at(207, 9).slice(0, 10), people: 2 } } }]);
+      if (lastText.includes('order us dinner')) return reply(res, [{ functionCall: { name: 'order_food', args: { what: 'pho', where: 'San Jose' } } }]);
+      if (lastText.includes('buy a film camera')) return reply(res, [{ functionCall: { name: 'buy_item', args: { item: 'film camera', max_price: 150 } } }]);
       if (lastText.includes('send flowers')) return reply(res, [{ functionCall: { name: 'send_flowers', args: { what: 'peonies', where: 'Brooklyn', deliver_on: at(5, 9).slice(0, 10) } } }]);
       if (lastText.includes('become a lighthouse')) return reply(res, [{ functionCall: { name: 'take_shape', args: { label: 'lighthouse', path: 'M42 10 L58 10 L62 80 L70 80 L70 92 L30 92 L30 80 L38 80 Z' } } }]);
       if (lastText.includes('become a broken thing')) return reply(res, [{ functionCall: { name: 'take_shape', args: { label: 'x', emoji: '<img src=x>' } } }]);
