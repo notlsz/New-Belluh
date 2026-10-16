@@ -97,6 +97,16 @@ grant execute on function public.accept_partner_invite(text) to authenticated;
 
 -- ---------- 2. exact email lookup ----------
 
+-- The live project has an older find_user_by_email with a different return type; Postgres can't change that in
+-- place, so drop the old one first (nothing else depends on it: only the app calls it).
+do $$ begin
+  if exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+             where n.nspname = 'public' and p.proname = 'find_user_by_email'
+               and pg_get_function_result(p.oid) <> 'uuid') then
+    drop function public.find_user_by_email(text);
+  end if;
+end $$;
+
 create or replace function public.find_user_by_email(p_email text) returns uuid
 language sql stable security definer set search_path = public as $$
   select id from public.profiles
