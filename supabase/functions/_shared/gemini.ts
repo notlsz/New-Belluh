@@ -39,39 +39,75 @@ async function callRaw(body: unknown, model: string): Promise<{ ok: boolean; sta
  * Runs a conversation turn, executing tool calls through `runTool` until the model answers in text
  * (at most `maxRounds` tool rounds). Returns the final text, or null if the model failed.
  */
+/** True when a reply parrots tool output ("ok: true", "note:", JSON keys) instead of talking to the person. */
+export function looksLikeToolEcho(text: string): boolean {
+  return /\b(?:ok|success)\s*["']?\s*[:=]\s*["']?(?:true|false)\b|\bstatus\s*["']?\s*:\s*["']?(?:done|could not)|\bprivate_guidance\b|"\w+"\s*:|functionResponse|function_?call|tool_code|default_api|already_saved|^\s*done\.?\s*(?:ok\b|note\b|\{)/i.test(text);
+}
+
+// What the model sees after a tool runs: plainly marked as private guidance, so it talks instead of quoting it
+const forModel = (r: Record<string, unknown>) => {
+  const { ok, note, error, ...rest } = r ?? {};
+  return { status: ok === false || error ? 'could not do it' : 'done', ...(note || error ? { private_guidance: String(note ?? error) } : {}), ...rest };
+};
+
+const NUDGE = 'Now reply to them as Belluh, in your own words: one to three natural sentences saying what you did or found and what you would pick. Never quote tool results, their keys or their guidance.';
+
 export async function chatWithTools(opts: {
   system: string;
   contents: GeminiContent[];
   tools: unknown[];
   runTool: (name: string, args: Record<string, unknown> | undefined) => Promise<Record<string, unknown>>;
   maxRounds?: number;
+  /** Filled with the tools that worked this turn, in order */
+  ran?: string[];
 }): Promise<string | null> {
   const contents = [...opts.contents];
   let model = AGENT_MODEL();
-  for (let round = 0; round <= (opts.maxRounds ?? 3); round++) {
+  let usedTools = false;
+  const ask = async (toolsOn: boolean) => {
     const body = (m: string) => ({
       systemInstruction: { parts: [{ text: opts.system }] },
       contents,
       tools: [{ functionDeclarations: opts.tools }],
+      ...(toolsOn ? {} : { toolConfig: { functionCallingConfig: { mode: 'NONE' } } }),
       generationConfig: genFor(m, 0.7),
     });
     let r = await callRaw(body(model), model);
     // The newer model unavailable to this key, or a request it rejects: finish the turn on the steady one
     if (!r.ok && model !== MODEL() && [400, 403, 404].includes(r.status)) { model = MODEL(); r = await callRaw(body(model), model); }
-    const reply = r.content;
-    if (!reply) return null;
+    return r.content;
+  };
+  // Only visible words count as the answer (never hidden thoughts)
+  const words = (c: GeminiContent) => (c.parts ?? []).filter(p => !(p as any).thought && !p.functionCall).map(p => p.text ?? '').join('').trim();
+  // After acting, a reply that parrots tool output or says nothing gets one more try, in words only
+  const finish = async (last: GeminiContent | null): Promise<string | null> => {
+    const text = last ? words(last) : '';
+    if (!usedTools || (text && !looksLikeToolEcho(text))) return text || null;
+    if (last && text) contents.push({ role: 'model', parts: last.parts });
+    const tail = contents[contents.length - 1];
+    if (tail?.role === 'user') tail.parts = [...tail.parts, { text: NUDGE }]; else contents.push({ role: 'user', parts: [{ text: NUDGE }] });
+    const again = await ask(false);
+    const retry = again ? words(again) : '';
+    return retry && !looksLikeToolEcho(retry) ? retry : null;
+  };
+  for (let round = 0; round <= (opts.maxRounds ?? 3); round++) {
+    const reply = await ask(true);
+    if (!reply) return usedTools ? finish(null) : null;
     const calls = (reply.parts ?? []).filter(p => p.functionCall);
-    // The model's parts go back verbatim (Gemini 3 needs its thought signatures); only visible text is the answer
-    if (!calls.length) return (reply.parts ?? []).filter(p => !(p as any).thought).map(p => p.text ?? '').join('').trim();
+    if (!calls.length) return finish(reply);
+    // The model's parts go back verbatim (Gemini 3 needs its thought signatures)
     contents.push({ role: 'model', parts: reply.parts });
     const responses: GeminiPart[] = [];
     for (const p of calls) {
       const result = await opts.runTool(p.functionCall!.name, p.functionCall!.args);
-      responses.push({ functionResponse: { name: p.functionCall!.name, response: result } });
+      if (result?.ok !== false && !result?.error) opts.ran?.push(p.functionCall!.name);
+      responses.push({ functionResponse: { name: p.functionCall!.name, response: forModel(result) } });
     }
+    usedTools = true;
     contents.push({ role: 'user', parts: responses });
   }
-  return null;
+  // Still calling tools after every round: ask for the words
+  return finish(null);
 }
 
 /** One structured JSON answer, no tools. */

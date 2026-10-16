@@ -52,6 +52,8 @@ http.createServer((req, res) => {
     if (body.generationConfig?.responseMimeType === 'application/json') {
       return reply(res, [{ text: JSON.stringify({ reply: 'Three weeks ago you wrote about the same quiet dinner. Is work heavy for Dan right now?' }) }]);
     }
+    const said = (body.contents ?? []).filter(c => c.role === 'user').flatMap(c => c.parts ?? []).map(p => p.text ?? '').join(' ').toLowerCase();
+    if (lastText.includes('in your own words')) return reply(res, [{ text: said.includes('mute') ? '{"ok":true}' : "Pho is ready to order below, from the place you both loved. You just check out." }]);
     if (body.tools && !hasToolResult) {
       if (lastText.includes('plan a dinner')) {
         const day = (n) => { const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T19:00`; };
@@ -76,7 +78,15 @@ http.createServer((req, res) => {
       if (lastText.includes('remove the date')) return reply(res, [{ functionCall: { name: 'forget_date', args: { query: 'Lisbon trip' } } }]);
       if (lastText.includes('forget')) return reply(res, [{ functionCall: { name: 'forget_memory', args: { query: 'e' } } }]);
     }
-    if (hasToolResult) return reply(res, [{ text: 'Done. ' + JSON.stringify(last[0].functionResponse.response).replace(/[{}"]/g, ' ').slice(0, 120) }]);
+    // After acting, Belluh talks like a person. "parrot" makes the first answer echo the tool output, so the test can
+    // check that Belluh asks again for real words (the nudge) instead of showing "ok: true".
+    if (hasToolResult) {
+      const fr = last.find(p => p.functionResponse).functionResponse;
+      if (said.includes('parrot') || said.includes('mute')) return reply(res, [{ text: 'Done. ok: true, note: ' + (fr.response.private_guidance ?? '').slice(0, 80) }]);
+      if (fr.response.already_saved) return reply(res, [{ text: 'Done. I already had that one saved, so nothing new to add.' }]);
+      if (fr.response.status !== 'done') return reply(res, [{ text: `I couldn't do that one. ${fr.response.private_guidance ?? ''}`.trim() }]);
+      return reply(res, [{ text: `Done. ${{ find_table: 'Your table is ready to book below.', order_food: 'Dinner is ready to order below.', buy_item: 'The best options are below, each one tap from checkout.', gift_ideas: 'A few gifts that fit him are below.', remind_me: "I'll remind you.", save_date: "Saved, I'll remind you before.", draft_note_to_partner: 'Your note is drafted for you to look over.' }[fr.name] ?? 'All set.'}` }]);
+    }
     return reply(res, [{ text: 'Plain reply from the model.' }]);
   });
 }).listen(3002, () => console.log('fake gemini on 3002'));

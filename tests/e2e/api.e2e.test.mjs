@@ -411,7 +411,7 @@ test('22. WhatsApp end to end: one-tap link, text a date, get the reply and the 
 
   await hook("Dan's birthday is October 20");
   // Texting Belluh is talking to Belluh: the agent saves dates, and knows Maya already told it this one in the app (scenario 4)
-  assert.match(sent().at(-1).text.body, /already_saved/);
+  assert.match(sent().at(-1).text.body, /already had that one saved/);
   const { data: occ } = await maya.from('occasions').select('label');
   assert.equal(occ.filter(o => o.label === "Dan's birthday").length, 1, 'no duplicate');
 
@@ -916,4 +916,18 @@ test('35. Belluh runs on the newest model, falls back on its own, and always tal
 
   const { data: c } = await agent(eve, { action: 'chat', message: 'talk like a person please' });
   assert.equal(c.messages.at(-1).body, 'Sure! Here is the plan:\nRamen on 5th\nThen a walk, home');
+});
+
+test('36. When the model parrots tool output, Belluh asks again and answers like a person', async () => {
+  const { data: a } = await agent(eve, { action: 'chat', message: 'order us dinner tonight, parrot' });
+  const body = a.messages.at(-1).body;
+  assert.equal(body, 'Pho is ready to order below, from the place you both loved. You just check out.');
+  assert.doesNotMatch(body, /ok:|note:|true|\{/);
+  const nudged = geminiRequests().filter(r => r.body?.toolConfig?.functionCallingConfig?.mode === 'NONE').at(-1);
+  assert.ok(nudged, 'the retry asks for words only, no more tools');
+  // and what the model sees after a tool is marked as private guidance, not something to repeat
+  assert.ok(JSON.stringify(nudged.body.contents).includes('private_guidance'));
+  // If it still can't find words, Belluh says what it did in a plain sentence
+  const { data: b } = await agent(eve, { action: 'chat', message: 'order us dinner tonight, mute' });
+  assert.equal(b.messages.at(-1).body, 'Dinner is ready to order below, you just check out.');
 });
