@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, ArrowLeft, Lock, Eye, EyeOff, Check } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Lock, Eye, EyeOff, Check, Mail } from 'lucide-react';
 import BelluhOrb from '../components/BelluhOrb';
 import BelluhSpeech from '../components/BelluhSpeech';
 import { belluh } from '../lib/belluhPresence';
@@ -29,6 +29,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(initialView === 'signup');
+  // After signing up, until the email is confirmed: the address the link went to
+  const [sentTo, setSentTo] = useState<string | null>(null);
   // Keep the address in step with the form (/signup or /login)
   useEffect(() => {
     const path = window.location.pathname;
@@ -101,6 +103,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
         
         // Successful Sign Up
         if (data.user && (!data.user.identities || data.user.identities.length > 0)) {
+            // Signed straight in (no email check needed): go
+            if (data.session) { onLogin(); return; }
             // Create basic profile
             await supabase.from('profiles').insert([
                 { 
@@ -111,8 +115,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
                   journal_streak: 0
                 }
             ]);
-            onShowToast('Account created! Please log in.', 'success');
-            setIsSignUp(false); 
+            setSentTo(email);
         }
       } else {
         // Login Flow
@@ -131,6 +134,18 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
     }
   };
 
+  const forgot = async () => {
+    if (!email) { onShowToast('Type your email above first, then tap Forgot.', 'info'); return; }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+    if (error) onShowToast(error.message, 'error');
+    else onShowToast(`We sent a reset link to ${email}.`, 'success');
+  };
+  const resend = async () => {
+    if (!sentTo) return;
+    const { error } = await supabase.auth.resend({ type: 'signup', email: sentTo });
+    onShowToast(error ? error.message : 'Sent again. Check your inbox and spam folder.', error ? 'error' : 'success');
+  };
+
   const Requirement = ({ met, text }: { met: boolean; text: string }) => (
     <span className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors duration-300 ${met ? 'text-[#3f7486]' : 'text-slate-400'}`}>
       <Check size={13} strokeWidth={3} className={`transition-opacity duration-300 ${met ? 'opacity-100' : 'opacity-25'}`} />
@@ -139,7 +154,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
   );
 
   const type = (set: (v: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => { set(e.target.value); belluh.key(); };
-  const line = isSignUp ? "Write a few lines. I'll remember the rest." : 'Welcome back. I kept your place.';
+  const line = sentTo ? "I'll be right here when you're back." : isSignUp ? "Write a few lines. I'll remember the rest." : 'I kept your place.';
   const field = 'w-full bg-white/90 border border-slate-200/80 rounded-2xl px-4 py-3.5 text-[16px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#CDE9F2]/70 focus:border-[#9bbecb] transition-all';
 
   return (
@@ -171,6 +186,15 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
 
       {/* The form */}
       <div className="relative flex items-start md:items-center justify-center px-6 pb-10 pt-4 md:p-12">
+        {sentTo ? (
+        <div className="w-full max-w-sm animate-slide-up">
+          <Mail size={28} className="text-[#9bbecb]" />
+          <h1 className="mt-5 text-3xl md:text-4xl font-serif text-slate-900 tracking-tight">Check your inbox.</h1>
+          <p className="mt-3 text-slate-500 leading-relaxed">We sent a link to <span className="font-semibold text-slate-800">{sentTo}</span>. Open it to finish creating your account, then come back and log in.</p>
+          <button onClick={() => { setSentTo(null); setIsSignUp(false); setPassword(''); }} className="mt-8 w-full h-14 rounded-full bg-slate-900 text-white font-bold text-[15px] inline-flex items-center justify-center gap-2 hover:bg-black transition-colors">I've confirmed, log in <ArrowRight size={16} /></button>
+          <p className="mt-5 text-center text-sm text-slate-500">Nothing yet? <button type="button" onClick={resend} className="font-bold text-slate-900 hover:text-[#3f7486] transition-colors">Send it again</button></p>
+        </div>
+        ) : (
         <div className="w-full max-w-sm animate-slide-up">
           <h1 className="text-3xl md:text-4xl font-serif text-slate-900 mb-2 tracking-tight">
             {isSignUp ? 'Start your story.' : 'Welcome back.'}
@@ -183,7 +207,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
               <input id="auth-email" type="email" autoComplete="email" value={email} onChange={type(setEmail)} placeholder="name@example.com" className={field} autoFocus required />
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="auth-password" className="text-xs font-bold text-slate-700 ml-1">Password</label>
+              <div className="flex items-center justify-between">
+                <label htmlFor="auth-password" className="text-xs font-bold text-slate-700 ml-1">Password</label>
+                {!isSignUp && <button type="button" onClick={forgot} className="text-xs font-semibold text-slate-400 hover:text-slate-900 transition-colors mr-1">Forgot?</button>}
+              </div>
               <div className="relative">
                 <input
                   id="auth-password"
@@ -200,7 +227,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
                 </button>
               </div>
               {isSignUp && (
-                <div className="pt-2 px-1 flex flex-wrap gap-x-4 gap-y-1.5 animate-fade-in">
+                <div className="pt-2.5 px-1 grid grid-cols-2 gap-x-4 gap-y-2 animate-fade-in">
                   <Requirement met={hasMinLength} text="8+ characters" />
                   <Requirement met={hasLower} text="Lowercase" />
                   <Requirement met={hasUpper} text="Uppercase" />
@@ -212,20 +239,18 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
             <button
               type="submit"
               disabled={loading || !email || !password || (isSignUp && !isPasswordValid)}
-              className="w-full bg-[#f0addd] text-white rounded-full py-4 font-bold text-sm hover:bg-[#e57ec3] transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl shadow-[#f0addd]/30 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed !mt-6"
+              className="w-full h-14 bg-slate-900 text-white rounded-full font-bold text-[15px] hover:bg-black transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)] disabled:opacity-25 disabled:shadow-none disabled:cursor-not-allowed !mt-7"
             >
               {loading ? <span>{isSignUp ? 'Creating your account...' : 'Logging you in...'}</span> : <><span>{isSignUp ? 'Create account' : 'Log in'}</span><ArrowRight size={16} /></>}
             </button>
           </form>
 
-          <div className="flex items-center gap-3 my-6 text-xs font-bold uppercase tracking-widest text-slate-300">
-            <span className="h-px flex-1 bg-slate-200"></span>or<span className="h-px flex-1 bg-slate-200"></span>
-          </div>
+          <p className="my-5 text-center text-sm text-slate-400">or</p>
 
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full bg-white text-slate-700 border border-slate-200 rounded-full py-3.5 font-bold text-sm hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-[0.98] flex items-center justify-center gap-3 shadow-sm disabled:opacity-70"
+            className="w-full h-14 bg-white text-slate-800 border border-slate-200 rounded-full font-bold text-[15px] hover:border-slate-400 transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-70"
           >
             <GoogleIcon />
             <span>Continue with Google</span>
@@ -240,7 +265,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
 
           <p className="mt-6 text-center text-sm text-slate-500">
             {isSignUp ? 'Already have an account?' : 'New to Belluh?'}{' '}
-            <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="font-bold text-slate-900 hover:text-[#f0addd] transition-colors">
+            <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="font-bold text-slate-900 hover:text-[#3f7486] transition-colors">
               {isSignUp ? 'Log in' : 'Create an account'}
             </button>
           </p>
@@ -250,6 +275,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
             Private entries stay yours. Encrypted in storage and in transit.
           </p>
         </div>
+        )}
       </div>
     </div>
   );

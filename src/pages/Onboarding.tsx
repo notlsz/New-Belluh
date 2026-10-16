@@ -150,7 +150,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   };
 
   const invited = inviteStatus === 'sent' || !!link;
-  const orbSize = step === 0 ? 132 : step === 3 ? 120 : 92;
+  const short = typeof window !== 'undefined' && window.innerHeight < 860;
+  const orbSize = step === 0 ? (short ? 100 : 132) : step === 3 ? (short ? 104 : 120) : 92;
 
   return (
     <div className="min-h-[100svh] bg-paper flex flex-col items-center px-6 pt-6 pb-10 md:pb-14 relative overflow-hidden">
@@ -207,13 +208,13 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             <p className="ob-in text-lg text-slate-500 font-light leading-relaxed mb-7 max-w-sm mx-auto" style={{ animationDelay: '.7s' }}>
               A private journal for the two of you, and an AI that knows you both.
             </p>
-            <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] px-2 text-left mb-7 divide-y divide-slate-100">
+            <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] px-2 py-1.5 text-left mb-7">
               {[
                 { icon: <Lock size={18} strokeWidth={1.75} />, title: 'Just me, when you want', text: 'Mark any entry Just me and only you can read it.' },
                 { icon: <Heart size={18} strokeWidth={1.75} />, title: 'Shared with your partner', text: 'Everything else lands in the story you write together.' },
                 { icon: <EyeOff size={18} strokeWidth={1.75} />, title: 'Belluh keeps secrets too', text: 'It never tells your partner what you wrote privately.' },
               ].map((r, i) => (
-                <div key={r.title} className="ob-in flex items-start gap-4 px-5 py-4 [@media(max-height:760px)]:py-3" style={{ animationDelay: `${0.9 + i * 0.15}s` }}>
+                <div key={r.title} className="ob-in flex items-start gap-4 px-5 py-3.5 [@media(max-height:860px)]:py-2.5" style={{ animationDelay: `${0.9 + i * 0.15}s` }}>
                   <div className="w-5 pt-0.5 text-[#9bbecb] shrink-0">{r.icon}</div>
                   <div className="min-w-0">
                     <p className="text-[15px] font-bold text-slate-900">{r.title}</p>
@@ -224,7 +225,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             </div>
             <button
               onClick={() => go(1, 'First things first.')}
-              className="ob-in w-full bg-[#f0addd] text-white py-4 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-[#e57ec3] transition-all shadow-xl shadow-[#f0addd]/30 hover:-translate-y-0.5 active:scale-[0.98]"
+              className="ob-in w-full bg-slate-900 text-white h-14 rounded-full font-bold text-[15px] hover:bg-black shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)] flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 active:scale-[0.98]"
               style={{ animationDelay: '1.4s' }}
             >
               <span>Begin</span>
@@ -251,7 +252,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             <button
               type="submit"
               disabled={!name || moment !== 'none'}
-              className="mt-12 w-full bg-[#f0addd] text-white py-4 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-[#e57ec3] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-[#f0addd]/30 hover:-translate-y-0.5"
+              className="mt-12 w-full bg-slate-900 text-white h-14 rounded-full font-bold text-[15px] hover:bg-black shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)] flex items-center justify-center gap-2 transition-all disabled:opacity-25 disabled:shadow-none disabled:cursor-not-allowed hover:-translate-y-0.5"
             >
               <span>Continue</span>
               <ArrowRight size={16} />
@@ -285,7 +286,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             <button
               type="submit"
               disabled={!entry.trim() || moment !== 'none'}
-              className="w-full bg-[#9bbecb] text-white py-4 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-[#8aaab7] transition-all shadow-xl shadow-[#9bbecb]/30 disabled:opacity-50"
+              className="w-full bg-slate-900 text-white h-14 rounded-full font-bold text-[15px] hover:bg-black shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)] flex items-center justify-center gap-2 transition-all disabled:opacity-25 disabled:shadow-none"
             >
               {moment === 'keeping' ? <span>Keeping it safe...</span> : <><span>Keep it</span><ArrowRight size={16} /></>}
             </button>
@@ -305,7 +306,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             </div>
             <button
               onClick={() => go(4, `Belluh is better with ${name || 'two'}.`)}
-              className="mt-7 w-full bg-[#f0addd] text-white py-4 rounded-full font-bold hover:bg-[#e57ec3] transition-all active:scale-95 shadow-xl shadow-[#f0addd]/30 flex items-center justify-center gap-2"
+              className="mt-7 w-full bg-slate-900 text-white h-14 rounded-full font-bold text-[15px] hover:bg-black shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)] transition-all active:scale-95 flex items-center justify-center gap-2"
             >
               <span>Continue</span>
               <ArrowRight size={16} />
@@ -322,7 +323,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             <button
               onClick={shareLink}
               disabled={linkState === 'making'}
-              className="w-full bg-[#f0addd] text-white py-4 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-[#e57ec3] transition-all shadow-xl shadow-[#f0addd]/30 active:scale-[0.98] disabled:opacity-70"
+              className="w-full bg-slate-900 text-white h-14 rounded-full font-bold text-[15px] hover:bg-black shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)] flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-70"
             >
               {linkState === 'copied' || linkState === 'shared' ? <><Check size={18} /><span>{linkState === 'copied' ? 'Link copied' : 'Link sent'}</span></> : <><Link2 size={18} /><span>{linkState === 'making' ? 'Making your link...' : `Send ${name || 'them'} your link`}</span></>}
             </button>
@@ -364,7 +365,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             <button
               onClick={finish}
               disabled={finishing}
-              className={`mt-8 w-full py-4 rounded-full font-bold transition-all active:scale-[0.98] disabled:opacity-60 ${invited ? 'bg-slate-900 text-white hover:bg-black shadow-lg' : 'text-slate-400 hover:text-slate-700'}`}
+              className={`mt-8 w-full py-4 rounded-full font-bold transition-all active:scale-[0.98] disabled:opacity-60 ${invited ? 'bg-slate-900 text-white hover:bg-black shadow-lg' : 'text-slate-500 hover:text-slate-900'}`}
             >
               {finishing ? 'Opening your journal...' : invited ? 'Start writing' : 'Skip for now'}
             </button>

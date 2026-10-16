@@ -47,7 +47,7 @@ const RECEIPT: [string, string][] = [
   ['Times she looked back', '13'],
 ];
 
-const Receipt: React.FC = () => (
+export const Receipt: React.FC = () => (
   <figure className="relative mx-auto w-full max-w-[340px] rotate-[2.5deg] transition-transform duration-700 hover:rotate-0" aria-label="The evening, itemized as a receipt">
     <div style={{ clipPath: 'polygon(0 0,100% 0,100% calc(100% - 10px),95% 100%,90% calc(100% - 10px),85% 100%,80% calc(100% - 10px),75% 100%,70% calc(100% - 10px),65% 100%,60% calc(100% - 10px),55% 100%,50% calc(100% - 10px),45% 100%,40% calc(100% - 10px),35% 100%,30% calc(100% - 10px),25% 100%,20% calc(100% - 10px),15% 100%,10% calc(100% - 10px),5% 100%,0 calc(100% - 10px))' }} className="relative bg-white px-7 pt-8 pb-10 font-mono text-[13px] leading-relaxed text-slate-700 shadow-[0_40px_80px_-30px_rgba(63,116,134,0.45)]">
       <p className="text-center font-bold tracking-[0.25em] text-slate-900">THE SUPERMARKET</p>
@@ -166,7 +166,7 @@ const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin, onShowLega
                 Why we're building a place to remember, in an age of perfect documentation.
               </p>
               <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-2 text-sm text-slate-400">
-                <span>Written by <span className="text-slate-700 font-medium">Jimmy</span>, founder</span>
+                <span>Written by <span className="text-slate-700 font-medium">Jimmy</span></span>
                 <span>6 minute read</span>
               </div>
             </div>

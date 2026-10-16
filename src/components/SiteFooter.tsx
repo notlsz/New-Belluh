@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import BelluhOrb from './BelluhOrb';
+import { belluh } from '../lib/belluhPresence';
 
 // The site footer, shared by the landing page, Careers and Our Why. Section links scroll on the landing page and
 // go home first everywhere else.
@@ -21,7 +22,7 @@ const SiteFooter: React.FC<{
                       <BelluhOrb size={30} />
                       <span className="font-serif text-2xl font-bold tracking-tight text-[#9bbecb]">Belluh</span>
                   </button>
-                  <p className="mt-5 max-w-xs text-[15px] leading-relaxed text-slate-500">The AI journal for couples. Write a few lines a day. Belluh remembers, plans, and reminds you both.</p>
+                  <p className="mt-6 max-w-sm font-serif text-2xl md:text-[1.75rem] leading-snug tracking-tight text-slate-800">Write a few lines. <span className="italic text-[#e58fc9]">Belluh remembers the rest.</span></p>
                   <button onClick={onGetStarted} className="mt-7 inline-flex h-11 items-center gap-2 rounded-full bg-slate-900 px-5 text-sm font-bold text-white transition-colors hover:bg-black">
                       Start free <ArrowRight size={15} />
                   </button>
@@ -35,14 +36,15 @@ const SiteFooter: React.FC<{
                       <p className="mb-5 text-sm font-bold text-slate-900">{col.title}</p>
                       <ul className="space-y-3.5">
                           {col.links.map(([label, go]) => (
-                              <li key={label as string}><button onClick={go as () => void} className="text-[15px] text-slate-500 transition-colors hover:text-slate-900">{label as string}</button></li>
+                              <li key={label as string}><button onClick={go as () => void} className="text-[15px] text-slate-500 transition-all hover:text-slate-900 hover:translate-x-0.5">{label as string}</button></li>
                           ))}
                       </ul>
                   </div>
               ))}
           </div>
+          <div className="mt-20 md:mt-24 flex flex-col-reverse md:flex-row md:items-end md:justify-between gap-12">
           {/* Signature, bottom left */}
-          <div className="mt-20 md:mt-24 inline-grid grid-cols-[auto_auto] items-center gap-x-3 gap-y-1 text-[#9bbecb] font-medium uppercase tracking-[0.08em] text-[17px] md:text-[22px] leading-tight select-none" aria-label="Made for two, by the team at Belluh, 2026">
+          <div className="inline-grid grid-cols-[auto_auto] items-center gap-x-3 gap-y-1 text-[#9bbecb] font-medium uppercase tracking-[0.08em] text-[17px] md:text-[22px] leading-tight select-none" aria-label="Made for two, by the team at Belluh, 2026">
               <div className="row-span-2 flex items-center gap-1.5" aria-hidden="true">
                   <svg viewBox="0 0 100 100" className="h-12 w-12 md:h-16 md:w-16" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinejoin="round"><path d="M44.8 13.0 A5.2 5.2 0 1 0 55.2 13.0 A5.2 5.2 0 1 0 44.8 13.0 Z M50.0 20.0 A8.0 5.8 90.0 1 0 50.0 36.0 A8.0 5.8 90.0 1 0 50.0 20.0 Z M53.4 33 L46.6 33 L47.7 89 Q50 95.5 52.3 89 Z M48.0 22.0 A21.5 6.4 12.1 1 0 6.0 13.0 A21.5 6.4 12.1 1 0 48.0 22.0 Z M52.0 22.0 A21.5 6.4 167.9 1 0 94.0 13.0 A21.5 6.4 167.9 1 0 52.0 22.0 Z M48.0 28.0 A20.4 6.0 162.9 1 0 9.0 40.0 A20.4 6.0 162.9 1 0 48.0 28.0 Z M52.0 28.0 A20.4 6.0 17.1 1 0 91.0 40.0 A20.4 6.0 17.1 1 0 52.0 28.0 Z" /></svg>
                   <svg viewBox="0 0 48 48" className="h-12 w-12 md:h-16 md:w-16" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="18" cy="24" r="13" /><circle cx="30" cy="24" r="13" /></svg>
@@ -50,6 +52,15 @@ const SiteFooter: React.FC<{
               <span>Made for two</span>
               <span>&rarr; By the team at</span>
               <span className="col-span-2 mt-1">&copy;2026 // Belluh</span>
+          </div>
+          {/* Belluh is here, bottom right: tap it and the water ripples */}
+          <button onClick={() => belluh.key()} className="group self-start md:self-auto inline-flex items-center gap-3 h-14 pl-2 pr-5 rounded-full bg-white border border-slate-100 shadow-[0_14px_36px_-20px_rgba(15,23,42,0.35)] hover:shadow-[0_18px_40px_-18px_rgba(63,116,134,0.45)] transition-shadow">
+              <BelluhOrb size={40} />
+              <span className="text-left leading-tight">
+                  <span className="block text-sm font-semibold text-slate-900">Belluh is here</span>
+                  <span className="block text-xs text-slate-400 group-hover:text-[#3f7486] transition-colors">Tap to make a ripple</span>
+              </span>
+          </button>
           </div>
       </div>
   </footer>

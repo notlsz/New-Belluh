@@ -91,6 +91,8 @@ const App: React.FC = () => {
     return 'landing';
   };
   const [authView, setAuthView] = useState<'landing' | 'auth' | 'about' | 'careers' | 'acquisition' | 'report'>(getInitialAuthView());
+  const [recovering, setRecovering] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
   const [authMode, setAuthMode] = useState<'login' | 'signup'>(window.location.pathname === '/login' ? 'login' : 'signup');
   // Where Log in / Start free was pressed, so Back on the login page returns there
   const lastPublicView = useRef<'landing' | 'about' | 'careers'>('landing');
@@ -621,6 +623,9 @@ const App: React.FC = () => {
                 loadUserData(session.user);
                 setTimeout(flushCta, 1500); // which landing button brought them in
             }
+        } else if (event === 'PASSWORD_RECOVERY') {
+            if (mounted) setRecovering(true);
+            if (session?.user && mounted && loadedUserId.current !== session.user.id) { loadedUserId.current = session.user.id; loadUserData(session.user); }
         } else if (event === 'SIGNED_OUT') {
             loadedUserId.current = null;
             if (mounted) resetUserState();
@@ -1087,7 +1092,27 @@ const App: React.FC = () => {
         </div>
       ) : null;
 
-  if (isOnboarding) return <>{inviteModal}<Onboarding onComplete={handleOnboardingComplete} /></>;
+  // After a password reset link: choose the new one
+  const recoveryModal = recovering ? (
+        <div className="fixed inset-0 z-[160] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
+          <form className="bg-white rounded-[2rem] max-w-sm w-full p-8 shadow-2xl animate-scale-in" onSubmit={async e => {
+              e.preventDefault();
+              const ok = newPassword.length >= 8 && /[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword);
+              if (!ok) { showNotification('Use 8+ characters with upper and lowercase letters and a number.', 'error'); return; }
+              const { error } = await supabase.auth.updateUser({ password: newPassword });
+              if (error) { showNotification(error.message, 'error'); return; }
+              setRecovering(false); setNewPassword(''); showNotification('Password updated.', 'success');
+          }}>
+            <h2 className="font-serif text-2xl text-slate-900">Choose a new password</h2>
+            <p className="mt-2 text-sm text-slate-500">8+ characters, with upper and lowercase letters and a number.</p>
+            <input type="password" autoComplete="new-password" autoFocus value={newPassword} onChange={e => setNewPassword(e.target.value)} aria-label="New password" className="mt-6 w-full bg-white border border-slate-200 rounded-2xl px-4 py-3.5 text-[16px] focus:outline-none focus:ring-4 focus:ring-[#CDE9F2]/70 focus:border-[#9bbecb]" />
+            <button type="submit" className="mt-5 w-full h-12 rounded-full bg-slate-900 text-white font-bold text-sm hover:bg-black">Save password</button>
+            <button type="button" onClick={() => setRecovering(false)} className="mt-2 w-full h-10 text-sm font-semibold text-slate-400 hover:text-slate-700">Not now</button>
+          </form>
+        </div>
+      ) : null;
+
+  if (isOnboarding) return <>{inviteModal}{recoveryModal}<Onboarding onComplete={handleOnboardingComplete} /></>;
 
   return (
     <div className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in lg:pl-64">
@@ -1102,6 +1127,7 @@ const App: React.FC = () => {
       
       {notification && <Toast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
       {inviteModal}
+      {recoveryModal}
       {belluhReply && currentTab !== 'ai-coach' && !isComposeOpen && (
         <div className="fixed bottom-28 left-0 right-0 px-6 z-[55] flex justify-center animate-slide-up lg:bottom-8 lg:left-64">
           <div className="max-w-[360px] w-full bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-900/10 border border-white p-4 flex gap-3">
