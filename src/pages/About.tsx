@@ -12,12 +12,14 @@ interface AboutProps {
   onGoToCareers?: () => void;
 }
 
+const reducedMotion = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } };
+
 // Fades a paragraph in once, as it scrolls into view
 const TextReveal: React.FC<{ children: ReactNode; delay?: number }> = ({ children, delay = 0 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') { setIsVisible(true); return; }
+    if (typeof IntersectionObserver === 'undefined' || reducedMotion()) { setIsVisible(true); return; }
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) { setIsVisible(true); observer.disconnect(); }
     }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
@@ -102,15 +104,24 @@ const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin, onShowLega
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Highlight the chapter you're reading
+  // Its own name in the browser tab
   useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') return;
-    const io = new IntersectionObserver(items => {
-      const top = items.filter(i => i.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-      if (top) setActive(top.target.id);
-    }, { rootMargin: '-30% 0px -60% 0px' });
-    CHAPTERS.forEach(c => { const el = document.getElementById(c.id); if (el) io.observe(el); });
-    return () => io.disconnect();
+    const before = document.title;
+    document.title = 'The Supermarket Moment | Belluh';
+    return () => { document.title = before; };
+  }, []);
+
+  // Highlight the chapter you're reading: the last one whose heading has passed the top third of the screen
+  useEffect(() => {
+    const onScroll = () => {
+      const line = window.innerHeight * 0.35;
+      let current = CHAPTERS[0].id;
+      for (const c of CHAPTERS) { const el = document.getElementById(c.id); if (el && el.getBoundingClientRect().top <= line) current = c.id; }
+      setActive(current);
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   const go = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -166,13 +177,17 @@ const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin, onShowLega
           </div>
 
           {/* Visual anchor, drifting slowly as you scroll */}
-          <div className="max-w-4xl mx-auto mb-24 md:mb-32 overflow-hidden rounded-[2px] animate-fade-in" style={{ animationDelay: '0.4s' }}>
-            <div className="aspect-[21/9] w-full overflow-hidden">
+          <div className="max-w-4xl mx-auto mb-6 md:mb-8 overflow-hidden rounded-[2px] animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <div className="aspect-[4/3] sm:aspect-[21/9] w-full overflow-hidden">
               <img
-                src="https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=2000&auto=format&fit=crop"
-                alt="Abstract blurred motion in a supermarket"
+                src="/images/supermarket-1800.webp"
+                srcSet="/images/supermarket-900.webp 900w, /images/supermarket-1800.webp 1800w"
+                sizes="(min-width: 960px) 896px, 100vw"
+                width={1800} height={1350}
+                alt="A long supermarket aisle under bright lights, in black and white"
+                {...({ fetchpriority: "high" } as any)}
                 className="w-full h-full object-cover grayscale contrast-[1.2] opacity-90 scale-105 transition-transform duration-[2s] hover:scale-110"
-                style={{ transform: `scale(${1 + scrollProgress * 0.1})` }}
+                style={reducedMotion() ? undefined : { transform: `scale(${1.05 + scrollProgress * 0.1})` }}
               />
             </div>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-4 text-center">Acme Market, C. 2025</p>
@@ -253,20 +268,25 @@ const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin, onShowLega
           </div>
         </div>
 
-        {/* Philosophy and the way in */}
+        {/* The ending answers the story's question */}
         <section className="relative overflow-hidden px-6 md:px-8 py-28 md:py-40 bg-gradient-to-b from-white via-[#CDE9F2]/30 to-white">
-          <div className="max-w-4xl mx-auto text-center">
+          <div className="max-w-3xl mx-auto text-center">
             <TextReveal>
-              <p className="font-serif text-4xl md:text-6xl leading-[1.1] tracking-tight text-slate-900">
-                Love and remembrance <span className="italic text-[#f0addd] md:whitespace-nowrap">go hand in hand.</span>
-              </p>
+              <p className="font-serif italic text-lg md:text-xl text-slate-500 [text-wrap:balance]">Perfection, or someone to share it with?</p>
             </TextReveal>
             <TextReveal delay={100}>
-              <p className="mt-10 font-serif italic text-lg text-slate-500">"I recognize only one duty, and that is to love."</p>
-              <p className="mt-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Albert Camus</p>
+              <h2 className="mt-6 font-serif text-[2.2rem] min-[400px]:text-[2.6rem] sm:text-5xl md:text-7xl leading-[1.05] tracking-tight text-slate-900">
+                <span className="whitespace-nowrap">Choose someone</span><br />
+                <span className="italic text-[#f0addd] whitespace-nowrap">to share it with.</span>
+              </h2>
             </TextReveal>
             <TextReveal delay={200}>
-              <div className="mt-16 flex flex-col items-center gap-6">
+              <p className="mt-8 mx-auto max-w-xl text-lg md:text-xl font-light leading-relaxed text-slate-500 [text-wrap:pretty]">
+                Your supermarket moment is happening somewhere this week. Write one line about it tonight, and you'll still be able to find it years from now.
+              </p>
+            </TextReveal>
+            <TextReveal delay={300}>
+              <div className="mt-14 flex flex-col items-center gap-6">
                 <BelluhOrb size={88} />
                 <button onClick={onGetStarted} className="group inline-flex items-center gap-3 rounded-full bg-slate-900 px-9 py-4 text-base font-bold text-white transition-all hover:bg-black active:scale-95">
                   Begin your story <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
