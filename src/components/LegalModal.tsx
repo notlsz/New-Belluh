@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { X, ArrowUp } from 'lucide-react';
+import { X, ArrowUp, ChevronDown } from 'lucide-react';
 import { TOS_TEXT } from '../data/Terms';
 import { PRIVACY_POLICY_TEXT } from '../data/PrivacyPolicy';
 
@@ -67,9 +67,16 @@ function parse(text: string): { effective: string | null; sections: Section[]; i
 
 const LegalModal: React.FC<LegalModalProps> = ({ type, onClose }) => {
   const scroller = useRef<HTMLDivElement>(null);
-  const title = type === 'tos' ? 'Terms of Service' : 'Privacy Policy';
-  const { effective, sections, intro } = useMemo(() => parse(type === 'tos' ? TOS_TEXT : PRIVACY_POLICY_TEXT), [type]);
+  // Switch between the two documents without closing
+  const [doc, setDoc] = useState<'tos' | 'privacy'>(type);
+  const title = doc === 'tos' ? 'Terms of Service' : 'Privacy Policy';
+  const { effective, sections, intro } = useMemo(() => parse(doc === 'tos' ? TOS_TEXT : PRIVACY_POLICY_TEXT), [doc]);
   const [active, setActive] = useState(sections[0]?.id ?? '');
+  const [progress, setProgress] = useState(0);
+  const [tocOpen, setTocOpen] = useState(false);
+  const minutes = useMemo(() => Math.max(1, Math.round((doc === 'tos' ? TOS_TEXT : PRIVACY_POLICY_TEXT).split(/\s+/).length / 230)), [doc]);
+  useEffect(() => { setActive(sections[0]?.id ?? ''); scroller.current?.scrollTo({ top: 0 }); setProgress(0); }, [doc]);
+  const onScroll = () => { const el = scroller.current; if (el) setProgress(el.scrollTop / Math.max(1, el.scrollHeight - el.clientHeight)); };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -91,7 +98,8 @@ const LegalModal: React.FC<LegalModalProps> = ({ type, onClose }) => {
     return () => io.disconnect();
   }, [sections]);
 
-  const go = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const go = (id: string) => { setTocOpen(false); document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  const current = sections.find(s => s.id === active) ?? sections[0];
 
   const renderBlock = (b: Block, k: number) => {
     if (b.kind === 'sub') return (
@@ -99,7 +107,7 @@ const LegalModal: React.FC<LegalModalProps> = ({ type, onClose }) => {
         <span className="font-serif text-[#9bbecb] tabular-nums">{b.num}</span><span>{b.title}</span>
       </h4>
     );
-    if (b.kind === 'item') return <p key={k} className="pl-5 text-[16px] leading-relaxed text-slate-600 mb-2">{b.text}</p>;
+    if (b.kind === 'item') return <p key={k} className="ml-1 pl-4 border-l-2 border-[#CDE9F2] text-[16px] leading-relaxed text-slate-600 py-0.5 mb-2.5">{b.text}</p>;
     if (b.kind === 'table') return (
       <div key={k} className="my-7 overflow-x-auto rounded-2xl bg-[#F8FAFB]">
         <table className="w-full text-sm text-left">
@@ -136,6 +144,11 @@ const LegalModal: React.FC<LegalModalProps> = ({ type, onClose }) => {
         {/* Contents */}
         <aside className="relative hidden md:flex w-80 shrink-0 flex-col p-10 pr-6 overflow-y-auto">
           <p className="font-serif text-xl font-bold text-[#9bbecb]">Belluh</p>
+          <div role="tablist" aria-label="Document" className="mt-7 p-1 rounded-full bg-slate-100/80 flex text-[13px] font-semibold">
+            {([['tos', 'Terms'], ['privacy', 'Privacy']] as const).map(([k, l]) => (
+              <button key={k} role="tab" aria-selected={doc === k} onClick={() => setDoc(k)} className={`flex-1 h-9 rounded-full transition-all ${doc === k ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>{l}</button>
+            ))}
+          </div>
           <p className="mt-8 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-4">Contents</p>
           <nav className="space-y-0.5">
             {sections.map(s => (
@@ -148,25 +161,41 @@ const LegalModal: React.FC<LegalModalProps> = ({ type, onClose }) => {
         </aside>
 
         {/* Document */}
-        <div ref={scroller} className="relative flex-1 overflow-y-auto scroll-smooth">
+        <div ref={scroller} onScroll={onScroll} className="relative flex-1 overflow-y-auto scroll-smooth">
+          <div className="sticky top-0 z-20 h-[3px] bg-transparent" aria-hidden="true"><div className="h-full bg-gradient-to-r from-[#9bbecb] to-[#f0addd] transition-[width] duration-150" style={{ width: `${progress * 100}%` }} /></div>
           <button onClick={onClose} aria-label="Close" className="sticky top-0 float-right z-10 m-4 md:m-6 p-2 text-slate-400 hover:text-slate-900 transition-colors">
             <X size={24} />
           </button>
-          <article className="max-w-3xl px-6 md:px-14 pt-16 md:pt-20 pb-28">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-5">Belluh</p>
+          <article className="max-w-3xl px-6 md:px-14 pt-12 md:pt-20 pb-28">
+            {/* Phones: switch documents here */}
+            <div role="tablist" aria-label="Document" className="md:hidden mb-8 inline-flex p-1 rounded-full bg-slate-100/80 text-[13px] font-semibold">
+              {([['tos', 'Terms'], ['privacy', 'Privacy']] as const).map(([k, l]) => (
+                <button key={k} role="tab" aria-selected={doc === k} onClick={() => setDoc(k)} className={`h-9 px-5 rounded-full transition-all ${doc === k ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>{l}</button>
+              ))}
+            </div>
             <h1 className="font-serif text-5xl md:text-6xl tracking-tight text-slate-900 leading-[1.05]">{title}</h1>
-            {effective && <p className="mt-5 text-slate-400">Effective {effective}</p>}
+            <p className="mt-5 flex flex-wrap gap-x-6 gap-y-1 text-slate-400">{effective && <span>Effective {effective}</span>}<span>{minutes} minute read</span></p>
             {intro.map(renderBlock)}
 
-            {/* Contents on phones */}
-            <nav className="md:hidden mt-10 rounded-3xl bg-slate-50 p-5">
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-3">Contents</p>
-              {sections.map(s => (
-                <button key={s.id} onClick={() => go(s.id)} className="w-full text-left flex gap-3 py-1.5 text-[15px] text-slate-600">
-                  <span className="w-6 shrink-0 font-serif text-[#9bbecb] tabular-nums">{s.num}</span>{s.title}
+            {/* Phones: where you are, and every section a tap away */}
+            {current && (
+              <div className="md:hidden sticky top-3 z-10 mt-8">
+                <button onClick={() => setTocOpen(o => !o)} aria-expanded={tocOpen} className="w-full h-12 px-4 rounded-full bg-white/95 backdrop-blur-xl border border-slate-100 shadow-[0_12px_30px_-16px_rgba(15,23,42,0.35)] flex items-center gap-3 text-left text-[15px]">
+                  <span className="font-serif text-[#9bbecb] tabular-nums">{current.num}</span>
+                  <span className="flex-1 min-w-0 truncate text-slate-800 font-medium">{current.title}</span>
+                  <ChevronDown size={18} className={`text-slate-400 transition-transform ${tocOpen ? 'rotate-180' : ''}`} />
                 </button>
-              ))}
-            </nav>
+                {tocOpen && (
+                  <nav className="mt-2 max-h-[55vh] overflow-y-auto rounded-3xl bg-white border border-slate-100 shadow-xl p-3 animate-scale-in">
+                    {sections.map(s => (
+                      <button key={s.id} onClick={() => go(s.id)} className={`w-full text-left flex gap-3 rounded-2xl px-3 py-2.5 text-[15px] ${active === s.id ? 'bg-slate-50 text-slate-900 font-semibold' : 'text-slate-600'}`}>
+                        <span className="w-6 shrink-0 font-serif text-[#9bbecb] tabular-nums">{s.num}</span>{s.title}
+                      </button>
+                    ))}
+                  </nav>
+                )}
+              </div>
+            )}
 
             {sections.map(s => (
               <section key={s.id} id={s.id} className="scroll-mt-6 pt-14 md:pt-16">

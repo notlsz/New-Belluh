@@ -42,13 +42,8 @@ const BelluhLine: React.FC<{ on: boolean; text: string; children?: React.ReactNo
   </Appear>
 );
 
-const Stage: React.FC<{ children: React.ReactNode; tint?: 'blue' | 'pink' }> = ({ children, tint = 'blue' }) => (
-  <div className="relative">
-    <div className={`absolute -inset-6 md:-inset-10 rounded-[3rem] blur-3xl opacity-70 pointer-events-none ${tint === 'blue' ? 'bg-[#CDE9F2]/70' : 'bg-[#f0addd]/25'}`}></div>
-    <div className="relative rounded-[2rem] bg-white/90 backdrop-blur-xl border border-white shadow-[0_30px_80px_-30px_rgba(15,23,42,0.25)] p-5 md:p-7 min-h-[360px] flex flex-col gap-4">
-      {children}
-    </div>
-  </div>
+const Stage: React.FC<{ children: React.ReactNode; tint?: 'blue' | 'pink' }> = ({ children }) => (
+  <div className="p-5 md:p-7 min-h-[430px] md:min-h-[460px] flex flex-col gap-4">{children}</div>
 );
 
 // 1. Plans a date both of you say yes to
@@ -57,7 +52,6 @@ const PlanDemo: React.FC = () => {
   return (
     <div ref={ref}>
       <Stage>
-        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">You &amp; Dan</p>
         <Appear on={step >= 1} className="self-end max-w-[80%] rounded-3xl rounded-br-lg bg-slate-100 px-4 py-2.5 text-[15px] text-slate-800">
           Belluh, plan us something easy this weekend
         </Appear>
@@ -89,13 +83,6 @@ const TextDemo: React.FC = () => {
   return (
     <div ref={ref}>
       <Stage tint="pink">
-        <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-          <BelluhOrb size={28} />
-          <div>
-            <p className="text-sm font-bold text-slate-900 leading-tight">Belluh</p>
-            <p className="text-xs text-slate-400">on WhatsApp, SMS or Telegram</p>
-          </div>
-        </div>
         <Appear on={step >= 1} className="max-w-[85%] rounded-3xl rounded-bl-lg bg-[#F4FAFC] px-4 py-3 text-[15px] leading-relaxed text-slate-800">
           {step >= 1 ? <BelluhSpeech text="Dan's birthday is in 12 days. He wrote that he misses shooting film. Want me to plan it?" pace={1.6} /> : null}
         </Appear>
@@ -170,41 +157,88 @@ const PrivacyDemo: React.FC = () => {
   );
 };
 
-const ROWS: { label: string; title: string; text: string; demo: React.ReactNode }[] = [
-  { label: 'Plans', title: 'Plans the date you both say yes to.', text: 'From date night to the honeymoon. Ask in your shared thread: Belluh suggests times from what it knows about your week, your partner picks one with a tap, it lands in both calendars, and the reservation or the trip is a tap from booked.', demo: <PlanDemo /> },
-  { label: 'Comes to you', title: 'Texts you before the big days.', text: "Birthdays, anniversaries, the plan nobody answered. Belluh reaches out on WhatsApp, SMS or Telegram and gets the table, the flowers and the gift ideas ready.", demo: <TextDemo /> },
-  { label: 'Notices', title: 'Sees what you might miss.', text: 'Every Sunday it reads both sides of your week and brings one insight and one small thing to try together. You each check it off with one tap.', demo: <WeekDemo /> },
-  { label: 'Private', title: 'Private when you want it.', text: "Every entry is shared or Just me, your call. Your partner never sees your private entries, and neither does their Belluh. Encrypted in storage and in transit, and never sold.", demo: <PrivacyDemo /> },
+const ROWS: { label: string; title: string; text: string; where: string; demo: () => React.ReactNode }[] = [
+  { label: 'Plans', where: 'You & Dan', title: 'Plans the date you both say yes to.', text: 'From date night to the honeymoon. Belluh suggests times from what it knows about your week, your partner picks one with a tap, and it lands in both calendars.', demo: () => <PlanDemo /> },
+  { label: 'Comes to you', where: 'WhatsApp', title: 'Texts you before the big days.', text: 'Birthdays, anniversaries, the plan nobody answered. Belluh reaches out on WhatsApp, SMS or Telegram and gets the table, the flowers and the gift ideas ready.', demo: () => <TextDemo /> },
+  { label: 'Notices', where: 'Sunday', title: 'Sees what you might miss.', text: 'Every Sunday it reads both sides of your week and brings one insight and one small thing to try together.', demo: () => <WeekDemo /> },
+  { label: 'Private', where: 'Today', title: 'Private when you want it.', text: "Every entry is shared or Just me, your call. Your partner never sees your private entries, and neither does their Belluh.", demo: () => <PrivacyDemo /> },
 ];
 
-const LandingDemos: React.FC<{ onShowPrivacy: () => void }> = ({ onShowPrivacy }) => (
-  <section id="features" className="relative z-10 px-6 py-24 md:py-32 scroll-mt-24">
-    <div className="max-w-6xl mx-auto">
-      <div className="max-w-2xl mb-16 md:mb-24">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-4">What Belluh does</p>
-        <h2 className="text-4xl md:text-6xl font-serif tracking-tight leading-[1.05] text-slate-900">Not a chatbot. <span className="text-[#9bbecb]">It does things.</span></h2>
-        <p className="mt-5 text-lg md:text-xl text-slate-500 font-light leading-relaxed">Planning, remembering, reminding. Anything that reaches your partner or costs money waits for your yes.</p>
-      </div>
-      <div className="space-y-24 md:space-y-36">
-        {ROWS.map((r, i) => (
-          <div key={r.label} className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
-            <div className={i % 2 ? 'md:order-2' : ''}>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#f0addd] mb-3">{r.label}</p>
-              <h3 className="text-3xl md:text-[2.6rem] font-serif tracking-tight leading-[1.1] text-slate-900">{r.title}</h3>
-              <p className="mt-4 text-lg text-slate-500 font-light leading-relaxed max-w-md">{r.text}</p>
-              {r.label === 'Private' && (
-                <p className="mt-4 text-sm text-slate-400 max-w-md">
-                  Belluh's replies are written by Google's Gemini models, which process your entries to write them.{' '}
-                  <button onClick={onShowPrivacy} className="font-bold text-slate-500 underline decoration-slate-300 underline-offset-4 hover:text-slate-800">Privacy policy</button>
-                </p>
-              )}
-            </div>
-            <div className={i % 2 ? 'md:order-1' : ''}>{r.demo}</div>
+const SLIDE_MS = 11000;
+
+// One stage, four things Belluh does: pick one on the left (or let it play through) and watch it happen on the right
+const LandingDemos: React.FC<{ onShowPrivacy: () => void }> = ({ onShowPrivacy }) => {
+  const [active, setActive] = useState(0);
+  const [auto, setAuto] = useState(true);
+  const [seen, setSeen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = box.current;
+    if (!el || typeof IntersectionObserver === 'undefined') { setSeen(true); return; }
+    const io = new IntersectionObserver(([e]) => setSeen(e.isIntersecting), { threshold: 0.25 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  useEffect(() => {
+    if (!auto || !seen || reducedMotion()) return;
+    const t = setTimeout(() => setActive(a => (a + 1) % ROWS.length), SLIDE_MS);
+    return () => clearTimeout(t);
+  }, [active, auto, seen]);
+  const pick = (i: number) => { setAuto(false); setActive(i); };
+  const row = ROWS[active];
+  return (
+    <section id="features" className="relative z-10 px-6 py-24 md:py-32 scroll-mt-24">
+      <div className="max-w-6xl mx-auto">
+        <div className="max-w-2xl mb-12 md:mb-16">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-4">What Belluh does</p>
+          <h2 className="text-4xl md:text-6xl font-serif tracking-tight leading-[1.05] text-slate-900">Not a chatbot. <span className="text-[#9bbecb]">It does things.</span></h2>
+          <p className="mt-5 text-lg md:text-xl text-slate-500 font-light leading-relaxed">Planning, remembering, reminding. Anything that reaches your partner or costs money waits for your yes.</p>
+        </div>
+
+        <div ref={box} className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-8 lg:gap-14 items-start">
+          {/* The four, as tabs: a row of chips on phones, a list with the story on laptops */}
+          <div role="tablist" aria-label="What Belluh does" className="flex lg:flex-col gap-2 overflow-x-auto no-scrollbar -mx-6 px-6 lg:mx-0 lg:px-0 lg:gap-1">
+            {ROWS.map((r, i) => (
+              <button key={r.label} role="tab" aria-selected={active === i} onClick={() => pick(i)}
+                className={`group relative shrink-0 text-left rounded-full lg:rounded-[1.5rem] transition-all duration-300 h-10 px-4 lg:h-auto lg:px-6 lg:py-5 ${active === i ? 'bg-slate-900 text-white lg:bg-white lg:text-slate-900 lg:shadow-[0_20px_50px_-24px_rgba(15,23,42,0.3)]' : 'bg-white/70 text-slate-500 lg:bg-transparent hover:text-slate-900 lg:hover:bg-white/60'}`}>
+                <span className="lg:hidden text-sm font-semibold whitespace-nowrap">{r.label}</span>
+                <span className="hidden lg:block">
+                  <span className={`block text-[11px] font-bold uppercase tracking-[0.16em] ${active === i ? 'text-[#e58fc9]' : 'text-slate-400'}`}>{r.label}</span>
+                  <span className={`mt-1.5 block font-serif text-2xl tracking-tight ${active === i ? 'text-slate-900' : 'text-slate-500 group-hover:text-slate-800'}`}>{r.title}</span>
+                  {active === i && <span className="mt-2 block text-[15px] font-light leading-relaxed text-slate-500 animate-fade-in">{r.text}</span>}
+                  {active === i && r.label === 'Private' && (
+                    <span className="mt-3 block text-sm text-slate-400">Replies are written by Google's Gemini models, which process your entries to write them. <span role="link" tabIndex={0} onClick={e => { e.stopPropagation(); onShowPrivacy(); }} className="font-semibold text-slate-500 underline decoration-slate-300 underline-offset-4 hover:text-slate-800 cursor-pointer">Privacy policy</span></span>
+                  )}
+                  {/* Time left on this one, while it plays through on its own */}
+                  {active === i && auto && seen && (
+                    <span className="absolute left-0 top-6 bottom-6 w-[3px] rounded-full bg-[#CDE9F2] overflow-hidden" aria-hidden="true">
+                      <span key={active} className="block w-full bg-[#9bbecb] rounded-full" style={{ height: '100%', transformOrigin: 'top', animation: `demoFill ${SLIDE_MS}ms linear both` }} />
+                    </span>
+                  )}
+                </span>
+              </button>
+            ))}
           </div>
-        ))}
+
+          <div>
+            <p className="lg:hidden mb-5 text-[15px] font-light leading-relaxed text-slate-500"><span className="font-serif text-xl text-slate-900 block mb-1">{row.title}</span>{row.text}</p>
+            <div role="tabpanel" aria-label={row.label} className="relative">
+              <div className="absolute -inset-6 md:-inset-10 rounded-[3rem] bg-gradient-to-br from-[#CDE9F2]/70 via-white/0 to-[#f0addd]/30 blur-3xl pointer-events-none" />
+              <div className="relative rounded-[2rem] bg-white border border-white shadow-[0_40px_100px_-40px_rgba(15,23,42,0.35)] overflow-hidden">
+                <div className="flex items-center gap-2.5 px-6 h-14 bg-[#F8FAFB]">
+                  <BelluhOrb size={22} />
+                  <span className="text-sm font-bold text-slate-900">Belluh</span>
+                  <span className="ml-auto text-xs font-semibold text-slate-400">{row.where}</span>
+                </div>
+                <div key={active} className="animate-fade-in">{row.demo()}</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </section>
-);
+      <style>{`@keyframes demoFill { from { transform: scaleY(0); } to { transform: scaleY(1); } }`}</style>
+    </section>
+  );
+};
 
 export default LandingDemos;

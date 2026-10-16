@@ -106,12 +106,12 @@ const getRelativeDisplay = (date: Date, type: 'past' | 'future' | 'auto') => {
 const FactCard = ({ id, label, date, setDate, isEditing, icon: Icon, theme, config, onToggleHidden, onCycleSize, mode = 'past', onAdd }: any) => {
     // ... (same as previous)
     const themes: any = {
-        blue: "bg-blue-50 border-blue-100 text-blue-900 hover:shadow-blue-100/50",
-        rose: "bg-rose-50 border-rose-100 text-rose-900 hover:shadow-rose-100/50",
-        purple: "bg-purple-50 border-purple-100 text-purple-900 hover:shadow-purple-100/50",
-        amber: "bg-amber-50 border-amber-100 text-amber-900 hover:shadow-amber-100/50",
-        orange: "bg-orange-50 border-orange-100 text-orange-900 hover:shadow-orange-100/50",
-        slate: "bg-slate-900 border-slate-800 text-white hover:shadow-slate-200/50"
+        blue: "bg-[#eef7fa] border-[#CDE9F2] text-[#2f6578] hover:shadow-[#CDE9F2]/60",
+        rose: "bg-[#fdf0f8] border-[#f7d8ee] text-[#9d3f78] hover:shadow-[#f7d8ee]/60",
+        purple: "bg-white border-[#CDE9F2] text-[#2f6578] hover:shadow-[#CDE9F2]/60",
+        amber: "bg-[#fdf0f8] border-[#f7d8ee] text-[#9d3f78] hover:shadow-[#f7d8ee]/60",
+        orange: "bg-[#eef7fa] border-[#CDE9F2] text-[#2f6578] hover:shadow-[#CDE9F2]/60",
+        slate: "bg-gradient-to-br from-[#3f7486] to-[#9bbecb] border-transparent text-white hover:shadow-[#9bbecb]/50"
     };
     const currentTheme = themes[theme] || themes.blue;
     let sizeClasses = "col-span-1 h-48"; 
@@ -155,7 +155,7 @@ const FactCard = ({ id, label, date, setDate, isEditing, icon: Icon, theme, conf
 
 const StatCard = ({ id, label, value, subtext, icon: Icon, theme, config, onToggleHidden, onCycleSize, isEditing }: any) => {
     // ... (same as previous)
-    const themes: any = { slate: "bg-slate-900 text-white shadow-xl shadow-slate-200/50", white: "bg-white text-slate-900 border border-slate-100 shadow-sm" };
+    const themes: any = { slate: "bg-gradient-to-br from-[#3f7486] to-[#9bbecb] text-white shadow-xl shadow-[#9bbecb]/30", white: "bg-white text-slate-900 border border-[#f7d8ee] shadow-sm" };
     const currentTheme = themes[theme] || themes.white;
     let sizeClasses = "col-span-1 h-48"; 
     if (config.size === 'wide') sizeClasses = "col-span-2 h-48";
@@ -167,7 +167,7 @@ const StatCard = ({ id, label, value, subtext, icon: Icon, theme, config, onTogg
              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/10 to-transparent rounded-bl-full pointer-events-none"></div>
              <Icon className={`absolute -bottom-4 -right-4 w-24 h-24 transition-all duration-500 rotate-12 ${theme === 'slate' ? 'opacity-[0.05] text-white' : 'opacity-[0.05] text-slate-900'}`} />
              <div className="relative z-10 flex justify-between items-start">
-                <span className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'slate' ? 'text-slate-400' : 'text-slate-400'}`}>{label}</span>
+                <span className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'slate' ? 'text-white/80' : 'text-slate-400'}`}>{label}</span>
                 {isEditing && (
                     <div className="flex gap-1">
                         <button onClick={() => onCycleSize(id)} className="p-1.5 bg-white/20 hover:bg-white/30 rounded-full text-current transition-colors"><MoveDiagonal size={12} /></button>
@@ -177,7 +177,7 @@ const StatCard = ({ id, label, value, subtext, icon: Icon, theme, config, onTogg
              </div>
              <div className="relative z-10">
                  <div className={`${config.size === 'big' || config.size === 'wide' ? 'text-5xl md:text-6xl' : 'text-4xl md:text-5xl'} font-serif font-medium tracking-tighter leading-none mb-2`}>{value}</div>
-                 <div className={`text-xs font-bold uppercase tracking-wider ${theme === 'slate' ? 'text-slate-400' : 'text-slate-400'}`}>{subtext}</div>
+                 <div className={`text-xs font-bold uppercase tracking-wider ${theme === 'slate' ? 'text-white/80' : 'text-slate-400'}`}>{subtext}</div>
              </div>
         </div>
     );
@@ -491,9 +491,9 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                       {activeCircle && (
                           <div className="mb-12 relative group/facts">
                               <div className="flex items-center justify-between mb-6">
-                                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Relationship Facts</h3>
-                                  <button onClick={() => isEditingFacts ? saveFacts() : setIsEditingFacts(true)} className={`text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-all flex items-center gap-2 ${isEditingFacts ? 'bg-slate-900 text-white shadow-lg scale-105' : 'bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50'}`}>
-                                      {isEditingFacts ? <><Check size={14} /> Done</> : <><Edit3 size={14} /> Customize</>}
+                                  <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] pl-1">Your dates</h3>
+                                  <button onClick={() => isEditingFacts ? saveFacts() : setIsEditingFacts(true)} className={`h-9 px-4 rounded-full text-sm font-semibold transition-colors inline-flex items-center gap-1.5 ${isEditingFacts ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}>
+                                      {isEditingFacts ? <><Check size={15} /> Done</> : <><Edit3 size={15} /> Edit</>}
                                   </button>
                               </div>
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-auto">
@@ -536,25 +536,22 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Unlock 2030</p>
                               </div>
                           </div>
-                          <div onClick={() => onViewArtifact('reel')} className="bg-slate-900 p-6 rounded-[2rem] shadow-lg flex flex-col aspect-square justify-between cursor-pointer hover:scale-[1.02] transition-transform">
+                          <div onClick={() => onViewArtifact('reel')} className="bg-gradient-to-br from-[#3f7486] to-[#9bbecb] p-6 rounded-[2rem] shadow-lg shadow-[#9bbecb]/30 flex flex-col aspect-square justify-between cursor-pointer hover:scale-[1.02] transition-transform">
                               <Film size={24} className="text-white" />
                               <div>
                                   <h4 className="font-serif text-lg text-white font-bold">Chapter Reel</h4>
-                                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Highlights</p>
+                                  <p className="text-[10px] text-white/75 font-bold uppercase tracking-widest mt-1">Highlights</p>
                               </div>
                           </div>
-                          <div onClick={handleGenerateReceipt} className="col-span-2 bg-[#f0addd] p-6 rounded-[2rem] shadow-lg flex items-center justify-between cursor-pointer hover:bg-[#e57ec3] transition-colors relative overflow-hidden group">
-                               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div>
+                          <div onClick={handleGenerateReceipt} className="col-span-2 bg-[#fdf0f8] border border-[#f7d8ee] p-6 rounded-[2rem] flex items-center justify-between cursor-pointer hover:shadow-lg hover:shadow-[#f7d8ee]/60 transition-shadow relative overflow-hidden group">
                                <div className="relative z-10 flex items-center gap-4">
-                                   <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-sm">
-                                       <Receipt size={24} />
-                                   </div>
-                                   <div className="text-white">
+                                   <Receipt size={24} className="text-[#e58fc9] shrink-0" />
+                                   <div className="text-[#9d3f78]">
                                        <h4 className="font-serif text-xl font-bold">Print Receipt</h4>
-                                       <p className="text-xs font-medium opacity-80">Generate your relationship invoice</p>
+                                       <p className="text-xs font-medium text-[#9d3f78]/70">Your relationship, itemized</p>
                                    </div>
                                </div>
-                               <ArrowRight className="text-white" size={20} />
+                               <ArrowRight className="text-[#e58fc9] group-hover:translate-x-0.5 transition-transform" size={20} />
                           </div>
                       </div>
                   </div>
