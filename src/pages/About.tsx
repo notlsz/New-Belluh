@@ -151,28 +151,31 @@ const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin, onShowLega
       </div>
 
       <main>
-        {/* Hero */}
-        <section className="relative overflow-x-clip px-6 md:px-8 pt-32 md:pt-44 pb-20 md:pb-28">
-          <div className="pointer-events-none absolute -top-40 -left-40 w-[42rem] h-[42rem] rounded-full bg-[#CDE9F2]/40 blur-[120px]" />
-          <div className="pointer-events-none absolute top-20 -right-40 w-[36rem] h-[36rem] rounded-full bg-[#f0addd]/20 blur-[120px]" />
-          <div className="relative max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] items-center gap-16 lg:gap-12">
-            <div className="animate-slide-up">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-6">Our why</p>
-              <h1 className="font-serif tracking-tight leading-[1.02] text-[3.25rem] sm:text-7xl lg:text-[5.25rem]">
-                <span className="text-[#9bbecb] lg:whitespace-nowrap">The supermarket</span><br />
-                <span className="italic text-[#f0addd]">moment.</span>
-              </h1>
-              <p className="mt-8 max-w-xl text-xl md:text-2xl font-light leading-relaxed text-slate-500">
-                Why we're building a place to remember, in an age of perfect documentation.
-              </p>
-              <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-2 text-sm text-slate-400">
-                <span>Written by <span className="text-slate-700 font-medium">Jimmy</span></span>
-                <span>6 minute read</span>
-              </div>
+        {/* Hero: the original Supermarket Moment opening */}
+        <section className="px-6 md:px-12 pt-32 md:pt-40">
+          <div className="max-w-3xl mx-auto mb-16 md:mb-20">
+            <div className="flex items-center gap-3 mb-8 animate-slide-up">
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Founding Story</span>
             </div>
-            <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-              <Receipt />
+            <h1 className="text-5xl md:text-7xl font-semibold tracking-tighter leading-[1.05] mb-8 text-[#1a1a1a] animate-slide-up" style={{ animationDelay: '0.1s' }}>
+              The Supermarket Moment.
+            </h1>
+            <p className="text-xl md:text-2xl text-slate-600 font-normal leading-relaxed max-w-2xl animate-slide-up" style={{ animationDelay: '0.2s' }}>
+              Why we are building tools for remembrance in an age of perfect documentation.
+            </p>
+          </div>
+
+          {/* Visual anchor, drifting slowly as you scroll */}
+          <div className="max-w-4xl mx-auto mb-24 md:mb-32 overflow-hidden rounded-[2px] animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <div className="aspect-[21/9] w-full overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=2000&auto=format&fit=crop"
+                alt="Abstract blurred motion in a supermarket"
+                className="w-full h-full object-cover grayscale contrast-[1.2] opacity-90 scale-105 transition-transform duration-[2s] hover:scale-110"
+                style={{ transform: `scale(${1 + scrollProgress * 0.1})` }}
+              />
             </div>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-4 text-center">Acme Market, C. 2025</p>
           </div>
         </section>
 
