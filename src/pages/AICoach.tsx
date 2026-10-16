@@ -327,7 +327,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
     return <UsThread partnerName={partnerName} myName={userName} header={
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-2">
-          {!inSheet && <><span className="text-sm font-bold font-serif text-[#9bbecb]">Belluh</span><span className="text-belluh-200">/</span></>}{spaceSwitch}
+          {!inSheet && <><span className="lg:hidden text-sm font-bold font-serif text-[#9bbecb]">Belluh</span><span className="lg:hidden text-belluh-200">/</span></>}{spaceSwitch}
           {closeBtn}
         </div>
       </div>
@@ -341,8 +341,8 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-transparent">
          <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2 p-1.5 rounded-lg">
-                {!inSheet && <><span className="text-sm font-bold font-serif text-[#9bbecb]">Belluh</span>
-                <span className="text-belluh-200">/</span></>}
+                {!inSheet && <><span className="lg:hidden text-sm font-bold font-serif text-[#9bbecb]">Belluh</span>
+                <span className="lg:hidden text-belluh-200">/</span></>}
                 {mode === 'agent' && partnerName ? spaceSwitch : (
                 <span className="text-sm font-medium text-slate-500">
                   {mode === 'agent' ? 'Just you' : `${detectedPersona} Mode`}
@@ -350,12 +350,10 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
             </div>
             <div className="flex items-center gap-2">
               {isConflictMode && (
-                  <div className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-[10px] font-bold uppercase tracking-wider animate-pulse">
-                      Conflict Mediator Active
-                  </div>
+                  <div className="px-3 py-1 bg-[#fdf0f8] text-[#b0457f] rounded-full text-xs font-semibold">Mediating</div>
               )}
               {mode === 'agent' && (
-                <button onClick={openMemories} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-slate-50">
+                <button onClick={openMemories} className="flex items-center gap-1.5 h-9 px-3 rounded-full text-[13px] font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-50">
                   <Brain size={14} /> Memory
                 </button>
               )}
@@ -396,7 +394,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                  );
                  if (msg.role === 'user') return (
                    <div key={msg.id} className="group animate-slide-up flex justify-end">
-                     <div className={`max-w-[85%] md:max-w-[80%] rounded-3xl p-5 md:p-6 text-[16px] leading-relaxed ${msg.meta?.mode === 'mediate' ? 'bg-rose-50 text-slate-800' : 'bg-slate-100 text-slate-800'}`}>
+                     <div className={`max-w-[85%] md:max-w-[80%] rounded-3xl p-5 md:p-6 text-[16px] leading-relaxed ${msg.meta?.mode === 'mediate' ? 'bg-[#fdf0f8] text-slate-800' : 'bg-slate-100 text-slate-800'}`}>
                        {(msg.meta?.photo_preview || (msg.meta?.photo && photoLinks.get(msg.meta.photo))) && (
                          <img src={msg.meta.photo_preview || photoLinks.get(msg.meta.photo)} alt="Your photo" className="mb-2 max-h-64 w-auto rounded-2xl object-cover" />
                        )}
@@ -409,10 +407,10 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                    <div key={msg.id} className="group animate-slide-up flex gap-4 md:gap-6">
                      <BelluhAvatar />
                      <div className="max-w-[85%] md:max-w-[80%]">
-                       {msg.meta?.entry_id && <p className="text-xs font-bold text-slate-300 mb-1">About your latest entry</p>}
-                       {msg.meta?.kind === 'weekly' && <p className="text-xs font-bold text-slate-300 mb-1">Your week, from Belluh</p>}
-                       {msg.meta?.kind === 'offer' && <p className="text-xs font-bold text-slate-300 mb-1">Belluh noticed</p>}
-                       {msg.meta?.kind === 'remind' && <p className="text-xs font-bold text-slate-300 mb-1">Reminder you asked for</p>}
+                       {msg.meta?.entry_id && <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6] mb-1.5">About your latest entry</p>}
+                       {msg.meta?.kind === 'weekly' && <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6] mb-1.5">Your week, from Belluh</p>}
+                       {msg.meta?.kind === 'offer' && <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6] mb-1.5">Belluh noticed</p>}
+                       {msg.meta?.kind === 'remind' && <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6] mb-1.5">Reminder you asked for</p>}
                        <p className="font-serif text-lg leading-relaxed text-slate-900 whitespace-pre-wrap">{revealIds.has(msg.id) ? <Reveal text={msg.body} onTick={() => messagesEndRef.current?.scrollIntoView({ block: 'end' })} /> : msg.body}</p>
                        {Array.isArray(msg.meta?.saved) && msg.meta.saved.length > 0 && (
                          <button onClick={openMemories} className="mt-2 flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-700 text-left">
@@ -463,7 +461,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                     <div className="flex gap-4 md:gap-6 animate-fade-in pl-0">
                         <BelluhAvatar thinking />
                         <div className="flex items-center mt-2">
-                            <span className="text-xs font-bold text-slate-400">{agentMessages[agentMessages.length - 1]?.meta?.photo_preview ? 'Looking at your photo' : isConflictMode ? 'Finding the words' : 'Thinking'}</span>
+                            <span className="text-sm text-slate-400 italic font-serif">{agentMessages[agentMessages.length - 1]?.meta?.photo_preview ? 'Looking at your photo' : isConflictMode ? 'Finding the words' : 'Thinking'}</span>
                         </div>
                     </div>
                 )}
@@ -473,21 +471,21 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
        </div>
 
        {/* Input Area */}
-       <div className={`fixed bottom-0 left-0 right-0 p-4 ${inSheet ? 'pb-6' : 'pb-28'} bg-gradient-to-t from-white via-white to-transparent pt-12 z-40`}>
+       <div className={`fixed bottom-0 left-0 right-0 p-4 ${inSheet ? 'pb-6' : 'pb-28 lg:pb-8 lg:left-64'} bg-gradient-to-t from-white via-white to-transparent pt-12 z-40`}>
             <div className="max-w-2xl mx-auto relative flex flex-col">
-                <div className="flex flex-wrap items-center gap-2 mb-3 pl-1">
+                <div className="flex items-center gap-2 mb-3 -mx-4 px-4 overflow-x-auto no-scrollbar">
                     {starters.map(t => (
                         <button key={t} onClick={() => sendNow(t)} disabled={isTyping}
-                            className="shrink-0 py-1.5 px-4 rounded-full bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:border-[#9bbecb] hover:text-[#3f7486] disabled:opacity-50 shadow-sm">
+                            className="shrink-0 h-9 px-4 rounded-full bg-white border border-slate-200 text-[13px] font-semibold text-slate-700 whitespace-nowrap hover:border-[#9bbecb] hover:text-[#3f7486] disabled:opacity-50 transition-colors">
                             {t}
                         </button>
                     ))}
                     <button
                         onClick={() => setIsConflictMode(!isConflictMode)}
-                        className={`shrink-0 py-1.5 px-4 rounded-full transition-all duration-300 flex items-center gap-2 shadow-sm border text-xs font-bold uppercase tracking-wide ${isConflictMode ? 'bg-rose-50 text-rose-600 border-rose-100 ring-2 ring-rose-50 translate-y-1' : 'bg-white text-slate-400 border-slate-200 hover:text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
+                        aria-pressed={isConflictMode} className={`shrink-0 h-9 px-4 rounded-full transition-colors duration-300 inline-flex items-center gap-2 border text-[13px] font-semibold whitespace-nowrap ${isConflictMode ? 'bg-[#fdf0f8] text-[#b0457f] border-[#f0addd]' : 'bg-white text-slate-500 border-slate-200 hover:text-slate-800 hover:border-slate-300'}`}
                     >
-                        <Wand2 size={14} className={isConflictMode ? "animate-pulse" : ""} />
-                        <span>{isConflictMode ? 'Mediation Active' : 'Mediate Conflict'}</span>
+                        <Wand2 size={14} />
+                        <span>{isConflictMode ? 'Mediating, tap to stop' : 'Mediate conflict'}</span>
                     </button>
                 </div>
 
@@ -498,7 +496,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                     </div>
                 )}
                 <input ref={photoInput} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) setPhoto({ file: f, preview: URL.createObjectURL(f) }); e.target.value = ''; }} />
-                <div className={`w-full relative rounded-[2rem] shadow-2xl transition-all duration-300 border flex items-center p-2 pr-3 min-h-[64px] bg-white ${isConflictMode ? 'shadow-rose-100/50 border-rose-100' : 'shadow-slate-200/50 border-slate-200 focus-within:shadow-belluh-200/60 focus-within:border-belluh-200'}`}>
+                <div className={`w-full relative rounded-[2rem] transition-all duration-300 border flex items-center p-2 pr-2.5 min-h-[60px] bg-white shadow-[0_14px_40px_-18px_rgba(15,23,42,0.25)] ${isConflictMode ? 'border-[#f0addd]' : 'border-slate-200 focus-within:border-[#9bbecb]'}`}>
                     <textarea
                         value={chatInput}
                         onChange={(e) => { setChatInput(e.target.value); belluh.key(); }}
@@ -524,8 +522,8 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                     </button>
                 </div>
 
-                <p className="text-center text-[10px] text-slate-300 mt-3 font-medium w-full">
-                    {mode === 'agent' && partnerName ? `Belluh never sees ${partnerName}'s private entries. ` : ''}Belluh can make mistakes. Trust your heart.
+                <p className="text-center text-[11px] text-slate-400 mt-3 w-full">
+                    {mode === 'agent' && partnerName ? `Belluh never sees ${partnerName}'s private entries, and it can make mistakes.` : 'Belluh can make mistakes.'}
                 </p>
             </div>
        </div>

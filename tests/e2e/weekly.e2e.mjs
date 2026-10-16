@@ -45,7 +45,7 @@ const MAYA = '11111111-1111-1111-1111-111111111111', DAN = '22222222-2222-2222-2
   check('Belluh tab shows a dot for the new weekly message', await p.locator('[aria-label="New note"]').count() > 0);
   await p.getByRole('button', { name: /^(Belluh|Us)$/ }).click(); await p.waitForTimeout(3000);
   const t = await p.locator('body').innerText();
-  check('Belluh thread shows the Sunday insight', t.includes('Your week, from Belluh') && t.includes('Dinner came up'));
+  check('Belluh thread shows the Sunday insight', /your week, from belluh/i.test(t) && t.includes('Dinner came up'));
   check('The check-in card sits under it', await p.getByText('This week, together').count() === 1);
   await p.getByText('Your week, from Belluh').first().scrollIntoViewIfNeeded(); await p.waitForTimeout(400);
   await p.screenshot({ path: `${OUT}/w3-maya-belluh-thread.png` });

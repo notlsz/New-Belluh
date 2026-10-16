@@ -1090,7 +1090,7 @@ const App: React.FC = () => {
   if (isOnboarding) return <>{inviteModal}<Onboarding onComplete={handleOnboardingComplete} /></>;
 
   return (
-    <div className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in">
+    <div className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in lg:pl-64">
       {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} partnerName={user.partnerName} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} onAskBelluh={askBelluh} onOpenBelluh={() => askBelluh('')} />}
       {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => handleCompose(prompt)} initialSpace={hasPartner ? tabSpace : undefined} />}
       {belluhSheet && (
@@ -1103,7 +1103,7 @@ const App: React.FC = () => {
       {notification && <Toast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
       {inviteModal}
       {belluhReply && currentTab !== 'ai-coach' && !isComposeOpen && (
-        <div className="fixed bottom-28 left-0 right-0 px-6 z-[55] flex justify-center animate-slide-up">
+        <div className="fixed bottom-28 left-0 right-0 px-6 z-[55] flex justify-center animate-slide-up lg:bottom-8 lg:left-64">
           <div className="max-w-[360px] w-full bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-900/10 border border-white p-4 flex gap-3">
             <div className="shrink-0 pt-0.5"><BelluhOrb size={24} /></div>
             <button className="text-left flex-1" onClick={() => { setBelluhReply(null); setCurrentTab('ai-coach'); }}>
@@ -1116,7 +1116,7 @@ const App: React.FC = () => {
         </div>
       )}
       <TabBar currentTab={currentTab} usTab={hasPartner} badges={{ 'ai-coach': unreadNotes > 0 || newFromBelluh }} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); if (tab === 'ai-coach') { setTabSpace(unreadNotes > 0 || newFromBelluh ? 'me' : 'us'); setUnreadNotes(0); setNewFromBelluh(false); setBelluhReply(null); } setCurrentTab(tab); }} onCompose={() => handleCompose()} />
-      {isComposeOpen && <div className="fixed inset-0 z-[60] bg-paper animate-slide-up"><button onClick={() => setIsComposeOpen(false)} className="absolute top-6 right-6 w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 z-50 transition-colors"><X size={20} /></button><Journal onAddEntry={handleAddEntry} partnerName={user.partnerName || 'Partner'} onTriggerPremium={handleTriggerPremium} initialPrompt={composePrompt} userName={user.name} partnerHasEntry={partnerHasEntry} /></div>}
+      {isComposeOpen && <div className="fixed inset-0 z-[60] bg-paper animate-slide-up"><button onClick={() => setIsComposeOpen(false)} aria-label="Close" className="absolute top-5 right-4 w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 z-50 transition-colors"><X size={22} /></button><Journal onAddEntry={handleAddEntry} partnerName={user.partnerName || 'Partner'} onTriggerPremium={handleTriggerPremium} initialPrompt={composePrompt} userName={user.name} partnerHasEntry={partnerHasEntry} /></div>}
       
       {showIntro && <IntroGuide onClose={() => setShowIntro(false)} />}
 

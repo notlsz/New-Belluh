@@ -102,43 +102,83 @@ const getRelativeDisplay = (date: Date, type: 'past' | 'future' | 'auto') => {
     return `${Math.abs(diffDays)} Days Ago`;
 };
 
-// --- Relationship facts: a plain list of dates and two big numbers, no tiles ---
-const FactCard = ({ id, label, date, setDate, isEditing, icon: Icon, config, onToggleHidden, mode = 'past', onAdd }: any) => {
+// --- FactCard & StatCard Components (Unchanged) ---
+const FactCard = ({ id, label, date, setDate, isEditing, icon: Icon, theme, config, onToggleHidden, onCycleSize, mode = 'past', onAdd }: any) => {
+    // ... (same as previous)
+    const themes: any = {
+        blue: "bg-blue-50 border-blue-100 text-blue-900 hover:shadow-blue-100/50",
+        rose: "bg-rose-50 border-rose-100 text-rose-900 hover:shadow-rose-100/50",
+        purple: "bg-purple-50 border-purple-100 text-purple-900 hover:shadow-purple-100/50",
+        amber: "bg-amber-50 border-amber-100 text-amber-900 hover:shadow-amber-100/50",
+        orange: "bg-orange-50 border-orange-100 text-orange-900 hover:shadow-orange-100/50",
+        slate: "bg-slate-900 border-slate-800 text-white hover:shadow-slate-200/50"
+    };
+    const currentTheme = themes[theme] || themes.blue;
+    let sizeClasses = "col-span-1 h-48"; 
+    if (config.size === 'wide') sizeClasses = "col-span-2 h-48";
+    if (config.size === 'tall') sizeClasses = "col-span-1 h-[25rem] row-span-2";
+    if (config.size === 'big') sizeClasses = "col-span-2 h-[25rem] row-span-2";
     if (config.hidden && !isEditing) return null;
-    const rel = getRelativeDisplay(date, mode);
-    const short = (r: string) => r.replace(' years ago', ' yrs ago').replace(' year ago', ' yr ago').replace(' months ago', ' mo ago');
     return (
-        <div className={`flex items-center gap-4 py-4 transition-opacity ${config.hidden ? 'opacity-40' : ''}`}>
-            <Icon size={18} className="shrink-0 text-[#9bbecb]" />
-            <span className="flex-1 min-w-0 text-[11px] font-bold uppercase tracking-widest text-slate-400">{label}</span>
-            {isEditing ? (
-                <>
-                    <input type="date" aria-label={label} value={toInput(date)} onChange={(e) => setDate(fromInput(e.target.value))} className="min-w-0 bg-transparent border-none text-right font-serif text-lg text-slate-900 outline-none p-0 focus:ring-0 cursor-pointer" />
-                    <button onClick={() => onToggleHidden(id)} aria-label={config.hidden ? "Show" : "Hide"} title={config.hidden ? `Show ${label}` : `Hide ${label}`} className="shrink-0 p-1.5 text-slate-400 hover:text-slate-900 transition-colors">{config.hidden ? <EyeOff size={16} /> : <Eye size={16} />}</button>
-                </>
-            ) : !isSet(date) ? (
-                <button type="button" onClick={onAdd} className="font-serif text-lg text-slate-400 hover:text-slate-900 transition-colors">Add date</button>
-            ) : (
-                <div className="text-right">
-                    {/* Past dates lead with the day itself; upcoming ones lead with the countdown */}
-                    <p className="font-serif text-xl text-slate-900 leading-tight">{mode === 'past' ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : rel}</p>
-                    <p className="text-sm text-slate-400">{mode === 'past' ? `${date.getFullYear()} (${short(rel)})` : date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
-                </div>
-            )}
+        <div className={`relative overflow-hidden rounded-[2rem] p-6 flex flex-col justify-between transition-all duration-500 hover:scale-[1.02] hover:shadow-xl border ${currentTheme} ${sizeClasses} group ${config.hidden ? 'opacity-50 grayscale border-dashed' : ''}`}>
+            <div className="absolute -right-6 -top-6 w-32 h-32 bg-white/20 rounded-full blur-2xl transition-all group-hover:scale-150"></div>
+            <Icon className="absolute -bottom-6 -right-6 w-32 h-32 opacity-[0.08] group-hover:opacity-[0.15] transition-all duration-500 rotate-12" />
+            <div className="relative z-10 flex justify-between items-start">
+                <span className="text-[10px] font-bold uppercase tracking-widest opacity-70 flex items-center gap-2">{label} {isEditing && <div className="w-1.5 h-1.5 bg-current rounded-full animate-pulse"></div>}</span>
+                {isEditing && (
+                    <div className="flex gap-1">
+                        <button onClick={() => onCycleSize(id)} className="p-1.5 bg-black/10 hover:bg-black/20 rounded-full text-current transition-colors"><MoveDiagonal size={12} /></button>
+                        <button onClick={() => onToggleHidden(id)} className="p-1.5 bg-black/10 hover:bg-black/20 rounded-full text-current transition-colors">{config.hidden ? <EyeOff size={12} /> : <Eye size={12} />}</button>
+                    </div>
+                )}
+            </div>
+            <div className="relative z-10">
+                {isEditing ? (
+                    <div className="bg-white/30 backdrop-blur-md p-2 rounded-xl border border-white/20 shadow-sm mt-2">
+                        <input type="date" aria-label={label} value={toInput(date)} onChange={(e) => setDate(fromInput(e.target.value))} className="w-full bg-transparent border-none text-lg font-bold outline-none text-inherit p-0 focus:ring-0 cursor-pointer font-serif"/>
+                    </div>
+                ) : (
+                    !isSet(date) ? (
+                        <button type="button" onClick={onAdd} className="text-lg font-serif font-medium opacity-60 hover:opacity-100 underline-offset-4 hover:underline">Add date</button>
+                    ) : (
+                    <>
+                        {/* Past dates lead with the day itself; upcoming ones lead with the countdown */}
+                        <div className={`${config.size === 'big' || config.size === 'wide' ? 'text-4xl md:text-5xl' : 'text-3xl md:text-4xl'} font-serif font-medium tracking-tight leading-tight mb-1`}>{mode === 'past' ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : getRelativeDisplay(date, mode)}</div>
+                        <div className="text-sm font-medium opacity-70">{mode === 'past' ? `${date.getFullYear()} (${getRelativeDisplay(date, mode).replace(' years ago', ' yrs ago').replace(' year ago', ' yr ago').replace(' months ago', ' mo ago')})` : date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+                    </>
+                    )
+                )}
+            </div>
         </div>
     );
 };
 
-const StatCard = ({ id, label, value, subtext, config, onToggleHidden, isEditing }: any) => {
+const StatCard = ({ id, label, value, subtext, icon: Icon, theme, config, onToggleHidden, onCycleSize, isEditing }: any) => {
+    // ... (same as previous)
+    const themes: any = { slate: "bg-slate-900 text-white shadow-xl shadow-slate-200/50", white: "bg-white text-slate-900 border border-slate-100 shadow-sm" };
+    const currentTheme = themes[theme] || themes.white;
+    let sizeClasses = "col-span-1 h-48"; 
+    if (config.size === 'wide') sizeClasses = "col-span-2 h-48";
+    if (config.size === 'tall') sizeClasses = "col-span-1 h-[25rem] row-span-2";
+    if (config.size === 'big') sizeClasses = "col-span-2 h-[25rem] row-span-2";
     if (config.hidden && !isEditing) return null;
     return (
-        <div className={`transition-opacity ${config.hidden ? 'opacity-40' : ''}`}>
-            <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                {label}
-                {isEditing && <button onClick={() => onToggleHidden(id)} aria-label={config.hidden ? "Show" : "Hide"} title={config.hidden ? `Show ${label}` : `Hide ${label}`} className="p-1 text-slate-400 hover:text-slate-900 transition-colors">{config.hidden ? <EyeOff size={14} /> : <Eye size={14} />}</button>}
-            </p>
-            <p className="mt-2 font-serif text-5xl md:text-6xl tracking-tight text-slate-900 leading-none">{value}</p>
-            <p className="mt-2 text-sm text-slate-400">{subtext}</p>
+        <div className={`relative overflow-hidden rounded-[2rem] p-6 flex flex-col justify-between transition-all duration-500 hover:scale-[1.02] hover:shadow-xl ${currentTheme} ${sizeClasses} group ${config.hidden ? 'opacity-50 grayscale border-dashed border-2 border-slate-300' : ''}`}>
+             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/10 to-transparent rounded-bl-full pointer-events-none"></div>
+             <Icon className={`absolute -bottom-4 -right-4 w-24 h-24 transition-all duration-500 rotate-12 ${theme === 'slate' ? 'opacity-[0.05] text-white' : 'opacity-[0.05] text-slate-900'}`} />
+             <div className="relative z-10 flex justify-between items-start">
+                <span className={`text-[10px] font-bold uppercase tracking-widest ${theme === 'slate' ? 'text-slate-400' : 'text-slate-400'}`}>{label}</span>
+                {isEditing && (
+                    <div className="flex gap-1">
+                        <button onClick={() => onCycleSize(id)} className="p-1.5 bg-white/20 hover:bg-white/30 rounded-full text-current transition-colors"><MoveDiagonal size={12} /></button>
+                        <button onClick={() => onToggleHidden(id)} className="p-1.5 bg-white/20 hover:bg-white/30 rounded-full text-current transition-colors">{config.hidden ? <EyeOff size={12} /> : <Eye size={12} />}</button>
+                    </div>
+                )}
+             </div>
+             <div className="relative z-10">
+                 <div className={`${config.size === 'big' || config.size === 'wide' ? 'text-5xl md:text-6xl' : 'text-4xl md:text-5xl'} font-serif font-medium tracking-tighter leading-none mb-2`}>{value}</div>
+                 <div className={`text-xs font-bold uppercase tracking-wider ${theme === 'slate' ? 'text-slate-400' : 'text-slate-400'}`}>{subtext}</div>
+             </div>
         </div>
     );
 };
@@ -361,16 +401,12 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
 
   return (
     <div className="pb-32 pt-10 px-0 max-w-4xl mx-auto min-h-screen bg-paper">
-      <div className="px-6 flex justify-end mb-8">
-          <button onClick={() => setShowSettingsModal(true)} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 shadow-soft border border-slate-50"><Settings size={20} /></button>
-      </div>
-      
-      {/* ... rest of the component (omitted for brevity, assume unchanged logic) ... */}
-      <div className="px-6 mb-10 flex justify-center">
-          <div className="bg-white border border-slate-100 p-1 rounded-full flex w-[180px] shadow-sm">
-              <button onClick={() => setActiveTab('us')} className={`flex-1 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all ${activeTab === 'us' ? 'bg-slate-900 text-white' : 'text-slate-400'}`}>Us</button>
-              <button onClick={() => setActiveTab('me')} className={`flex-1 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all ${activeTab === 'me' ? 'bg-slate-900 text-white' : 'text-slate-400'}`}>Me</button>
+      <div className="px-6 mb-10 flex items-center justify-between">
+          <div role="tablist" aria-label="Whose page" className="p-1 rounded-full bg-slate-100/80 flex text-sm font-semibold">
+              <button role="tab" aria-selected={activeTab === 'us'} onClick={() => setActiveTab('us')} className={`h-9 px-5 rounded-full transition-all ${activeTab === 'us' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Us</button>
+              <button role="tab" aria-selected={activeTab === 'me'} onClick={() => setActiveTab('me')} className={`h-9 px-5 rounded-full transition-all ${activeTab === 'me' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Me</button>
           </div>
+          <button onClick={() => setShowSettingsModal(true)} aria-label="Settings" className="w-11 h-11 -mr-2 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"><Settings size={21} /></button>
       </div>
 
       {pendingInvites && pendingInvites.length > 0 && (
@@ -426,29 +462,30 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                           <div className="relative flex items-center justify-center">
                               {activeMembers.map((member, index) => (
                                   <React.Fragment key={member.id}>
-                                      <div className={`w-28 h-28 rounded-full border-[5px] border-white shadow-apple overflow-hidden bg-white z-[${10-index}] ${index > 0 ? '-ml-6' : ''}`}>
+                                      <div className={`relative w-24 h-24 md:w-28 md:h-28 rounded-full ring-[5px] ring-[#fcfcfc] shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] overflow-hidden bg-[#eef7fa] ${index > 0 ? '-ml-5' : ''}`} style={{ zIndex: 10 - index }}>
                                           <img src={member.avatar} className="w-full h-full object-cover" alt={member.name} />
                                       </div>
-                                      {/* Only show infinity if exactly 2 people, between them */}
-                                      {activeMembers.length === 2 && index === 0 && (
-                                          <div className="w-12 h-12 bg-white rounded-full shadow-lg border border-slate-50 text-[#f0addd] flex items-center justify-center z-20 absolute left-1/2 -translate-x-1/2">
-                                              <Infinity size={22} strokeWidth={2.5} />
-                                          </div>
-                                      )}
                                   </React.Fragment>
                               ))}
                           </div>
-                          <h2 className="text-4xl font-serif text-slate-900 mt-8 tracking-tight text-center px-4">
+                          <h2 className="text-4xl md:text-5xl font-serif text-slate-900 mt-7 tracking-tight text-center px-4">
                               {activeMembers.map(m => m.name.split(' ')[0]).join(' & ')}
                           </h2>
-                          <div className="mt-8 flex flex-wrap justify-center gap-3">
-                                <div className="px-4 py-2 bg-white rounded-full shadow-sm border border-slate-100 flex items-center gap-2"><Flame size={14} className="text-orange-500 fill-orange-500" /><span className="text-xs font-bold">{streak} Day Streak</span></div>
-                                <div className="px-4 py-2 bg-white rounded-full shadow-sm border border-slate-100 flex items-center gap-2"><Activity size={14} className="text-[#f0addd]" /><span className="text-xs font-bold">{sharedThisMonth} shared this month</span></div>
-                                <div className="px-4 py-2 bg-white rounded-full shadow-sm border border-slate-100 flex items-center gap-2"><Trophy size={14} className="text-yellow-500" /><span className="text-xs font-bold">{totalMemoriesUs} Memories</span></div>
+                          <div className="mt-6 flex flex-wrap justify-center gap-x-8 gap-y-3 text-center">
+                                {[
+                                    { n: streak, label: streak === 1 ? 'day in a row' : 'days in a row' },
+                                    { n: sharedThisMonth, label: 'shared this month' },
+                                    { n: totalMemoriesUs, label: totalMemoriesUs === 1 ? 'memory' : 'memories' },
+                                ].map(x => (
+                                    <div key={x.label}>
+                                        <p className="font-serif text-2xl text-slate-900 leading-none">{x.n}</p>
+                                        <p className="mt-1.5 text-xs text-slate-400">{x.label}</p>
+                                    </div>
+                                ))}
                           </div>
                       </div>
                       
-                      <div className="mb-12"></div>
+                      <div className="mb-14"></div>
 
                       {/* Relationship Facts Grid */}
                       {activeCircle && (
@@ -459,11 +496,9 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                                       {isEditingFacts ? <><Check size={14} /> Done</> : <><Edit3 size={14} /> Customize</>}
                                   </button>
                               </div>
-                              <div className="flex flex-wrap gap-x-14 gap-y-8 px-1 mb-8">
-                                  <StatCard id="timeTogether" label="Time Together" value={(() => { const from = isSet(facts.firstMet) ? facts.firstMet : facts.anniversary; return isSet(from) ? Math.floor((Date.now() - from.getTime()) / 86400000).toLocaleString('en-US') : '--'; })()} subtext="Days and counting" icon={Clock} theme="slate" config={factConfigs.timeTogether} onToggleHidden={toggleHidden} onCycleSize={cycleSize} isEditing={isEditingFacts} />
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-auto">
+                                  <StatCard id="timeTogether" label="Time Together" value={(() => { const from = isSet(facts.firstMet) ? facts.firstMet : facts.anniversary; return isSet(from) ? `${Math.floor((Date.now() - from.getTime()) / 86400000).toLocaleString('en-US')}d` : '--'; })()} subtext="And counting" icon={Clock} theme="slate" config={factConfigs.timeTogether} onToggleHidden={toggleHidden} onCycleSize={cycleSize} isEditing={isEditingFacts} />
                                   <StatCard id="nextAnniversary" label="Next Anniversary" value={(() => { if (isNaN(facts.anniversary.getTime())) return '--'; const now = new Date(); const next = new Date(facts.anniversary); next.setFullYear(now.getFullYear()); if (next < now) next.setFullYear(now.getFullYear() + 1); return `${Math.ceil((next.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))}`; })()} subtext="Days Away" icon={Infinity} theme="white" config={factConfigs.nextAnniversary} onToggleHidden={toggleHidden} onCycleSize={cycleSize} isEditing={isEditingFacts} />
-                              </div>
-                              <div className="rounded-[2rem] bg-white border border-slate-100 shadow-sm px-6 py-1">
                                   <FactCard id="firstMet" onAdd={() => setIsEditingFacts(true)} label="First Met" date={facts.firstMet} setDate={(d: Date) => setFacts({...facts, firstMet: d})} isEditing={isEditingFacts} icon={Users} theme="blue" config={factConfigs.firstMet} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
                                   <FactCard id="firstKiss" onAdd={() => setIsEditingFacts(true)} label="First Kiss" date={facts.firstKiss} setDate={(d: Date) => setFacts({...facts, firstKiss: d})} isEditing={isEditingFacts} icon={Heart} theme="rose" config={factConfigs.firstKiss} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
                                   <FactCard id="firstDate" onAdd={() => setIsEditingFacts(true)} label="First Date" date={facts.firstDate} setDate={(d: Date) => setFacts({...facts, firstDate: d})} isEditing={isEditingFacts} icon={Calendar} theme="purple" config={factConfigs.firstDate} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
@@ -493,21 +528,34 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                       
                       {/* Keepsakes */}
                       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 mb-4">Keepsakes</h3>
-                      <div className="rounded-[2rem] bg-white border border-slate-100 shadow-sm px-6 py-1">
-                          {[
-                              { icon: Mail, title: 'Future Letter', sub: 'Opens in 2030', go: () => onViewArtifact('letter') },
-                              { icon: Film, title: 'Chapter Reel', sub: 'Your highlights', go: () => onViewArtifact('reel') },
-                              { icon: Receipt, title: 'Print Receipt', sub: 'Your relationship, itemized', go: handleGenerateReceipt },
-                          ].map(k => (
-                              <button key={k.title} onClick={k.go} className="w-full flex items-center gap-4 py-4 text-left group">
-                                  <k.icon size={20} className="shrink-0 text-[#f0addd]" />
-                                  <span className="flex-1 min-w-0">
-                                      <span className="block font-serif text-lg text-slate-900">{k.title}</span>
-                                      <span className="block text-sm text-slate-400">{k.sub}</span>
-                                  </span>
-                                  <ChevronRight size={18} className="shrink-0 text-slate-300 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all" />
-                              </button>
-                          ))}
+                      <div className="grid grid-cols-2 gap-4">
+                          <div onClick={() => onViewArtifact('letter')} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col aspect-square justify-between cursor-pointer hover:shadow-md transition-shadow">
+                              <Mail size={24} className="text-[#f0addd]" />
+                              <div>
+                                  <h4 className="font-serif text-lg text-slate-900 font-bold">Future Letter</h4>
+                                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Unlock 2030</p>
+                              </div>
+                          </div>
+                          <div onClick={() => onViewArtifact('reel')} className="bg-slate-900 p-6 rounded-[2rem] shadow-lg flex flex-col aspect-square justify-between cursor-pointer hover:scale-[1.02] transition-transform">
+                              <Film size={24} className="text-white" />
+                              <div>
+                                  <h4 className="font-serif text-lg text-white font-bold">Chapter Reel</h4>
+                                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Highlights</p>
+                              </div>
+                          </div>
+                          <div onClick={handleGenerateReceipt} className="col-span-2 bg-[#f0addd] p-6 rounded-[2rem] shadow-lg flex items-center justify-between cursor-pointer hover:bg-[#e57ec3] transition-colors relative overflow-hidden group">
+                               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div>
+                               <div className="relative z-10 flex items-center gap-4">
+                                   <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-sm">
+                                       <Receipt size={24} />
+                                   </div>
+                                   <div className="text-white">
+                                       <h4 className="font-serif text-xl font-bold">Print Receipt</h4>
+                                       <p className="text-xs font-medium opacity-80">Generate your relationship invoice</p>
+                                   </div>
+                               </div>
+                               <ArrowRight className="text-white" size={20} />
+                          </div>
                       </div>
                   </div>
               )}
@@ -515,79 +563,61 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
       ) : (
           <div className="px-6 animate-fade-in pb-20">
               <div className="flex flex-col items-center mb-12">
-                  <div className="w-32 h-32 rounded-full border-[6px] border-white shadow-2xl overflow-hidden mb-6"><img src={user.avatar} className="w-full h-full object-cover" /></div>
-                  <h2 className="text-3xl font-serif text-slate-900 tracking-tight">{user.name}</h2>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-2">{totalMemoriesMe} Memories Created</p>
-                  <button onClick={() => setIsEditingProfile(true)} className="mt-4 text-xs font-bold text-belluh-400 uppercase tracking-widest hover:text-belluh-600 transition-colors bg-belluh-50 px-4 py-2 rounded-full">Edit Profile</button>
+                  <div className="w-28 h-28 rounded-full ring-[5px] ring-[#fcfcfc] shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] overflow-hidden mb-6 bg-[#eef7fa]"><img src={user.avatar} alt={user.name} className="w-full h-full object-cover" /></div>
+                  <h2 className="text-4xl font-serif text-slate-900 tracking-tight">{user.name}</h2>
+                  <p className="text-sm text-slate-400 mt-2">{totalMemoriesMe} {totalMemoriesMe === 1 ? 'memory' : 'memories'} written</p>
+                  <button onClick={() => setIsEditingProfile(true)} className="mt-4 h-9 px-4 rounded-full inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"><Edit3 size={15} /> Edit profile</button>
               </div>
 
-              {/* Circles */}
-              <div className="mb-12">
-                   <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-2">
-                             <Users size={16} className="text-slate-900" />
-                             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Active Circles</h3>
-                        </div>
-                   </div>
-
-                   <div className="flex gap-4 overflow-x-auto pb-6 pt-8 -mx-6 px-6 no-scrollbar snap-x items-center">
-                       <div 
-                           onClick={() => setIsCreatingCircle(!isCreatingCircle)}
-                           className="w-[240px] h-[140px] shrink-0 rounded-[1.8rem] bg-white border border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-slate-500 hover:bg-slate-50 transition-all duration-300 group snap-start shadow-sm hover:shadow-md"
-                       >
-                           <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600 transition-colors mb-3">
-                               <Plus size={24} />
-                           </div>
-                           <span className="text-sm font-bold text-slate-500 group-hover:text-slate-800">New Circle</span>
-                       </div>
-
-                       {isCreatingCircle && (
-                            <div className="w-[240px] h-[140px] shrink-0 bg-white p-4 rounded-[1.8rem] shadow-xl border border-slate-100 flex flex-col justify-between animate-scale-in snap-start">
-                                <input type="text" value={newCircleName} onChange={(e) => setNewCircleName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleCreateCircle()} placeholder="Circle Name..." className="w-full bg-slate-50 border-none rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 font-bold mb-2" autoFocus />
-                                <div className="flex gap-2">
-                                    <button onClick={() => setIsCreatingCircle(false)} className="flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100">Cancel</button>
-                                    <button onClick={handleCreateCircle} disabled={!newCircleName.trim()} className="flex-1 bg-slate-900 text-white py-2 rounded-lg text-xs font-bold hover:bg-black disabled:opacity-50">Create</button>
-                                </div>
-                            </div>
-                       )}
-
-                       {activeCircles.map(circle => (
-                           <CircleCard key={circle.id} circle={circle} isActive={activeCircleId === circle.id} onClick={() => handleCircleSwitch(circle.id)} user={user} onEdit={handleEditCircleOpen} />
-                       ))}
-                   </div>
-                   
-                   {archivedCircles.length > 0 && (
-                       <div className="mt-8">
-                           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Past Chapters</h3>
-                           <div className="flex gap-4 overflow-x-auto pb-6 pt-8 -mx-6 px-6 no-scrollbar snap-x items-center">
-                                {archivedCircles.map(circle => (
-                                    <div key={circle.id} className="opacity-70 hover:opacity-100 transition-opacity grayscale hover:grayscale-0">
-                                        <CircleCard circle={circle} isActive={activeCircleId === circle.id} onClick={() => handleCircleSwitch(circle.id)} user={user} onEdit={handleEditCircleOpen} />
-                                    </div>
-                                ))}
-                           </div>
-                       </div>
-                   )}
-
-                   <div className="mt-8">
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 pl-1">Your Story</h3>
-                      <button onClick={() => handleCircleSwitch('constellation')} className={`w-full relative overflow-hidden rounded-[1.8rem] p-6 text-left group transition-all duration-300 ${activeCircleId === 'constellation' ? 'bg-slate-900 text-white shadow-xl translate-y-[-2px]' : 'bg-slate-900 text-white shadow-md hover:shadow-xl hover:scale-[1.01]'}`}>
-                           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-[80px] group-hover:bg-white/10 transition-colors pointer-events-none"></div>
-                           <div className="absolute bottom-0 left-0 w-40 h-40 bg-belluh-500/30 rounded-full blur-[60px] pointer-events-none"></div>
-                           <div className="relative z-10 flex items-center justify-between">
-                               <div>
-                                   <div className="flex items-center gap-2 mb-2">
-                                       <Star size={16} className={activeCircleId === 'constellation' ? "text-belluh-300 fill-belluh-300" : "text-belluh-300"} />
-                                       <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">The Constellation</span>
-                                   </div>
-                                   <h4 className="text-xl font-serif">All Your Stars Aligned</h4>
-                                   <p className="text-xs text-slate-400 mt-1 max-w-xs">A combined timeline of every relationship, every moment, and every lesson learned.</p>
-                               </div>
-                               <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/10 group-hover:bg-white/20 transition-colors"><ChevronRight size={20} /></div>
-                           </div>
-                      </button>
-                   </div>
+              {/* Circles: the people you keep a journal with */}
+              <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] pl-1 mb-4">Your circles</h3>
+              <div className="rounded-[2rem] bg-white border border-slate-100 shadow-sm px-6 py-1 mb-10">
+                  {activeCircles.map(circle => (
+                      <div key={circle.id} className="flex items-center gap-4 py-4">
+                          <button onClick={() => handleCircleSwitch(circle.id)} className="flex-1 min-w-0 text-left group">
+                              <span className="block font-serif text-lg text-slate-900 truncate">{circle.name}</span>
+                              <span className="block text-sm text-slate-400">{activeCircleId === circle.id ? <span className="text-[#3f7486] font-semibold">Open now</span> : `${(circle.type as any) || 'Circle'}`}{circle.members.length > 2 ? `, ${circle.members.length} people` : ''}</span>
+                          </button>
+                          <button onClick={() => handleEditCircleOpen(circle)} aria-label={`Manage ${circle.name}`} className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"><MoreHorizontal size={18} /></button>
+                      </div>
+                  ))}
+                  {isCreatingCircle ? (
+                      <div className="flex items-center gap-2 py-3">
+                          <input type="text" value={newCircleName} onChange={(e) => setNewCircleName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleCreateCircle()} placeholder="Name the circle" className="flex-1 min-w-0 h-11 bg-slate-50 rounded-full px-4 text-[15px] focus:outline-none focus:ring-2 focus:ring-[#9bbecb]" autoFocus />
+                          <button onClick={() => setIsCreatingCircle(false)} className="h-11 px-3 rounded-full text-sm font-semibold text-slate-500 hover:bg-slate-100">Cancel</button>
+                          <button onClick={handleCreateCircle} disabled={!newCircleName.trim()} className="h-11 px-4 rounded-full bg-slate-900 text-white text-sm font-semibold disabled:opacity-30">Create</button>
+                      </div>
+                  ) : (
+                      <button onClick={() => setIsCreatingCircle(true)} className="w-full flex items-center gap-2 py-4 text-left text-[15px] font-semibold text-[#3f7486] hover:text-slate-900 transition-colors"><Plus size={17} /> New circle</button>
+                  )}
               </div>
+
+              {archivedCircles.length > 0 && (
+                  <>
+                      <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] pl-1 mb-4">Past chapters</h3>
+                      <div className="rounded-[2rem] bg-white border border-slate-100 shadow-sm px-6 py-1 mb-10">
+                          {archivedCircles.map(circle => (
+                              <div key={circle.id} className="flex items-center gap-4 py-4">
+                                  <button onClick={() => handleCircleSwitch(circle.id)} className="flex-1 min-w-0 text-left">
+                                      <span className="block font-serif text-lg text-slate-500 truncate">{circle.name}</span>
+                                      <span className="block text-sm text-slate-400">Kept, read only</span>
+                                  </button>
+                                  <button onClick={() => handleEditCircleOpen(circle)} aria-label={`Manage ${circle.name}`} className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"><MoreHorizontal size={18} /></button>
+                              </div>
+                          ))}
+                      </div>
+                  </>
+              )}
+
+              <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] pl-1 mb-4">Your story</h3>
+              <button onClick={() => handleCircleSwitch('constellation')} className="w-full rounded-[2rem] bg-white border border-slate-100 shadow-sm px-6 py-5 flex items-center gap-4 text-left group">
+                  <Star size={20} className="shrink-0 text-[#9bbecb]" />
+                  <span className="flex-1 min-w-0">
+                      <span className="block font-serif text-lg text-slate-900">Every moment, together</span>
+                      <span className="block text-sm text-slate-400">All your circles in one timeline</span>
+                  </span>
+                  <ChevronRight size={18} className="shrink-0 text-slate-300 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all" />
+              </button>
           </div>
       )}
 
@@ -601,7 +631,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                   </div>
                   <div className="space-y-6">
                       <div>
-                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 block">Name</label>
+                          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] mb-2 block">Name</label>
                           <div className="flex gap-2">
                               <input type="text" value={editCircleName} onChange={(e) => setEditCircleName(e.target.value)} className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-belluh-200" />
                               <button onClick={handleRenameSubmit} disabled={!editCircleName.trim() || editCircleName === editingCircle.name} className="bg-slate-900 text-white p-3 rounded-xl disabled:opacity-50 hover:bg-black transition-colors"><Check size={18} /></button>
@@ -636,7 +666,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                   
                   {/* Theme Selector */}
                   <div className="mb-8">
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] mb-4 flex items-center gap-2">
                           <Palette size={14} /> Appearance
                       </p>
                       <div className="flex gap-2 flex-wrap">
@@ -652,7 +682,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                       </div>
                   </div>
 
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Account</p>
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] mb-2">Account</p>
                   <div className="space-y-1">
                     <button onClick={() => onShowLegal('tos')} className="w-full py-3 flex items-center justify-between text-slate-500 hover:bg-slate-50 rounded-xl px-2"><span className="text-sm font-bold">Terms of Service</span><ChevronRight size={16} /></button>
                     <button onClick={() => onShowLegal('privacy')} className="w-full py-3 flex items-center justify-between text-slate-500 hover:bg-slate-50 rounded-xl px-2"><span className="text-sm font-bold">Privacy Policy</span><ChevronRight size={16} /></button>
