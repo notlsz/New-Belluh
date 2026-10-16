@@ -17,9 +17,20 @@ export const thinkingFor = (model: string) => (model.startsWith('gemini-2.5') ? 
 /** Generation settings per model family: 3.x thinks for itself and wants temperature 1; 2.5 replies straight away. */
 const genFor = (model: string, temperature: number) => (model.startsWith('gemini-2.5') ? { temperature, maxOutputTokens: 8192, ...thinkingFor(model) } : { temperature: 1, maxOutputTokens: 8192 });
 
-async function call(body: unknown, model = MODEL()): Promise<GeminiContent | null> {
-  const r = await callRaw(body, model);
-  return r.ok ? r.content : null;
+/** Gemini models to try, best first: the newest Flash, then the steady one. New keys may not get 2.5 at all. */
+export const MODELS = () => [...new Set([AGENT_MODEL(), MODEL()])];
+
+/**
+ * Tries each Gemini model in turn until one answers. A model can be missing for this key (400/403/404), out of quota
+ * (429) or down (5xx); any of those moves on to the next. Returns the answer and the model that gave it.
+ */
+export async function geminiFirst(bodyFor: (model: string) => unknown, models = MODELS()): Promise<{ content: GeminiContent; model: string } | null> {
+  if (!Deno.env.get('GEMINI_API_KEY')) return null;
+  for (const m of models) {
+    const r = await callRaw(bodyFor(m), m).catch(() => ({ ok: false, status: 0, content: null }));
+    if (r.ok && r.content) return { content: r.content, model: m };
+  }
+  return null;
 }
 
 async function callRaw(body: unknown, model: string): Promise<{ ok: boolean; status: number; content: GeminiContent | null }> {
@@ -89,10 +100,11 @@ export async function chatWithTools(opts: {
       ...(toolsOn ? {} : { toolConfig: { functionCallingConfig: { mode: 'NONE' } } }),
       generationConfig: genFor(m, 0.7),
     });
-    let r = await callRaw(body(model), model);
-    // The newer model unavailable to this key, or a request it rejects: finish the turn on the steady one
-    if (!r.ok && model !== MODEL() && [400, 403, 404].includes(r.status)) { model = MODEL(); r = await callRaw(body(model), model); }
-    return r.content;
+    // Starts from the model that answered last in this turn (Gemini 3 replays its own thought signatures)
+    const order = MODELS(); const at = Math.max(0, order.indexOf(model));
+    const got = await geminiFirst(body, order.slice(at));
+    if (got) model = got.model;
+    return got?.content ?? null;
   };
   // Only visible words count as the answer (never hidden thoughts)
   const words = (c: GeminiContent) => (c.parts ?? []).filter(p => !(p as any).thought && !p.functionCall).map(p => p.text ?? '').join('').trim();
@@ -129,11 +141,12 @@ export async function chatWithTools(opts: {
 
 /** One structured JSON answer, no tools. */
 export async function jsonAnswer(system: string, prompt: string, schema: unknown, images: { mimeType: string; data: string }[] = []): Promise<unknown | null> {
-  const reply = await call({
+  const got = await geminiFirst(m => ({
     systemInstruction: { parts: [{ text: system }] },
     contents: [{ role: 'user', parts: [...images.map(inlineData => ({ inlineData })), { text: prompt }] }],
-    generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0.6, maxOutputTokens: 8192, ...thinkingFor(MODEL()) },
-  });
+    generationConfig: { ...genFor(m, 0.6), responseMimeType: 'application/json', responseSchema: schema },
+  }));
+  const reply = got?.content;
   const parse = (t: string | undefined) => { try { return t ? JSON.parse(t.replace(/^```(?:json)?\s*|\s*```$/g, '')) : null; } catch { return null; } };
   const out = parse(reply?.parts?.map(p => p.text ?? '').join(''));
   if (out || images.length) return out;

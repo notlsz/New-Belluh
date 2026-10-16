@@ -959,3 +959,19 @@ test('38. When Gemini is out of quota, a backup provider finishes the turn: tool
   assert.equal(tool.function.parameters.type, 'object', 'Gemini schemas are translated to standard JSON Schema');
   assert.equal(backup[1].backup.messages.find(x => x.role === 'tool').tool_call_id, backup[1].backup.messages.find(x => x.tool_calls)?.tool_calls[0].id, 'the tool result is paired with its call');
 });
+
+test('39. The app\'s own AI features use the current model, and fall back to the backup when Gemini is out', async () => {
+  const before = geminiRequests().length;
+  const { data } = await maya.functions.invoke('gemini-proxy', { body: { model: 'gemini-3-flash-preview', contents: 'Summarize: we had coffee.' } });
+  assert.ok(data.text);
+  assert.match(geminiRequests().slice(before).find(r => r.url?.includes('generateContent')).url, /gemini-3\.8-flash/, 'the old preview name is never sent to Google');
+  const mid = geminiRequests().length;
+  const { data: d2, error } = await maya.functions.invoke('gemini-proxy', { body: { contents: 'gemini is out, write me one line' } });
+  assert.equal(error, null);
+  assert.equal(d2.text, 'Backup here, and listening.');
+  const tried = geminiRequests().slice(mid).filter(r => r.url?.includes('generateContent')).map(r => r.url.match(/models\/([^:]+)/)[1]);
+  assert.deepEqual(tried, ['gemini-3.8-flash', 'gemini-2.5-flash'], 'both Gemini models first, then the backup');
+  // A JSON answer (a reply to a journal entry) falls back too
+  const { data: j } = await maya.functions.invoke('gemini-proxy', { body: { contents: 'gemini is out, json please', config: { responseMimeType: 'application/json', responseSchema: { type: 'OBJECT', properties: { reply: { type: 'STRING' } } } } } });
+  assert.match(JSON.parse(j.text).reply, /Backup here/);
+});

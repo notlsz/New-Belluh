@@ -1,3 +1,4 @@
+import { jsonAnswer } from './gemini.ts';
 // Thin client for the WhatsApp Cloud API and Gemini. Reads secrets from the edge function environment.
 
 // WHATSAPP_API_BASE points tests at a stand-in for Meta's servers
@@ -47,27 +48,8 @@ export function sendTemplate(toE164: string, name: string, params: string[], lan
   });
 }
 
-/** Asks Gemini for structured dates. Returns the parsed JSON, or null on any failure. */
+/** Asks for structured dates (Gemini first, then the backups). Returns the parsed JSON, or null on any failure. */
 export async function geminiJson(prompt: string, schema: unknown): Promise<unknown | null> {
-  const model = Deno.env.get('GEMINI_MODEL') || 'gemini-2.5-flash';
-  try {
-    const res = await fetch(`${Deno.env.get('GEMINI_API_BASE') ?? 'https://generativelanguage.googleapis.com'}/v1beta/models/${model}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env('GEMINI_API_KEY') },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0 },
-      }),
-    });
-    if (!res.ok) {
-      console.error('Gemini failed', res.status, (await res.text()).slice(0, 500));
-      return null;
-    }
-    const json = await res.json();
-    const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-    return text ? JSON.parse(text) : null;
-  } catch (e) {
-    console.error('Gemini error', e);
-    return null;
-  }
+  try { return await jsonAnswer('Read the dates in the message. Answer with JSON only.', prompt, schema); }
+  catch (e) { console.error('Date reading failed', e); return null; }
 }

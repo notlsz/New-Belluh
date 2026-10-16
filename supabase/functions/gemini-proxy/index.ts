@@ -4,6 +4,8 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 import { buildGeminiBody, MAX_BODY_BYTES } from '../_shared/proxy.ts';
+import { geminiFirst, MODELS, type GeminiContent } from '../_shared/gemini.ts';
+import { backups, askBackup, toJsonSchema } from '../_shared/backups.ts';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
 const HOURLY_LIMIT = Number(Deno.env.get('AI_HOURLY_LIMIT') ?? 120);
@@ -36,18 +38,24 @@ Deno.serve(async (req) => {
   const built = buildGeminiBody(parsed as Record<string, unknown>);
   if ('error' in built) return json({ error: built.error }, 400);
 
-  const key = Deno.env.get('GEMINI_API_KEY');
-  if (!key) return json({ error: 'AI is not configured' }, 503);
-  const res = await fetch(`${Deno.env.get('GEMINI_API_BASE') ?? 'https://generativelanguage.googleapis.com'}/v1beta/models/${built.model}:generateContent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-    body: JSON.stringify(built.body),
-  });
-  if (!res.ok) {
-    console.error('Gemini error', res.status, (await res.text()).slice(0, 300));
-    return json({ error: res.status === 429 ? 'RESOURCE_EXHAUSTED' : 'AI request failed' }, res.status === 429 ? 429 : 502);
+  if (!Deno.env.get('GEMINI_API_KEY') && !backups().length) return json({ error: 'AI is not configured' }, 503);
+  const body = built.body as { contents: GeminiContent[]; generationConfig: Record<string, unknown> };
+  // The model the app asked for first, then the others; any one that answers wins
+  const order = [built.model, ...MODELS().filter(m => m !== built.model)];
+  const got = await geminiFirst(m => ({ ...body, generationConfig: m.startsWith('gemini-2.5') ? { ...body.generationConfig, thinkingConfig: { thinkingBudget: 0 } } : (({ thinkingConfig, ...g }) => g)(body.generationConfig as any) }), order);
+  let text = (got?.content?.parts ?? []).filter((p: any) => !p.thought).map((p: { text?: string }) => p.text ?? '').join('');
+  // Gemini couldn't answer: text-only requests go to the backups (they can't hear voice notes or see photos)
+  const textOnly = body.contents.every(c => c.parts.every(p => typeof p.text === 'string'));
+  if (!got && textOnly) {
+    const wantsJson = body.generationConfig.responseMimeType === 'application/json';
+    const schema = body.generationConfig.responseSchema;
+    const system = wantsJson ? `Answer with one JSON object only${schema ? `, matching this JSON Schema:\n${JSON.stringify(toJsonSchema(schema))}` : '.'}` : 'You are a helpful assistant inside Belluh, a journal for couples.';
+    for (const b of backups()) {
+      const c = await askBackup(b, { system, contents: body.contents, json: wantsJson, temperature: typeof body.generationConfig.temperature === 'number' ? body.generationConfig.temperature as number : 0.7 });
+      const t = (c?.parts ?? []).map(p => p.text ?? '').join('').replace(/^```(?:json)?\s*|\s*```$/g, '');
+      if (t) { text = t; break; }
+    }
   }
-  const out = await res.json();
-  const text = (out?.candidates?.[0]?.content?.parts ?? []).map((p: { text?: string }) => p.text ?? '').join('');
+  if (!text) return json({ error: 'RESOURCE_EXHAUSTED' }, 429);
   return json({ text });
 });

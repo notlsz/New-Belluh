@@ -1,7 +1,9 @@
 // Pure request shaping for the Gemini proxy: the browser sends what it used to send to the Gemini SDK,
 // and this turns it into a safe REST request. Unit-tested in Node.
 
-export const ALLOWED_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3-flash-preview'];
+export const ALLOWED_MODELS = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+// Older names the app used to send, mapped to what's current (previews get switched off)
+const RENAMED: Record<string, string> = { 'gemini-3-flash-preview': 'gemini-3.8-flash', 'gemini-3.5-flash': 'gemini-3.8-flash', 'gemini-3.7-flash': 'gemini-3.8-flash' };
 export const MAX_BODY_BYTES = 8 * 1024 * 1024; // voice notes arrive as base64
 export const MAX_TEXT_CHARS = 60_000;
 
@@ -28,7 +30,8 @@ function toParts(x: unknown): Part[] | null {
 
 /** Validates and converts an SDK-style request. Returns an error string instead of throwing. */
 export function buildGeminiBody(req: ProxyRequest): { model: string; body: unknown } | { error: string } {
-  const model = typeof req.model === 'string' && ALLOWED_MODELS.includes(req.model) ? req.model : 'gemini-2.5-flash';
+  const asked = typeof req.model === 'string' ? (RENAMED[req.model] ?? req.model) : '';
+  const model = ALLOWED_MODELS.includes(asked) ? asked : 'gemini-3.8-flash';
 
   let contents: Content[] = [];
   if (Array.isArray(req.contents)) {
@@ -55,5 +58,6 @@ export function buildGeminiBody(req: ProxyRequest): { model: string; body: unkno
   if (cfg.responseSchema && typeof cfg.responseSchema === 'object') generationConfig.responseSchema = cfg.responseSchema;
   if (typeof cfg.temperature === 'number') generationConfig.temperature = Math.max(0, Math.min(1.5, cfg.temperature));
 
+  if (!model.startsWith('gemini-2.5') && typeof generationConfig.temperature !== 'number') generationConfig.temperature = 1;
   return { model, body: { contents, generationConfig } };
 }
