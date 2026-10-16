@@ -84,12 +84,12 @@ test('AI proxy: converts SDK-style requests and rejects anything else', () => {
   const ok = buildGeminiBody({ model: 'gemini-3-flash-preview', contents: 'hello', config: { responseMimeType: 'application/json', responseSchema: { type: 'OBJECT' } } });
   assert.ok(!('error' in ok));
   if (!('error' in ok)) {
-    assert.equal(ok.model, 'gemini-3-flash-preview');
+    assert.equal(ok.model, 'gemini-3.8-flash', 'the old preview name maps to the current model');
     assert.deepEqual((ok.body as any).contents, [{ role: 'user', parts: [{ text: 'hello' }] }]);
     assert.equal((ok.body as any).generationConfig.responseMimeType, 'application/json');
   }
   const audio = buildGeminiBody({ model: 'x', contents: { parts: [{ inlineData: { mimeType: 'audio/webm', data: 'AAA' } }, { text: 'Transcribe' }] } });
-  assert.ok(!('error' in audio) && audio.model === 'gemini-2.5-flash', 'unknown models fall back to the default');
+  assert.ok(!('error' in audio) && audio.model === 'gemini-3.8-flash', 'unknown models fall back to the default');
   assert.ok('error' in buildGeminiBody({ contents: { parts: [{ inlineData: { mimeType: 'application/pdf', data: 'x' } }] } }));
   assert.ok('error' in buildGeminiBody({ contents: { parts: [{ functionCall: {} }] } }));
   assert.ok('error' in buildGeminiBody({ contents: 'x'.repeat(70_000) }));

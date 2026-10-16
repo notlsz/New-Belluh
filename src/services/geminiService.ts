@@ -68,7 +68,7 @@ ${context}`;
 
     const response = await retryOperation<GenerateContentResponse>(() => 
       getAI().models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.8-flash',
         contents: prompt,
       })
     );
@@ -82,7 +82,7 @@ export const transcribeAudio = async (base64Audio: string, mimeType: string): Pr
   try {
     const aiPromise = retryOperation<GenerateContentResponse>(() =>
       getAI().models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.8-flash',
         contents: {
           parts: [
             {
@@ -114,7 +114,7 @@ export const askBelluhAboutJournal = async (query: string, entries: JournalEntry
     const context = entries.slice(0, 30).map(e => `[${e.authorName}]: ${e.content}`).join('\n');
     const response = await retryOperation<GenerateContentResponse>(() =>
       getAI().models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.8-flash',
         contents: `Context:\n${context}\n\nQuestion: ${query}`
       })
     );
@@ -129,7 +129,7 @@ export const generateRelationshipSummary = async (entries: JournalEntry[]): Prom
     const context = entries.slice(0, 20).map(e => e.content).join('\n');
     const response = await retryOperation<GenerateContentResponse>(() =>
       getAI().models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.8-flash',
         contents: `Provide a concise, 2-3 sentence summary of the relationship's current state based on these entries. Be honest but compassionate. Focus on the core emotional trajectory (growing closer, drifting, conflict, or harmony). Keep it brief and glanceable. Do not use hashtags, asterisks, or markdown formatting. Just pure text.\n\nContext:\n${context}`
       })
     );
@@ -150,7 +150,7 @@ export const detectPatterns = async (entries: JournalEntry[]): Promise<Insight[]
     
     const response = await retryOperation<GenerateContentResponse>(() =>
       getAI().models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.8-flash',
         contents: `Identify patterns in these entries. Return as JSON array of objects. 
         For 'relatedEntryIds', you MUST pick 1-3 specific 'ID's from the provided list that are the strongest evidence for that pattern.
         
@@ -199,7 +199,7 @@ export const chatWithBelluh = async (message: string, history: { role: string, t
     const context = history.map(h => `${h.role === 'model' ? 'Belluh' : 'User'}: ${h.text}`).join('\n');
     const response = await retryOperation<GenerateContentResponse>(() =>
       getAI().models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.8-flash',
         contents: `Persona Style: ${persona}\n\nRecent History:\n${context}\n\nUser: ${message}\nBelluh (Use plain text only, no markdown, no asterisks):`
       })
     );
@@ -215,7 +215,7 @@ export const generateDailyReflection = async (entryTexts: string[], persona: Use
   try {
     const response = await retryOperation<GenerateContentResponse>(() =>
       getAI().models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.8-flash',
         contents: `Generate a concise, 1-2 sentence reflection based on these entries using the ${persona} persona. Output plain text only. Do not use asterisks, bolding, hashtags, or headers.\n\nEntries:\n${entryTexts.join('\n')}`
       })
     );
@@ -231,7 +231,7 @@ export const getRelationshipArchetype = async (entryTexts: string[]): Promise<Re
   try {
     const response = await retryOperation<GenerateContentResponse>(() =>
       getAI().models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.8-flash',
         contents: `Determine the archetype for this relationship based on these entries:\n\n${entryTexts.slice(0, 10).join('\n')}`,
         config: {
           responseMimeType: "application/json",
@@ -280,7 +280,7 @@ Return ONLY plain text. Do NOT use markdown. Do NOT use asterisks (*), bolding (
 
     const response = await retryOperation<GenerateContentResponse>(() =>
       getAI().models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.8-flash',
         contents: prompt
       })
     );
@@ -299,7 +299,7 @@ export const detectPersonaFromEntries = async (entries: any[]): Promise<UserPers
   try {
     const response = await retryOperation<GenerateContentResponse>(() =>
       getAI().models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-3.8-flash',
         contents: `Match this writing style to ONE of: Kafka, Hemingway, Nietzsche, Fitzgerald, Camus, or Woolf. Return ONLY the name, nothing else.\n\n${entries
           .slice(0, 5)
           .map(e => e.content)
@@ -320,7 +320,7 @@ export const generateRelationshipReceipt = async (entries: JournalEntry[], coupl
         
         const response = await retryOperation<GenerateContentResponse>(() => 
             getAI().models.generateContent({
-                model: 'gemini-3-flash-preview',
+                model: 'gemini-3.8-flash',
                 contents: `Generate a funny, witty 'Relationship Receipt' based on these journal entries for ${coupleName}. 
                 It should look like a store receipt of their love life.
                 Items should be abstract emotional transactions (e.g., 'Late Night Talks', 'Patience', 'Bad Puns').
@@ -387,7 +387,7 @@ export const generateRelationshipForecast = async (entries: JournalEntry[]): Pro
         
         const response = await retryOperation<GenerateContentResponse>(() => 
             getAI().models.generateContent({
-                model: 'gemini-3-flash-preview',
+                model: 'gemini-3.8-flash',
                 contents: `Analyze the 'Emotional Velocity' and 'Sentiment Volatility' of these entries to predict the relationship 'weather' for the next 3 days.
                 Be analytical like a data scientist but empathetic like a friend.
                 
