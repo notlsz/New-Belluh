@@ -11,7 +11,6 @@ import SiteFooter from '../components/SiteFooter';
 import SiteNav from '../components/SiteNav';
 import { belluh, type BelluhState } from '../lib/belluhPresence';
 import { ORGANIZATIONS } from '../constants';
-import { BRAND_MARKS } from '../data/brandMarks';
 
 const FAQ = [
   { q: 'Can my partner read my private entries?', a: 'No. Every entry is shared or private, your call. Your partner never sees your private entries, and neither does their Belluh.' },
@@ -31,10 +30,17 @@ const STEPS = [
 ];
 
 // A real app screen in a phone frame; sizes scale with the phone's width
+// The three screens in Inside Belluh, left to right
+const INSIDE_SCREENS = [
+  { src: '/screens/write.webp', alt: 'Maya writing a few lines about her day', caption: 'Write a few lines' },
+  { src: '/screens/us.webp', alt: 'Belluh planning a ramen night for Maya and Dan in their shared thread', caption: 'Plan it together' },
+  { src: '/screens/home.webp', alt: 'Home, where Belluh offers to plan an anniversary, asks how a date went, and shows a reminder', caption: 'Belluh comes to you' },
+];
+
 const PhoneFrame: React.FC<{ src: string; alt: string; className?: string }> = ({ src, alt, className = '' }) => (
   <div className={`[container-type:inline-size] ${className}`}>
     <div className="rounded-[15cqw] bg-[#0f172a] p-[2.6cqw] shadow-[0_50px_100px_-30px_rgba(15,23,42,0.45),0_30px_80px_-30px_rgba(240,173,221,0.55)] ring-1 ring-black/5">
-      <img src={src} alt={alt} width={390} height={898} loading="lazy" className="block w-full h-auto rounded-[12.6cqw]" />
+      <img src={src} alt={alt} width={390} height={898} decoding="async" className="block w-full h-auto rounded-[12.6cqw]" />
     </div>
   </div>
 );
@@ -65,11 +71,11 @@ const MOMENT_TONES = ['bg-white', 'bg-[#fdf0f8]', 'bg-[#eef7fa]'];
 
 // What Belluh connects to, shown in the second scrolling strip
 const INTEGRATIONS = [
-  { name: 'WhatsApp', domain: 'whatsapp.com' },
-  { name: 'Google Calendar', domain: 'calendar.google.com' },
-  { name: 'Apple iCloud', domain: 'icloud.com' },
-  { name: 'Outlook', domain: 'outlook.live.com' },
-  { name: 'Gemini', domain: 'gemini.google.com' },
+  { name: 'WhatsApp', domain: 'whatsapp.com', logo: '/logos/whatsapp.png' },
+  { name: 'Google Calendar', domain: 'calendar.google.com', logo: '/logos/google-calendar.png' },
+  { name: 'Apple iCloud', domain: 'icloud.com', logo: '/logos/icloud.png' },
+  { name: 'Outlook', domain: 'outlook.live.com', logo: '/logos/outlook.png' },
+  { name: 'Gemini', domain: 'gemini.google.com', logo: '/logos/gemini.png' },
 ];
 
 interface LandingPageProps {
@@ -85,24 +91,13 @@ const isUniversity = (domain: string) => /\.(edu|ac\.uk|ca)$/.test(domain);
 
 type Org = { name: string; domain: string; logo?: string };
 
-// Real logos (grey until you hover, like before). If one ever fails to load, the brand's mark or name stands in.
+// Real logos only (grey until you hover), served from belluh.com so they always load. Never text.
 const LogoItem = ({ org }: { org: Org }) => {
   const [failed, setFailed] = useState(false);
-  const mark = BRAND_MARKS[org.domain];
-  if (org.logo && !failed) {
-    return (
-      <img src={org.logo} alt={org.name} title={org.name} decoding="async" draggable={false} onError={() => setFailed(true)}
-        className="max-h-10 md:max-h-12 max-w-full w-auto h-auto object-contain grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-[filter,opacity] duration-500 select-none" />
-    );
-  }
-  if (isUniversity(org.domain) && !mark) {
-    return <span className="font-serif text-[1.6rem] md:text-[1.85rem] tracking-tight whitespace-nowrap text-slate-400">{org.name}</span>;
-  }
+  if (!org.logo) return null;
   return (
-    <span className="inline-flex items-center gap-2.5 whitespace-nowrap text-slate-400 hover:text-slate-900 transition-colors duration-300">
-      {mark && <svg viewBox="0 0 24 24" className="h-6 w-6 md:h-7 md:w-7 shrink-0 fill-current" aria-hidden="true"><path d={mark} /></svg>}
-      <span className="text-lg md:text-xl font-semibold tracking-tight">{org.name}</span>
-    </span>
+    <img src={org.logo} alt={org.name} title={org.name} decoding="async" draggable={false} onError={() => setFailed(true)}
+      className={`max-h-10 md:max-h-12 max-w-full w-auto h-auto object-contain grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-[filter,opacity] duration-500 select-none ${failed ? 'invisible' : ''}`} />
   );
 };
 
@@ -110,12 +105,13 @@ const FADE_X = { WebkitMaskImage: 'linear-gradient(to right, transparent, #000 1
 
 const MarqueeRow = ({ orgs, reverse = false, speed = 60 }: { orgs: Org[]; reverse?: boolean; speed?: number }) => {
   // Two identical halves, so sliding by half loops without a seam; short lists are repeated to fill wide screens
-  const half = Array.from({ length: Math.max(1, Math.ceil(12 / orgs.length)) }, () => orgs).flat();
+  const shown = orgs.filter(o => o.logo);
+  const half = Array.from({ length: Math.max(1, Math.ceil(12 / Math.max(1, shown.length))) }, () => shown).flat();
   return (
     <div className="relative flex overflow-hidden group" style={FADE_X}>
       <div className={`flex items-center w-max ${reverse ? 'animate-marquee-reverse' : 'animate-marquee'} group-hover:[animation-play-state:paused]`} style={{ animationDuration: `${speed}s`, willChange: 'transform', backfaceVisibility: 'hidden' }}>
         {[...half, ...half].map((org, i) => (
-          <div key={i} aria-hidden={i >= half.length ? true : undefined} className={`shrink-0 flex items-center justify-center h-16 ${orgs.some(o => o.logo) ? 'w-[132px] md:w-[184px] px-4' : 'px-7 md:px-10'}`}>
+          <div key={i} aria-hidden={i >= half.length ? true : undefined} className="shrink-0 flex items-center justify-center h-16 w-[132px] md:w-[184px] px-4">
             <LogoItem org={org} />
           </div>
         ))}
@@ -463,27 +459,30 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
               </h2>
               <p className="text-center text-lg text-slate-500 font-light mb-12">Real screens from the app, with a sample couple.</p>
 
-              <div className="group relative h-[560px] md:h-[780px] rounded-[2.5rem] md:rounded-[3rem] overflow-hidden border border-white bg-gradient-to-b from-white/70 to-[#fdf2f9]/60 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.06)]">
+              <div className="group relative md:h-[760px] rounded-[2.5rem] md:rounded-[3rem] overflow-hidden border border-white bg-gradient-to-b from-white/70 to-[#fdf2f9]/60 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.06)]">
                   <div className="absolute -top-40 -left-32 w-[560px] h-[560px] rounded-full bg-[#CDE9F2]/70 blur-[110px] pointer-events-none"></div>
                   <div className="absolute -bottom-48 -right-32 w-[620px] h-[620px] rounded-full bg-[#f0addd]/35 blur-[120px] pointer-events-none"></div>
 
-                  <div className="absolute inset-x-0 top-10 md:top-16 flex justify-center">
-                      <div className="relative w-[220px] md:w-[330px]">
-                          <PhoneFrame src="/screens/write.webp" alt="Maya writing a few lines about her day" className="absolute top-12 md:top-20 right-[58%] md:right-[68%] w-[80%] -rotate-[7deg] origin-bottom-right transition-transform duration-700 group-hover:-rotate-[9deg] group-hover:-translate-x-2" />
-                          <PhoneFrame src="/screens/home.webp" alt="Home, where Belluh offers to plan an anniversary, asks how a date went, and shows a reminder" className="absolute top-12 md:top-20 left-[58%] md:left-[68%] w-[80%] rotate-[7deg] origin-bottom-left transition-transform duration-700 group-hover:rotate-[9deg] group-hover:translate-x-2" />
-                          <PhoneFrame src="/screens/us.webp" alt="Belluh planning a ramen night for Maya and Dan in their shared thread" className="relative z-10 transition-transform duration-700 group-hover:-translate-y-2" />
-                      </div>
+                  {/* Three real screens side by side, each fully in view; on phones they swipe */}
+                  <div className="relative flex md:justify-center items-start gap-5 md:gap-12 overflow-x-auto md:overflow-visible snap-x snap-mandatory no-scrollbar px-[calc(50%-125px)] md:px-10 pt-10 md:pt-16 pb-8 md:pb-0">
+                      {INSIDE_SCREENS.map((sc, i) => (
+                          <figure key={sc.src} className={`snap-center shrink-0 w-[250px] ${i === 1 ? 'md:w-[316px] relative z-10' : 'md:w-[280px] md:mt-20'} transition-transform duration-700 ${i === 0 ? 'md:-rotate-[4deg] md:group-hover:-rotate-[5deg] md:group-hover:-translate-x-1' : i === 2 ? 'md:rotate-[4deg] md:group-hover:rotate-[5deg] md:group-hover:translate-x-1' : 'md:group-hover:-translate-y-2'}`}>
+                              <PhoneFrame src={sc.src} alt={sc.alt} />
+                              <figcaption className="md:hidden mt-4 text-center text-sm font-semibold text-slate-600">{sc.caption}</figcaption>
+                          </figure>
+                      ))}
                   </div>
+              </div>
 
-                  <div className="absolute z-20 bottom-6 inset-x-5 mx-auto max-w-[290px] md:max-w-[320px] md:inset-x-auto md:bottom-auto md:top-28 md:right-[6%] md:mx-0 rounded-3xl bg-white/85 backdrop-blur-xl border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.18)] p-3 md:p-4 flex gap-3">
-                      <div className="shrink-0 pt-0.5"><BelluhOrb size={34} /></div>
+              <div className="mt-6 flex flex-col md:flex-row items-center justify-center gap-3">
+                  <div className="w-full max-w-[340px] rounded-3xl bg-white border border-slate-100 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.25)] p-3.5 flex gap-3">
+                      <div className="shrink-0 pt-0.5"><BelluhOrb size={32} /></div>
                       <div className="min-w-0">
                           <div className="flex items-center justify-between gap-3"><span className="text-sm font-bold text-slate-900">Belluh</span><span className="text-xs text-slate-400">now</span></div>
                           <p className="text-[13px] md:text-sm text-slate-600 leading-snug mt-0.5">Dan picked Friday at 7:00 PM for "Ramen, then the night market".</p>
                       </div>
                   </div>
-
-                  <div className="hidden md:flex absolute z-20 bottom-24 left-[6%] items-center gap-2.5 rounded-full bg-white/85 backdrop-blur-xl border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] px-5 py-3">
+                  <div className="inline-flex items-center gap-2.5 rounded-full bg-white border border-slate-100 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.25)] px-5 py-3.5">
                       <Lock size={16} className="text-[#3f7486]" />
                       <span className="text-sm font-bold text-slate-700">Private entries stay private</span>
                   </div>
