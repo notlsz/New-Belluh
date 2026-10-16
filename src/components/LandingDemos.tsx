@@ -162,7 +162,7 @@ const ROWS: { label: string; title: string; text: string; where: string; demo: (
   { label: 'Plans', where: 'You & Dan', title: 'The date nobody gets around to planning.', text: 'Everyone says "we should go out." Belluh finds times that fit both your weeks, your partner picks one with a tap, and it lands in both calendars.', demo: () => <PlanDemo /> },
   { label: 'Comes to you', where: 'WhatsApp', title: 'The birthday that sneaks up on you.', text: 'Birthdays, anniversaries, the plan nobody answered. Belluh texts you on WhatsApp, SMS or Telegram days ahead, with the table, the flowers and the gift ideas ready.', demo: () => <TextDemo /> },
   { label: 'Notices', where: 'Sunday', title: 'The quiet drift you never notice.', text: 'Couples rarely fall apart in one night. Every Sunday Belluh reads both sides of your week and brings one insight and one small thing to try together.', demo: () => <WeekDemo /> },
-  { label: 'Private', where: 'Today', title: "The things you're not ready to say.", text: "Every entry is shared or Just me, your call. Your partner never sees your private entries, and neither does their Belluh.", demo: () => <PrivacyDemo /> },
+  { label: 'Private', where: 'Today', title: 'Some things are just for you.', text: "Every entry is shared or Just me, your call. Your partner never sees your private entries, and neither does their Belluh.", demo: () => <PrivacyDemo /> },
 ];
 
 const SLIDE_MS = 11000;
@@ -190,9 +190,9 @@ const LandingDemos: React.FC<{ onShowPrivacy: () => void }> = ({ onShowPrivacy }
   return (
     <section id="features" className="relative z-10 px-6 py-24 md:py-32 scroll-mt-24">
       <div className="max-w-6xl mx-auto">
-        <div className="max-w-2xl mb-12 md:mb-16">
+        <div className="max-w-3xl mb-12 md:mb-16">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-4">What Belluh does</p>
-          <h2 className="text-4xl md:text-6xl font-serif tracking-tight leading-[1.05] text-slate-900">You meant to.<br /><span className="text-[#9bbecb]">Life got in the way.</span></h2>
+          <h2 className="text-4xl md:text-6xl font-serif tracking-tight leading-[1.05] text-slate-900">Everyone says <span className="italic text-[#f0addd] whitespace-nowrap">we should.</span><br /><span className="text-[#9bbecb]">Nobody does.</span></h2>
           <p className="mt-5 text-lg md:text-xl text-slate-500 font-light leading-relaxed [text-wrap:pretty]">The date night nobody booked, the birthday that snuck up. Belluh catches what falls through, and anything that reaches your partner or costs money waits for your yes.</p>
         </div>
 

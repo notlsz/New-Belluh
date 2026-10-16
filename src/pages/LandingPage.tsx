@@ -14,6 +14,7 @@ import { ORGANIZATIONS } from '../constants';
 
 const FAQ = [
   { q: 'Can my partner read my private entries?', a: 'No. Every entry is shared or private, your call. Your partner never sees your private entries, and neither does their Belluh.' },
+  { q: "We're already busy. Isn't this one more thing to keep up with?", a: "It's the opposite. Write one line a day, or none at all. Belluh does the remembering, the planning and the reminding, so neither of you has to keep track." },
   { q: 'What does Belluh actually do?', a: 'It remembers what matters to you both, plans dates your partner can accept with one tap, and gets things ready to finish in a tap: the date-night table, dinner delivered, the gift, the groceries, a ride, tickets, the honeymoon and the flowers. It reminds you before birthdays and anniversaries, sends the reminders you ask for, helps you find the words for a note, and every Sunday gives you one insight and one small thing to try together.' },
   { q: 'Do we both need to sign up?', a: "Belluh is made for two, so it's best together. You can start on your own and send your partner the link whenever you're ready." },
   { q: 'Is Belluh an AI girlfriend or boyfriend?', a: "No. Belluh doesn't flirt or play a partner. It works for the two of you and points you back to each other." },
@@ -211,7 +212,7 @@ const MeetBelluh: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =>
                 <span className="text-[#9bbecb]">Meet</span> <span className="text-[#f0addd] italic">Belluh.</span>
               </h2>
               <p className="text-lg md:text-xl text-slate-500 font-light leading-relaxed mb-8 max-w-md mx-auto md:mx-0">
-                Your relationship's assistant, made of living water. You can see it listen, think and talk, and it becomes anything you ask for.
+                You're both busy. Someone should be paying attention. Belluh listens to you both, remembers what matters and nudges you back toward each other. Type below and watch it think.
               </p>
               <div className="mb-8">
                 <div className="inline-flex p-1 rounded-full bg-white/70 border border-white shadow-[0_8px_24px_-16px_rgba(15,23,42,0.3)]" aria-label="What Belluh is doing">
@@ -389,7 +390,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
              <div className="text-center lg:text-left" style={{ animation: 'slideUp 0.9s cubic-bezier(0.16,1,0.3,1) both' }}>
                  <h1 className="font-serif tracking-tight leading-[0.98] text-[2.85rem] sm:text-7xl xl:text-[5.6rem]">
                      <span className="text-[#9bbecb]">Life gets busy.</span><br />
-                     <span className="text-[#f0addd] italic">Love gets lost.</span>
+                     <span className="text-[#f0addd] italic">Love drifts.</span>
                  </h1>
                  <p className="mt-5 sm:mt-7 text-[17px] md:text-[1.35rem] text-slate-500 font-light leading-relaxed max-w-xl mx-auto lg:mx-0 min-h-[5.4rem] md:min-h-[4.4rem] [text-wrap:pretty]">
                      <BelluhSpeech text="The plans you never made. The moments you forgot. Belluh, the AI journal for couples, keeps them for you both." delay={500} />
@@ -457,7 +458,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
               <h2 className="text-3xl md:text-5xl font-serif text-center leading-tight mb-4 drop-shadow-sm">
                   <span className="text-[#9bbecb]">Inside</span> <span className="text-[#f0addd] italic">Belluh.</span>
               </h2>
-              <p className="text-center text-lg text-slate-500 font-light mb-12">Real screens from the app, with a sample couple.</p>
+              <p className="text-center text-lg text-slate-500 font-light mb-12">What remembering for two looks like. Real screens, with a sample couple.</p>
 
               <div className="group relative md:h-[760px] rounded-[2.5rem] md:rounded-[3rem] overflow-hidden border border-white bg-gradient-to-b from-white/70 to-[#fdf2f9]/60 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.06)]">
                   <div className="absolute -top-40 -left-32 w-[560px] h-[560px] rounded-full bg-[#CDE9F2]/70 blur-[110px] pointer-events-none"></div>
@@ -508,10 +509,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
         <div className="max-w-6xl mx-auto px-6 mb-14 md:mb-20 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-5">The kind of thing you'll write</p>
-                <h2 className="font-serif text-5xl md:text-7xl tracking-tight text-slate-900 leading-[1.02]">Every <span className="italic text-[#f0addd]">moment</span><br className="hidden md:block" /> counts.</h2>
+                <h2 className="font-serif text-5xl md:text-7xl tracking-tight text-slate-900 leading-[1.02]">The ordinary <span className="italic text-[#f0addd]">Tuesdays</span><br className="hidden md:block" /> <span className="whitespace-nowrap">slip away.</span></h2>
             </div>
             <p className="text-slate-500 text-lg md:text-xl font-light leading-relaxed max-w-sm md:text-right">
-                You'll remember the wedding. It's the ordinary Tuesdays that slip away, unless someone keeps them.
+                You'll remember the wedding. Belluh keeps the rest: the coffee, the late talks, the ticket stub in the drawer.
             </p>
         </div>
 
@@ -587,9 +588,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
               <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-10 px-8 py-14 md:px-16 md:py-20">
                   <div className="text-center md:text-left">
                       <h2 className="font-serif text-5xl md:text-7xl tracking-tight leading-[1.0]">
-                          <span className="text-[#9bbecb]">Start tonight.</span><br /><span className="text-[#f0addd] italic">Together.</span>
+                          <span className="text-[#9bbecb]">Keep tonight.</span><br /><span className="text-[#f0addd] italic">Together.</span>
                       </h2>
-                      <p className="mt-6 text-lg md:text-xl text-slate-500 font-light leading-relaxed max-w-lg mx-auto md:mx-0">Tonight will blur into the rest of the week unless you keep it. Write one line, send your partner the link, and your first insight arrives on Sunday.</p>
+                      <p className="mt-6 text-lg md:text-xl text-slate-500 font-light leading-relaxed max-w-lg mx-auto md:mx-0">By Sunday it will have blurred into the rest of the week. Write one line now, send your partner the link, and your first insight arrives on Sunday.</p>
                       <div className="mt-9 flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3">
                           <button onClick={() => { rememberCta('final'); onGetStarted(); }} className="group w-full sm:w-auto h-14 px-8 rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 hover:bg-black transition-colors">Start free <ArrowRight size={17} className="transition-transform group-hover:translate-x-0.5" /></button>
                           <button onClick={onLogin} className="w-full sm:w-auto h-14 px-7 rounded-full text-[15px] font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-colors">I have an account</button>
