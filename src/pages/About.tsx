@@ -12,6 +12,17 @@ interface AboutProps {
   onGoToCareers?: () => void;
 }
 
+// A newspaper drop cap: the first letter spans exactly three lines, its top level with the first line's capitals and
+// its foot on the third line's baseline, the text tucked close beside it. Browsers with initial-letter (Chrome,
+// Safari, Edge) size it exactly; others get a float tuned to the same three lines.
+const DROPCAP_CSS = `
+.dropcap::first-letter { float: left; font-family: Merriweather, Georgia, serif; font-weight: 400; color: #9bbecb;
+  font-size: 6.2em; line-height: 0.74; margin: 0.1em 0.03em -0.1em -0.04em; }
+@supports (initial-letter: 3) or (-webkit-initial-letter: 3) {
+  .dropcap::first-letter { float: none; font-size: 1em; line-height: inherit; margin: 0 0.12em 0 0;
+    -webkit-initial-letter: 3; initial-letter: 3; }
+}`;
+
 const reducedMotion = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } };
 
 // Fades a paragraph in once, as it scrolls into view
@@ -161,6 +172,7 @@ const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin, onShowLega
         </nav>
       </div>
 
+      <style>{DROPCAP_CSS}</style>
       <main>
         {/* Hero: the original Supermarket Moment opening */}
         <section className="px-6 md:px-8 pt-32 md:pt-40">
@@ -215,9 +227,8 @@ const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin, onShowLega
               <section id="moment" className="scroll-mt-24">
                 <Chapter n={1} id="moment" title="The moment" />
                 <TextReveal>
-                  <p className="text-slate-900">
-                    <span className="float-left mr-3 mt-1.5 font-serif text-[5.2rem] leading-[0.8] text-[#9bbecb]">E</span>
-                    ven before checkout at Acme, we had already exchanged what felt like 10,000 words. Our gaze locked. Brief glances. Obvious, eluding. Like children sneaking chocolate. Aisle after aisle, our eyes locked onto another. Almost touching.
+                  <p className="dropcap text-slate-900">
+                    Even before checkout at Acme, we had already exchanged what felt like 10,000 words. Our gaze locked. Brief glances. Obvious, eluding. Like children sneaking chocolate. Aisle after aisle, our eyes locked onto another. Almost touching.
                   </p>
                 </TextReveal>
                 <TextReveal><p>My hand brushed the label on my newly weighed shrimp. The chill from the ice lingering on my fingertips. Paired with a droning hum of the central AC mixed with the faint squeak of a cart the aisle beside us.</p></TextReveal>
