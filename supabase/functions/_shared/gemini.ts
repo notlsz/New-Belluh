@@ -1,4 +1,7 @@
-// Server-side Gemini calls with function calling. The API key never reaches the browser.
+// Server-side Gemini calls with function calling. The API key never reaches the browser. When Gemini can't answer
+// (out of quota, down), the turn carries on with a backup provider (backups.ts).
+
+import { backups, askBackup, toJsonSchema, type Backup } from './backups.ts';
 
 export interface GeminiPart { text?: string; inlineData?: { mimeType: string; data: string }; functionCall?: { name: string; args?: Record<string, unknown> }; functionResponse?: unknown }
 export interface GeminiContent { role: 'user' | 'model'; parts: GeminiPart[] }
@@ -64,7 +67,21 @@ export async function chatWithTools(opts: {
   const contents = [...opts.contents];
   let model = AGENT_MODEL();
   let usedTools = false;
+  // Once a backup has answered in this turn, the rest of the turn stays with it
+  let via: Backup | null = null;
+  const viaBackup = async (toolsOn: boolean) => {
+    for (const b of via ? [via] : backups()) {
+      const c = await askBackup(b, { system: opts.system, contents, tools: opts.tools, toolsOn });
+      if (c) { via = b; return c; }
+    }
+    return null;
+  };
   const ask = async (toolsOn: boolean) => {
+    if (via) return viaBackup(toolsOn);
+    const c = await askGemini(toolsOn);
+    return c ?? viaBackup(toolsOn);
+  };
+  const askGemini = async (toolsOn: boolean) => {
     const body = (m: string) => ({
       systemInstruction: { parts: [{ text: opts.system }] },
       contents,
@@ -117,6 +134,15 @@ export async function jsonAnswer(system: string, prompt: string, schema: unknown
     contents: [{ role: 'user', parts: [...images.map(inlineData => ({ inlineData })), { text: prompt }] }],
     generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0.6, maxOutputTokens: 8192, ...thinkingFor(MODEL()) },
   });
-  const text = reply?.parts?.map(p => p.text ?? '').join('');
-  try { return text ? JSON.parse(text) : null; } catch { return null; }
+  const parse = (t: string | undefined) => { try { return t ? JSON.parse(t.replace(/^```(?:json)?\s*|\s*```$/g, '')) : null; } catch { return null; } };
+  const out = parse(reply?.parts?.map(p => p.text ?? '').join(''));
+  if (out || images.length) return out;
+  // Gemini couldn't answer: the backups get the same question, with the shape spelled out
+  const shaped = `${system}\n\nAnswer with one JSON object only, matching this JSON Schema:\n${JSON.stringify(toJsonSchema(schema))}`;
+  for (const b of backups()) {
+    const c = await askBackup(b, { system: shaped, contents: [{ role: 'user', parts: [{ text: prompt }] }], json: true, temperature: 0.6 });
+    const o = parse(c?.parts?.map(p => p.text ?? '').join(''));
+    if (o) return o;
+  }
+  return null;
 }

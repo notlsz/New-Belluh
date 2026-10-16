@@ -944,3 +944,18 @@ test('37. Groceries, a ride and something to do: each one ready, links that land
   assert.ok(e.meta.links[0].url.startsWith('https://www.eventbrite.com/d/ca--san-francisco/jazz-concert/'), e.meta.links[0].url);
   for (const m of [g, r, e]) assert.doesNotMatch(m.body, /[{}*#•·→]|ok:|note:|https?:/, m.body);
 });
+
+test('38. When Gemini is out of quota, a backup provider finishes the turn: tools, words and all', async () => {
+  const before = geminiRequests().length;
+  const { data } = await agent(eve, { action: 'chat', message: 'gemini is out today, order us dinner' });
+  const m = data.messages.at(-1);
+  assert.equal(m.body, 'Ramen is ready to order below. I picked the place you both keep mentioning.');
+  assert.deepEqual(m.meta.links.map(l => l.label), ['Order ramen on DoorDash', 'Order ramen on Uber Eats']);
+  const backup = geminiRequests().slice(before).filter(r => r.backup);
+  assert.equal(backup.length, 2, 'one call to pick the tool, one to answer');
+  assert.equal(backup[0].auth, 'Bearer groq-test');
+  assert.equal(backup[0].backup.model, 'openai/gpt-oss-120b');
+  const tool = backup[0].backup.tools.find(t => t.function.name === 'order_food');
+  assert.equal(tool.function.parameters.type, 'object', 'Gemini schemas are translated to standard JSON Schema');
+  assert.equal(backup[1].backup.messages.find(x => x.role === 'tool').tool_call_id, backup[1].backup.messages.find(x => x.tool_calls)?.tool_calls[0].id, 'the tool result is paired with its call');
+});

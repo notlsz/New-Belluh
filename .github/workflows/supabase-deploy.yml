@@ -5,6 +5,10 @@
 #   SUPABASE_ACCESS_TOKEN  Belluh's Supabase account → Account → Access Tokens
 #   SUPABASE_DB_PASSWORD   Belluh's project → Project Settings → Database (reset it there if unknown)
 #   GEMINI_API_KEY         Google AI Studio key
+# Optional backup AI, used only when Gemini can't answer (any or all; each is skipped without a key):
+#   GROQ_API_KEY           console.groq.com/keys
+#   CEREBRAS_API_KEY       cloud.cerebras.ai
+#   OPENROUTER_API_KEY     openrouter.ai/keys
 # Optional, for WhatsApp dates and reminders (see docs/whatsapp-occasions.md):
 #   WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN
 # Optional, for the same by plain SMS (Twilio):
@@ -43,6 +47,9 @@ jobs:
       TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
       TWILIO_FROM: ${{ secrets.TWILIO_FROM }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || 'ctbsycrlakdanfzbaqmz' }}
     steps:
       - name: Check setup
@@ -106,6 +113,18 @@ jobs:
           echo "::add-mask::$CRON_SECRET"
           echo "CRON_SECRET=$CRON_SECRET" >> "$GITHUB_ENV"
           supabase secrets set --project-ref "$PROJECT_REF" GEMINI_API_KEY="$GEMINI_API_KEY" CRON_SECRET="$CRON_SECRET"
+          # Backup AI providers, each only if its key exists
+          backup=""
+          for k in GROQ_API_KEY CEREBRAS_API_KEY OPENROUTER_API_KEY; do
+            if [ -n "${!k}" ]; then backup="$backup $k=${!k}"; fi
+          done
+          if [ -n "$backup" ]; then
+            # shellcheck disable=SC2086
+            supabase secrets set --project-ref "$PROJECT_REF" $backup
+            echo "Backup AI on:$(for k in GROQ_API_KEY CEREBRAS_API_KEY OPENROUTER_API_KEY; do [ -n "${!k}" ] && printf ' %s' "${k%%_API_KEY}"; done)"
+          else
+            echo "::notice::No backup AI keys; if Gemini is out of quota, Belluh says it's having trouble. Add GROQ_API_KEY to turn on a free backup."
+          fi
 
       - name: Deploy edge functions
         if: steps.setup.outputs.ready == 'true'

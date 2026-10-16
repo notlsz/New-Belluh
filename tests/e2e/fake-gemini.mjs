@@ -12,6 +12,18 @@ http.createServer((req, res) => {
       res.writeHead(req.url.startsWith('/push/gone') ? 410 : 201); return res.end();
     }
     // Stand-in for Twilio's SMS API (form-encoded): record what Belluh sends
+    // A backup AI provider (OpenAI chat format, like Groq): calls a tool first, then answers in words
+    if (req.url.startsWith('/openai/')) {
+      const b = JSON.parse(rawBody || '{}');
+      fs.appendFileSync(LOG, JSON.stringify({ url: req.url, backup: b, auth: req.headers.authorization }) + '\n');
+      const msgs = b.messages ?? [];
+      const sentTool = msgs.some(m => m.role === 'tool');
+      const lastUser = [...msgs].reverse().find(m => m.role === 'user')?.content ?? '';
+      const answer = (message) => { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ choices: [{ message }] })); };
+      if (b.response_format?.type === 'json_object') return answer({ role: 'assistant', content: JSON.stringify({ reply: 'Backup here. You wrote about the same quiet dinner three weeks ago.' }) });
+      if (!sentTool && b.tools?.length && /order us dinner/i.test(lastUser)) return answer({ role: 'assistant', content: null, tool_calls: [{ id: 'x1', type: 'function', function: { name: 'order_food', arguments: JSON.stringify({ what: 'ramen', where: 'San Jose' }) } }] });
+      return answer({ role: 'assistant', content: sentTool ? 'Ramen is ready to order below. I picked the place you both keep mentioning.' : 'Backup here, and listening.' });
+    }
     // Shopify's Global Catalog: answers with the trimmed real response in tests/fixtures-shopify-catalog.json
     if (req.url.startsWith('/shopify')) {
       fs.appendFileSync(LOG, JSON.stringify({ url: req.url, shopify: JSON.parse(Buffer.concat(chunks).toString() || '{}') }) + '\n');
@@ -41,6 +53,8 @@ http.createServer((req, res) => {
     const last = body.contents?.at(-1)?.parts ?? [];
     const lastText = last.map(p => p.text ?? '').join(' ').toLowerCase();
     const hasToolResult = last.some(p => p.functionResponse);
+    // Gemini out of free quota: every Gemini model says 429, so the backup has to take the turn
+    if (JSON.stringify(body.contents ?? []).toLowerCase().includes('gemini is out')) { res.writeHead(429, { 'content-type': 'application/json' }); return res.end('{"error":{"code":429,"message":"quota"}}'); }
     // A key without the newest model: Google answers 404 for it, and Belluh should finish on the steady one
     if (lastText.includes('older key') && !req.url.includes('gemini-2.5')) { res.writeHead(404, { 'content-type': 'application/json' }); return res.end('{"error":{"code":404,"message":"model not found"}}'); }
     if (lastText.includes('talk like a person')) return reply(res, [{ text: '**Sure!** Here is the plan:\n- Ramen on 5th 🍜\n- Then a walk → home' }]);
