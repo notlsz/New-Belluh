@@ -73,7 +73,8 @@ export function tripLinks(raw: unknown, today = new Date()): ActionLink[] {
   if (back && (!depart || back <= depart)) back = null;
   const people = travelers(r.people);
   const flights = new URL('https://www.google.com/travel/flights');
-  flights.searchParams.set('q', `Flights to ${to}${from ? ` from ${from}` : ''}${depart ? ` on ${depart}` : ''}${back ? ` through ${back}` : ''}`);
+  // Google Flights reads the travelers from the sentence too ("for 2 adults"); without it, it searches for one
+  flights.searchParams.set('q', `Flights to ${to}${from ? ` from ${from}` : ''}${depart ? ` on ${depart}` : ''}${back ? ` through ${back}` : ''} for ${people} adult${people === 1 ? '' : 's'}`);
   const stay = new URL('https://www.booking.com/searchresults.html');
   stay.searchParams.set('ss', to);
   if (depart && back) { stay.searchParams.set('checkin', depart); stay.searchParams.set('checkout', back); }
@@ -94,9 +95,9 @@ export function flowerLinks(raw: unknown): ActionLink[] {
   const r = (raw ?? {}) as Record<string, unknown>;
   const what = clean(r.what, 60) || 'flowers';
   const where = clean(r.where, 80);
-  const shop = new URL('https://www.google.com/search');
-  shop.searchParams.set('tbm', 'shop');
-  shop.searchParams.set('q', `${what} delivery${where ? ` ${where}` : ''}`);
+  // UrbanStems delivers nationwide (same day in many cities) and its search lands on real arrangements
+  const shop = new URL('https://urbanstems.com/search');
+  shop.searchParams.set('q', what);
   const maps = new URL('https://www.google.com/maps/search/');
   maps.searchParams.set('api', '1');
   maps.searchParams.set('query', where ? `florist near ${where}` : 'florist near me');
@@ -140,7 +141,7 @@ export function buyLinks(raw: unknown): ActionLink[] {
   const target = new URL('https://www.target.com/s');
   target.searchParams.set('searchTerm', item);
   const shop = new URL('https://www.google.com/search');
-  shop.searchParams.set('tbm', 'shop');
+  shop.searchParams.set('udm', '28'); // Google Shopping (tbm=shop now drops to plain search)
   shop.searchParams.set('q', max > 0 ? `${item} under $${max}` : item);
   return [
     { label: `Buy ${item} on Amazon`, url: amazon.toString() },
@@ -177,6 +178,22 @@ export function rideLinks(raw: unknown): ActionLink[] {
   ];
 }
 
+const STATES: Record<string, string> = { alabama: 'al', alaska: 'ak', arizona: 'az', arkansas: 'ar', california: 'ca', colorado: 'co', connecticut: 'ct', delaware: 'de', florida: 'fl', georgia: 'ga', hawaii: 'hi', idaho: 'id', illinois: 'il', indiana: 'in', iowa: 'ia', kansas: 'ks', kentucky: 'ky', louisiana: 'la', maine: 'me', maryland: 'md', massachusetts: 'ma', michigan: 'mi', minnesota: 'mn', mississippi: 'ms', missouri: 'mo', montana: 'mt', nebraska: 'ne', nevada: 'nv', 'new hampshire': 'nh', 'new jersey': 'nj', 'new mexico': 'nm', 'new york': 'ny', 'north carolina': 'nc', 'north dakota': 'nd', ohio: 'oh', oklahoma: 'ok', oregon: 'or', pennsylvania: 'pa', 'rhode island': 'ri', 'south carolina': 'sc', 'south dakota': 'sd', tennessee: 'tn', texas: 'tx', utah: 'ut', vermont: 'vt', virginia: 'va', washington: 'wa', 'west virginia': 'wv', wisconsin: 'wi', wyoming: 'wy', 'district of columbia': 'dc' };
+// Big cities people name without a state
+const CITY_STATE: Record<string, string> = { 'san francisco': 'ca', 'los angeles': 'ca', 'san jose': 'ca', 'san diego': 'ca', oakland: 'ca', 'palo alto': 'ca', 'new york': 'ny', 'new york city': 'ny', nyc: 'ny', brooklyn: 'ny', manhattan: 'ny', chicago: 'il', boston: 'ma', seattle: 'wa', austin: 'tx', houston: 'tx', dallas: 'tx', miami: 'fl', atlanta: 'ga', denver: 'co', portland: 'or', philadelphia: 'pa', washington: 'dc', 'las vegas': 'nv', nashville: 'tn', phoenix: 'az' };
+const slugify = (x: string) => x.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+/** Eventbrite's place in its URLs is "state--city" ("ca--san-francisco"); without a state the page is a dead end. */
+export function eventbritePlace(where: string): string {
+  const parts = where.split(',').map(x => x.trim()).filter(Boolean);
+  if (!parts.length) return 'united-states';
+  const city = parts[0].toLowerCase();
+  const tail = (parts[1] ?? '').toLowerCase();
+  const st = /^[a-z]{2}$/.test(tail) ? tail : STATES[tail] ?? CITY_STATE[city];
+  if (!st) return 'united-states';
+  return `${st}--${slugify(city === 'nyc' || city === 'manhattan' ? 'new york' : city)}`;
+}
+
 /** Something to do together (a concert, a class, a tasting): tickets and experiences near them, on the day if given. */
 export function experienceLinks(raw: unknown): ActionLink[] {
   const r = (raw ?? {}) as Record<string, unknown>;
@@ -184,7 +201,7 @@ export function experienceLinks(raw: unknown): ActionLink[] {
   if (what.length < 2) return [];
   const where = clean(r.where, 60);
   const day = dateOnly(r.on);
-  const slug = (where || 'online').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const slug = eventbritePlace(where);
   const eb = new URL(`https://www.eventbrite.com/d/${slug}/${encodeURIComponent(what.toLowerCase().replace(/\s+/g, '-'))}/`);
   if (day) { eb.searchParams.set('start_date', day); eb.searchParams.set('end_date', day); }
   const ab = new URL(`https://www.airbnb.com/s/${encodeURIComponent(where || 'nearby')}/experiences`);

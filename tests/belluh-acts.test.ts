@@ -132,7 +132,7 @@ test('Trips: flights, hotels and an Airbnb, with the dates and travelers filled 
   const now = new Date('2026-10-15T12:00:00Z');
   const l = tripLinks({ to: 'Lisbon', from: 'San Francisco', depart: '2027-05-10', return: '2027-05-17', people: 2 }, now);
   assert.deepEqual(l.map(x => x.label), ['Flights to Lisbon', 'Hotels in Lisbon', 'Airbnbs in Lisbon']);
-  assert.match(new URL(l[0].url).searchParams.get('q')!, /^Flights to Lisbon from San Francisco on 2027-05-10 through 2027-05-17$/);
+  assert.match(new URL(l[0].url).searchParams.get('q')!, /^Flights to Lisbon from San Francisco on 2027-05-10 through 2027-05-17 for 2 adults$/);
   const b = new URL(l[1].url);
   assert.equal(b.hostname, 'www.booking.com');
   assert.equal(b.searchParams.get('checkin'), '2027-05-10');
@@ -150,7 +150,8 @@ test('Flowers: an order for delivery and florists near where they should go', as
   const { flowerLinks } = await import('../supabase/functions/_shared/actions.ts');
   const l = flowerLinks({ what: 'peonies', where: 'Brooklyn', deliver_on: '2026-10-20' });
   assert.equal(l[0].label, 'Order peonies for delivery');
-  assert.equal(new URL(l[0].url).searchParams.get('q'), 'peonies delivery Brooklyn');
+  assert.equal(new URL(l[0].url).hostname, 'urbanstems.com', 'a florist that delivers, not a search page');
+  assert.equal(new URL(l[0].url).searchParams.get('q'), 'peonies');
   assert.equal(new URL(l[1].url).searchParams.get('query'), 'florist near Brooklyn');
   assert.equal(flowerLinks({})[0].label, 'Order flowers for delivery');
 });
@@ -185,7 +186,15 @@ test('Groceries, rides and things to do', async () => {
   assert.equal(new URL(r[0].url).searchParams.get('dropoff[formatted_address]'), 'Nopa, San Francisco');
   assert.equal(new URL(r[1].url).searchParams.get('destination[address]'), 'Nopa, San Francisco');
   const e = experienceLinks({ what: 'cooking class', where: 'San Jose', on: '2026-11-07' });
-  assert.ok(e[0].url.startsWith('https://www.eventbrite.com/d/san-jose/cooking-class/'));
+  assert.ok(e[0].url.startsWith('https://www.eventbrite.com/d/ca--san-jose/cooking-class/'), e[0].url);
+  // Eventbrite needs "state--city": from a state code, a state name, a known city, or the whole US as a last resort
+  const { eventbritePlace } = await import('../supabase/functions/_shared/actions.ts');
+  assert.equal(eventbritePlace('Austin, TX'), 'tx--austin');
+  assert.equal(eventbritePlace('Portland, Maine'), 'me--portland');
+  assert.equal(eventbritePlace('Brooklyn'), 'ny--brooklyn');
+  assert.equal(eventbritePlace('NYC'), 'ny--new-york');
+  assert.equal(eventbritePlace('Smallville'), 'united-states');
+  assert.equal(eventbritePlace(''), 'united-states');
   assert.equal(new URL(e[0].url).searchParams.get('start_date'), '2026-11-07');
   assert.equal(new URL(e[1].url).searchParams.get('query'), 'cooking class');
   for (const n of ['order_food', 'buy_item', 'order_groceries', 'book_ride', 'find_experience']) assert.equal(validateToolCall(n, { what: 'x' })?.name, n);
@@ -209,4 +218,12 @@ test('Shopify: only dollar-priced products with a real checkout link, priced pla
   assert.equal(sent.params.name, 'search_catalog');
   assert.equal(sent.params.arguments.catalog.query, 'film camera');
   assert.equal(sent.params.arguments.catalog.filters.price.max, 10000, 'the budget goes in cents');
+});
+
+test('Prices are compared on Google Shopping (udm=28), with the budget in the search', async () => {
+  const { buyLinks } = await import('../supabase/functions/_shared/actions.ts');
+  const u = new URL(buyLinks({ item: 'film camera', max_price: 150 })[2].url);
+  assert.equal(u.searchParams.get('udm'), '28');
+  assert.equal(u.searchParams.get('tbm'), null);
+  assert.equal(u.searchParams.get('q'), 'film camera under $150');
 });
