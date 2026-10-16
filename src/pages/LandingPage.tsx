@@ -388,11 +388,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
          <div className="w-full max-w-7xl mx-auto md:px-6 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] items-center gap-6 sm:gap-12 lg:gap-6">
              <div className="text-center lg:text-left" style={{ animation: 'slideUp 0.9s cubic-bezier(0.16,1,0.3,1) both' }}>
                  <h1 className="font-serif tracking-tight leading-[0.98] text-[2.85rem] sm:text-7xl xl:text-[5.6rem]">
-                     <span className="text-[#9bbecb]">The AI journal</span><br />
-                     <span className="text-[#f0addd] italic">for couples.</span>
+                     <span className="text-[#9bbecb]">Life gets busy.</span><br />
+                     <span className="text-[#f0addd] italic">Love gets lost.</span>
                  </h1>
-                 <p className="mt-5 sm:mt-7 text-[17px] md:text-[1.35rem] text-slate-500 font-light leading-relaxed max-w-xl mx-auto lg:mx-0 min-h-[5.4rem] md:min-h-[4.4rem]">
-                     <BelluhSpeech text="You each write a few lines a day. Belluh remembers what matters, plans the date and reminds you both." delay={500} />
+                 <p className="mt-5 sm:mt-7 text-[17px] md:text-[1.35rem] text-slate-500 font-light leading-relaxed max-w-xl mx-auto lg:mx-0 min-h-[5.4rem] md:min-h-[4.4rem] [text-wrap:pretty]">
+                     <BelluhSpeech text="The plans you never made. The moments you forgot. Belluh, the AI journal for couples, keeps them for you both." delay={500} />
                  </p>
                  <div className="mt-7 sm:mt-9 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-1.5 sm:gap-3">
                      <button onClick={() => { rememberCta('hero'); onGetStarted(); }} className="group w-full sm:w-auto h-14 px-8 rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 hover:bg-black transition-colors shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)]">
@@ -511,7 +511,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                 <h2 className="font-serif text-5xl md:text-7xl tracking-tight text-slate-900 leading-[1.02]">Every <span className="italic text-[#f0addd]">moment</span><br className="hidden md:block" /> counts.</h2>
             </div>
             <p className="text-slate-500 text-lg md:text-xl font-light leading-relaxed max-w-sm md:text-right">
-                From the big milestones to the quiet Sunday mornings, Belluh keeps your story alive.
+                You'll remember the wedding. It's the ordinary Tuesdays that slip away, unless someone keeps them.
             </p>
         </div>
 
@@ -589,7 +589,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                       <h2 className="font-serif text-5xl md:text-7xl tracking-tight leading-[1.0]">
                           <span className="text-[#9bbecb]">Start tonight.</span><br /><span className="text-[#f0addd] italic">Together.</span>
                       </h2>
-                      <p className="mt-6 text-lg md:text-xl text-slate-500 font-light leading-relaxed max-w-lg mx-auto md:mx-0">Write one line about today and send your partner the link. Your first insight arrives on Sunday.</p>
+                      <p className="mt-6 text-lg md:text-xl text-slate-500 font-light leading-relaxed max-w-lg mx-auto md:mx-0">Tonight will blur into the rest of the week unless you keep it. Write one line, send your partner the link, and your first insight arrives on Sunday.</p>
                       <div className="mt-9 flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3">
                           <button onClick={() => { rememberCta('final'); onGetStarted(); }} className="group w-full sm:w-auto h-14 px-8 rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 hover:bg-black transition-colors">Start free <ArrowRight size={17} className="transition-transform group-hover:translate-x-0.5" /></button>
                           <button onClick={onLogin} className="w-full sm:w-auto h-14 px-7 rounded-full text-[15px] font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-colors">I have an account</button>
