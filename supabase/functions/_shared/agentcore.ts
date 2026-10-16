@@ -2,7 +2,7 @@
 // Anything that reaches the partner (a plan to pick, a note, an answer) also goes to their phone if they've connected one.
 
 import {
-  validateToolCall, cleanReply, TOOL_DECLARATIONS, MEDIATE_INSTRUCTION, type Shape,
+  validateToolCall, cleanReply, naturalFallback, TOOL_DECLARATIONS, MEDIATE_INSTRUCTION, type Shape,
 } from './agent.ts';
 import { chatWithTools, type GeminiContent } from './gemini.ts';
 import { db, addMessage, history, weekView, buildSystem, buildUsSystem, type Ctx } from './agentdb.ts';
@@ -66,8 +66,9 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   const products: ShopProduct[] = [];
   const addProducts = (ps: ShopProduct[]) => { for (const p of ps) { if (products.length >= 4 || products.some(x => x.url === p.url)) continue; products.push(p); links.push({ label: `${p.title}, ${p.price} at ${p.seller}`, url: p.url }); } };
   let shape: Shape | null = null;
+  const ran: string[] = [];
   const reply = await chatWithTools({
-    system, contents, tools: TOOL_DECLARATIONS,
+    system, contents, tools: TOOL_DECLARATIONS, ran,
     runTool: async (name, args) => {
       const call = validateToolCall(name, args);
       if (!call) return { ok: false, error: 'invalid arguments' };
@@ -193,7 +194,7 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
     },
   });
 
-  const final = cleanReply(reply ?? '') || "I'm having trouble thinking right now. Try me again in a moment.";
+  const final = cleanReply(reply ?? '') || naturalFallback(ran) || "I'm having trouble thinking right now. Try me again in a moment.";
   // Every new memory is shown under the reply, so nothing is remembered silently
   created.push(await addMessage(ctx.userId, 'belluh', final, { ...(saved.length ? { saved } : {}), ...(links.length ? { links: links.slice(0, 7) } : {}), ...(products.length ? { products } : {}), ...(shape ? { shape } : {}) }));
   return { messages: created };
@@ -380,8 +381,9 @@ export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Pro
     : { role: 'user', parts: [{ text: `${names[m.author ?? ''] ?? 'Partner'}: ${m.body}` }] }));
   const system = await buildUsSystem(ctx);
   const usLinks: ActionLink[] = [];
+  const ran: string[] = [];
   const reply = await chatWithTools({
-    system, contents, tools: TOOL_DECLARATIONS.filter((t: any) => ['plan_with_partner', 'find_table', 'plan_trip', 'order_food', 'find_experience'].includes(t.name)),
+    system, contents, ran, tools: TOOL_DECLARATIONS.filter((t: any) => ['plan_with_partner', 'find_table', 'plan_trip', 'order_food', 'find_experience'].includes(t.name)),
     runTool: async (name, args) => {
       const call = validateToolCall(name, args);
       if (call?.name === 'plan_trip') {
@@ -412,7 +414,7 @@ export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Pro
       return { ok: true, note: `The plan card is in the chat. ${ctx.partnerName} picks a time right there. Say so in one short line.` };
     },
   });
-  const final = cleanReply(reply ?? '') || "I'm having trouble thinking right now. Try me again in a moment.";
+  const final = cleanReply(reply ?? '') || naturalFallback(ran) || "I'm having trouble thinking right now. Try me again in a moment.";
   created.push(await usAdd(ctx, null, 'belluh', final, usLinks.length ? { links: usLinks.slice(0, 4) } : {}));
   return res({ messages: created });
 }

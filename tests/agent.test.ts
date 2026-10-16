@@ -154,3 +154,14 @@ test('Us thread: Belluh only gets what both of them can see', () => {
   assert.match(p, /Both of them see everything you write here/);
   assert.match(p, /that stays private/);
 });
+
+test('Belluh never shows tool output: echoes are caught, ordinary sentences are not', async () => {
+  const { looksLikeToolEcho } = await import('../supabase/functions/_shared/gemini.ts');
+  const { naturalFallback } = await import('../supabase/functions/_shared/agent.ts');
+  for (const bad of ['Done. ok: true, note: The order is ready', '{"ok":true}', 'status: done', 'private_guidance says', 'already_saved', 'Done. {"x":1}', 'ok=true'])
+    assert.ok(looksLikeToolEcho(bad), bad);
+  for (const good of ["Dinner's ready to order below. I went with pho.", 'One note: bring a jacket, it gets cold by the water.', "Okay, that's done.", "I'd say yes, the 7pm works."])
+    assert.ok(!looksLikeToolEcho(good), good);
+  assert.equal(naturalFallback(['remember_fact', 'find_table']), 'Your table is ready to book right below, one tap and it is yours.');
+  assert.equal(naturalFallback([]), null);
+});

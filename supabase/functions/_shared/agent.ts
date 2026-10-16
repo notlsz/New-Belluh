@@ -153,6 +153,7 @@ export interface PersonContext {
 const VOICE = `- Talk like a thoughtful person texting a friend: full, natural sentences in plain words, warm and direct. No filler openers ("Great question", "Absolutely", "I'd be happy to").
 - Plain text only. No markdown, asterisks, underscores, hashtags or headings. No bullet points or numbered lists unless they ask for a list. No emoji. No em dashes, arrows, slashes between options or other symbols; use commas and periods.
 - Never show tool names, JSON, IDs, code or raw links. Links and products appear under your reply on their own, so just say what you got ready.
+- What a tool sends back (status, private_guidance and the rest) is a private note to you. Never quote it, its keys or its wording; just talk to them.
 - Write times and money the way people say them: "Saturday at 7", "$69", "in 12 days".`;
 
 export function systemPrompt(c: PersonContext): string {
@@ -568,4 +569,28 @@ export function cleanReply(text: string): string {
     .trim()
     .replace(/[,;:]$/, '.')
     .slice(0, 4000);
+}
+
+// If the model acted but never found its words, Belluh still answers like a person, from what it actually did
+const DID: Record<string, string> = {
+  find_table: 'Your table is ready to book right below, one tap and it is yours.',
+  plan_trip: 'I pulled up flights, hotels and Airbnbs for the trip, all below and ready when you are.',
+  send_flowers: 'The flowers are ready to order below. Want me to write the card?',
+  gift_ideas: 'I found a few gifts that fit, they are right below.',
+  buy_item: 'Found it. The best options are below, each one tap from checkout.',
+  order_food: 'Dinner is ready to order below, you just check out.',
+  order_groceries: 'Your groceries are each one tap from the cart, right below.',
+  book_ride: 'Your ride is ready with the address filled in, just below.',
+  find_experience: 'I found a few things you two could do, they are below.',
+  plan_with_partner: 'The plan is in, and they can pick a time with one tap.',
+  draft_note_to_partner: 'I drafted it for you. Have a look before it goes.',
+  remind_me: "Done, I'll remind you.",
+  save_date: "Saved. I'll remind you a week before and on the day.",
+  remember_fact: "Got it, I'll remember that.",
+  write_entry: "It's in your journal.",
+  take_shape: 'How do I look?',
+};
+export function naturalFallback(ran: string[]): string | null {
+  for (let i = ran.length - 1; i >= 0; i--) if (DID[ran[i]]) return DID[ran[i]];
+  return null;
 }
