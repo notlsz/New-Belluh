@@ -165,3 +165,21 @@ test('Belluh never shows tool output: echoes are caught, ordinary sentences are 
   assert.equal(naturalFallback(['remember_fact', 'find_table']), 'Your table is ready to book right below, one tap and it is yours.');
   assert.equal(naturalFallback([]), null);
 });
+
+test('Backup AI: Gemini tools and turns translate to the OpenAI format and back', async () => {
+  const { toJsonSchema, toOpenAIMessages, fromOpenAIMessage, toOpenAITools } = await import('../supabase/functions/_shared/backups.ts');
+  assert.deepEqual(toJsonSchema({ type: 'OBJECT', properties: { at: { type: 'STRING', nullable: true }, ideas: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['ideas'] }),
+    { type: 'object', properties: { at: { type: ['string', 'null'] }, ideas: { type: 'array', items: { type: 'string' } } }, required: ['ideas'] });
+  assert.equal(toOpenAITools([{ name: 'order_food', description: 'd', parameters: { type: 'OBJECT', properties: {} } }])[0].function.parameters.type, 'object');
+  const msgs = toOpenAIMessages('sys', [
+    { role: 'user', parts: [{ text: 'order us dinner' }] },
+    { role: 'model', parts: [{ text: 'thinking', thought: true } as any, { functionCall: { name: 'order_food', args: { what: 'pho' } } }] },
+    { role: 'user', parts: [{ functionResponse: { name: 'order_food', response: { status: 'done' } } } as any] },
+  ]);
+  assert.deepEqual(msgs.map(m => m.role), ['system', 'user', 'assistant', 'tool']);
+  assert.equal(msgs[2].content, null, 'hidden thoughts are never sent on');
+  assert.equal(msgs[3].tool_call_id, msgs[2].tool_calls[0].id);
+  assert.deepEqual(fromOpenAIMessage({ content: null, tool_calls: [{ function: { name: 'order_food', arguments: '{"what":"pho"}' } }] }), { role: 'model', parts: [{ functionCall: { name: 'order_food', args: { what: 'pho' } } }] });
+  assert.deepEqual(fromOpenAIMessage({ content: 'Hi', tool_calls: [{ function: { name: 'x', arguments: 'not json' } }] })?.parts, [{ text: 'Hi' }, { functionCall: { name: 'x', args: {} } }]);
+  assert.equal(fromOpenAIMessage({ content: '  ' }), null);
+});
