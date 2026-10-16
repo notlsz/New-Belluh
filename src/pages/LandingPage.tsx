@@ -75,17 +75,26 @@ interface LandingPageProps {
   onGoToCareers: () => void;
 }
 
-// Logos are drawn inline (no network), so the strip never shows a broken image or a blurry favicon.
-// Companies get their mark and name; universities get their name set in serif, the way they set it themselves.
+// Universities get one row and companies the other
 const isUniversity = (domain: string) => /\.(edu|ac\.uk|ca)$/.test(domain);
 
-const LogoItem = ({ org }: { org: { name: string; domain: string } }) => {
+type Org = { name: string; domain: string; logo?: string };
+
+// Real logos (grey until you hover, like before). If one ever fails to load, the brand's mark or name stands in.
+const LogoItem = ({ org }: { org: Org }) => {
+  const [failed, setFailed] = useState(false);
   const mark = BRAND_MARKS[org.domain];
-  if (isUniversity(org.domain)) {
-    return <span className="font-serif text-[1.6rem] md:text-[1.85rem] tracking-tight whitespace-nowrap">{org.name}</span>;
+  if (org.logo && !failed) {
+    return (
+      <img src={org.logo} alt={org.name} title={org.name} loading="lazy" decoding="async" draggable={false} onError={() => setFailed(true)}
+        className="h-10 md:h-12 w-auto max-w-[130px] md:max-w-[150px] object-contain grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-500 select-none" />
+    );
+  }
+  if (isUniversity(org.domain) && !mark) {
+    return <span className="font-serif text-[1.6rem] md:text-[1.85rem] tracking-tight whitespace-nowrap text-slate-400">{org.name}</span>;
   }
   return (
-    <span className="inline-flex items-center gap-2.5 whitespace-nowrap">
+    <span className="inline-flex items-center gap-2.5 whitespace-nowrap text-slate-400 hover:text-slate-900 transition-colors duration-300">
       {mark && <svg viewBox="0 0 24 24" className="h-6 w-6 md:h-7 md:w-7 shrink-0 fill-current" aria-hidden="true"><path d={mark} /></svg>}
       <span className="text-lg md:text-xl font-semibold tracking-tight">{org.name}</span>
     </span>
@@ -94,14 +103,14 @@ const LogoItem = ({ org }: { org: { name: string; domain: string } }) => {
 
 const FADE_X = { WebkitMaskImage: 'linear-gradient(to right, transparent, #000 12%, #000 88%, transparent)', maskImage: 'linear-gradient(to right, transparent, #000 12%, #000 88%, transparent)' } as React.CSSProperties;
 
-const MarqueeRow = ({ orgs, reverse = false, speed = 60 }: { orgs: { name: string; domain: string }[]; reverse?: boolean; speed?: number }) => {
+const MarqueeRow = ({ orgs, reverse = false, speed = 60 }: { orgs: Org[]; reverse?: boolean; speed?: number }) => {
   // Two identical halves, so sliding by half loops without a seam; short lists are repeated to fill wide screens
   const half = Array.from({ length: Math.max(1, Math.ceil(12 / orgs.length)) }, () => orgs).flat();
   return (
     <div className="relative flex overflow-hidden group" style={FADE_X}>
       <div className={`flex items-center w-max ${reverse ? 'animate-marquee-reverse' : 'animate-marquee'} group-hover:[animation-play-state:paused]`} style={{ animationDuration: `${speed}s` }}>
         {[...half, ...half].map((org, i) => (
-          <div key={i} aria-hidden={i >= half.length ? true : undefined} className="shrink-0 px-7 md:px-10 flex items-center h-14 text-slate-400 hover:text-slate-900 transition-colors duration-300">
+          <div key={i} aria-hidden={i >= half.length ? true : undefined} className="shrink-0 px-7 md:px-10 flex items-center h-16">
             <LogoItem org={org} />
           </div>
         ))}
@@ -110,7 +119,7 @@ const MarqueeRow = ({ orgs, reverse = false, speed = 60 }: { orgs: { name: strin
   );
 };
 
-const LogoMarquee = ({ title, orgs, note }: { title: string; orgs: { name: string; domain: string }[]; note: string; repeat?: number }) => {
+const LogoMarquee = ({ title, orgs, note }: { title: string; orgs: Org[]; note: string; repeat?: number }) => {
   const schools = orgs.filter(o => isUniversity(o.domain));
   const others = orgs.filter(o => !isUniversity(o.domain));
   return (

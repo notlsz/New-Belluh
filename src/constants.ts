@@ -29,213 +29,215 @@ export interface Organization {
   logo?: string;
 }
 
+// Logos are Wikimedia Commons thumbnails at standard widths (120px for seals and marks, 330px for wordmarks);
+// Wikimedia only serves those standard sizes, which is why the old 1024px links never loaded.
 export const ORGANIZATIONS: Organization[] = [
   // Universities
   { 
     name: 'Oxford', 
     domain: 'ox.ac.uk',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/University_of_Oxford.svg/1024px-University_of_Oxford.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/University_of_Oxford.svg/330px-University_of_Oxford.svg.png'
   },
   { 
     name: 'Harvard', 
     domain: 'harvard.edu',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Harvard_University_shield.png/1024px-Harvard_University_shield.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Harvard_University_shield.png/120px-Harvard_University_shield.png'
   },
   { 
     name: 'Yale', 
     domain: 'yale.edu',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Yale_University_Shield_1.svg/1024px-Yale_University_Shield_1.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Yale_University_Shield_1.svg/120px-Yale_University_Shield_1.svg.png'
   },
   { 
     name: 'Princeton', 
     domain: 'princeton.edu',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Princeton_seal.svg/1024px-Princeton_seal.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Princeton_seal.svg/120px-Princeton_seal.svg.png'
   },
   { 
     name: 'Penn', 
     domain: 'upenn.edu',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/UPenn_shield_with_banner.svg/1024px-UPenn_shield_with_banner.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/UPenn_shield_with_banner.svg/120px-UPenn_shield_with_banner.svg.png'
   },
   { 
     name: 'Cornell', 
     domain: 'cornell.edu',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Cornell_University_seal.svg/1024px-Cornell_University_seal.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Cornell_University_seal.svg/120px-Cornell_University_seal.svg.png'
   },
   { 
     name: 'USC', 
     domain: 'usc.edu',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/USC_Trojans_logo.svg/1024px-USC_Trojans_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/USC_Trojans_logo.svg/120px-USC_Trojans_logo.svg.png'
   },
   { 
     name: 'UCLA', 
     domain: 'ucla.edu',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/UCLA_Bruins_primary_logo.svg/1024px-UCLA_Bruins_primary_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/UCLA_Bruins_primary_logo.svg/330px-UCLA_Bruins_primary_logo.svg.png'
   },
   { 
     name: 'Cal', 
     domain: 'berkeley.edu',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Seal_of_University_of_California%2C_Berkeley.svg/1024px-Seal_of_University_of_California%2C_Berkeley.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Seal_of_University_of_California%2C_Berkeley.svg/120px-Seal_of_University_of_California%2C_Berkeley.svg.png'
   },
   { 
     name: 'UNC', 
     domain: 'unc.edu',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/North_Carolina_Tar_Heels_logo.svg/1024px-North_Carolina_Tar_Heels_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/North_Carolina_Tar_Heels_logo.svg/120px-North_Carolina_Tar_Heels_logo.svg.png'
   },
   { 
     name: 'UMich', 
     domain: 'umich.edu',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Michigan_Wolverines_logo.svg/1024px-Michigan_Wolverines_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Michigan_Wolverines_logo.svg/120px-Michigan_Wolverines_logo.svg.png'
   },
   { 
     name: 'Waterloo', 
     domain: 'uwaterloo.ca',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/6/6e/University_of_Waterloo_seal.svg/1024px-University_of_Waterloo_seal.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/6/6e/University_of_Waterloo_seal.svg/120px-University_of_Waterloo_seal.svg.png'
   },
   { 
     name: 'U of T', 
     domain: 'utoronto.ca',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/04/Utoronto_coa.svg/1024px-Utoronto_coa.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/04/Utoronto_coa.svg/120px-Utoronto_coa.svg.png'
   },
   { 
     name: 'Rutgers', 
     domain: 'rutgers.edu',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Rutgers_Scarlet_Knights_logo.svg/1024px-Rutgers_Scarlet_Knights_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Rutgers_Scarlet_Knights_logo.svg/120px-Rutgers_Scarlet_Knights_logo.svg.png'
   },
   {
     name: 'Duke',
     domain: 'duke.edu',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Duke_University_logo.svg/1024px-Duke_University_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Duke_University_logo.svg/330px-Duke_University_logo.svg.png'
   },
   {
     name: 'Stanford',
     domain: 'stanford.edu',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/4/4b/Stanford_Cardinal_logo.svg'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Stanford_Cardinal_logo.svg/120px-Stanford_Cardinal_logo.svg.png'
   },
   {
     name: 'UChicago',
     domain: 'uchicago.edu',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/7/79/University_of_Chicago_shield.svg/1024px-University_of_Chicago_shield.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/7/79/University_of_Chicago_shield.svg/120px-University_of_Chicago_shield.svg.png'
   },
   // Tech & Finance
   {
     name: 'Amazon',
     domain: 'amazon.com',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/1024px-Amazon_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/330px-Amazon_logo.svg.png'
   },
   {
     name: 'Microsoft',
     domain: 'microsoft.com',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Microsoft_logo_%282012%29.svg/1024px-Microsoft_logo_%282012%29.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Microsoft_logo_%282012%29.svg/330px-Microsoft_logo_%282012%29.svg.png'
   },
   { 
     name: 'Google', 
     domain: 'google.com',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1024px-Google_2015_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/330px-Google_2015_logo.svg.png'
   },
   { 
     name: 'Meta', 
     domain: 'meta.com',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/1024px-Meta_Platforms_Inc._logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/330px-Meta_Platforms_Inc._logo.svg.png'
   },
   { 
     name: 'OpenAI', 
     domain: 'openai.com',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/1024px-OpenAI_Logo.svg.png'
+    logo: 'https://commons.wikimedia.org/wiki/Special:FilePath/OpenAI_Logo.svg?width=330'
   },
   { 
     name: 'Perplexity', 
     domain: 'perplexity.ai', 
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Perplexity_AI_logo.svg/1024px-Perplexity_AI_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Perplexity_AI_logo.svg/330px-Perplexity_AI_logo.svg.png'
   },
   { 
     name: 'Apple', 
     domain: 'apple.com', 
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/1024px-Apple_logo_black.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/120px-Apple_logo_black.svg.png'
   },
   { 
     name: 'NVIDIA', 
     domain: 'nvidia.com', 
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Nvidia_logo.svg/1024px-Nvidia_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Nvidia_logo.svg/330px-Nvidia_logo.svg.png'
   },
   { 
     name: 'Palantir', 
     domain: 'palantir.com', 
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Palantir_Technologies_logo.svg/1024px-Palantir_Technologies_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Palantir_Technologies_logo.svg/330px-Palantir_Technologies_logo.svg.png'
   },
   { 
     name: 'Jane Street', 
     domain: 'janestreet.com',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Jane_Street_Capital_Logo.svg/1024px-Jane_Street_Capital_Logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Jane_Street_Capital_Logo.svg/330px-Jane_Street_Capital_Logo.svg.png'
   },
   { 
     name: 'Goldman Sachs', 
     domain: 'goldmansachs.com',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Goldman_Sachs.svg/1024px-Goldman_Sachs.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Goldman_Sachs.svg/120px-Goldman_Sachs.svg.png'
   },
   { 
     name: 'Coinbase', 
     domain: 'coinbase.com',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Coinbase.svg/1024px-Coinbase.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Coinbase.svg/330px-Coinbase.svg.png'
   },
   { 
     name: 'Stripe', 
     domain: 'stripe.com',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Stripe_Logo%2C_revised_2016.svg/1024px-Stripe_Logo%2C_revised_2016.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Stripe_Logo%2C_revised_2016.svg/330px-Stripe_Logo%2C_revised_2016.svg.png'
   },
   { 
     name: 'Airbnb', 
     domain: 'airbnb.com',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Airbnb_Logo_B%C3%A9lo.svg/1024px-Airbnb_Logo_B%C3%A9lo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Airbnb_Logo_B%C3%A9lo.svg/330px-Airbnb_Logo_B%C3%A9lo.svg.png'
   },
   { 
     name: 'Uber', 
     domain: 'uber.com',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Uber_logo_2018.png/1024px-Uber_logo_2018.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Uber_logo_2018.png/330px-Uber_logo_2018.png'
   },
   { 
     name: 'Lyft', 
     domain: 'lyft.com',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Lyft_logo.svg/1024px-Lyft_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Lyft_logo.svg/120px-Lyft_logo.svg.png'
   },
   { 
     name: 'TikTok', 
     domain: 'tiktok.com',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/a/a9/TikTok_logo.svg/1024px-TikTok_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/a/a9/TikTok_logo.svg/330px-TikTok_logo.svg.png'
   },
   { 
     name: 'Snapchat', 
     domain: 'snapchat.com',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/c/c4/Snapchat_logo.svg/1024px-Snapchat_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/c/c4/Snapchat_logo.svg/120px-Snapchat_logo.svg.png'
   },
   { 
     name: 'Discord', 
     domain: 'discord.com', 
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/98/Discord_logo.svg/1024px-Discord_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/98/Discord_logo.svg/330px-Discord_logo.svg.png'
   },
   { 
     name: 'Spotify', 
     domain: 'spotify.com', 
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Spotify_logo_with_text.svg/1024px-Spotify_logo_with_text.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Spotify_logo_with_text.svg/330px-Spotify_logo_with_text.svg.png'
   },
   { 
     name: 'HP', 
     domain: 'hp.com', 
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/HP_logo_2012.svg/1024px-HP_logo_2012.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/HP_logo_2012.svg/120px-HP_logo_2012.svg.png'
   },
   { 
     name: 'Nike', 
     domain: 'nike.com', 
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Logo_NIKE.svg/1024px-Logo_NIKE.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Logo_NIKE.svg/330px-Logo_NIKE.svg.png'
   },
   { 
     name: 'Adidas', 
     domain: 'adidas.com', 
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Adidas_Logo.svg/1024px-Adidas_Logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Adidas_Logo.svg/120px-Adidas_Logo.svg.png'
   },
   { 
     name: 'Under Armour', 
     domain: 'underarmour.com', 
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Under_armour_logo.svg/1024px-Under_armour_logo.svg.png'
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Under_armour_logo.svg/120px-Under_armour_logo.svg.png'
   },
 ];
 
