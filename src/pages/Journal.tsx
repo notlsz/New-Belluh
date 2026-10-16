@@ -3,7 +3,8 @@ import React, { useState, useRef } from 'react';
 import { EntryType, Mood } from '../types';
 import { DAILY_PROMPTS, MOOD_EMOJIS } from '../constants';
 import { questionForDay } from '../lib/daily';
-import { Mic, Image as ImageIcon, Send, X, Loader2, Music, CheckCircle2, Lock, Globe } from 'lucide-react';
+import { Mic, Image as ImageIcon, X, Loader2, Lock, Users, ArrowRight, ArrowUp } from 'lucide-react';
+import BelluhOrb from '../components/BelluhOrb';
 import { transcribeAudio } from '../services/geminiService';
 import { uploadPrivate } from '../services/media';
 
@@ -189,32 +190,27 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
       
       {step === 'success' ? (
         <div className="flex-1 flex flex-col items-center justify-center animate-scale-in">
-           <div className="relative mb-8">
-              <div className="w-24 h-24 bg-belluh-50 rounded-full flex items-center justify-center animate-pulse-slow">
-                 <CheckCircle2 size={40} className="text-belluh-400" />
-              </div>
-           </div>
-           <h2 className="text-3xl font-serif text-slate-900 mb-3 text-center">Moment Captured</h2>
-           <p className="text-slate-500 text-sm font-medium tracking-wide text-center max-w-xs leading-relaxed">
+           <div className="mb-8"><BelluhOrb size={96} /></div>
+           <h2 className="text-3xl font-serif text-slate-900 mb-3 text-center">Moment captured</h2>
+           <p className="text-slate-500 text-[15px] text-center max-w-xs leading-relaxed">
                {!isPrivate ? `Shared with ${partnerName || 'your partner'}.` : "Saved just for you."}
            </p>
         </div>
       ) : (
         <div className="relative flex-1 flex flex-col">
             <div className={`transition-all duration-500 flex-1 flex flex-col ${step === 'write' ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
-                <div className="mb-8 mt-4">
+                <div className="mb-6 mt-2">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#9bbecb] mb-3">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                     {dailyPrompt ? (
                         <>
-                            <div className="flex items-center justify-between mb-3">
-                                <p className="text-xs font-bold text-belluh-400 uppercase tracking-widest">{dailyPrompt === todaysQuestion ? "Today's question" : 'Prompt'}</p>
-                                <button type="button" onClick={() => setDailyPrompt(null)} className="text-xs font-bold text-slate-400 hover:text-slate-700">Write freely instead</button>
-                            </div>
-                            <p className="text-2xl text-slate-800 font-serif leading-tight">{dailyPrompt}</p>
+                            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#e58fc9] mb-2">{dailyPrompt === todaysQuestion ? "Today's question" : 'Prompt'}</p>
+                            <p className="text-[1.75rem] text-slate-900 font-serif leading-tight">{dailyPrompt}</p>
+                            <button type="button" onClick={() => setDailyPrompt(null)} className="mt-3 text-sm font-semibold text-slate-400 hover:text-slate-800 transition-colors">Write freely instead</button>
                         </>
                     ) : (
                         <>
-                            <p className="text-2xl text-slate-800 font-serif leading-tight">What's on your mind?</p>
-                            <button type="button" onClick={() => setDailyPrompt(todaysQuestion)} className="mt-3 px-3.5 py-1.5 rounded-full bg-belluh-50 border border-belluh-100 text-xs font-bold text-belluh-900 hover:bg-belluh-100">Answer today's question instead</button>
+                            <p className="text-[1.75rem] text-slate-900 font-serif leading-tight">What's on your mind?</p>
+                            <button type="button" onClick={() => setDailyPrompt(todaysQuestion)} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#3f7486] hover:text-slate-900 transition-colors">Answer today's question instead <ArrowRight size={14} /></button>
                         </>
                     )}
                 </div>
@@ -230,11 +226,9 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
                     {/* Audio Status Indicator */}
                     {(audioUrl || isUploading || uploadFailed) && !isRecording && (
                         <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 animate-slide-up">
-                            <div className="w-10 h-10 bg-slate-900 rounded-full flex items-center justify-center text-white">
-                                {isUploading ? <Loader2 size={16} className="animate-spin" /> : <Mic size={16} />}
-                            </div>
+                            <span className="text-slate-700">{isUploading ? <Loader2 size={18} className="animate-spin" /> : <Mic size={18} />}</span>
                             <div className="flex-1 text-xs font-bold">
-                                {isUploading ? "Saving voice note..." : uploadFailed ? "Couldn't save the recording. Your words are kept above." : "Voice Note Ready"}
+                                {isUploading ? "Saving voice note..." : uploadFailed ? "Couldn't save the recording. Your words are kept above." : "Voice note ready"}
                             </div>
                             {!isUploading && (
                                 <button onClick={handleDeleteAudio} className="p-2 text-slate-400 hover:text-red-400">
@@ -247,41 +241,42 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
                 <textarea
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder={isTranscribing ? "Transcribing your thoughts..." : "Start typing..."}
-                    className="w-full bg-transparent text-slate-800 placeholder:text-slate-300 focus:outline-none resize-none font-serif text-xl leading-relaxed flex-1 transition-opacity duration-300"
+                    placeholder={isTranscribing ? "Transcribing your thoughts..." : "A line or two is enough."}
+                    className="w-full min-h-[10rem] bg-transparent text-slate-800 placeholder:text-slate-300 focus:outline-none resize-none font-serif text-xl leading-relaxed flex-1 transition-opacity duration-300"
                     style={{ opacity: isTranscribing ? 0.5 : 1 }}
                     autoFocus
                     disabled={isTranscribing}
                 />
                 {/* One step: mood is optional, sharing is one tap, Save is right here */}
                 <div className="mt-auto pt-4">
-                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-3 -mx-1 px-1" role="group" aria-label="How does it feel? Optional">
+                    <p className="text-xs text-slate-400 mb-2">How did it feel? <span className="text-slate-300">Optional</span></p>
+                    <div className="grid grid-cols-9 gap-0.5 pb-4" role="group" aria-label="How does it feel? Optional">
                         {Object.values(Mood).map((m) => (
                             <button key={m} type="button" aria-label={m} aria-pressed={selectedMood === m} title={m}
                                 onClick={() => setSelectedMood(selectedMood === m ? undefined : m)}
-                                className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xl transition-all ${selectedMood === m ? 'bg-white shadow-apple ring-2 ring-belluh-300 scale-110' : 'bg-slate-50 opacity-70 hover:opacity-100'}`}>
+                                className={`justify-self-center w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-[1.3rem] transition-all ${selectedMood === m ? 'bg-white shadow-md ring-2 ring-[#f0addd] scale-110' : selectedMood ? 'opacity-40 hover:opacity-100' : 'hover:scale-110'}`}>
                                 {MOOD_EMOJIS[m]}
                             </button>
                         ))}
                     </div>
                     <div className="flex items-center justify-between gap-2">
-                        <div className="flex gap-1.5 items-center min-w-0">
-                            <button onClick={handleMicClick} disabled={isBusy} aria-label={isRecording ? 'Stop recording' : 'Record a voice note'} className={`h-11 w-11 shrink-0 rounded-full flex items-center justify-center transition-all ${isRecording ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-500'}`}>
-                                {isRecording ? <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" /> : (isTranscribing ? <Loader2 size={18} className="animate-spin" /> : <Mic size={18} />)}
+                        <div className="flex gap-0.5 items-center min-w-0">
+                            <button onClick={handleMicClick} disabled={isBusy} aria-label={isRecording ? 'Stop recording' : 'Record a voice note'} className={`h-11 w-11 shrink-0 rounded-full flex items-center justify-center transition-all ${isRecording ? 'bg-[#fdf0f8] text-[#e58fc9]' : 'text-slate-500 hover:bg-slate-100'}`}>
+                                {isRecording ? <div className="w-2.5 h-2.5 bg-[#e58fc9] rounded-sm animate-pulse" /> : (isTranscribing ? <Loader2 size={18} className="animate-spin" /> : <Mic size={18} />)}
                             </button>
-                            {!isRecording && !isBusy && <button onClick={handleImageClick} aria-label="Add a photo" className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all ${hasImage ? 'bg-belluh-50 text-belluh-600' : 'bg-slate-50 text-slate-500'}`}><ImageIcon size={18} /></button>}
-                            <button type="button" onClick={() => setIsPrivate(!isPrivate)} aria-pressed={isPrivate}
-                                className={`h-11 px-3.5 shrink-0 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all ${isPrivate ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-500'}`}>
-                                {isPrivate ? <><Lock size={13} /> Just me</> : <><Globe size={13} /> Shared</>}
-                            </button>
+                            {!isRecording && !isBusy && <button onClick={handleImageClick} aria-label="Add a photo" className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all ${hasImage ? 'text-[#e58fc9]' : 'text-slate-500 hover:bg-slate-100'}`}><ImageIcon size={18} /></button>}
+                            <div role="radiogroup" aria-label="Who sees this" className="h-11 shrink-0 p-1 rounded-full bg-slate-100/80 flex items-center text-xs font-bold">
+                                <button type="button" role="radio" aria-checked={!isPrivate} onClick={() => setIsPrivate(false)} className={`h-9 px-3 rounded-full inline-flex items-center gap-1.5 transition-all ${!isPrivate ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}><Users size={13} /> {(partnerName || '').split(' ')[0] ? `With ${(partnerName || '').split(' ')[0]}` : 'Shared'}</button>
+                                <button type="button" role="radio" aria-checked={isPrivate} onClick={() => setIsPrivate(true)} className={`h-9 px-3 rounded-full inline-flex items-center gap-1.5 transition-all ${isPrivate ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}><Lock size={13} /> Just me</button>
+                            </div>
                         </div>
-                        {(content.trim() || hasImage || audioUrl) && !isRecording && !isBusy && (
-                            <button onClick={handleFinalSubmit} disabled={isSaving} aria-label="Save to Story" className="h-11 px-5 bg-slate-900 text-white rounded-full font-bold text-sm flex items-center gap-2 shrink-0 disabled:opacity-60">
-                                <span>{isSaving ? 'Saving…' : <><span className="sm:hidden">Save</span><span className="hidden sm:inline">Save to Story</span></>}</span> <Send size={14} />
+                        {!isRecording && !isBusy && (
+                            <button onClick={handleFinalSubmit} disabled={isSaving || !(content.trim() || hasImage || audioUrl)} aria-label="Save to Story" className="h-11 w-11 sm:w-auto sm:px-5 bg-slate-900 text-white rounded-full font-bold text-sm inline-flex items-center justify-center gap-2 shrink-0 transition-opacity disabled:opacity-25">
+                                {isSaving ? <Loader2 size={16} className="animate-spin" /> : <><span className="hidden sm:inline">Save to Story</span><ArrowUp size={17} /></>}
                             </button>
                         )}
                     </div>
-                    <p className="mt-2 text-[11px] text-slate-400">{isPrivate ? `Only you can see this. Belluh never shows it to ${partnerName || 'your partner'}.` : `${partnerName || 'Your partner'} will see this.`}</p>
+                    <p className="mt-3 text-xs text-slate-400">{isPrivate ? `Only you can see this. Belluh never shows it to ${partnerName || 'your partner'}.` : `${partnerName || 'Your partner'} will see this.`}</p>
                 </div>
             </div>
         </div>

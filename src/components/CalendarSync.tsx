@@ -29,7 +29,7 @@ const CalendarSync: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' |
 
   return (
     <div className="mb-12">
-      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 mb-4">Your calendar</h3>
+      <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] pl-1 mb-4">Your calendar</h3>
       <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6">
         {!feed ? (
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">

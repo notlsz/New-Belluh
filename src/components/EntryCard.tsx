@@ -89,11 +89,11 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
                   <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-slate-900 tracking-tight">{entry.authorName}</span>
                       {!isCurrentUser && !entry.isPrivate && (
-                          <span className="px-1.5 py-0.5 rounded-md bg-cyan-100 text-cyan-700 text-[9px] font-bold uppercase tracking-wider">Partner</span>
+                          <span className="px-2 py-0.5 rounded-full bg-[#CDE9F2]/70 text-[#2f6578] text-[10px] font-bold">Partner</span>
                       )}
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-slate-400 font-medium tracking-wide">{timeStr}</span>
+                    <span className="text-xs text-slate-400">{timeStr}</span>
                     {showContext && circleName && (
                         <>
                             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
@@ -171,7 +171,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
         </div>
         
         {/* Footer Actions */}
-        <div className="mt-6 pt-4 border-t border-slate-50 flex justify-between items-center relative z-10 opacity-60 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="mt-4 -mb-2 flex justify-between items-center relative z-10">
            {/* Location / Meta */}
            <div className="flex items-center gap-2">
                {entry.location ? (
@@ -182,26 +182,26 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
                ) : <div></div>}
            </div>
 
-           <div className="flex items-center gap-3">
+           <div className="flex items-center gap-1">
                {/* Author Actions (Edit/Delete) - Only if editing is supported and authorized */}
                {isCurrentUser && (
-                   <div className="flex items-center gap-2 mr-2 border-r border-slate-100 pr-3">
+                   <div className="flex items-center gap-0.5">
                        {isEditing ? (
                            <>
-                                <button onClick={handleSave} className="p-1.5 rounded-full bg-slate-900 text-white hover:bg-black transition-colors" title="Save">
-                                    <Check size={12} />
+                                <button onClick={handleSave} aria-label="Save" className="w-9 h-9 inline-flex items-center justify-center rounded-full bg-slate-900 text-white hover:bg-black transition-colors" title="Save">
+                                    <Check size={15} />
                                 </button>
-                                <button onClick={handleCancel} className="p-1.5 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors" title="Cancel">
-                                    <X size={12} />
+                                <button onClick={handleCancel} aria-label="Cancel" className="w-9 h-9 inline-flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 transition-colors" title="Cancel">
+                                    <X size={15} />
                                 </button>
                            </>
                        ) : (
                            <>
-                                <button onClick={() => setIsEditing(true)} className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors" title="Edit">
-                                    <Pencil size={12} />
+                                <button onClick={() => setIsEditing(true)} aria-label="Edit" className="w-9 h-9 inline-flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-800 transition-colors" title="Edit">
+                                    <Pencil size={15} />
                                 </button>
-                                <button onClick={onDelete} className="p-1.5 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors" title="Delete">
-                                    <Trash2 size={12} />
+                                <button onClick={onDelete} aria-label="Delete" className="w-9 h-9 inline-flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-800 transition-colors" title="Delete">
+                                    <Trash2 size={15} />
                                 </button>
                            </>
                        )}
@@ -212,23 +212,24 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
                {onAskBelluh && !entry.isPrivate && (
                    <button
                         onClick={onAskBelluh}
-                        className="flex items-center gap-1.5 text-slate-400 hover:text-belluh-500 transition-colors px-2 py-1 hover:bg-belluh-50 rounded-lg group/sparkle"
-                        title="Analyze pattern"
+                        className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-slate-500 hover:text-[#2f6578] hover:bg-[#CDE9F2]/40 transition-colors"
+                        title="Ask Belluh about this entry"
                    >
-                       <Sparkles size={12} className="group-hover/sparkle:animate-spin" />
-                       <span className="text-[10px] font-bold uppercase tracking-wide whitespace-nowrap">Ask Belluh</span>
+                       <Sparkles size={15} />
+                       <span className="text-[13px] font-semibold whitespace-nowrap">Ask Belluh</span>
                    </button>
                )}
 
                <button 
                   onClick={() => onLike && onLike(entry.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-300 group/like ${
+                  aria-label={entry.isLiked ? 'Unlike' : 'Like'}
+                  className={`h-9 min-w-[2.25rem] inline-flex items-center justify-center gap-1.5 px-2.5 rounded-full transition-colors duration-300 ${
                       entry.isLiked 
-                      ? 'text-rose-500 bg-rose-50' 
-                      : 'text-slate-400 hover:text-rose-400 hover:bg-slate-50'
+                      ? 'text-[#e58fc9] bg-[#fdf0f8]' 
+                      : 'text-slate-400 hover:text-[#e58fc9] hover:bg-[#fdf0f8]'
                   }`}
                >
-                  <Heart size={14} className={`transition-transform active:scale-75 ${entry.isLiked ? 'fill-current' : ''}`} />
+                  <Heart size={16} className={`transition-transform active:scale-75 ${entry.isLiked ? 'fill-current' : ''}`} />
                   {(entry.likes || 0) > 0 && <span className="text-[10px] font-bold">{entry.likes}</span>}
                </button>
            </div>

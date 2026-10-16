@@ -23,6 +23,10 @@ await ctx.addInitScript(([s]) => { localStorage.setItem('sb-127-auth-token', s);
 const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
 await p.goto('http://localhost:4175'); await p.waitForTimeout(4000);
 let t = await p.locator('body').innerText();
+// One card in front, the rest folded behind it until you ask
+check('Home shows one card in front with the rest folded', /Show \d more/.test(t) && !t.includes('Pick up the camera'));
+await p.getByRole('button', { name: /^Show \d more$/ }).click(); await p.waitForTimeout(400);
+t = await p.locator('body').innerText();
 const n = Number(/Belluh has (\d) things for you/i.exec(t)?.[1] ?? 0);
 check('Home stacks what Belluh has for you', n >= 2 && /belluh noticed/i.test(t) && /reminder you asked for/i.test(t) && t.includes('Pick up the camera'), t.slice(0, 400).replace(/\n/g, ' | '));
 await p.screenshot({ path: `${OUT}/1-home-stack.png` });

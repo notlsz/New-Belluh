@@ -17,6 +17,7 @@ const pond = (kind: 'calm' | 'thinking') => (ponds[kind] ??= createPond(110, kin
 let running = false;
 let last = 0, lastDraw = 0;
 let cost = 0, costFrames = 0;
+const MAX_WATER = lightWater ? 300 : 560; // same cap as the shared water
 const FRAME_GAP = lightWater ? 1000 / 30 - 2 : 0; // phones: 30 frames a second is plenty for water, and half the work
 const reduced = () => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } };
 
@@ -46,10 +47,15 @@ function frame(now: number) {
     const t0 = performance.now();
     water.frame(reduced() ? dt * 0.3 : dt);
     shown.forEach(o => paint(o.canvas, water.canvas));
-    // If drawing takes too long on this device, draw fewer pixels (checked every 30 frames)
+    // If drawing takes too long on this device, draw fewer pixels, but never so few that the water goes soft:
+    // the floor is most of what the biggest orb on screen needs. When there's headroom again, sharpen back up.
     cost += performance.now() - t0;
     if (++costFrames === 30) {
-      if (cost / 30 > (lightWater ? 14 : 10) && water.size > 150) water.resize(water.size * 0.8);
+      const avg = cost / 30;
+      const need = Math.min(MAX_WATER, Math.max(...shown.map(o => o.canvas.width)));
+      const floor = Math.max(150, Math.round(need * 0.75));
+      if (avg > (lightWater ? 14 : 10) && water.size > floor) water.resize(Math.max(floor, water.size * 0.85));
+      else if (avg < (lightWater ? 7 : 5) && water.size < need) water.resize(Math.min(need, water.size * 1.15));
       cost = 0; costFrames = 0;
     }
   } else {

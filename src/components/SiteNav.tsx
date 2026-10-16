@@ -28,7 +28,7 @@ const SiteNav: React.FC<{
   return (
     <header className="fixed top-0 inset-x-0 z-50 bg-[#fcfcfc]/90 backdrop-blur-md">
       <div className="max-w-7xl mx-auto h-[60px] px-4 md:px-6 flex items-center gap-6">
-        <button onClick={onHome} className="flex items-center gap-2 shrink-0 h-9 pl-1 pr-2 [&_.belluh-orb-glow]:hidden" aria-label="Belluh home">
+        <button onClick={onHome} className="flex items-center gap-2 shrink-0 h-9 pl-1 pr-2" aria-label="Belluh home">
           <BelluhOrb size={22} />
           <span className="font-serif text-[21px] font-bold tracking-tight text-[#9bbecb]">Belluh</span>
         </button>

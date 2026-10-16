@@ -119,12 +119,12 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
 
   const openLink = !code ? null : via === 'telegram' && TG_BOT ? tgHref(code) : via === 'sms' && SMS_NUMBER ? smsHref(code) : BELLUH_NUMBER ? waHref(code) : null;
   const appName = via === 'telegram' ? 'Telegram' : via === 'sms' ? 'Messages' : 'WhatsApp';
-  const btn = 'shrink-0 px-5 py-3 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-all';
+  const btn = 'shrink-0 h-11 px-5 rounded-full font-semibold text-sm inline-flex items-center justify-center gap-2 transition-colors bg-white text-slate-900 border border-slate-200 hover:border-slate-400';
 
   return (
     <div className="mb-12">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Dates Belluh remembers</h3>
+        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] pl-1">Text Belluh</h3>
         {phone && <button onClick={disconnect} className="text-xs font-bold text-slate-400 hover:text-slate-700">Disconnect texting</button>}
       </div>
 
@@ -138,25 +138,25 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
             {BELLUH_NUMBER || SMS_NUMBER || TG_BOT ? (
               <div className="flex flex-wrap gap-2 shrink-0">
                 {BELLUH_NUMBER && (readyCode ? (
-                  <a href={waHref(readyCode)} target="_blank" rel="noreferrer" onClick={() => connect('whatsapp')} className={`${btn} bg-[#25D366] text-white hover:brightness-105`}>
-                    <MessageCircle size={16} /> Connect WhatsApp
+                  <a href={waHref(readyCode)} target="_blank" rel="noreferrer" onClick={() => connect('whatsapp')} className={btn}>
+                    <MessageCircle size={17} className="text-[#25D366]" /> Connect WhatsApp
                   </a>
                 ) : (
-                  <button onClick={() => connect('whatsapp')} className={`${btn} bg-[#25D366] text-white hover:brightness-105`}><MessageCircle size={16} /> Connect WhatsApp</button>
+                  <button onClick={() => connect('whatsapp')} className={btn}><MessageCircle size={17} className="text-[#25D366]" /> Connect WhatsApp</button>
                 ))}
                 {TG_BOT && (readyCode ? (
-                  <a href={tgHref(readyCode)} target="_blank" rel="noreferrer" onClick={() => connect('telegram')} className={`${btn} bg-[#229ED9] text-white hover:brightness-105`}>
-                    <Send size={16} /> Connect Telegram
+                  <a href={tgHref(readyCode)} target="_blank" rel="noreferrer" onClick={() => connect('telegram')} className={btn}>
+                    <Send size={16} className="text-[#229ED9]" /> Connect Telegram
                   </a>
                 ) : (
-                  <button onClick={() => connect('telegram')} className={`${btn} bg-[#229ED9] text-white hover:brightness-105`}><Send size={16} /> Connect Telegram</button>
+                  <button onClick={() => connect('telegram')} className={btn}><Send size={16} className="text-[#229ED9]" /> Connect Telegram</button>
                 ))}
                 {SMS_NUMBER && (readyCode ? (
-                  <a href={smsHref(readyCode)} onClick={() => connect('sms')} className={`${btn} bg-slate-900 text-white hover:bg-slate-800`}>
-                    <MessageSquare size={16} /> Connect by text
+                  <a href={smsHref(readyCode)} onClick={() => connect('sms')} className={btn}>
+                    <MessageSquare size={16} className="text-[#3f7486]" /> Connect by text
                   </a>
                 ) : (
-                  <button onClick={() => connect('sms')} className={`${btn} bg-slate-900 text-white hover:bg-slate-800`}><MessageSquare size={16} /> Connect by text</button>
+                  <button onClick={() => connect('sms')} className={btn}><MessageSquare size={16} className="text-[#3f7486]" /> Connect by text</button>
                 ))}
               </div>
             ) : (

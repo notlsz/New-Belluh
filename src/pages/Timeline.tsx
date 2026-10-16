@@ -96,6 +96,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
 
   // What Belluh is waiting on you for (an offer, a plan to pick, how it went, a reminder), stacked at the top of Home
   const [waiting, setWaiting] = useState<AgentMessage[]>([]);
+  const [stackOpen, setStackOpen] = useState(false);
   useEffect(() => {
     let cancelled = false;
     belluhAgent.latest().then(r => { if (!cancelled) { setBelluhLive(r.live); setLatest(r.message); setWaiting(r.waiting); } }).catch(() => setBelluhLive(false));
@@ -318,7 +319,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                             {isArchived && <Archive size={20} className="text-slate-300" />}
                         </h1>
                         <div className="flex items-center gap-2 mt-2">
-                             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-belluh-400">
+                             <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#9bbecb]">
                                 {isConstellation ? "All Memories" : "Shared Journal"}
                              </span>
                              <ChevronDown size={12} className={`text-slate-300 transition-transform duration-300 ${isCircleMenuOpen ? 'rotate-180' : ''}`} />
@@ -365,7 +366,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                 <div className="flex items-center gap-2">
                      <button
                         onClick={() => setShowPatterns(!showPatterns)}
-                        className={`w-12 h-12 rounded-full border border-slate-100 flex items-center justify-center transition-all group shadow-sm ${showPatterns ? 'bg-belluh-50 text-belluh-500 border-belluh-100' : 'bg-white text-slate-400 hover:text-slate-600'}`}
+                        className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors hover:bg-slate-50 ${showPatterns ? 'text-[#3f7486]' : 'text-slate-300 hover:text-slate-600'}`}
                         title={showPatterns ? "Hide Belluh's cards" : "Show Belluh's cards"} aria-label={showPatterns ? "Hide Belluh's cards" : "Show Belluh's cards"} aria-pressed={!showPatterns}
                      >
                         {showPatterns ? <Eye size={20} strokeWidth={1.5} /> : <EyeOff size={20} strokeWidth={1.5} />}
@@ -374,10 +375,10 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                          <button 
                             onClick={() => { setShowWeeklyReport(true); trackEvent('weekly_report_opened'); }}
                             aria-label="Our weeks" title="Our weeks"
-                            className="h-12 min-w-[3rem] px-3.5 rounded-full bg-white border border-slate-100 flex items-center justify-center gap-2 text-slate-400 hover:text-belluh-500 hover:border-belluh-200 shadow-sm transition-all group"
+                            className="h-11 min-w-[2.75rem] px-3 rounded-full flex items-center justify-center gap-2 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors group"
                          >
                             <BookOpen size={20} strokeWidth={1.5} className="group-hover:scale-110 transition-transform"/>
-                            <span className="hidden md:inline text-xs font-bold text-slate-500">Our weeks</span>
+                            <span className="hidden md:inline text-sm font-medium">Our weeks</span>
                          </button>
                      )}
                 </div>
@@ -389,34 +390,49 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                  if (!cards.length) return null;
                  const LABEL: Record<string, string> = { weekly: 'Your week from Belluh', checkin: 'Check-in from Belluh', reminder: 'Reminder from Belluh', remind: 'Reminder you asked for', offer: 'Belluh noticed', plan_nudge: 'Waiting on you', after_plan: 'From Belluh' };
                  const update = (id: string, next: AgentMessage | null) => setWaiting(prev => next ? prev.map(m => (m.id === id ? next : m)) : prev.filter(m => m.id !== id));
+                 const shown = stackOpen ? cards : cards.slice(0, 1);
+                 const hidden = cards.length - shown.length;
                  return (
-                     <div className="mb-6 space-y-3">
-                         {cards.length > 1 && <p className="pl-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Belluh has {cards.length} things for you</p>}
-                         {cards.map(m => (
-                             <div key={m.id} className="w-full animate-scale-in group">
-                                 <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-float flex items-start gap-4 relative overflow-hidden group-hover:shadow-lg transition-shadow">
-                                     <div className="absolute top-0 left-0 w-1 h-full bg-[#f0addd]"></div>
-                                     <div className="shrink-0 pt-0.5"><BelluhOrb size={32} /></div>
-                                     <div className="min-w-0 flex-1">
-                                         <button type="button" onClick={() => onOpenBelluh?.()} className="w-full text-left">
-                                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{LABEL[m.meta?.kind] ?? 'Belluh'}</span>
-                                             <p className="mt-1 text-[15px] font-serif text-slate-800 leading-snug line-clamp-3">{m.meta?.kind === 'remind' ? m.body.replace(/^Reminder:\s*/, '') : m.body}</p>
-                                         </button>
-                                         <BelluhActions key={m.id + (m.meta?.status ?? '')} msg={m} partnerName={partnerName} onCompose={(p) => onCompose(p)}
-                                             onAdded={(added, updated) => {
-                                                 if (waiting.length) update(m.id, updated.meta?.status === 'open' ? updated : null); else setLatest(added.length ? added[added.length - 1] : updated);
-                                                 if (added.length) onOpenBelluh?.();
-                                             }} />
-                                         {!['offer', 'after_plan', 'plan_nudge'].includes(m.meta?.kind) && !(Array.isArray(m.meta?.links) && m.meta.links.length) && (
-                                             <button type="button" onClick={() => onOpenBelluh?.()} className="mt-2 inline-block text-xs font-bold text-belluh-500">Reply</button>
+                     <div className="mb-6">
+                         {cards.length > 1 && (
+                             <div className="flex items-center justify-between mb-2.5 px-1">
+                                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Belluh has {cards.length} things for you</p>
+                                 <button type="button" onClick={() => setStackOpen(o => !o)} className="text-xs font-bold text-[#3f7486] hover:text-slate-900 transition-colors">{stackOpen ? 'Show less' : `Show ${hidden} more`}</button>
+                             </div>
+                         )}
+                         <div className="relative space-y-3">
+                             {shown.map(m => (
+                                 <div key={m.id} className="relative z-10 w-full animate-scale-in">
+                                     <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-[0_14px_40px_-22px_rgba(15,23,42,0.25)] flex items-start gap-4 hover:shadow-[0_18px_44px_-20px_rgba(63,116,134,0.35)] transition-shadow">
+                                         <div className="shrink-0 pt-0.5"><BelluhOrb size={30} /></div>
+                                         <div className="min-w-0 flex-1">
+                                             <button type="button" onClick={() => onOpenBelluh?.()} className="w-full text-left">
+                                                 <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6]">{LABEL[m.meta?.kind] ?? 'Belluh'}</span>
+                                                 <p className="mt-1 text-[16px] font-serif text-slate-800 leading-snug line-clamp-3">{m.meta?.kind === 'remind' ? m.body.replace(/^Reminder:\s*/, '') : m.body}</p>
+                                             </button>
+                                             <BelluhActions key={m.id + (m.meta?.status ?? '')} msg={m} partnerName={partnerName} onCompose={(p) => onCompose(p)}
+                                                 onAdded={(added, updated) => {
+                                                     if (waiting.length) update(m.id, updated.meta?.status === 'open' ? updated : null); else setLatest(added.length ? added[added.length - 1] : updated);
+                                                     if (added.length) onOpenBelluh?.();
+                                                 }} />
+                                             {!['offer', 'after_plan', 'plan_nudge'].includes(m.meta?.kind) && !(Array.isArray(m.meta?.links) && m.meta.links.length) && (
+                                                 <button type="button" onClick={() => onOpenBelluh?.()} className="mt-2.5 inline-flex items-center gap-1 text-[13px] font-bold text-[#3f7486] hover:text-slate-900 transition-colors">Reply <ArrowRight size={13} /></button>
+                                             )}
+                                         </div>
+                                         {waiting.length > 0 && m.meta?.kind !== 'offer' && (
+                                             <button type="button" aria-label="Dismiss" onClick={() => { belluhAgent.dismiss(m.id); update(m.id, null); }} className="shrink-0 -mr-1 -mt-1 w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-slate-600 hover:bg-slate-50"><X size={15} /></button>
                                          )}
                                      </div>
-                                     {waiting.length > 0 && m.meta?.kind !== 'offer' && (
-                                         <button type="button" aria-label="Dismiss" onClick={() => { belluhAgent.dismiss(m.id); update(m.id, null); }} className="shrink-0 -mr-1 -mt-1 w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-slate-600 hover:bg-slate-50"><X size={14} /></button>
-                                     )}
                                  </div>
-                             </div>
-                         ))}
+                             ))}
+                             {/* The rest of the stack peeks out underneath */}
+                             {hidden > 0 && (
+                                 <button type="button" onClick={() => setStackOpen(true)} aria-label={`Show ${hidden} more from Belluh`} className="block w-full" style={{ marginTop: -2 }}>
+                                     <div className="mx-4 h-3 rounded-b-[1.25rem] bg-white border border-t-0 border-slate-100 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.3)]" />
+                                     {hidden > 1 && <div className="mx-8 h-2.5 rounded-b-[1rem] bg-white/80 border border-t-0 border-slate-100" />}
+                                 </button>
+                             )}
+                         </div>
                      </div>
                  );
              })()}
@@ -466,8 +482,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
           {/* Today: what needs you now, before the story */}
           {!isArchived && !isConstellation && (
               <div className="relative pl-20 md:pl-24 pr-6 mb-5 flex items-center gap-3">
-                  <span className="text-[10px] font-bold text-belluh-400 uppercase tracking-widest">Today</span>
-                  <div className="h-px bg-slate-100 flex-1"></div>
+                  <span className="text-[11px] font-bold text-[#e58fc9] uppercase tracking-[0.18em]">Today</span>
               </div>
           )}
 
@@ -494,13 +509,12 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
 
                   {!myAnswer ? (
                   <button onClick={() => { trackEvent('daily_question_opened', { partner_answered: !!partnerAnswer }); onCompose(todaysPrompt); }} className="w-full text-left group">
-                      <div className="bg-white border border-slate-100 shadow-sm hover:shadow-lg rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden group-hover:border-belluh-100 group-hover:-translate-y-1">
-                          <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity"><PenLine size={80} className="rotate-12" /></div>
+                      <div className="bg-white border border-slate-100 shadow-sm hover:shadow-lg rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden group-hover:-translate-y-0.5">
                           <div className="relative z-10">
                               <div className="flex items-center gap-2 mb-4">
-                                  <span className="bg-belluh-50 text-belluh-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Today's Question</span>
+                                  <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#e58fc9]">Today's question</span>
                               </div>
-                              <h3 className="font-serif text-2xl text-slate-800 leading-tight mb-6 group-hover:text-belluh-600 transition-colors">
+                              <h3 className="font-serif text-2xl md:text-[1.7rem] text-slate-900 leading-tight mb-6">
                                   {todaysPrompt}
                               </h3>
                               {partnerAnswer && (
@@ -513,9 +527,8 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                                       <p className="text-xs text-[#831843]/80 mt-2">Write yours to see it.</p>
                                   </div>
                               )}
-                              <div className="flex items-center gap-3 text-sm font-bold text-slate-400 group-hover:text-slate-900 transition-colors">
-                                  <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 group-hover:bg-white group-hover:shadow-sm"><Plus size={18} /></div>
-                                  <span>{partnerAnswer ? 'Answer to unlock' : 'Tap to answer'}</span>
+                              <div className="flex items-center text-sm font-bold">
+                                  <span className="inline-flex items-center gap-2 h-10 px-5 rounded-full bg-slate-900 text-white group-hover:bg-black transition-colors">{partnerAnswer ? 'Answer to unlock' : 'Tap to answer'} <ArrowRight size={15} /></span>
                               </div>
                           </div>
                       </div>
@@ -523,7 +536,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                   ) : (
                   <div className="w-full bg-white border border-slate-100 shadow-sm rounded-[2rem] p-8">
                       <div className="flex items-center gap-2 mb-4">
-                          <span className="bg-belluh-50 text-belluh-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Today's Question</span>
+                          <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#e58fc9]">Today's question</span>
                       </div>
                       <h3 className="font-serif text-xl text-slate-800 leading-tight mb-5">{todaysPrompt}</h3>
                       <div className="grid gap-3 sm:grid-cols-2">
@@ -552,12 +565,8 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
               // Header with Custom Centered Design
               if ('type' in item && item.type === 'header') {
                   return (
-                      <div key={`header-${index}`} className="relative pl-20 md:pl-24 pr-6 mb-8 mt-12 flex items-center opacity-60">
-                           <div className="h-px bg-slate-200 flex-1"></div>
-                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">
-                               {item.title}
-                           </span>
-                           <div className="h-px bg-slate-200 flex-1"></div>
+                      <div key={`header-${index}`} className="relative pl-20 md:pl-24 pr-6 mb-6 mt-10">
+                           <span className="font-serif text-lg text-slate-400">{item.title}</span>
                       </div>
                   );
               }
@@ -642,9 +651,9 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                             <div className="mt-3 ml-3 flex items-start gap-3 animate-slide-up">
                                 <div className="shrink-0 mt-3"><BelluhOrb size={20} /></div>
                                 <div className="min-w-0 rounded-2xl rounded-tl-md bg-white border border-slate-100 px-4 py-3 shadow-sm">
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Belluh</p>
+                                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6]">Belluh</p>
                                     <p className="mt-0.5 font-serif text-[15px] leading-snug text-slate-700">{replies[entry.id].body}</p>
-                                    <button type="button" onClick={() => onOpenBelluh?.()} className="mt-1.5 text-xs font-bold text-belluh-500">Reply</button>
+                                    <button type="button" onClick={() => onOpenBelluh?.()} className="mt-1.5 text-[13px] font-bold text-[#3f7486] hover:text-slate-900">Reply</button>
                                 </div>
                             </div>
                         )}
