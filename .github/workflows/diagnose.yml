@@ -19,9 +19,11 @@ jobs:
             jq -n --arg q "$2" '{query: $q}' | curl -sS -X POST -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
               --data @- "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" | jq -c '.'
           }
-          q "owner app events since 08:40 UTC" "select created_at, event_name, left(properties::text, 1500) props from public.analytics_events where user_id='d95a25a6-e873-41d1-80ef-26258d3ff3b7' and created_at > '2026-10-18 08:40+00' order by created_at desc limit 30"
-          q "owner auth events since 08:40" "select created_at, payload->>'action' action, payload->'traits'->>'provider' provider from auth.audit_log_entries where created_at > '2026-10-18 08:40+00' and (payload->>'actor_id')='d95a25a6-e873-41d1-80ef-26258d3ff3b7' order by created_at desc limit 30"
-          q "any user errors since 08:40" "select created_at, user_id='d95a25a6-e873-41d1-80ef-26258d3ff3b7' owner, event_name, left(properties::text, 1500) props from public.analytics_events where created_at > '2026-10-18 08:40+00' and event_name in ('load_failed','load_stalled','client_error','render_error') order by created_at desc limit 20"
+          U="(select id from auth.users where lower(email)=lower('notmemryapp@gmail.com'))"
+          q "that account" "select id='d95a25a6-e873-41d1-80ef-26258d3ff3b7' is_owner, created_at, email_confirmed_at is not null confirmed, last_sign_in_at, banned_until, deleted_at, (select string_agg(provider||':'||coalesce(last_sign_in_at::text,''), ',') from auth.identities i where i.user_id=u.id) identities, (encrypted_password is not null and encrypted_password <> '') has_password, (select count(*) from public.journal_entries je where je.user_id=u.id) entries from auth.users u where lower(email)=lower('notmemryapp@gmail.com')"
+          q "its auth events since 09:25 UTC" "select created_at, payload->>'action' action, payload->'traits'->>'provider' provider from auth.audit_log_entries where created_at > '2026-10-18 09:25+00' and (payload->>'actor_id') in (select id::text from auth.users where lower(email)=lower('notmemryapp@gmail.com')) order by created_at desc limit 20"
+          q "its app events since 09:25 UTC" "select created_at, event_name, left(properties::text, 1500) props from public.analytics_events where user_id in $U and created_at > '2026-10-18 09:25+00' order by created_at desc limit 20"
+          q "all auth events since 09:25 (any account, no ids)" "select created_at, payload->>'action' action, payload->'traits'->>'provider' provider, left(coalesce(payload->'traits'->>'error', payload->>'log_type', ''),80) extra from auth.audit_log_entries where created_at > '2026-10-18 09:25+00' order by created_at desc limit 20"
   _old:
     runs-on: ubuntu-24.04
     if: false
