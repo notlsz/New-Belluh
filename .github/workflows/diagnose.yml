@@ -21,9 +21,8 @@ jobs:
           }
           ME="d95a25a6-e873-41d1-80ef-26258d3ff3b7"
           V="(select '$ME'::uuid union select case when c.user_id='$ME' then c.partner_id else c.user_id end from public.partner_connections c where c.status='connected' and '$ME' in (c.user_id,c.partner_id))"
-          q "avatar urls of me and partners (path only)" "select left(p.id::text,8) id8, regexp_replace(p.avatar_url, '^https://[^/]+', '') path from public.profiles p where p.avatar_url like 'http%' and p.id in $V"
-          q "storage buckets" "select id, public from storage.buckets"
-          q "avatar objects exist?" "select o.bucket_id, left(o.name,60) name from storage.objects o where o.name like '%avatar%' or o.bucket_id in ('avatars','profile-pictures') limit 20"
+          q "undo: remove the two members I added today (the owner asked to restore)" "delete from public.journal_entries where user_id='$ME' and 'system_circle_member'=any(tags) and created_at > '2026-10-18 09:00+00' and (exists (select 1 from unnest(tags) t where t like 'member:30742a7e%' or t like 'member:c7f9e926%')) returning left(tags[3],16) removed"
+          q "first chapter members now" "select left(regexp_replace(t,'^member:',''),8) id8, created_at from public.journal_entries je, unnest(je.tags) t where je.user_id='$ME' and 'system_circle_member'=any(je.tags) and t like 'member:%'"
   _old:
     runs-on: ubuntu-24.04
     if: false
