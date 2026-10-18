@@ -20,6 +20,15 @@ jobs:
               --data @- "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" | jq -c '.'
           }
           ME="d95a25a6-e873-41d1-80ef-26258d3ff3b7"
+          logs() {
+            echo "== logs: $1"
+            curl -sS -G -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/$PROJECT_REF/analytics/endpoints/logs.all" \
+              --data-urlencode "sql=$2" --data-urlencode "iso_timestamp_start=$(date -u -d '-12 hours' +%Y-%m-%dT%H:%M:%SZ)" --data-urlencode "iso_timestamp_end=$(date -u +%Y-%m-%dT%H:%M:%SZ)" | jq -c '.result // .error // .' | head -c 4000; echo
+          }
+          logs "REST requests by path and status (12h)" "select regexp_extract(r.path, '^/rest/v1/[a-z_]+') p, resp.status_code s, count(*) n from edge_logs cross join unnest(metadata) m cross join unnest(m.request) r cross join unnest(m.response) resp where r.path like '/rest/v1/%' group by p, s order by n desc limit 40"
+          logs "auth events (12h)" "select regexp_extract(event_message, '\"(action|msg)\":\"[^\"]+\"') a, count(*) n from auth_logs group by a order by n desc limit 20"
+          logs "auth: who signed in (12h, owner or not)" "select timestamp, regexp_contains(event_message, 'd95a25a6-e873-41d1-80ef-26258d3ff3b7') is_owner, regexp_extract(event_message, '\"action\":\"[^\"]+\"') action, regexp_extract(event_message, '\"provider\":\"[^\"]+\"') provider from auth_logs where regexp_contains(event_message, 'login|token_refreshed|user_signedup|user_recovery') order by timestamp desc limit 15"
+          logs "postgres errors (12h)" "select timestamp, regexp_extract(event_message, '^.{0,160}') m from postgres_logs where parsed.error_severity in ('ERROR','FATAL') order by timestamp desc limit 15"
           A="begin read only; set local role authenticated; select set_config('request.jwt.claims', json_build_object('sub','$ME','role','authenticated')::text, true);"
           q "as me: grants" "select has_table_privilege('authenticated','public.journal_entries','select') je, has_table_privilege('authenticated','public.profiles','select') pr, has_table_privilege('authenticated','public.partner_connections','select') pc, has_function_privilege('authenticated','public.are_partners(uuid,uuid)','execute') ap, has_function_privilege('authenticated','public.can_see_profile(uuid)','execute') csp"
           q "as me: my profile visible" "$A select count(*) from public.profiles where id='$ME'; "
