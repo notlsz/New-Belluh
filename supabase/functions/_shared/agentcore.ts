@@ -12,6 +12,7 @@ import { validatePlan, formatOption, localDateOf, type PlanOption } from './plan
 import { notify } from './notify.ts';
 import { searchShopify, type ShopProduct } from './shopify.ts';
 import { bookingFromTool, doneLabel, memoryFor, reminderFor, whenText, type BookingDraft } from './bookings.ts';
+import { instacartCart } from './instacart.ts';
 import { callsOn, findPlace, startCall, okToCallNow, whyNot, type CallOutcome } from './vapi.ts';
 import { zonedToUtc } from './plans.ts';
 import { validateReminder, tableLinks, giftLinks, tripLinks, flowerLinks, foodLinks, buyLinks, groceryLinks, rideLinks, experienceLinks, type ActionLink } from './actions.ts';
@@ -70,6 +71,8 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   const addProducts = (ps: ShopProduct[]) => { for (const p of ps) { if (products.length >= 4 || products.some(x => x.url === p.url)) continue; products.push(p); links.push({ label: `${p.title}, ${p.price} at ${p.seller}`, url: p.url }); } };
   let shape: Shape | null = null;
   const ran: string[] = [];
+  // The restaurant Belluh found this turn, so a ride asked for in the same breath goes to its door
+  let restaurant: { name: string; address: string | null } | null = null;
   // What this turn got ready, to confirm with "I booked it" once they've done it
   const prepared: BookingDraft[] = [];
   const prepare = (name: string, args: Record<string, unknown>, firstUrl: string | null, productTitle?: string | null) => {
@@ -164,6 +167,7 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           if (table && callsOn() && table.starts_at && people >= 1 && people <= 20 && new Date(table.starts_at).getTime() > Date.now() + 3600_000) {
             const found = await findPlace([call.args.what, call.args.where].filter(x => typeof x === 'string').join(' '));
             if (found) Object.assign(table, { phone: found.phone, people, call_status: 'ready', place: found.name });
+            if (found) restaurant = found;
             if (found) return { ok: true, restaurant: found.name, note: `Booking links are shown under your reply, plus a "Call for me" button: if they tap it, you phone ${found.name} yourself and book it. Say in one line what you set up (${found.name}, time, people) and that you can call them for it. Never say it is booked.` };
           }
           return { ok: true, note: 'Booking links are shown under your reply, with an "I booked it" button that adds it to their calendar and reminds them. Say in one line what you set up (place, time, people); they finish the booking with one tap. Never say it is booked.' };
@@ -183,13 +187,20 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           return { ok: true, note: `The order and nearby florists are shown under your reply. Say what you'd send and why it fits${when ? `, and that it should arrive ${when}` : ''}. Offer a two-line card message and a reminder the day before. They place the order. Do not paste links.` };
         }
         case 'order_food': case 'buy_item': case 'order_groceries': case 'book_ride': case 'find_experience': {
+          if (call.name === 'book_ride' && restaurant?.address) {
+            const to = String(call.args.to ?? '').toLowerCase();
+            if (!to || /restaurant|dinner|table|there|the place/.test(to) || to.includes(restaurant.name.toLowerCase())) call.args = { ...call.args, to: `${restaurant.name}, ${restaurant.address}` };
+          }
           if (call.name === 'buy_item' && typeof call.args.item === 'string') addProducts(await searchShopify(call.args.item, Number(call.args.max_price) || null, 3));
-          const l = call.name === 'order_food' ? foodLinks(call.args) : call.name === 'buy_item' ? buyLinks(call.args) : call.name === 'order_groceries' ? groceryLinks(call.args) : call.name === 'book_ride' ? rideLinks(call.args) : experienceLinks(call.args);
+          let l = call.name === 'order_food' ? foodLinks(call.args) : call.name === 'buy_item' ? buyLinks(call.args) : call.name === 'order_groceries' ? groceryLinks(call.args) : call.name === 'book_ride' ? rideLinks(call.args) : experienceLinks(call.args);
+          // Groceries as one cart when Instacart is connected: every item on one page, one checkout
+          const cart = call.name === 'order_groceries' && l.length ? await instacartCart(`Groceries from Belluh`, l.map(x => x.label.replace(/^Add /, ''))) : null;
+          if (cart) l = [{ label: 'Your cart on Instacart', url: cart }];
           if (!l.length) return { ok: false, error: call.name === 'order_groceries' ? 'List the groceries.' : call.name === 'book_ride' ? 'Say where they are going.' : 'Say what it is.' };
           links.push(...l);
           if (call.name === 'buy_item') prepare('buy_item', call.args, products[0]?.url ?? l[0]?.url ?? null, products[0]?.title ?? null);
           else if (call.name === 'order_food' || call.name === 'find_experience') prepare(call.name, call.args, l[0]?.url ?? null);
-          const what = { order_food: 'The order is ready on DoorDash and Uber Eats', buy_item: 'It is ready to buy on Amazon and Target, with a price comparison', order_groceries: 'Each item is one tap from their Instacart cart', book_ride: 'Uber and Lyft are ready with the destination filled in', find_experience: 'Tickets and experiences are shown' }[call.name];
+          const what = { order_food: 'The order is ready on DoorDash and Uber Eats', buy_item: 'It is ready to buy on Amazon and Target, with a price comparison', order_groceries: cart ? 'Every item is in one Instacart cart, ready to check out' : 'Each item is one tap from their Instacart cart', book_ride: 'Uber and Lyft are ready with the destination filled in', find_experience: 'Tickets and experiences are shown' }[call.name];
           const found = call.name === 'buy_item' && products.length ? ` Also ${products.length} real products from independent Shopify shops, each with its checkout ready: ${products.map(p => `${p.title} (${p.price}, ${p.seller})`).join('; ')}. You may name the one you'd pick and why.` : '';
           return { ok: true, note: `${what}, under your reply.${found} In one or two lines say what you chose and why it fits them; they finish it with a tap. Never say it is ordered, bought or booked. Do not paste links.` };
         }
