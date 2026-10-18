@@ -20,8 +20,10 @@ jobs:
               --data @- "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" | jq -c '.'
           }
           ME="d95a25a6-e873-41d1-80ef-26258d3ff3b7"
-          q "add Elizabeth and Sarah to the first chapter (the owner asked)" "insert into public.journal_entries (user_id, type, content, is_shared, date, tags) select '$ME', 'Milestone', 'Added new member', true, now(), array['system_circle_member','circle:c1','member:'||p.id::text] from (select distinct case when c.user_id='$ME' then c.partner_id else c.user_id end id from public.partner_connections c where c.status='connected' and '$ME' in (c.user_id,c.partner_id)) p where (p.id::text like '30742a7e%' or p.id::text like 'c7f9e926%') and not exists (select 1 from public.journal_entries je where je.user_id='$ME' and 'system_circle_member'=any(je.tags) and 'circle:c1'=any(je.tags) and ('member:'||p.id::text)=any(je.tags)) returning left(tags[3],16) added"
-          q "first chapter members now" "select left(regexp_replace(t,'^member:',''),8) id8, split_part(coalesce((select full_name from public.profiles where id::text=regexp_replace(t,'^member:','')),''),' ',1) name from public.journal_entries je, unnest(je.tags) t where je.user_id='$ME' and 'system_circle_member'=any(je.tags) and 'circle:c1'=any(je.tags) and t like 'member:%'"
+          V="(select '$ME'::uuid union select case when c.user_id='$ME' then c.partner_id else c.user_id end from public.partner_connections c where c.status='connected' and '$ME' in (c.user_id,c.partner_id))"
+          q "avatar urls of me and partners (path only)" "select left(p.id::text,8) id8, regexp_replace(p.avatar_url, '^https://[^/]+', '') path from public.profiles p where p.avatar_url like 'http%' and p.id in $V"
+          q "storage buckets" "select id, public from storage.buckets"
+          q "avatar objects exist?" "select o.bucket_id, left(o.name,60) name from storage.objects o where o.name like '%avatar%' or o.bucket_id in ('avatars','profile-pictures') limit 20"
   _old:
     runs-on: ubuntu-24.04
     if: false
