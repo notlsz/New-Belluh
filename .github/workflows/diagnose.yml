@@ -12,6 +12,18 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || 'ctbsycrlakdanfzbaqmz' }}
     steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb
+        with: { version: latest }
+      - name: Which AI keys work (temporary check function)
+        run: |
+          T=$(openssl rand -hex 24); echo "::add-mask::$T"
+          supabase secrets set --project-ref "$PROJECT_REF" HEALTH_TOKEN="$T" > /dev/null
+          supabase functions deploy belluh-health --project-ref "$PROJECT_REF" --no-verify-jwt > /dev/null
+          sleep 5
+          echo "== AI keys"; curl -sS "https://${PROJECT_REF}.supabase.co/functions/v1/belluh-health" -H "x-health-token: $T" | jq -c '.'
+          supabase functions delete belluh-health --project-ref "$PROJECT_REF" > /dev/null || true
+          supabase secrets unset --project-ref "$PROJECT_REF" HEALTH_TOKEN > /dev/null || true
       - name: Gemini key check
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
