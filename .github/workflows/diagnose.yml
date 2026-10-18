@@ -20,9 +20,8 @@ jobs:
               --data @- "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" | jq -c '.'
           }
           ME="d95a25a6-e873-41d1-80ef-26258d3ff3b7"
-          q "my partners (first names)" "select distinct on (p.id) left(p.id::text,8) id8, split_part(coalesce(p.full_name,''),' ',1) first_name, c.created_at::date connected from public.partner_connections c join public.profiles p on p.id = case when c.user_id='$ME' then c.partner_id else c.user_id end where c.status='connected' and '$ME' in (c.user_id,c.partner_id) order by p.id, c.created_at"
-          q "member entry date" "select created_at from public.journal_entries where user_id='$ME' and 'system_circle_member'=any(tags)"
-          q "my circle names" "select title, tags from public.journal_entries where user_id='$ME' and ('system_circle_def'=any(tags) or 'system_circle_metadata'=any(tags))"
+          q "add Elizabeth and Sarah to the first chapter (the owner asked)" "insert into public.journal_entries (user_id, type, content, is_shared, date, tags) select '$ME', 'Milestone', 'Added new member', true, now(), array['system_circle_member','circle:c1','member:'||p.id::text] from (select distinct case when c.user_id='$ME' then c.partner_id else c.user_id end id from public.partner_connections c where c.status='connected' and '$ME' in (c.user_id,c.partner_id)) p where (p.id::text like '30742a7e%' or p.id::text like 'c7f9e926%') and not exists (select 1 from public.journal_entries je where je.user_id='$ME' and 'system_circle_member'=any(je.tags) and 'circle:c1'=any(je.tags) and ('member:'||p.id::text)=any(je.tags)) returning left(tags[3],16) added"
+          q "first chapter members now" "select left(regexp_replace(t,'^member:',''),8) id8, split_part(coalesce((select full_name from public.profiles where id::text=regexp_replace(t,'^member:','')),''),' ',1) name from public.journal_entries je, unnest(je.tags) t where je.user_id='$ME' and 'system_circle_member'=any(je.tags) and 'circle:c1'=any(je.tags) and t like 'member:%'"
   _old:
     runs-on: ubuntu-24.04
     if: false
