@@ -12,6 +12,20 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || 'ctbsycrlakdanfzbaqmz' }}
     steps:
+      - name: Login events
+        run: |
+          q() {
+            echo "== $1"
+            jq -n --arg q "$2" '{query: $q}' | curl -sS -X POST -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
+              --data @- "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" | jq -c '.'
+          }
+          q "owner app events since 08:40 UTC" "select created_at, event_name, left(properties::text, 1500) props from public.analytics_events where user_id='d95a25a6-e873-41d1-80ef-26258d3ff3b7' and created_at > '2026-10-18 08:40+00' order by created_at desc limit 30"
+          q "owner auth events since 08:40" "select created_at, payload->>'action' action, payload->'traits'->>'provider' provider from auth.audit_log_entries where created_at > '2026-10-18 08:40+00' and (payload->>'actor_id')='d95a25a6-e873-41d1-80ef-26258d3ff3b7' order by created_at desc limit 30"
+          q "any user errors since 08:40" "select created_at, user_id='d95a25a6-e873-41d1-80ef-26258d3ff3b7' owner, event_name, left(properties::text, 1500) props from public.analytics_events where created_at > '2026-10-18 08:40+00' and event_name in ('load_failed','load_stalled','client_error','render_error') order by created_at desc limit 20"
+  _old:
+    runs-on: ubuntu-24.04
+    if: false
+    steps:
       - name: Counts
         run: |
           q() {
