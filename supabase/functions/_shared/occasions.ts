@@ -63,6 +63,7 @@ export type Command =
   | { type: 'checkin'; status: 'done' | 'not_yet' | 'skipped' }
   | { type: 'offer'; accept: boolean }
   | { type: 'booked' }
+  | { type: 'call' }
   | { type: 'capture'; text: string };
 
 /** Short replies people send from their phone. Anything else is a message to Belluh. */
@@ -90,6 +91,7 @@ export function parseCommand(raw: string): Command {
   if (/^not yet[.!]*$/.test(lower)) return { type: 'checkin', status: 'not_yet' };
   if (/^(skip|skipped|skip it)[.!]*$/.test(lower)) return { type: 'checkin', status: 'skipped' };
   if (/^(i )?(booked|ordered|bought)( it)?[.!]*$/.test(lower)) return { type: 'booked' };
+  if (/^(call( (them|it|for me))?|call for me please|yes,? call( them)?)[.!]*$/.test(lower)) return { type: 'call' };
   if (/^(plan it|yes,? plan it|help me plan it)[.!]*$/.test(lower)) return { type: 'offer', accept: true };
   if (/^(not now|no thanks|maybe later)[.!]*$/.test(lower)) return { type: 'offer', accept: false };
   return { type: 'capture', text };
@@ -236,6 +238,9 @@ export const NOT_LINKED_TEXT =
 
 export const NOT_LINKED_TELEGRAM_TEXT =
   "Hi, I'm Belluh. To connect, open Belluh, go to Me → Settings, and tap Connect Telegram. It brings you back here, already linked.";
+
+export const NOT_LINKED_IMESSAGE_TEXT =
+  "Hi, I'm Belluh. To text me here, open Belluh, go to Me → Settings, and tap Connect iMessage. It opens Messages with the code ready to send.";
 
 export const NOT_LINKED_SMS_TEXT =
   "Hi, I'm Belluh. To save dates by text, open Belluh, go to Me → Settings, and tap Connect by text. It opens Messages with the code ready to send.";

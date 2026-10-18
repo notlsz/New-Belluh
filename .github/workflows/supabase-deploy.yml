@@ -15,6 +15,15 @@
 #   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM (a Twilio number or a Messaging Service SID, MG...)
 # Optional, for texting Belluh on Telegram (the fastest: no business number or carrier registration):
 #   TELEGRAM_BOT_TOKEN     from @BotFather in Telegram (/newbot); the webhook is registered below
+# Optional, for iMessage (Linq: a real iPhone number, blue bubbles, SMS fallback for Android):
+#   LINQ_API_KEY           Linq dashboard → API keys
+#   LINQ_WEBHOOK_SECRET    the signing secret Linq shows when you add the webhook (whsec_...)
+#   LINQ_FROM              optional: which of your Linq numbers sends, when you have more than one
+#   Also set VITE_BELLUH_IMESSAGE_NUMBER in Vercel so Settings shows "Connect iMessage".
+# Optional, for Belluh calling a restaurant to book a table (Vapi voice agent + Google Places for the number):
+#   VAPI_API_KEY           dashboard.vapi.ai → API Keys (private key)
+#   VAPI_PHONE_NUMBER_ID   dashboard.vapi.ai → Phone Numbers (an imported Twilio/Telnyx number; free Vapi numbers can't call out)
+#   GOOGLE_PLACES_API_KEY  console.cloud.google.com → Places API (New) key
 # Optional repository variable SUPABASE_PROJECT_REF (defaults to the project the app points at).
 
 name: Deploy Supabase backend
@@ -47,6 +56,12 @@ jobs:
       TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
       TWILIO_FROM: ${{ secrets.TWILIO_FROM }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      LINQ_API_KEY: ${{ secrets.LINQ_API_KEY }}
+      LINQ_WEBHOOK_SECRET: ${{ secrets.LINQ_WEBHOOK_SECRET }}
+      LINQ_FROM: ${{ secrets.LINQ_FROM }}
+      VAPI_API_KEY: ${{ secrets.VAPI_API_KEY }}
+      VAPI_PHONE_NUMBER_ID: ${{ secrets.VAPI_PHONE_NUMBER_ID }}
+      GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -136,7 +151,19 @@ jobs:
           supabase functions deploy belluh-push --project-ref "$PROJECT_REF"
           supabase functions deploy belluh-nudges --project-ref "$PROJECT_REF" --no-verify-jwt
 
-      - name: Texting Belluh (WhatsApp, SMS and Telegram) and reminders
+      - name: Belluh calls restaurants (Vapi)
+        if: steps.setup.outputs.ready == 'true'
+        run: |
+          if [ -n "$VAPI_API_KEY" ] && [ -n "$VAPI_PHONE_NUMBER_ID" ] && [ -n "$GOOGLE_PLACES_API_KEY" ]; then
+            supabase secrets set --project-ref "$PROJECT_REF" VAPI_API_KEY="$VAPI_API_KEY" VAPI_PHONE_NUMBER_ID="$VAPI_PHONE_NUMBER_ID" GOOGLE_PLACES_API_KEY="$GOOGLE_PLACES_API_KEY"
+            # The call webhook's secret is derived from the key inside the functions (vapi.ts), so there's nothing else to store
+            supabase functions deploy vapi-webhook --project-ref "$PROJECT_REF" --no-verify-jwt
+            echo "Calls are on. Belluh can phone restaurants once someone taps Call for me."
+          else
+            echo "::notice::Calls are off: add VAPI_API_KEY, VAPI_PHONE_NUMBER_ID and GOOGLE_PLACES_API_KEY to let Belluh phone restaurants."
+          fi
+
+      - name: Texting Belluh (WhatsApp, SMS, Telegram, iMessage) and reminders
         if: steps.setup.outputs.ready == 'true'
         run: |
           on=""
@@ -173,6 +200,16 @@ jobs:
             on="yes"
           else
             echo "::notice::Telegram is off: add TELEGRAM_BOT_TOKEN (from @BotFather) to turn it on."
+          fi
+          if [ -n "$LINQ_API_KEY" ] && [ -n "$LINQ_WEBHOOK_SECRET" ]; then
+            echo "::add-mask::$LINQ_API_KEY"
+            supabase secrets set --project-ref "$PROJECT_REF" LINQ_API_KEY="$LINQ_API_KEY" LINQ_WEBHOOK_SECRET="$LINQ_WEBHOOK_SECRET"
+            if [ -n "$LINQ_FROM" ]; then supabase secrets set --project-ref "$PROJECT_REF" LINQ_FROM="$LINQ_FROM"; fi
+            supabase functions deploy linq-webhook --project-ref "$PROJECT_REF" --no-verify-jwt
+            echo "iMessage is on. Linq webhook (message.received): https://${PROJECT_REF}.supabase.co/functions/v1/linq-webhook?version=2026-02-03"
+            on="yes"
+          else
+            echo "::notice::iMessage is off: add LINQ_API_KEY and LINQ_WEBHOOK_SECRET to turn it on."
           fi
           [ -z "$on" ] && exit 0
           supabase functions deploy occasion-reminders --project-ref "$PROJECT_REF" --no-verify-jwt

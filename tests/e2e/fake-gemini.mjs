@@ -37,6 +37,24 @@ http.createServer((req, res) => {
       return res.end(JSON.stringify({ sid: 'SM' + Date.now() + Math.random().toString(36).slice(2, 6) }));
     }
     const body = JSON.parse(rawBody || '{}');
+    // Stand-in for Linq (iMessage): record what Belluh sends
+    if (req.url.startsWith('/linq/')) {
+      fs.appendFileSync(LOG, JSON.stringify({ url: req.url, linq: body, auth: req.headers.authorization }) + '\n');
+      res.writeHead(202, { 'content-type': 'application/json' });
+      return res.end(JSON.stringify({ message: { id: 'lq_' + Date.now() + Math.random().toString(36).slice(2, 6) } }));
+    }
+    // Stand-in for Google Places text search: one restaurant with a number
+    if (req.url.startsWith('/places/')) {
+      fs.appendFileSync(LOG, JSON.stringify({ url: req.url, places: body, key: req.headers['x-goog-api-key'], mask: req.headers['x-goog-fieldmask'] }) + '\n');
+      res.writeHead(200, { 'content-type': 'application/json' });
+      return res.end(JSON.stringify({ places: [{ displayName: { text: 'Ramen Taka' }, internationalPhoneNumber: '+1 408-555-0134', formattedAddress: '12 S 1st St, San Jose, CA' }] }));
+    }
+    // Stand-in for Vapi: record the call Belluh places
+    if (req.url.startsWith('/vapi/')) {
+      fs.appendFileSync(LOG, JSON.stringify({ url: req.url, vapi: body, auth: req.headers.authorization }) + '\n');
+      res.writeHead(201, { 'content-type': 'application/json' });
+      return res.end(JSON.stringify({ id: 'call_' + Date.now() + Math.random().toString(36).slice(2, 6), status: 'queued' }));
+    }
     // Stand-in for Telegram's Bot API: record what Belluh sends
     if (req.url.startsWith('/telegram/')) {
       fs.appendFileSync(LOG, JSON.stringify({ url: req.url, telegram: body }) + '\n');

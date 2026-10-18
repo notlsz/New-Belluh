@@ -14,6 +14,10 @@ const waHref = (code: string) => `https://wa.me/${BELLUH_NUMBER}?text=${encodeUR
 const TG_BOT: string = ((import.meta as any).env?.VITE_BELLUH_TELEGRAM_BOT || '').replace(/^@/, '').replace(/[^A-Za-z0-9_]/g, '');
 const tgHref = (code: string) => `https://t.me/${TG_BOT}?start=${code}`;
 
+// Belluh's iMessage number (Linq), e.g. +15551234567. Set VITE_BELLUH_IMESSAGE_NUMBER in Vercel. Messages sends it as iMessage.
+const IMESSAGE_NUMBER: string = (() => { const d = ((import.meta as any).env?.VITE_BELLUH_IMESSAGE_NUMBER || '').replace(/\D/g, ''); return d ? '+' + d : ''; })();
+const imHref = (code: string) => `sms:${IMESSAGE_NUMBER}?&body=${encodeURIComponent(`LINK ${code}`)}`;
+
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 interface Occasion {
@@ -24,7 +28,7 @@ interface Occasion {
   day: number;
   year: number | null;
   repeats_yearly: boolean;
-  source: 'app' | 'whatsapp' | 'sms' | 'telegram';
+  source: 'app' | 'whatsapp' | 'sms' | 'telegram' | 'imessage';
   mentioned_at: string;
 }
 
@@ -50,7 +54,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
   const [code, setCode] = useState<string | null>(null);
   const [occasions, setOccasions] = useState<Occasion[]>([]);
   const [copied, setCopied] = useState(false);
-  const [via, setVia] = useState<'whatsapp' | 'sms' | 'telegram'>('whatsapp');
+  const [via, setVia] = useState<'whatsapp' | 'sms' | 'telegram' | 'imessage'>('whatsapp');
 
   const load = useCallback(async () => {
     const [{ data: link, error: linkErr }, { data: occ, error: occErr }] = await Promise.all([
@@ -88,7 +92,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
     return () => clearInterval(t);
   }, [available, phone, prepare]);
 
-  const connect = async (channel: 'whatsapp' | 'sms' | 'telegram' = 'whatsapp') => {
+  const connect = async (channel: 'whatsapp' | 'sms' | 'telegram' | 'imessage' = 'whatsapp') => {
     setVia(channel);
     if (readyCode) { setCode(readyCode); return; } // the link itself opens WhatsApp or Messages
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -117,8 +121,8 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
     .filter(x => x.days !== null)
     .sort((a, b) => (a.days as number) - (b.days as number));
 
-  const openLink = !code ? null : via === 'telegram' && TG_BOT ? tgHref(code) : via === 'sms' && SMS_NUMBER ? smsHref(code) : BELLUH_NUMBER ? waHref(code) : null;
-  const appName = via === 'telegram' ? 'Telegram' : via === 'sms' ? 'Messages' : 'WhatsApp';
+  const openLink = !code ? null : via === 'imessage' && IMESSAGE_NUMBER ? imHref(code) : via === 'telegram' && TG_BOT ? tgHref(code) : via === 'sms' && SMS_NUMBER ? smsHref(code) : BELLUH_NUMBER ? waHref(code) : null;
+  const appName = via === 'telegram' ? 'Telegram' : via === 'sms' || via === 'imessage' ? 'Messages' : 'WhatsApp';
   const btn = 'shrink-0 h-11 px-5 rounded-full font-semibold text-sm inline-flex items-center justify-center gap-2 transition-colors bg-white text-slate-900 border border-slate-200 hover:border-slate-400';
 
   return (
@@ -135,8 +139,15 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
               <p className="font-serif text-lg text-slate-900">Text Belluh like you'd text a friend.</p>
               <p className="text-sm text-slate-500 mt-1">Dates, plans, "remind me to call his mom Sunday". Belluh texts you first when something's coming up, and replies where you are.</p>
             </div>
-            {BELLUH_NUMBER || SMS_NUMBER || TG_BOT ? (
+            {BELLUH_NUMBER || SMS_NUMBER || TG_BOT || IMESSAGE_NUMBER ? (
               <div className="flex flex-wrap gap-2 shrink-0">
+                {IMESSAGE_NUMBER && (readyCode ? (
+                  <a href={imHref(readyCode)} onClick={() => connect('imessage')} className={btn}>
+                    <MessageCircle size={17} className="text-[#0A84FF]" /> Connect iMessage
+                  </a>
+                ) : (
+                  <button onClick={() => connect('imessage')} className={btn}><MessageCircle size={17} className="text-[#0A84FF]" /> Connect iMessage</button>
+                ))}
                 {BELLUH_NUMBER && (readyCode ? (
                   <a href={waHref(readyCode)} target="_blank" rel="noreferrer" onClick={() => connect('whatsapp')} className={btn}>
                     <MessageCircle size={17} className="text-[#25D366]" /> Connect WhatsApp
@@ -179,7 +190,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
               </button>
             </div>
             {openLink && (
-              <a href={openLink} target={via === 'sms' ? undefined : '_blank'} rel="noreferrer" className={`inline-flex mt-5 px-6 py-3 ${via === 'sms' ? 'bg-slate-900' : via === 'telegram' ? 'bg-[#229ED9]' : 'bg-[#25D366]'} text-white rounded-full font-bold text-sm items-center gap-2 hover:brightness-105`}>
+              <a href={openLink} target={via === 'sms' || via === 'imessage' ? undefined : '_blank'} rel="noreferrer" className={`inline-flex mt-5 px-6 py-3 ${via === 'imessage' ? 'bg-[#0A84FF]' : via === 'sms' ? 'bg-slate-900' : via === 'telegram' ? 'bg-[#229ED9]' : 'bg-[#25D366]'} text-white rounded-full font-bold text-sm items-center gap-2 hover:brightness-105`}>
                 <MessageCircle size={16} /> Open {appName}
               </a>
             )}

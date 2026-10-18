@@ -3,26 +3,28 @@
 // LIST/FORGET dates, STOP/START. Each webhook verifies its provider's signature, then hands every message here.
 
 import {
-  parseCommand, localDateParts, listReply, HELP_TEXT, NOT_LINKED_TEXT, NOT_LINKED_SMS_TEXT, NOT_LINKED_TELEGRAM_TEXT, type StoredOccasion,
+  parseCommand, localDateParts, listReply, HELP_TEXT, NOT_LINKED_TEXT, NOT_LINKED_SMS_TEXT, NOT_LINKED_TELEGRAM_TEXT, NOT_LINKED_IMESSAGE_TEXT, type StoredOccasion,
 } from './occasions.ts';
 import { sendText } from './whatsapp.ts';
 import { sendSms } from './sms.ts';
 import { sendTelegram, telegramChat } from './telegram.ts';
+import { sendLinq } from './linq.ts';
 import { db, loadCtx, weekAction } from './agentdb.ts';
-import { chat, sendNote, planRespond, checkin, offerRespond, bookingDone, latestPrepared } from './agentcore.ts';
+import { chat, sendNote, planRespond, checkin, offerRespond, bookingDone, latestPrepared, placeCall } from './agentcore.ts';
 
-export type Channel = 'whatsapp' | 'sms' | 'telegram';
+export type Channel = 'whatsapp' | 'sms' | 'telegram' | 'imessage';
 export interface Inbound { channel: Channel; id: string; phone: string; sentAt: string; text: string; kind: string }
 
 interface Link { user_id: string; timezone: string; reminders_enabled: boolean }
 
-const CONNECT_AGAIN: Record<Channel, string> = { whatsapp: 'Connect WhatsApp', sms: 'Connect by text', telegram: 'Connect Telegram' };
-const NOT_LINKED: Record<Channel, string> = { whatsapp: NOT_LINKED_TEXT, sms: NOT_LINKED_SMS_TEXT, telegram: NOT_LINKED_TELEGRAM_TEXT };
+const CONNECT_AGAIN: Record<Channel, string> = { whatsapp: 'Connect WhatsApp', sms: 'Connect by text', telegram: 'Connect Telegram', imessage: 'Connect iMessage' };
+const NOT_LINKED: Record<Channel, string> = { whatsapp: NOT_LINKED_TEXT, sms: NOT_LINKED_SMS_TEXT, telegram: NOT_LINKED_TELEGRAM_TEXT, imessage: NOT_LINKED_IMESSAGE_TEXT };
 
 /** Sends on whichever app the person is using; a Telegram chat is stored as "tg:<chat id>". */
 export async function sendOn(channel: string | null, to: string, body: string): Promise<string | null> {
   const tg = telegramChat(to);
   if (channel === 'telegram' || tg) return tg ? sendTelegram(tg, body) : null;
+  if (channel === 'imessage') return sendLinq(to, body);
   return channel === 'sms' ? sendSms(to, body) : sendText(to, body);
 }
 
@@ -54,8 +56,11 @@ async function talk(m: Inbound, link: Link, text: string) {
   const draft = messages.find(x => x?.role === 'note_draft');
   const extra = draft ? `\n\nNote to ${ctx.partnerName ?? 'your partner'}:\n"${draft.body}"\n\nReply SEND to send it, or DISCARD.` : '';
   const last = [...messages].reverse().find(x => x?.role === 'belluh');
-  const cards = (last?.meta?.bookings ?? []) as { label: string }[];
-  const booked = !draft && cards.length ? `\n\nReply ${cards[0].label === 'I booked it' ? 'BOOKED' : 'ORDERED'} once it's done and I'll add it to your calendar and remind you.` : '';
+  const cards = (last?.meta?.bookings ?? []) as { label: string; call?: { place: string; status: string } }[];
+  const callable = cards.find(c => c.call?.status === 'ready');
+  const booked = !draft && cards.length ? (callable
+    ? `\n\nReply CALL and I'll phone ${callable.call!.place} and book it for you, or BOOKED once you've done it yourself.`
+    : `\n\nReply ${cards[0].label === 'I booked it' ? 'BOOKED' : 'ORDERED'} once it's done and I'll add it to your calendar and remind you.`) : '';
   // Links Belluh found (a table to book, gift ideas) come after the reply, one per line
   const links = (([...messages].reverse().find(x => x?.role === 'belluh')?.meta?.links ?? []) as { label: string; url: string }[])
     .map(l => `${l.label}: ${l.url}`).join('\n');
@@ -172,6 +177,14 @@ export async function handleInbound(m: Inbound) {
       if (!id) return reply_(m, link.user_id, "I don't have anything waiting to be booked. Ask me for a table, flowers or a gift and I'll get it ready.");
       const r = await bookingDone(ctx, id, true);
       return reply_(m, link.user_id, r.body?.message?.body ?? 'Done.');
+    }
+    case 'call': {
+      const ctx = await loadCtx(link.user_id, link.timezone);
+      const { data } = await db.from('bookings').select('id').eq('user_id', link.user_id).eq('status', 'prepared').eq('call_status', 'ready')
+        .gte('created_at', new Date(Date.now() - 7 * 86_400_000).toISOString()).order('created_at', { ascending: false }).limit(1);
+      if (!data?.[0]) return talk(m, link, m.text);
+      const r = await placeCall(ctx, data[0].id);
+      return reply_(m, link.user_id, r.body?.message?.body ?? r.body?.error ?? "I'm on it.");
     }
     case 'capture': return talk(m, link, cmd.text);
   }

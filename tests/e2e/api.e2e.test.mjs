@@ -1045,3 +1045,129 @@ test('41. Flowers are a surprise: remembered and reminded, never shown to the pa
   const { data: no } = await agent(dan, { action: 'booking', booking_id: gift.id, done: false });
   assert.equal(no.booking.status, 'dismissed');
 });
+
+test('42. iMessage (Linq): signed deliveries only, one tap links it, then it is the same Belluh', async () => {
+  const LQ_URL = `${URL_}/functions/v1/linq-webhook?version=2026-02-03`;
+  const SECRET_ = 'whsec_bGlucS10ZXN0LXNpZ25pbmctc2VjcmV0LTEyMzQ1Ng==';
+  const sign = (id, ts, body, secret = SECRET_) => 'v1,' + crypto.createHmac('sha256', Buffer.from(secret.replace(/^whsec_/, ''), 'base64')).update(`${id}.${ts}.${body}`).digest('base64');
+  const send = (text, from = '+15558880000', opts = {}) => {
+    const id = 'msg_' + crypto.randomUUID(), ts = String(opts.ts ?? Math.floor(Date.now() / 1000));
+    const body = JSON.stringify({ event_type: 'message.received', data: { id, direction: opts.direction ?? 'inbound', sender_handle: { handle: from }, parts: [{ type: 'text', value: text }] } });
+    return fetch(LQ_URL, { method: 'POST', headers: { 'content-type': 'application/json', 'webhook-id': id, 'webhook-timestamp': ts, 'webhook-signature': opts.sig ?? sign(id, ts, body) }, body });
+  };
+  const toPhone = () => geminiRequests().filter(r => r.linq?.to?.[0] === '+15558880000');
+  // Eve's Telegram link comes back afterwards, so the app tests still see it
+  const { data: saved } = await service.from('whatsapp_links').select('*').eq('user_id', EVE).single();
+
+  assert.equal((await send('hi', '+15558880000', { sig: 'v1,nope' })).status, 401, 'unsigned deliveries are refused');
+  assert.equal((await send('hi', '+15558880000', { ts: Math.floor(Date.now() / 1000) - 3600 })).status, 401, 'old deliveries are refused');
+  await send('hello?');
+  assert.match(toPhone().at(-1).linq.message.parts[0].value, /tap Connect iMessage/, 'a stranger is told how to connect');
+  assert.equal(toPhone().at(-1).auth, 'Bearer linq-test');
+
+  const { data: code } = await eve.rpc('request_whatsapp_link', { p_timezone: 'America/New_York' });
+  await send(`LINK ${code}`);
+  assert.match(toPhone().at(-1).linq.message.parts[0].value, /connected/i);
+  const { data: link } = await eve.from('whatsapp_links').select('phone_e164, channel').single();
+  assert.deepEqual(link, { phone_e164: '+15558880000', channel: 'imessage' });
+
+  // Same Belluh, same thread: the text lands in Eve's conversation and the answer comes back in blue bubbles
+  const n = toPhone().length;
+  await send('what should we do this weekend?');
+  assert.equal(toPhone().length, n + 1);
+  const { data: h } = await agent(eve, { action: 'history' });
+  assert.ok(h.messages.some(m => m.role === 'user' && m.body === 'what should we do this weekend?' && m.meta?.channel === 'imessage'));
+  assert.equal(h.messages.at(-1).body, toPhone().at(-1).linq.message.parts[0].value);
+  // LIST works the same as on every other channel
+  await send('LIST');
+  assert.match(toPhone().at(-1).linq.message.parts[0].value, /birthday/i);
+  // Belluh's own sends and other people's messages in a group never trigger a reply
+  const sent = toPhone().length;
+  await send('remind me again', '+15558880000', { direction: 'outbound' });
+  assert.equal(toPhone().length, sent);
+
+  await service.from('whatsapp_links').update({ phone_e164: saved.phone_e164, channel: saved.channel }).eq('user_id', EVE);
+});
+
+test('43. "Call for me": Belluh phones the restaurant, says it is an AI, and the answer finishes the booking', async () => {
+  const HOOK = `${URL_}/functions/v1/vapi-webhook`;
+  const secret = crypto.createHash('sha256').update('belluh-vapi:vapi-test').digest('hex').slice(0, 48);
+  const report = (callId, bookingId, data, endedReason = 'customer-ended-call', s = secret) => fetch(HOOK, {
+    method: 'POST', headers: { 'content-type': 'application/json', ...(s ? { 'x-vapi-secret': s } : {}) },
+    body: JSON.stringify({ message: { type: 'end-of-call-report', endedReason, call: { id: callId, metadata: { booking_id: bookingId } }, analysis: { structuredData: data } } }),
+  });
+  const calls = () => geminiRequests().filter(r => r.vapi);
+  const table = async () => (await agent(dan, { action: 'chat', message: 'book a table for us' })).data.messages.at(-1).meta.bookings[0];
+
+  // The table comes with the restaurant's real number, found on Google Places
+  const card = await table();
+  assert.deepEqual(card.call, { place: 'Ramen Taka', phone: '+14085550134', status: 'ready' });
+  const places = geminiRequests().filter(r => r.places).at(-1);
+  assert.equal(places.key, 'places-test');
+  assert.match(places.mask, /internationalPhoneNumber/);
+  assert.equal(calls().length, 0, 'nothing is called until they tap');
+
+  // Only Dan can ask; one tap is one call
+  assert.ok((await agent(maya, { action: 'booking_call', booking_id: card.id })).error, "it's not hers to call");
+  const { data: c1 } = await agent(dan, { action: 'booking_call', booking_id: card.id });
+  assert.equal(c1.called, true);
+  assert.match(c1.message.body, /^Calling Ramen Taka now for 2 at 7:00 PM on .*\. I'll tell you as soon as they answer\.$/);
+  await agent(dan, { action: 'booking_call', booking_id: card.id });
+  assert.equal(calls().length, 1, 'a second tap never makes a second call');
+  const v = calls().at(-1);
+  assert.equal(v.auth, 'Bearer vapi-test');
+  assert.equal(v.vapi.phoneNumberId, 'pn-test');
+  assert.equal(v.vapi.customer.number, '+14085550134');
+  assert.match(v.vapi.assistant.firstMessage, /^Hi, this is Belluh, an AI assistant calling for Dan\. I'd like to book a table for 2 on .* at 7:00 PM\./);
+  assert.match(v.vapi.assistant.model.messages[0].content, /Never pretend to be human/);
+  assert.equal(v.vapi.assistant.artifactPlan.recordingEnabled, false, 'nothing is recorded');
+  assert.equal(v.vapi.assistant.server.url, 'http://127.0.0.1:3000/functions/v1/vapi-webhook');
+  assert.equal(v.vapi.assistant.server.secret, secret);
+  assert.equal(v.vapi.metadata.booking_id, card.id);
+  const { data: calling } = await service.from('bookings').select('call_status, call_id, status').eq('id', card.id).single();
+  assert.equal(calling.call_status, 'calling');
+  assert.equal(calling.status, 'prepared');
+  const callId = calling.call_id;
+
+  // Reports must carry Belluh's secret
+  assert.equal((await report(callId, card.id, { booked: true }, 'x', null)).status, 401);
+  assert.equal((await report(callId, card.id, { booked: true }, 'x', 'wrong'.padEnd(48, '0'))).status, 401);
+
+  // They had 7:30: it's booked at 7:30, in both calendars, with reminders, and Maya hears
+  const r = await (await report(callId, card.id, { booked: true, confirmed_time: '19:30', name: 'Dan' })).json();
+  assert.equal(r.result, 'booked');
+  const { data: b } = await service.from('bookings').select('status, call_status, starts_at, message_id').eq('id', card.id).single();
+  assert.equal(b.status, 'booked');
+  assert.equal(b.call_status, 'booked');
+  assert.equal(new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }).format(new Date(b.starts_at)), '7:30 PM');
+  const { data: dh } = await agent(dan, { action: 'history' });
+  assert.match(dh.messages.at(-1).body, /^Booked: Ramen Taka, .* at 7:30 PM\. They confirmed on the phone, under Dan\. It's in your calendar and Maya's\./);
+  const { data: m } = await service.from('agent_messages').select('meta').eq('id', b.message_id).single();
+  assert.equal(m.meta.bookings[0].status, 'booked');
+  assert.equal(m.meta.bookings[0].call.status, 'booked');
+  const { data: us } = await service.from('us_messages').select('body').eq('meta->>booking_id', card.id);
+  assert.equal(us.length, 1);
+  assert.equal((await (await report(callId, card.id, { booked: true })).json()).result, 'ignored', 'a repeated report changes nothing');
+
+  // Nobody picked up: Belluh says so and offers another spot; the links still work
+  const card2 = await table();
+  await agent(dan, { action: 'booking_call', booking_id: card2.id });
+  const { data: c2 } = await service.from('bookings').select('call_id').eq('id', card2.id).single();
+  assert.equal((await (await report(c2.call_id, card2.id, { booked: false }, 'customer-did-not-answer')).json()).result, 'failed');
+  const { data: dh2 } = await agent(dan, { action: 'history' });
+  assert.equal(dh2.messages.at(-1).body, 'I called Ramen Taka, but nobody picked up. Want me to find another spot, or will you try the links?');
+  const { data: b2 } = await service.from('bookings').select('status, call_status').eq('id', card2.id).single();
+  assert.deepEqual(b2, { status: 'prepared', call_status: 'failed' });
+  // A report for one booking can't touch another
+  const card3 = await table();
+  await agent(dan, { action: 'booking_call', booking_id: card3.id });
+  const { data: c3 } = await service.from('bookings').select('call_id').eq('id', card3.id).single();
+  assert.equal((await (await report(c3.call_id, card2.id, { booked: true })).json()).result, 'ignored');
+
+  // A few calls a day at most
+  const card4 = await table();
+  const { data: c4 } = await agent(dan, { action: 'booking_call', booking_id: card4.id });
+  assert.equal(c4.called, false);
+  assert.match(c4.message.body, /I've made today's calls for you already/);
+  assert.equal(calls().length, 3);
+});
