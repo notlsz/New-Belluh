@@ -17,7 +17,7 @@ import IntroGuide from './components/IntroGuide'; // Import the new guide
 import { CURRENT_USER, MOCK_INSIGHTS, THEMES, DAILY_PROMPTS } from './constants';
 import { JournalEntry, EntryType, Mood, User, CircleType, CircleStatus, ColorTheme } from './types';
 import { Sparkles, X, CheckCircle2, AlertCircle, Info } from 'lucide-react';
-import { supabase } from './lib/supabaseClient';
+import { supabase, readAs } from './lib/supabaseClient';
 import { useAdminAccess } from './hooks/useAdminAccess';
 import { trackEvent, flushCta } from './services/analytics';
 import { belluhAgent } from './services/belluhAgent';
@@ -278,11 +278,21 @@ const App: React.FC = () => {
       setIsLoading(false);
   };
 
+  // The latest login Supabase handed us, straight from its sign-in answer
+  const lastSession = useRef<any>(null);
   const loadUserData = async (sessionUser: any, attempt = 1): Promise<void> => {
       // Which step it reached, so a load that stalls says where (recorded after 12 seconds)
       let stage = 'start';
       const stall = setTimeout(() => { trackEvent('load_stalled', { attempt, stage }); }, 12000);
       try {
+        // Only read the journal once this browser really holds the login: a request sent without it is treated
+        // as a logged-out visitor, which the database refuses
+        // Every read below carries that login explicitly, from Supabase's own sign-in answer if the browser's saved
+        // copy isn't readable yet, so it can never go out as a logged-out visitor
+        const { data: { session: live } } = await supabase.auth.getSession();
+        const token = (live?.user?.id === sessionUser.id ? live?.access_token : null) ?? (lastSession.current?.user?.id === sessionUser.id ? lastSession.current?.access_token : null);
+        if (!token) throw new Error('no login token yet');
+        const db = readAs(token);
         trackEvent('app_opened', { source: 'web' });
 
         // --- HANDLE INVITE LINKS (Persistent) ---
@@ -292,14 +302,14 @@ const App: React.FC = () => {
 
         // Invite links carry a one-time token. We ask before connecting: opening a link alone never links accounts.
         if (inviteToken) {
-            const { data: inviterName, error: previewError } = await supabase.rpc('preview_partner_invite', { p_token: inviteToken });
+            const { data: inviterName, error: previewError } = await db.rpc('preview_partner_invite', { p_token: inviteToken });
             const rpcMissing = !!previewError && /could not find the function|PGRST202/i.test(`${previewError.message} ${(previewError as any).code ?? ''}`);
             const isLegacyUserId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(inviteToken);
             if (inviterName) {
                 setInviteOffer({ token: inviteToken, name: inviterName as string });
             } else if (rpcMissing && isLegacyUserId && inviteToken !== sessionUser.id) {
                 // Before the new invite system is installed: send a request the other person must accept
-                const { error: reqError } = await supabase.from('partner_connections')
+                const { error: reqError } = await db.from('partner_connections')
                     .insert({ user_id: sessionUser.id, partner_id: inviteToken, status: 'pending' });
                 if (!reqError || reqError.code === '23505') showNotification("Request sent. It connects once they accept it in their profile.", "success");
                 try { localStorage.removeItem('pending_invite_id'); } catch { /* ignore */ }
@@ -319,7 +329,7 @@ const App: React.FC = () => {
 
         stage = 'profile';
         // 1. Fetch User Profile
-        const { data: profile } = await supabase
+        const { data: profile } = await db
             .from('profiles')
             .select('*')
             .eq('id', sessionUser.id)
@@ -327,12 +337,13 @@ const App: React.FC = () => {
 
         stage = 'connections';
         // 2. Fetch Active Partner Connections
-        const { data: connections } = await supabase
+        const { data: connections, error: connectionsError } = await db
             .from('partner_connections')
             .select('*')
             .eq('status', 'connected')
             .or(`user_id.eq.${sessionUser.id},partner_id.eq.${sessionUser.id}`);
         
+        if (connectionsError) throw new Error(`partners: ${connectionsError.message}`);
         // Each partner once (a connection can exist in both directions), oldest first: your first partner is
         // always chapter "c1", the way your entries were tagged when you wrote them
         let connectedUserIds: string[] = [];
@@ -344,7 +355,7 @@ const App: React.FC = () => {
         stage = 'entries';
         // 3. Fetch All Journal Entries (Content + System Data)
         const initialUserIds = [sessionUser.id, ...connectedUserIds];
-        const { data: dbEntries, error: entriesError } = await supabase
+        const { data: dbEntries, error: entriesError } = await db
             .from('journal_entries')
             .select('*')
             .in('user_id', initialUserIds)
@@ -367,7 +378,7 @@ const App: React.FC = () => {
         stage = 'profiles';
         // 4. Fetch Profiles for ALL relevant users
         const allProfileIds = [...new Set([...initialUserIds, ...extendedMemberIds])];
-        const { data: allProfiles } = await supabase
+        const { data: allProfiles } = await db
             .from('profiles')
             .select('*')
             .in('id', allProfileIds);
@@ -493,7 +504,7 @@ const App: React.FC = () => {
         }
 
         stage = 'pending';
-        const { data: pendingRows } = await supabase
+        const { data: pendingRows } = await db
             .from('partner_connections')
             .select('*')
             .eq('partner_id', sessionUser.id)
@@ -501,7 +512,7 @@ const App: React.FC = () => {
         
         if (pendingRows && pendingRows.length > 0) {
             const inviterIds = pendingRows.map((r: any) => r.user_id);
-            const { data: inviters } = await supabase.from('profiles').select('*').in('id', inviterIds);
+            const { data: inviters } = await db.from('profiles').select('*').in('id', inviterIds);
             const invites: PendingInvite[] = pendingRows.map((r: any) => {
                 const inviter = inviters?.find((p: any) => p.id === r.user_id);
                 return {
@@ -631,11 +642,14 @@ const App: React.FC = () => {
         
         stage = 'done';
         setIsAuthenticated(true);
+        trackEvent('load_done', { attempt, entries: mappedEntries.length });
       } catch (err: any) {
           console.error("Failed to load user data", err);
           // Record exactly what broke (no journal text), so it can be fixed
-          trackEvent('load_failed', { attempt, stage, message: String(err?.message ?? err).slice(0, 300), stack: String(err?.stack ?? '').slice(0, 1200) });
-          if (attempt < 3) { await new Promise(r => setTimeout(r, 1200 * attempt)); return loadUserData(sessionUser, attempt + 1); }
+          let exp = 0; try { exp = JSON.parse(atob(String(lastSession.current?.access_token ?? '').split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp ?? 0; } catch { /* none */ }
+          let storageOk = true; try { localStorage.setItem('belluh_probe', 'x'.repeat(2048)); localStorage.removeItem('belluh_probe'); } catch { storageOk = false; }
+          trackEvent('load_failed', { attempt, stage, has_login: !!lastSession.current, token_exp_in_s: exp ? exp - Math.floor(Date.now() / 1000) : null, storage_ok: storageOk, message: String(err?.message ?? err).slice(0, 300), stack: String(err?.stack ?? '').slice(0, 1200) });
+          if (attempt < 5) { await new Promise(r => setTimeout(r, 700 * attempt)); return loadUserData(sessionUser, attempt + 1); }
           // Let the next "Log in" try again instead of being ignored
           loadedUserId.current = null;
           showNotification("Couldn't load your journal. Try logging in again.", "error");
@@ -657,6 +671,7 @@ const App: React.FC = () => {
   useEffect(() => {
     let mounted = true;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        lastSession.current = session ?? null;
         // Token refreshes happen every hour and must not reload everything or reset your place
         if (event === 'SIGNED_IN') {
             if (session?.user && mounted && loadedUserId.current !== session.user.id) {

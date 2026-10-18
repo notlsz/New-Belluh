@@ -42,6 +42,30 @@ await logIn();
 t = await p.locator('body').innerText();
 check('logging in again after logging out opens the journal', t.includes('Jimmy & Ana') && ALL.every(x => t.includes(x)));
 await p.screenshot({ path: `${OUT}/login-2-again.png` });
+// Pressing Log in over and over (or holding Enter) must still end in the journal, never as a logged-out visitor
+await p.locator('nav button[aria-label="Me"]').click(); await p.waitForTimeout(1500);
+await p.getByRole('button', { name: 'Settings' }).first().click(); await p.waitForTimeout(800);
+await p.getByText('Log Out', { exact: true }).click(); await p.waitForTimeout(2500);
+await p.goto(`${APP}/login`); await p.waitForTimeout(1500);
+await p.locator('input[type="email"]').fill('jimmy@test.com');
+await p.locator('input[type="password"]').fill(PASSWORD);
+for (let i = 0; i < 10; i++) await p.locator('input[type="password"]').press('Enter', { delay: 0 }).catch(() => {});
+await p.waitForTimeout(6000);
+t = await p.locator('body').innerText();
+check('pressing Enter ten times still opens the journal with every entry', t.includes('Jimmy & Ana') && ALL.every(x => t.includes(x)));
+// A browser that can't save the login (storage full or blocked) must still open the journal right after logging in
+{
+  const c2 = await b.newContext({ viewport: { width: 390, height: 844 } });
+  await c2.addInitScript(() => { const set = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) { if (String(k).startsWith('sb-')) throw new DOMException('QuotaExceededError', 'QuotaExceededError'); return set.call(this, k, v); }; });
+  const q = await c2.newPage();
+  await q.goto(`${APP}/login`); await q.waitForTimeout(1500);
+  await q.locator('input[type="email"]').fill('jimmy@test.com');
+  await q.locator('input[type="password"]').fill(PASSWORD);
+  await q.getByRole('button', { name: /^Log in/ }).click(); await q.waitForTimeout(7000);
+  const t2 = await q.locator('body').innerText();
+  check("logging in on a browser that can't save the login still opens the journal", t2.includes('Jimmy & Ana') && ALL.every(x => t2.includes(x)), t2.slice(0, 120).replace(/\n+/g, ' | '));
+  await c2.close();
+}
 check('no crashes', errs.length === 0, errs.join(' | ').slice(0, 200));
 await b.close();
 console.log(R.join('\n'));
