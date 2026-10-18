@@ -69,6 +69,15 @@ http.createServer((req, res) => {
     });
     return;
   }
+  // Sign-up with an email that already has an account: like Supabase, answer with an empty identities list and no session
+  if (u.pathname === '/auth/v1/signup') {
+    const chunks = []; req.on('data', c => chunks.push(c)); req.on('end', () => {
+      const { email } = JSON.parse(Buffer.concat(chunks).toString() || '{}');
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ id: crypto.randomUUID(), aud: 'authenticated', role: 'authenticated', email, identities: [], user_metadata: {}, app_metadata: {}, created_at: new Date().toISOString() }));
+    });
+    return;
+  }
   if (u.pathname === '/auth/v1/logout') { res.writeHead(204); return res.end(); }
   if (u.pathname === '/auth/v1/user') {
     const c = verify((req.headers.authorization || '').replace(/^Bearer /, ''));

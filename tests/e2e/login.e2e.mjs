@@ -20,7 +20,18 @@ const CARA = ['A new chapter, coffee with Cara', 'Cara and I painted the hallway
 await logIn('wrong-password', 1200);
 const wrong = await p.locator('body').innerText();
 check('a wrong password is refused, with a message', /invalid login credentials/i.test(wrong) && !wrong.includes('SHARED JOURNAL'), wrong.slice(0, 160).replace(/\n+/g, ' | '));
-await logIn();
+// One tap is enough: the journal opens from a single "Log in", fast, and the button shows it's working meanwhile
+await p.goto(`${APP}/login`); await p.waitForTimeout(1500);
+await p.locator('input[type="email"]').fill('jimmy@test.com');
+await p.locator('input[type="password"]').fill(PASSWORD);
+const t0 = Date.now();
+await p.getByRole('button', { name: /^Log in/ }).click();
+await p.waitForTimeout(150);
+check('the button says it is opening your journal', /Opening your journal/.test(await p.locator('body').innerText()));
+await p.getByText('Jimmy & Ana').first().waitFor({ timeout: 8000 });
+check('one tap opens the journal', true, `${Date.now() - t0} ms`);
+await p.waitForTimeout(2500);
+check('photos fill in after the journal opens', await p.locator('img[src*="old.jpg"]').count() > 0);
 let t = await p.locator('body').innerText();
 check('logging in opens the journal', t.includes('Jimmy & Ana') && t.includes('SHARED JOURNAL'));
 check('every old entry in the first chapter shows', ALL.every(x => t.includes(x)), ALL.filter(x => !t.includes(x)).join('; '));
@@ -65,6 +76,24 @@ check('pressing Enter ten times still opens the journal with every entry', t.inc
   const t2 = await q.locator('body').innerText();
   check("logging in on a browser that can't save the login still opens the journal", t2.includes('Jimmy & Ana') && ALL.every(x => t2.includes(x)), t2.slice(0, 120).replace(/\n+/g, ' | '));
   await c2.close();
+}
+// Typing your existing account into "Create account" logs you in instead of stopping there
+{
+  const c3 = await b.newContext({ viewport: { width: 390, height: 844 } });
+  const q = await c3.newPage();
+  await q.goto(`${APP}/signup`); await q.waitForTimeout(1500);
+  await q.locator('input[type="email"]').fill('jimmy@test.com');
+  await q.locator('input[type="password"]').fill(PASSWORD + 'Aa');
+  await q.getByRole('button', { name: /^Create account/ }).click(); await q.waitForTimeout(3000);
+  const wrong = await q.locator('body').innerText();
+  check('Create account with your email and a wrong password says you already have an account', /already have an account/i.test(wrong));
+  await q.goto(`${APP}/signup`); await q.waitForTimeout(1500);
+  await q.locator('input[type="email"]').fill('jimmy@test.com');
+  await q.locator('input[type="password"]').fill(PASSWORD);
+  await q.getByRole('button', { name: /^Create account/ }).click(); await q.waitForTimeout(6000);
+  const t3 = await q.locator('body').innerText();
+  check('Create account with your existing email and password just logs you in, every entry there', t3.includes('Jimmy & Ana') && ALL.every(x => t3.includes(x)));
+  await c3.close();
 }
 check('no crashes', errs.length === 0, errs.join(' | ').slice(0, 200));
 await b.close();

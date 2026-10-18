@@ -86,6 +86,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
 
     setLoading(true);
     const release = belluh.holdThinking();
+    let stayBusy = false;
 
     try {
       if (isSignUp) {
@@ -98,8 +99,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
         
         // Supabase Security Pattern: If identities is empty, user exists but hidden.
         if (data.user && data.user.identities && data.user.identities.length === 0) {
-            setIsSignUp(false); 
-            onShowToast("Account exists. Please log in.", "info");
+            // You already have an account: log you in with what you just typed instead of stopping at "Create account"
+            const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+            setIsSignUp(false);
+            if (!loginError) { stayBusy = true; onLogin(); return; }
+            onShowToast("You already have an account. That password didn't match it: try again, or tap Forgot?", "info");
             return;
         }
         
@@ -126,13 +130,16 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
           password,
         });
         if (error) throw error;
+        // Signed in: keep showing that we're on it until the journal opens (this screen goes away then)
+        stayBusy = true;
         onLogin();
       }
     } catch (error: any) {
       onShowToast(error.message || 'Authentication failed', 'error');
     } finally {
       release();
-      setLoading(false);
+      // If the journal hasn't opened within a few seconds, let them try again
+      if (stayBusy) setTimeout(() => setLoading(false), 12000); else setLoading(false);
     }
   };
 
@@ -243,7 +250,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
               disabled={loading || !email || !password || (isSignUp && !isPasswordValid)}
               className="w-full h-14 bg-slate-900 text-white rounded-full font-bold text-[15px] hover:bg-black transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)] disabled:opacity-25 disabled:shadow-none disabled:cursor-not-allowed !mt-7"
             >
-              {loading ? <span>{isSignUp ? 'Creating your account...' : 'Logging you in...'}</span> : <><span>{isSignUp ? 'Create account' : 'Log in'}</span><ArrowRight size={16} /></>}
+              {loading ? <span>{isSignUp ? 'Creating your account...' : 'Opening your journal...'}</span> : <><span>{isSignUp ? 'Create account' : 'Log in'}</span><ArrowRight size={16} /></>}
             </button>
           </form>
 

@@ -355,9 +355,11 @@ const App: React.FC = () => {
         stage = 'entries';
         // 3. Fetch All Journal Entries (Content + System Data)
         const initialUserIds = [sessionUser.id, ...connectedUserIds];
+        // Everything but the photos, which some older entries store inline (hundreds of KB each): they follow right
+        // after the journal is on screen
         const { data: dbEntries, error: entriesError } = await db
             .from('journal_entries')
-            .select('*')
+            .select('id, user_id, content, title, mood, type, is_shared, is_favorite, tags, audio_url, date, created_at')
             .in('user_id', initialUserIds)
             .order('created_at', { ascending: false });
         // A failed read must never look like an empty journal: try again rather than showing nothing
@@ -597,15 +599,24 @@ const App: React.FC = () => {
         stage = 'media';
         // Private voice notes and photos get fresh links each time the journal loads
         // Never let slow storage hold up the journal: entries show, and media fills in what it can
-        const links = await Promise.race([
-            resolveMedia(mappedEntries.flatMap(e => [e.mediaUrl, e.audioUrl])).catch(() => new Map<string, string>()),
-            new Promise<Map<string, string>>(r => setTimeout(() => r(new Map()), 6000)),
-        ]);
-        setEntries(mappedEntries.map(e => ({
-            ...e,
-            mediaUrl: e.mediaUrl && links.get(e.mediaUrl) || (e.mediaUrl?.startsWith('sb://') ? undefined : e.mediaUrl),
-            audioUrl: e.audioUrl && links.get(e.audioUrl) || (e.audioUrl?.startsWith('sb://') ? undefined : e.audioUrl),
-        })));
+        // The journal shows now; photos and private voice-note links fill in a moment later
+        setEntries(mappedEntries.map(e => ({ ...e, mediaUrl: undefined, audioUrl: e.audioUrl?.startsWith('sb://') ? undefined : e.audioUrl })));
+        const shownIds = new Set(mappedEntries.map(e => e.id));
+        const audioRefs = mappedEntries.filter(e => e.audioUrl?.startsWith('sb://')).map(e => [e.id, e.audioUrl!] as const);
+        void (async () => {
+            try {
+                const { data: photoRows } = await db.from('journal_entries').select('id, photo_url').in('user_id', initialUserIds).not('photo_url', 'is', null);
+                const photos = new Map<string, string>();
+                (photoRows ?? []).forEach((r: any) => { const u = repairLegacyUrl(r.photo_url); if (u && shownIds.has(r.id)) photos.set(r.id, u); });
+                const links = await resolveMedia([...photos.values(), ...audioRefs.map(([, a]) => a)]).catch(() => new Map<string, string>());
+                const audio = new Map(audioRefs.map(([id, a]) => [id, links.get(a)]));
+                setEntries(prev => prev.map(e => {
+                    const p = photos.get(e.id);
+                    const mediaUrl = p ? (p.startsWith('sb://') ? links.get(p) : p) : e.mediaUrl;
+                    return { ...e, mediaUrl, audioUrl: audio.get(e.id) ?? e.audioUrl };
+                }));
+            } catch (err: any) { trackEvent('media_failed', { message: String(err?.message ?? err).slice(0, 200) }); }
+        })();
 
         // Streak = consecutive days with at least one entry of yours, counting back from today (or yesterday)
         setStreak(computeStreak(mappedEntries.filter(e => e.userId === sessionUser.id).map(e => e.timestamp)));
