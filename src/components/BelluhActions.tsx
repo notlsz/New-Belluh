@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExternalLink, PenLine, ArrowUpRight } from 'lucide-react';
+import { ExternalLink, PenLine, ArrowUpRight, CalendarCheck, Gift, Flower2, UtensilsCrossed, Plane, Ticket, Check, Lock } from 'lucide-react';
 import { belluhAgent, AgentMessage } from '../services/belluhAgent';
 import PlanCard from './PlanCard';
 import { trackEvent } from '../services/analytics';
@@ -21,6 +21,19 @@ const BelluhActions: React.FC<{
   const products: { title: string; price: string; seller: string; image: string | null; url: string }[] = Array.isArray(msg.meta?.products) ? msg.meta.products.filter((p: any) => typeof p?.url === 'string' && p.url.startsWith('https://')) : [];
   const links: { label: string; url: string }[] = (Array.isArray(msg.meta?.links) ? msg.meta.links : []).filter((l: any) => !products.some(p => p.url === l.url));
   const kind = msg.meta?.kind;
+  // What Belluh got ready, waiting for "I booked it" so it can go in the calendar, the reminders and the journal
+  const [cards, setCards] = useState<{ id: string; kind: string; title: string; when: string | null; surprise: boolean; label: string; status: string }[]>(Array.isArray(msg.meta?.bookings) ? msg.meta.bookings : []);
+  const [cardBusy, setCardBusy] = useState<string | null>(null);
+  const markBooking = async (id: string, done: boolean) => {
+    setCardBusy(id);
+    trackEvent(done ? 'booking_done' : 'booking_dismissed', { kind: cards.find(c => c.id === id)?.kind });
+    const r = await belluhAgent.bookingDone(id, done);
+    setCardBusy(null);
+    if (!r) return;
+    const next = cards.map(c => c.id === id ? { ...c, status: done ? 'booked' : 'dismissed' } : c);
+    setCards(next);
+    onAdded?.(r.message ? [r.message] : [], { ...msg, meta: { ...msg.meta, bookings: next } });
+  };
 
   const answer = async (accept: boolean) => {
     setBusy(true); onBusy?.(true);
@@ -64,6 +77,32 @@ const BelluhActions: React.FC<{
           ))}
         </div>
       )}
+      {cards.filter(c => c.status !== 'dismissed').map(c => {
+        const Icon = { table: CalendarCheck, trip: Plane, flowers: Flower2, gift: Gift, dinner: UtensilsCrossed, experience: Ticket }[c.kind] ?? CalendarCheck;
+        return (
+          <div key={c.id} className="mt-3 max-w-md rounded-2xl bg-white border border-slate-100 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.35)] px-4 py-3.5">
+            <div className="flex items-start gap-3">
+              <Icon size={18} className="mt-0.5 shrink-0 text-[#9bbecb]" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-slate-900 leading-snug">{c.title}</p>
+                {c.when && <p className="mt-0.5 text-xs text-slate-500">{c.when}</p>}
+                {c.surprise && c.status !== 'booked' && <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-slate-400"><Lock size={11} /> A surprise. {partnerName ?? 'Your partner'} won't see this.</p>}
+              </div>
+            </div>
+            {c.status === 'booked' ? (
+              <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#3f7486]"><Check size={14} /> Done{c.when ? '. In your calendar, with a reminder.' : '. Belluh will remember.'}</p>
+            ) : (
+              <div className="mt-3 flex items-center gap-2">
+                <button disabled={cardBusy === c.id} onClick={() => markBooking(c.id, true)} className="h-9 px-4 rounded-full bg-slate-900 text-white text-xs font-bold disabled:opacity-60">
+                  {cardBusy === c.id ? 'Saving…' : c.label}
+                </button>
+                <button disabled={cardBusy === c.id} onClick={() => markBooking(c.id, false)} className="h-9 px-3 rounded-full text-xs font-bold text-slate-400 hover:text-slate-700">Not now</button>
+                <span className="ml-auto text-[11px] text-slate-400 hidden sm:block">Tap once it's done</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
       {kind === 'offer' && status === 'open' && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button disabled={busy} onClick={() => answer(true)} className="px-5 py-2.5 rounded-full bg-slate-900 text-white text-sm font-bold disabled:opacity-60">

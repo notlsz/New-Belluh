@@ -9,7 +9,7 @@ import { sendText } from './whatsapp.ts';
 import { sendSms } from './sms.ts';
 import { sendTelegram, telegramChat } from './telegram.ts';
 import { db, loadCtx, weekAction } from './agentdb.ts';
-import { chat, sendNote, planRespond, checkin, offerRespond } from './agentcore.ts';
+import { chat, sendNote, planRespond, checkin, offerRespond, bookingDone, latestPrepared } from './agentcore.ts';
 
 export type Channel = 'whatsapp' | 'sms' | 'telegram';
 export interface Inbound { channel: Channel; id: string; phone: string; sentAt: string; text: string; kind: string }
@@ -53,10 +53,13 @@ async function talk(m: Inbound, link: Link, text: string) {
   const reply = [...messages].reverse().find(x => x?.role === 'belluh')?.body ?? "I'm having trouble thinking right now. Try me again in a moment.";
   const draft = messages.find(x => x?.role === 'note_draft');
   const extra = draft ? `\n\nNote to ${ctx.partnerName ?? 'your partner'}:\n"${draft.body}"\n\nReply SEND to send it, or DISCARD.` : '';
+  const last = [...messages].reverse().find(x => x?.role === 'belluh');
+  const cards = (last?.meta?.bookings ?? []) as { label: string }[];
+  const booked = !draft && cards.length ? `\n\nReply ${cards[0].label === 'I booked it' ? 'BOOKED' : 'ORDERED'} once it's done and I'll add it to your calendar and remind you.` : '';
   // Links Belluh found (a table to book, gift ideas) come after the reply, one per line
   const links = (([...messages].reverse().find(x => x?.role === 'belluh')?.meta?.links ?? []) as { label: string; url: string }[])
     .map(l => `${l.label}: ${l.url}`).join('\n');
-  return reply_(m, link.user_id, reply + (links ? `\n\n${links}` : '') + extra);
+  return reply_(m, link.user_id, reply + (links ? `\n\n${links}` : '') + extra + booked);
 }
 
 /** SEND / DISCARD: the note Belluh just drafted. */
@@ -163,6 +166,13 @@ export async function handleInbound(m: Inbound) {
     case 'none': return planAnswer(m, link, null, cmd.note);
     case 'checkin': return weekAnswer(m, link, cmd.status);
     case 'offer': return offerAnswer(m, link, cmd.accept);
+    case 'booked': {
+      const ctx = await loadCtx(link.user_id, link.timezone);
+      const id = await latestPrepared(link.user_id);
+      if (!id) return reply_(m, link.user_id, "I don't have anything waiting to be booked. Ask me for a table, flowers or a gift and I'll get it ready.");
+      const r = await bookingDone(ctx, id, true);
+      return reply_(m, link.user_id, r.body?.message?.body ?? 'Done.');
+    }
     case 'capture': return talk(m, link, cmd.text);
   }
 }

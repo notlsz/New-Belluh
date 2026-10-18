@@ -70,7 +70,7 @@ const icsStamp = (iso: string) => iso.replace(/[-:]/g, '').replace(/\.\d{3}/, ''
 const icsText = (s: string) => s.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
 const pad = (n: number) => String(n).padStart(2, '0');
 
-export interface CalEvent { uid: string; title: string; starts_at: string; minutes: number; details?: string | null }
+export interface CalEvent { uid: string; title: string; starts_at: string; minutes: number; details?: string | null; days?: { start: string; end: string } /* all-day, YYYYMMDD, end exclusive */ }
 export interface CalDate { uid: string; title: string; month: number; day: number; year: number | null; repeats_yearly: boolean }
 
 /** Folds long lines to 75 octets as the iCalendar spec requires. */
@@ -88,7 +88,8 @@ export function icsCalendar(name: string, events: CalEvent[], dates: CalDate[] =
     `X-WR-CALNAME:${icsText(name)}`, 'REFRESH-INTERVAL;VALUE=DURATION:PT6H', 'X-PUBLISHED-TTL:PT6H'];
   for (const e of events) {
     const end = new Date(new Date(e.starts_at).getTime() + e.minutes * 60000).toISOString();
-    lines.push('BEGIN:VEVENT', `UID:${e.uid}@belluh.com`, `DTSTAMP:${stamp}`, `DTSTART:${icsStamp(e.starts_at)}`, `DTEND:${icsStamp(end)}`,
+    const span = e.days ? [`DTSTART;VALUE=DATE:${e.days.start}`, `DTEND;VALUE=DATE:${e.days.end}`] : [`DTSTART:${icsStamp(e.starts_at)}`, `DTEND:${icsStamp(end)}`];
+    lines.push('BEGIN:VEVENT', `UID:${e.uid}@belluh.com`, `DTSTAMP:${stamp}`, ...span,
       `SUMMARY:${icsText(e.title)}`, ...(e.details ? [`DESCRIPTION:${icsText(e.details)}`] : []), 'END:VEVENT');
   }
   for (const d of dates) {
