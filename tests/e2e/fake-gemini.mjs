@@ -43,6 +43,12 @@ http.createServer((req, res) => {
       res.writeHead(202, { 'content-type': 'application/json' });
       return res.end(JSON.stringify({ message: { id: 'lq_' + Date.now() + Math.random().toString(36).slice(2, 6) } }));
     }
+    // Stand-in for Instacart's Developer Platform: the whole list becomes one shopping page
+    if (req.url.startsWith('/instacart/')) {
+      fs.appendFileSync(LOG, JSON.stringify({ url: req.url, instacart: body, auth: req.headers.authorization }) + '\n');
+      res.writeHead(200, { 'content-type': 'application/json' });
+      return res.end(JSON.stringify({ products_link_url: 'https://customers.instacart.com/store/shopping_lists/1234567' }));
+    }
     // Stand-in for Google Places text search: one restaurant with a number
     if (req.url.startsWith('/places/')) {
       fs.appendFileSync(LOG, JSON.stringify({ url: req.url, places: body, key: req.headers['x-goog-api-key'], mask: req.headers['x-goog-fieldmask'] }) + '\n');
@@ -92,6 +98,13 @@ http.createServer((req, res) => {
         return reply(res, [{ functionCall: { name: 'plan_with_partner', args: { title: 'Dinner at the Thai place', details: 'The one you both wrote about.', options: [{ start: day(3), minutes: 120 }, { start: day(4), minutes: 120, label: 'Saturday' }, { start: '2001-01-01T19:00', minutes: 60 }] } } }]);
       }
       const at = (n, h) => { const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(h).padStart(2, '0')}:00`; };
+      // The whole date in one ask, the way a person would hand it to an assistant: table, flowers, a ride, a reminder
+      if (lastText.includes('whole date')) return reply(res, [
+        { functionCall: { name: 'find_table', args: { what: 'Italian', where: 'Palo Alto', start: at(4, 19).replace(':00', ':30'), people: 2 } } },
+        { functionCall: { name: 'send_flowers', args: { what: 'peonies', where: 'Palo Alto', deliver_on: at(4, 9).slice(0, 10) } } },
+        { functionCall: { name: 'book_ride', args: { to: 'Italian restaurant, Palo Alto' } } },
+        { functionCall: { name: 'remind_me', args: { text: 'Leave for dinner with Maya', at: at(4, 18).replace(':00', ':45') } } },
+      ]);
       if (lastText.includes('honeymoon')) return reply(res, [{ functionCall: { name: 'plan_trip', args: { to: 'Lisbon', from: 'San Jose', depart: at(200, 9).slice(0, 10), return: at(207, 9).slice(0, 10), people: 2 } } }]);
       if (lastText.includes('order us dinner')) return reply(res, [{ functionCall: { name: 'order_food', args: { what: 'pho', where: 'San Jose' } } }]);
       if (lastText.includes('get groceries for scampi')) return reply(res, [{ functionCall: { name: 'order_groceries', args: { items: ['shrimp', 'linguine', 'garlic'] } } }]);
@@ -118,9 +131,10 @@ http.createServer((req, res) => {
     if (hasToolResult) {
       const fr = last.find(p => p.functionResponse).functionResponse;
       if (said.includes('parrot') || said.includes('mute')) return reply(res, [{ text: 'Done. ok: true, note: ' + (fr.response.private_guidance ?? '').slice(0, 80) }]);
+      if (said.includes('whole date')) return reply(res, [{ text: "Your night is handled: a table for two, peonies arriving that morning, a ride when you're ready, and I'll tell you when to leave. Want me to call the restaurant and lock in the table?" }]);
       if (fr.response.already_saved) return reply(res, [{ text: 'Done. I already had that one saved, so nothing new to add.' }]);
       if (fr.response.status !== 'done') return reply(res, [{ text: `I couldn't do that one. ${fr.response.private_guidance ?? ''}`.trim() }]);
-      return reply(res, [{ text: `Done. ${{ order_groceries: 'Your groceries are each one tap from the cart, below.', book_ride: 'Your ride is ready below.', find_experience: 'A few things you two could do are below.', find_table: 'Your table is ready to book below.', order_food: 'Dinner is ready to order below.', buy_item: 'The best options are below, each one tap from checkout.', gift_ideas: 'A few gifts that fit him are below.', remind_me: "I'll remind you.", save_date: "Saved, I'll remind you before.", draft_note_to_partner: 'Your note is drafted for you to look over.' }[fr.name] ?? 'All set.'}` }]);
+      return reply(res, [{ text: `Done. ${{ order_groceries: 'Your groceries are in one cart, below.', book_ride: 'Your ride is ready below.', find_experience: 'A few things you two could do are below.', find_table: 'Your table is ready to book below.', order_food: 'Dinner is ready to order below.', buy_item: 'The best options are below, each one tap from checkout.', gift_ideas: 'A few gifts that fit him are below.', remind_me: "I'll remind you.", save_date: "Saved, I'll remind you before.", draft_note_to_partner: 'Your note is drafted for you to look over.' }[fr.name] ?? 'All set.'}` }]);
     }
     return reply(res, [{ text: 'Plain reply from the model.' }]);
   });

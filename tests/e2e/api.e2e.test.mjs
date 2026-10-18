@@ -935,8 +935,11 @@ test('36. When the model parrots tool output, Belluh asks again and answers like
 test('37. Groceries, a ride and something to do: each one ready, links that land, words without symbols', async () => {
   const run = async (m) => (await agent(eve, { action: 'chat', message: m })).data.messages.at(-1);
   const g = await run('Can you get groceries for scampi tonight?');
-  assert.deepEqual(g.meta.links.map(l => l.label), ['Add shrimp', 'Add linguine', 'Add garlic']);
-  assert.ok(g.meta.links.every(l => new URL(l.url).hostname === 'www.instacart.com'));
+  // One cart with everything on it (Instacart's shopping list page), not three separate searches
+  assert.deepEqual(g.meta.links, [{ label: 'Your cart on Instacart', url: 'https://customers.instacart.com/store/shopping_lists/1234567' }]);
+  const ic = geminiRequests().filter(x => x.instacart).at(-1);
+  assert.equal(ic.auth, 'Bearer instacart-test');
+  assert.deepEqual(ic.instacart.line_items.map(i => i.name), ['shrimp', 'linguine', 'garlic']);
   const r = await run('get us a ride to dinner');
   assert.deepEqual(r.meta.links.map(l => new URL(l.url).hostname), ['m.uber.com', 'ride.lyft.com']);
   assert.equal(new URL(r.meta.links[0].url).searchParams.get('dropoff[formatted_address]'), 'Ramen Nagi, Palo Alto');
@@ -1170,4 +1173,45 @@ test('43. "Call for me": Belluh phones the restaurant, says it is an AI, and the
   assert.equal(c4.called, false);
   assert.match(c4.message.body, /I've made today's calls for you already/);
   assert.equal(calls().length, 3);
+});
+
+test('44. The whole date in one ask: table, flowers, a ride to the door and a reminder, then Belluh calls and it all lands', async () => {
+  // Today's earlier test calls don't count against Dan's daily limit
+  await service.from('bookings').update({ called_at: null }).eq('user_id', DAN);
+  const { data } = await agent(dan, { action: 'chat', message: 'plan our whole date saturday' });
+  const reply = data.messages.at(-1);
+  assert.match(reply.body, /^Your night is handled/);
+  const cards = reply.meta.bookings;
+  assert.deepEqual(cards.map(c => c.kind).sort(), ['flowers', 'table']);
+  const table = cards.find(c => c.kind === 'table'), flowers = cards.find(c => c.kind === 'flowers');
+  assert.equal(table.call.status, 'ready', 'the table can be called for');
+  assert.equal(flowers.surprise, true);
+  const urls = reply.meta.links.map(l => new URL(l.url));
+  assert.ok(urls.some(u => u.hostname === 'www.opentable.com' && u.searchParams.get('covers') === '2' && /T19:30:00$/.test(u.searchParams.get('dateTime'))), 'OpenTable at 7:30 for 2');
+  assert.ok(urls.some(u => u.hostname === 'urbanstems.com'), 'flowers to order');
+  const uber = urls.find(u => u.hostname === 'm.uber.com');
+  assert.equal(uber.searchParams.get('dropoff[formatted_address]'), 'Ramen Taka, 12 S 1st St, San Jose, CA', 'the ride goes to the restaurant Belluh found');
+  const { data: rem } = await service.from('personal_reminders').select('body, due_at').eq('user_id', DAN).eq('body', 'Leave for dinner with Maya');
+  assert.equal(rem.length, 1, 'and it tells him when to leave');
+
+  // One tap: Belluh calls, the restaurant says yes
+  const { data: c } = await agent(dan, { action: 'booking_call', booking_id: table.id });
+  assert.equal(c.called, true);
+  const { data: row } = await service.from('bookings').select('call_id').eq('id', table.id).single();
+  const secret = crypto.createHash('sha256').update('belluh-vapi:vapi-test').digest('hex').slice(0, 48);
+  const r = await fetch(`${URL_}/functions/v1/vapi-webhook`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-vapi-secret': secret },
+    body: JSON.stringify({ message: { type: 'end-of-call-report', endedReason: 'customer-ended-call', call: { id: row.call_id, metadata: { booking_id: table.id } }, analysis: { structuredData: { booked: true, confirmed_time: '19:30' } } } }) });
+  assert.equal((await r.json()).result, 'booked');
+  // He orders the flowers; Maya never hears about those
+  const { data: f } = await agent(dan, { action: 'booking', booking_id: flowers.id, done: true });
+  assert.match(f.message.body, /^Ordered: Peonies for Maya, .*Maya won't see a thing\.$/);
+
+  // Maya: the dinner is in her calendar and her thread, the flowers are nowhere
+  const { data: tok } = await maya.rpc('my_calendar_token', { p_reset: false });
+  const ics = await (await fetch(`${URL_}/functions/v1/belluh-calendar?token=${tok}`)).text();
+  assert.ok(ics.includes(`UID:booking-${table.id}@belluh.com`), 'dinner is in her calendar');
+  assert.ok(!ics.includes(flowers.id), 'the flowers stay a surprise');
+  const { data: us } = await service.from('us_messages').select('body, meta').in('meta->>booking_id', [table.id, flowers.id]);
+  assert.equal(us.length, 1);
+  assert.match(us[0].body, /^Dan booked Ramen in Palo Alto|^Dan booked Italian in Palo Alto/);
 });
