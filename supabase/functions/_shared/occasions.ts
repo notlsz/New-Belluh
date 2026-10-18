@@ -62,6 +62,7 @@ export type Command =
   | { type: 'none'; note: string }
   | { type: 'checkin'; status: 'done' | 'not_yet' | 'skipped' }
   | { type: 'offer'; accept: boolean }
+  | { type: 'booked' }
   | { type: 'capture'; text: string };
 
 /** Short replies people send from their phone. Anything else is a message to Belluh. */
@@ -88,6 +89,7 @@ export function parseCommand(raw: string): Command {
   if (/^(did it|we did it|done)[.!]*$/.test(lower)) return { type: 'checkin', status: 'done' };
   if (/^not yet[.!]*$/.test(lower)) return { type: 'checkin', status: 'not_yet' };
   if (/^(skip|skipped|skip it)[.!]*$/.test(lower)) return { type: 'checkin', status: 'skipped' };
+  if (/^(i )?(booked|ordered|bought)( it)?[.!]*$/.test(lower)) return { type: 'booked' };
   if (/^(plan it|yes,? plan it|help me plan it)[.!]*$/.test(lower)) return { type: 'offer', accept: true };
   if (/^(not now|no thanks|maybe later)[.!]*$/.test(lower)) return { type: 'offer', accept: false };
   return { type: 'capture', text };

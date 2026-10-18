@@ -227,3 +227,35 @@ test('Prices are compared on Google Shopping (udm=28), with the budget in the se
   assert.equal(u.searchParams.get('tbm'), null);
   assert.equal(u.searchParams.get('q'), 'film camera under $150');
 });
+
+test('Bookings: what a tool got ready, the reminder, the memory and the follow-up', async () => {
+  const { bookingFromTool, reminderFor, memoryFor, readyForFollowUp, doneLabel, whenText } = await import('../supabase/functions/_shared/bookings.ts');
+  const { parseCommand } = await import('../supabase/functions/_shared/occasions.ts');
+  const tz = 'America/Los_Angeles';
+  const t = bookingFromTool('find_table', { what: 'ramen', where: 'San Jose', start: '2026-10-24T19:00', people: 2 }, tz, 'Maya', 'https://www.opentable.com/s')!;
+  assert.equal(t.title, 'Ramen in San Jose');
+  assert.equal(t.starts_at, '2026-10-25T02:00:00.000Z');
+  assert.equal(whenText(t, tz), 'Sat, Oct 24 at 7:00 PM');
+  assert.equal(doneLabel('table'), 'I booked it');
+  const now = new Date('2026-10-20T12:00:00Z');
+  assert.deepEqual(reminderFor(t, tz, now), { due_at: '2026-10-24T01:00:00.000Z', body: 'Tomorrow: Ramen in San Jose at 7:00 PM.' });
+  assert.equal(reminderFor(t, tz, new Date('2026-10-24T22:00:00Z'))!.body, 'Today: Ramen in San Jose at 7:00 PM.', 'same day: a couple of hours before');
+  assert.equal(memoryFor(t, 'Maya', tz), 'Booked Ramen in San Jose for Sat, Oct 24 at 7:00 PM.');
+  const trip = bookingFromTool('plan_trip', { to: 'Lisbon', depart: '2027-05-01', return: '2027-05-08' }, tz, 'Maya', null)!;
+  assert.equal(trip.all_day, true);
+  assert.equal(whenText(trip, tz), 'Sat, May 1');
+  const f = bookingFromTool('send_flowers', { what: 'peonies', deliver_on: '2026-10-24' }, tz, 'Maya', 'https://urbanstems.com/search?q=peonies')!;
+  assert.equal(f.surprise, true);
+  assert.equal(doneLabel('flowers'), 'I ordered it');
+  const g = bookingFromTool('buy_item', { item: 'film camera' }, tz, 'Maya', 'javascript:alert(1)', 'Peanuts Beagle Scouts 35mm Film Camera')!;
+  assert.equal(g.title, 'Peanuts Beagle Scouts 35mm Film Camera');
+  assert.equal(g.url, null, 'only real https links are kept');
+  assert.equal(memoryFor(g, 'Maya', tz, now), 'Bought Maya a gift: Peanuts Beagle Scouts 35mm Film Camera (October 2026).');
+  assert.equal(bookingFromTool('order_groceries', { items: ['x'] }, tz, null, null), null);
+  // Afterwards: asked 8 to 48 hours after it ended; gifts never
+  assert.equal(readyForFollowUp(t, new Date('2026-10-25T14:00:00Z')), true);
+  assert.equal(readyForFollowUp(t, new Date('2026-10-25T05:00:00Z')), false);
+  assert.equal(readyForFollowUp({ ...g, starts_at: '2026-10-20T00:00:00Z' }, new Date('2026-10-21T00:00:00Z')), false);
+  // By text: BOOKED or ORDERED confirms the latest thing Belluh got ready
+  for (const w of ['booked', 'BOOKED', 'I booked it!', 'ordered', 'bought it']) assert.equal(parseCommand(w).type, 'booked', w);
+});

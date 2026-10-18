@@ -8,6 +8,7 @@
 // Called by pg_cron with the x-cron-secret header (see docs/belluh-agent.md).
 // Testing: ?force=daily&user=<uuid> ignores the time of day.
 
+import { readyForFollowUp, followUpText } from '../_shared/bookings.ts';
 import { cleanReply } from '../_shared/agent.ts';
 import { jsonAnswer } from '../_shared/gemini.ts';
 import { localDateParts, type StoredOccasion } from '../_shared/occasions.ts';
@@ -85,6 +86,22 @@ async function nudgePlans(ctx: Ctx, plans: NudgePlan[]): Promise<number> {
   return n;
 }
 
+/** After something they booked through Belluh: "How was it?", so the moment lands in the journal. */
+async function afterBookings(ctx: Ctx): Promise<number> {
+  let n = 0;
+  const since = new Date(Date.now() - 10 * 86_400_000).toISOString();
+  const { data } = await db.from('bookings').select('id, user_id, kind, title, starts_at, ends_at, all_day, surprise').eq('status', 'booked')
+    .gte('starts_at', since).or(`user_id.eq.${ctx.userId},and(partner_id.eq.${ctx.userId},surprise.eq.false)`);
+  for (const b of data ?? []) {
+    if (!readyForFollowUp(b)) continue;
+    if (await posted(ctx.userId, 'after_plan', b.id)) continue;
+    const body = followUpText(b, b.user_id === ctx.userId ? ctx.partnerName : null);
+    const msg = await addMessage(ctx.userId, 'belluh', body, { kind: 'after_plan', week: b.id, booking_id: b.id, prompt: `How was ${b.title}?` });
+    if (msg) { n++; await notify(ctx.userId, body, { push: body, tag: 'after-plan' }); }
+  }
+  return n;
+}
+
 async function afterPlans(ctx: Ctx, plans: NudgePlan[]): Promise<number> {
   let n = 0;
   for (const p of plansJustHappened(plans, ctx.userId)) {
@@ -122,6 +139,7 @@ Deno.serve(async (req) => {
       if (await offer(ctx, plans, local)) results.offers = (results.offers ?? 0) + 1;
       results.plan_nudges = (results.plan_nudges ?? 0) + await nudgePlans(ctx, plans);
       results.after_plans = (results.after_plans ?? 0) + await afterPlans(ctx, plans);
+      results.after_bookings = (results.after_bookings ?? 0) + await afterBookings(ctx);
     } catch (e) {
       console.error('belluh-nudges', p.user_id, e);
       results.error = (results.error ?? 0) + 1;

@@ -11,6 +11,7 @@ import type { CheckinStatus } from './weekly.ts';
 import { validatePlan, formatOption, localDateOf, type PlanOption } from './plans.ts';
 import { notify } from './notify.ts';
 import { searchShopify, type ShopProduct } from './shopify.ts';
+import { bookingFromTool, doneLabel, memoryFor, reminderFor, whenText, type BookingDraft } from './bookings.ts';
 import { validateReminder, tableLinks, giftLinks, tripLinks, flowerLinks, foodLinks, buyLinks, groceryLinks, rideLinks, experienceLinks, type ActionLink } from './actions.ts';
 
 export type Channel = 'app' | 'whatsapp' | 'sms' | 'telegram'; // also the source recorded on dates saved this way
@@ -67,6 +68,12 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   const addProducts = (ps: ShopProduct[]) => { for (const p of ps) { if (products.length >= 4 || products.some(x => x.url === p.url)) continue; products.push(p); links.push({ label: `${p.title}, ${p.price} at ${p.seller}`, url: p.url }); } };
   let shape: Shape | null = null;
   const ran: string[] = [];
+  // What this turn got ready, to confirm with "I booked it" once they've done it
+  const prepared: BookingDraft[] = [];
+  const prepare = (name: string, args: Record<string, unknown>, firstUrl: string | null, productTitle?: string | null) => {
+    const b = bookingFromTool(name, args, ctx.timezone, ctx.partnerName, firstUrl, productTitle);
+    if (b && prepared.length < 3 && !prepared.some(x => x.kind === b.kind && x.title === b.title)) prepared.push(b);
+  };
   const reply = await chatWithTools({
     system, contents, tools: TOOL_DECLARATIONS, ran,
     runTool: async (name, args) => {
@@ -148,16 +155,20 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
         case 'find_table': {
           const l = tableLinks(call.args, ctx.timezone);
           links.push(...l);
-          return { ok: true, note: 'Booking links are shown under your reply. Say in one line what you set up (place, time, people); they finish the booking with one tap. Never say it is booked.' };
+          prepare('find_table', call.args, l[0]?.url ?? null);
+          return { ok: true, note: 'Booking links are shown under your reply, with an "I booked it" button that adds it to their calendar and reminds them. Say in one line what you set up (place, time, people); they finish the booking with one tap. Never say it is booked.' };
         }
         case 'plan_trip': {
           const l = tripLinks(call.args);
           if (!l.length) return { ok: false, error: 'Say where they want to go.' };
           links.push(...l);
+          prepare('plan_trip', call.args, l[0]?.url ?? null);
           return { ok: true, note: 'Flight, hotel and Airbnb searches are shown under your reply with the dates filled in. In one or two lines say what you set up and one idea that makes it theirs; they book. Never say it is booked. Do not paste links.' };
         }
         case 'send_flowers': {
-          links.push(...flowerLinks(call.args));
+          const fl = flowerLinks(call.args);
+          links.push(...fl);
+          prepare('send_flowers', call.args, fl[0]?.url ?? null);
           const when = typeof call.args.deliver_on === 'string' ? call.args.deliver_on : null;
           return { ok: true, note: `The order and nearby florists are shown under your reply. Say what you'd send and why it fits${when ? `, and that it should arrive ${when}` : ''}. Offer a two-line card message and a reminder the day before. They place the order. Do not paste links.` };
         }
@@ -166,6 +177,8 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           const l = call.name === 'order_food' ? foodLinks(call.args) : call.name === 'buy_item' ? buyLinks(call.args) : call.name === 'order_groceries' ? groceryLinks(call.args) : call.name === 'book_ride' ? rideLinks(call.args) : experienceLinks(call.args);
           if (!l.length) return { ok: false, error: call.name === 'order_groceries' ? 'List the groceries.' : call.name === 'book_ride' ? 'Say where they are going.' : 'Say what it is.' };
           links.push(...l);
+          if (call.name === 'buy_item') prepare('buy_item', call.args, products[0]?.url ?? l[0]?.url ?? null, products[0]?.title ?? null);
+          else if (call.name === 'order_food' || call.name === 'find_experience') prepare(call.name, call.args, l[0]?.url ?? null);
           const what = { order_food: 'The order is ready on DoorDash and Uber Eats', buy_item: 'It is ready to buy on Amazon and Target, with a price comparison', order_groceries: 'Each item is one tap from their Instacart cart', book_ride: 'Uber and Lyft are ready with the destination filled in', find_experience: 'Tickets and experiences are shown' }[call.name];
           const found = call.name === 'buy_item' && products.length ? ` Also ${products.length} real products from independent Shopify shops, each with its checkout ready: ${products.map(p => `${p.title} (${p.price}, ${p.seller})`).join('; ')}. You may name the one you'd pick and why.` : '';
           return { ok: true, note: `${what}, under your reply.${found} In one or two lines say what you chose and why it fits them; they finish it with a tap. Never say it is ordered, bought or booked. Do not paste links.` };
@@ -174,8 +187,10 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           const l = giftLinks(call.args);
           if (!l.length) return { ok: false, error: 'Give one to three short gift ideas.' };
           // The real thing from a Shopify brand first, checkout ready; Amazon after
+          const before = products.length;
           for (const ps of await Promise.all(l.map(x => searchShopify(x.label, null, 1)))) addProducts(ps);
           links.push(...l);
+          prepare('gift_ideas', call.args, products[before]?.url ?? l[0]?.url ?? null, products[before]?.title ?? null);
           return { ok: true, note: `The ideas are shown under your reply as links to buy${products.length ? `, with real products from independent Shopify shops, checkout ready: ${products.map(p => `${p.title} (${p.price}, ${p.seller})`).join('; ')}` : ''}. In one or two lines, say why each fits, from what their partner said. Do not paste links.` };
         }
         case 'take_shape': {
@@ -195,8 +210,11 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   });
 
   const final = cleanReply(reply ?? '') || naturalFallback(ran) || "I'm having trouble thinking right now. Try me again in a moment.";
+  const bookings = await saveBookings(ctx, prepared);
   // Every new memory is shown under the reply, so nothing is remembered silently
-  created.push(await addMessage(ctx.userId, 'belluh', final, { ...(saved.length ? { saved } : {}), ...(links.length ? { links: links.slice(0, 7) } : {}), ...(products.length ? { products } : {}), ...(shape ? { shape } : {}) }));
+  const msg = await addMessage(ctx.userId, 'belluh', final, { ...(saved.length ? { saved } : {}), ...(links.length ? { links: links.slice(0, 7) } : {}), ...(products.length ? { products } : {}), ...(shape ? { shape } : {}), ...(bookings.length ? { bookings } : {}) });
+  if (msg && bookings.length) await db.from('bookings').update({ message_id: msg.id }).in('id', bookings.map(b => b.id));
+  created.push(msg);
   return { messages: created };
 }
 
@@ -417,4 +435,77 @@ export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Pro
   const final = cleanReply(reply ?? '') || naturalFallback(ran) || "I'm having trouble thinking right now. Try me again in a moment.";
   created.push(await usAdd(ctx, null, 'belluh', final, usLinks.length ? { links: usLinks.slice(0, 4) } : {}));
   return res({ messages: created });
+}
+
+
+// ---------- Bookings: what Belluh got ready, until they've done it ----------
+
+/** The card shown under Belluh's reply for each thing it got ready. */
+export type BookingCard = { id: string; kind: string; title: string; when: string | null; surprise: boolean; label: string; status: 'prepared' | 'booked' | 'dismissed' };
+
+async function saveBookings(ctx: Ctx, prepared: BookingDraft[]): Promise<BookingCard[]> {
+  if (!prepared.length) return [];
+  const { data } = await db.from('bookings').insert(prepared.map(b => ({ ...b, user_id: ctx.userId, partner_id: ctx.partnerId ?? null }))).select('id, kind, title, starts_at, all_day, surprise');
+  return (data ?? []).map((r: any) => ({ id: r.id, kind: r.kind, title: r.title, when: whenText(r, ctx.timezone), surprise: r.surprise, label: doneLabel(r.kind), status: 'prepared' as const }));
+}
+
+/**
+ * "I booked it" (or "Not now"): once it's done, it goes in their calendar feed, gets a reminder, is remembered, and the
+ * partner hears about it in your shared thread (never for flowers or gifts, which are surprises).
+ */
+export async function bookingDone(ctx: Ctx, bookingId: string, done: boolean): Promise<Result> {
+  const { data: b } = await db.from('bookings').select('*').eq('id', bookingId).maybeSingle();
+  if (!b || b.user_id !== ctx.userId) return res({ error: 'Not found' }, 404);
+  const status = done ? 'booked' : 'dismissed';
+  if (b.status !== 'prepared') return res({ booking: b, message: null });
+  const { data: claimed } = await db.from('bookings').update({ status, booked_at: done ? new Date().toISOString() : null }).eq('id', bookingId).eq('status', 'prepared').select('*');
+  if (!claimed?.length) return res({ booking: b, message: null });
+
+  // The card under Belluh's reply shows the new state wherever it's opened
+  if (b.message_id) {
+    const { data: m } = await db.from('agent_messages').select('meta').eq('id', b.message_id).maybeSingle();
+    const cards = ((m?.meta as any)?.bookings ?? []) as BookingCard[];
+    if (cards.length) await db.from('agent_messages').update({ meta: { ...(m!.meta as object), bookings: cards.map(c => c.id === bookingId ? { ...c, status } : c) } }).eq('id', b.message_id);
+  }
+  if (!done) return res({ booking: claimed[0], message: null });
+
+  const when = whenText(b, ctx.timezone);
+  const done_: string[] = [];
+  // Remembered, so Belluh knows what they've tried and never suggests the same gift twice
+  const fact = memoryFor(b, ctx.partnerName, ctx.timezone);
+  const { error: memErr } = await db.from('agent_memories').insert({ user_id: ctx.userId, fact });
+  if (!memErr || memErr.code === '23505') done_.push('remembered');
+  // A reminder before it happens, for them and (unless it's a surprise) their partner
+  const r = reminderFor(b, ctx.timezone);
+  if (r) {
+    await db.from('personal_reminders').insert({ user_id: ctx.userId, body: r.body, due_at: r.due_at });
+    if (!b.surprise && ctx.partnerId) {
+      const pr = reminderFor(b, await tzOf(ctx.partnerId, ctx.timezone));
+      if (pr) await db.from('personal_reminders').insert({ user_id: ctx.partnerId, body: pr.body, due_at: pr.due_at });
+    }
+    done_.push('reminder');
+  }
+  if (b.starts_at) done_.push('calendar');
+  // The partner hears about it in the shared thread, and on their phone
+  if (!b.surprise && ctx.partnerId) {
+    const line = `${ctx.myName} booked ${b.title}${when ? `, ${when}` : ''}. It's in both your calendars and I'll remind you both.`;
+    await usAdd(ctx, null, 'belluh', b.starts_at ? line : `${ctx.myName} booked ${b.title}.`, { booking_id: b.id });
+    await notify(ctx.partnerId, b.starts_at ? line : `${ctx.myName} booked ${b.title}.`, { push: b.starts_at ? line : `${ctx.myName} booked ${b.title}.`, tag: 'booking' });
+    done_.push('partner');
+  }
+  const parts = [
+    b.starts_at ? `It's in your calendar${!b.surprise && ctx.partnerId ? ` and ${ctx.partnerName ?? 'your partner'}'s` : ''}` : null,
+    r ? `I'll remind you ${new Date(r.due_at).getTime() - Date.now() > 20 * 3600_000 ? 'the evening before' : 'a couple of hours before'}` : null,
+    b.surprise ? `${ctx.partnerName ?? 'Your partner'} won't see a thing` : null,
+  ].filter(Boolean);
+  const text = `${b.kind === 'gift' || b.kind === 'flowers' || b.kind === 'dinner' ? 'Ordered' : 'Booked'}: ${b.title}${when ? `, ${when}` : ''}.${parts.length ? ` ${parts.join('. ')}.` : ''}`;
+  const message = await addMessage(ctx.userId, 'belluh', text, { kind: 'booking_done', booking_id: b.id });
+  return res({ booking: claimed[0], message, done: done_ });
+}
+
+/** Texting: BOOKED / ORDERED confirms the latest thing Belluh got ready. */
+export async function latestPrepared(userId: string): Promise<string | null> {
+  const { data } = await db.from('bookings').select('id').eq('user_id', userId).eq('status', 'prepared')
+    .gte('created_at', new Date(Date.now() - 7 * 86_400_000).toISOString()).order('created_at', { ascending: false }).limit(1);
+  return data?.[0]?.id ?? null;
 }

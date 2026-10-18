@@ -68,6 +68,7 @@ export const belluhAgent = {
   sendNote: (draftId: string, text?: string) => call<{ ok: boolean }>({ action: 'send_note', draft_id: draftId, text }),
   discardNote: (draftId: string) => call<{ ok: boolean }>({ action: 'discard_note', draft_id: draftId }),
   /** Yes or not now to something Belluh offered on its own (a birthday coming up, say). Yes runs it like a request. */
+  bookingDone: (bookingId: string, done: boolean) => call<{ booking: any; message: AgentMessage | null }>({ action: 'booking', booking_id: bookingId, done }),
   offerRespond: (messageId: string, accept: boolean) => call<{ messages: AgentMessage[]; status: string }>({ action: 'offer_respond', message_id: messageId, accept }),
 
   async memories(): Promise<{ id: string; fact: string }[]> {

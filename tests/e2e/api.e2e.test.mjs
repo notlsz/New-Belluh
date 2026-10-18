@@ -975,3 +975,73 @@ test('39. The app\'s own AI features use the current model, and fall back to the
   const { data: j } = await maya.functions.invoke('gemini-proxy', { body: { contents: 'gemini is out, json please', config: { responseMimeType: 'application/json', responseSchema: { type: 'OBJECT', properties: { reply: { type: 'STRING' } } } } } });
   assert.match(JSON.parse(j.text).reply, /Backup here/);
 });
+
+test('40. "I booked it": a table goes in both calendars with reminders, is remembered, and Belluh asks how it went', async () => {
+  const { data } = await agent(dan, { action: 'chat', message: 'can you book a table for us this week' });
+  const m = data.messages.at(-1);
+  assert.equal(m.meta.bookings.length, 1);
+  const card = m.meta.bookings[0];
+  assert.equal(card.kind, 'table');
+  assert.equal(card.title, 'Ramen in San Jose');
+  assert.equal(card.label, 'I booked it');
+  assert.match(card.when, /at 7:00 PM$/);
+  assert.equal(card.surprise, false);
+  // Nothing happens until they say it's done
+  assert.equal((await service.from('personal_reminders').select('id').eq('user_id', DAN).like('body', '%Ramen in San Jose%')).data.length, 0);
+
+  const { data: done } = await agent(dan, { action: 'booking', booking_id: card.id, done: true });
+  assert.match(done.message.body, /^Booked: Ramen in San Jose, .* It's in your calendar and Maya's\. I'll remind you the evening before\.$/);
+  const { data: row } = await service.from('bookings').select('status, message_id').eq('id', card.id).single();
+  assert.equal(row.status, 'booked');
+  // The card under Belluh's reply shows it's done, wherever it's opened
+  const { data: msgRow } = await service.from('agent_messages').select('meta').eq('id', row.message_id).single();
+  assert.equal(msgRow.meta.bookings[0].status, 'booked');
+  // Reminders for both, the evening before
+  const { data: rem } = await service.from('personal_reminders').select('user_id, body, due_at').like('body', 'Tomorrow: Ramen in San Jose at 7:00 PM.');
+  assert.deepEqual(rem.map(r => r.user_id).sort(), [MAYA, DAN].sort());
+  // Remembered
+  assert.ok((await service.from('agent_memories').select('fact').eq('user_id', DAN)).data.some(f => /^Booked Ramen in San Jose for .* at 7:00 PM\.$/.test(f.fact)));
+  // Maya hears about it in the shared thread, and it's in her calendar feed
+  const { data: us } = await service.from('us_messages').select('body, meta').eq('meta->>booking_id', card.id);
+  assert.match(us[0].body, /^Dan booked Ramen in San Jose, .* It's in both your calendars and I'll remind you both\.$/);
+  const { data: tok } = await maya.rpc('my_calendar_token', { p_reset: false });
+  const ics = await (await fetch(`${URL_}/functions/v1/belluh-calendar?token=${tok}`)).text();
+  assert.ok(ics.includes(`UID:booking-${card.id}@belluh.com`) && ics.includes('SUMMARY:Ramen in San Jose'));
+  // Tapping again changes nothing
+  const { data: again } = await agent(dan, { action: 'booking', booking_id: card.id, done: true });
+  assert.equal(again.message, null);
+  // Maya can't confirm Dan's booking
+  const notHers = await agent(maya, { action: 'booking', booking_id: card.id, done: true });
+  assert.ok(notHers.error, "it's not hers to confirm");
+
+  // The day after, Belluh asks how it was, once, for both of them
+  await service.from('bookings').update({ starts_at: new Date(Date.now() - 14 * 3600_000).toISOString() }).eq('id', card.id);
+  for (let i = 0; i < 2; i++) await fetch(`${URL_}/functions/v1/belluh-nudges?force=daily&user=${DAN}`, { method: 'POST', headers: { 'x-cron-secret': 'cron-test' } });
+  const { data: asked } = await service.from('agent_messages').select('body, meta').eq('user_id', DAN).eq('meta->>booking_id', card.id).eq('meta->>kind', 'after_plan');
+  assert.equal(asked.length, 1, 'asked once');
+  assert.equal(asked[0].body, "How was Ramen in San Jose? Tell me a line or two while it's fresh and I'll keep it in your journal.");
+});
+
+test('41. Flowers are a surprise: remembered and reminded, never shown to the partner', async () => {
+  const { data } = await agent(dan, { action: 'chat', message: 'please send flowers to Maya' });
+  const card = data.messages.at(-1).meta.bookings[0];
+  assert.equal(card.kind, 'flowers');
+  assert.equal(card.title, 'Peonies for Maya');
+  assert.equal(card.label, 'I ordered it');
+  assert.equal(card.surprise, true);
+  const { data: done } = await agent(dan, { action: 'booking', booking_id: card.id, done: true });
+  assert.match(done.message.body, /^Ordered: Peonies for Maya, .*Maya won't see a thing\.$/);
+  assert.equal((await maya.from('bookings').select('id').eq('id', card.id)).data.length, 0, "Maya can't read it");
+  assert.equal((await service.from('us_messages').select('id').eq('meta->>booking_id', card.id)).data.length, 0, 'nothing in the shared thread');
+  const { data: tok } = await maya.rpc('my_calendar_token', { p_reset: false });
+  assert.ok(!(await (await fetch(`${URL_}/functions/v1/belluh-calendar?token=${tok}`)).text()).includes(card.id), 'not in her calendar');
+  assert.equal((await service.from('personal_reminders').select('id').eq('user_id', MAYA).like('body', '%Peonies%')).data.length, 0, 'no reminder that would spoil it');
+  assert.ok((await service.from('agent_memories').select('fact').eq('user_id', DAN)).data.some(f => /^Sent peonies to Maya/.test(f.fact)));
+  // "Not now" on something else just closes it
+  const { data: g } = await agent(dan, { action: 'chat', message: 'buy a film camera for Maya, under 150' });
+  const gift = g.messages.at(-1).meta.bookings[0];
+  assert.equal(gift.kind, 'gift');
+  assert.equal(gift.title, 'Peanuts Beagle Scouts 35mm Film Camera', 'the real product they would buy');
+  const { data: no } = await agent(dan, { action: 'booking', booking_id: gift.id, done: false });
+  assert.equal(no.booking.status, 'dismissed');
+});
