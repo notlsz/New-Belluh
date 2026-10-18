@@ -53,6 +53,21 @@ http.createServer((req, res) => {
   }
   if (u.pathname === '/__storage') { res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify([...STORE.keys()])); }
   if (u.pathname.startsWith('/rest/v1')) return forward(req, res, 3001, req.url.replace('/rest/v1', '') || '/');
+  // Password sign-in for the login-screen test (local test accounts only, one shared test password)
+  if (u.pathname === '/auth/v1/token' && u.searchParams.get('grant_type') === 'password') {
+    const chunks = []; req.on('data', c => chunks.push(c)); req.on('end', async () => {
+      const { email, password } = JSON.parse(Buffer.concat(chunks).toString() || '{}');
+      const ids = { 'maya@test.com': '11111111-1111-1111-1111-111111111111', 'dan@test.com': '22222222-2222-2222-2222-222222222222', 'jimmy@test.com': 'aaaaaaaa-0000-0000-0000-000000000001' };
+      if (!ids[email] || password !== process.env.TEST_PASSWORD) { res.writeHead(400, { 'content-type': 'application/json' }); return res.end('{"error":"invalid_grant","error_description":"Invalid login credentials"}'); }
+      const b = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+      const exp = Math.floor(Date.now() / 1000) + 3600, h = b({ alg: 'HS256', typ: 'JWT' }), pl = b({ sub: ids[email], email, role: 'authenticated', aud: 'authenticated', exp });
+      const access_token = `${h}.${pl}.${crypto.createHmac('sha256', SECRET).update(`${h}.${pl}`).digest('base64url')}`;
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ access_token, token_type: 'bearer', expires_in: 3600, expires_at: exp, refresh_token: 'local', user: { id: ids[email], email, aud: 'authenticated', role: 'authenticated', created_at: '2025-04-04T00:00:00Z', app_metadata: { provider: 'email' }, user_metadata: {} } }));
+    });
+    return;
+  }
+  if (u.pathname === '/auth/v1/logout') { res.writeHead(204); return res.end(); }
   if (u.pathname === '/auth/v1/user') {
     const c = verify((req.headers.authorization || '').replace(/^Bearer /, ''));
     if (!c || !c.sub) { res.writeHead(401, { 'content-type': 'application/json' }); return res.end('{"message":"invalid"}'); }
