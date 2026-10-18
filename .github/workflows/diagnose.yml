@@ -1,0 +1,33 @@
+# Read-only check of why old journals don't load. Prints counts only: no entry text, names or emails.
+name: Diagnose journals
+on:
+  push:
+    branches: [diagnose-journals]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || 'ctbsycrlakdanfzbaqmz' }}
+    steps:
+      - name: Counts
+        run: |
+          q() {
+            echo "== $1"
+            jq -n --arg q "$2" '{query: $q}' | curl -sS -X POST -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
+              --data @- "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" | jq -c '.'
+          }
+          q "public tables and row counts" "select relname as table, n_live_tup as rows from pg_stat_user_tables where schemaname='public' order by n_live_tup desc"
+          q "entries total, with no circle tag, own-user missing from auth" "select count(*) total, count(*) filter (where not exists (select 1 from unnest(tags) t where t like 'circle:%')) no_circle, count(*) filter (where user_id is null) null_user, count(*) filter (where user_id is not null and not exists (select 1 from auth.users u where u.id = journal_entries.user_id)) orphan_user from public.journal_entries"
+          q "entries by circle tag kind" "select case when t = 'circle:c1' then 'c1' when t like 'circle:partner_%' then 'partner_x' when t ~ '^circle:[0-9a-f-]{36}$' then 'circle_def_uuid' else 'other:'||left(t,20) end kind, count(*) from public.journal_entries, unnest(tags) t where t like 'circle:%' group by 1 order by 2 desc"
+          q "system entries" "select t, count(*) from public.journal_entries, unnest(tags) t where t like 'system_%' or t like 'status:%' group by 1"
+          q "entries per user (top 10, counts only)" "select count(*) n, count(*) filter (where is_shared) shared from public.journal_entries group by user_id order by 1 desc limit 10"
+          q "partner_connections by status" "select status, count(*) from public.partner_connections group by 1"
+          q "users with more than one connected partner" "select count(*) from (select u, count(*) from (select user_id u from public.partner_connections where status='connected' union all select partner_id from public.partner_connections where status='connected') x group by u having count(*) > 1) y"
+          q "auth users, and emails used by more than one account" "select (select count(*) from auth.users) users, (select count(*) from (select lower(email) from auth.users where email is not null group by 1 having count(*) > 1) d) dup_emails"
+          q "entries whose author has a connected partner vs not" "select count(*) filter (where exists (select 1 from public.partner_connections c where c.status='connected' and journal_entries.user_id in (c.user_id, c.partner_id))) with_partner, count(*) filter (where not exists (select 1 from public.partner_connections c where c.status='connected' and journal_entries.user_id in (c.user_id, c.partner_id))) without_partner from public.journal_entries"
+          q "journal_entries columns" "select column_name, data_type from information_schema.columns where table_schema='public' and table_name='journal_entries' order by ordinal_position"
+          q "policies on journal_entries" "select policyname, cmd from pg_policies where schemaname='public' and tablename='journal_entries'"
+          q "PostgREST max rows setting (db-max-rows)" "select current_setting('pgrst.db_max_rows', true) as max_rows"
