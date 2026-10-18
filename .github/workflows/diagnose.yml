@@ -20,9 +20,9 @@ jobs:
               --data @- "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" | jq -c '.'
           }
           ME="d95a25a6-e873-41d1-80ef-26258d3ff3b7"
-          q "circle members I added" "select regexp_replace(t,'^member:','') = lower(regexp_replace(t,'^member:','')) lowercase, (select string_agg(x,',') from unnest(je.tags) x where x like 'circle:%') circle, exists(select 1 from public.profiles p where p.id::text = lower(regexp_replace(t,'^member:',''))) has_profile, exists(select 1 from public.partner_connections c where c.status='connected' and (c.user_id::text=lower(regexp_replace(t,'^member:','')) or c.partner_id::text=lower(regexp_replace(t,'^member:',''))) and '$ME' in (c.user_id,c.partner_id)) is_my_partner, (select count(*) from public.partner_connections c where c.status='connected' and lower(regexp_replace(t,'^member:','')) in (c.user_id::text,c.partner_id::text)) their_partners, left(lower(regexp_replace(t,'^member:','')),8) id8 from public.journal_entries je, unnest(je.tags) t where je.user_id='$ME' and t like 'member:%'"
-          q "my partners id8" "select left(case when c.user_id='$ME' then c.partner_id else c.user_id end::text,8) id8, c.created_at from public.partner_connections c where c.status='connected' and '$ME' in (c.user_id,c.partner_id) order by c.created_at"
-          q "anyone who added me to their circle" "select left(je.user_id::text,8) by_id8, (select string_agg(x,',') from unnest(je.tags) x where x like 'circle:%') circle from public.journal_entries je where 'system_circle_member'=any(je.tags) and ('member:'||'$ME')=any(je.tags)"
+          q "my partners (first names)" "select distinct on (p.id) left(p.id::text,8) id8, split_part(coalesce(p.full_name,''),' ',1) first_name, c.created_at::date connected from public.partner_connections c join public.profiles p on p.id = case when c.user_id='$ME' then c.partner_id else c.user_id end where c.status='connected' and '$ME' in (c.user_id,c.partner_id) order by p.id, c.created_at"
+          q "member entry date" "select created_at from public.journal_entries where user_id='$ME' and 'system_circle_member'=any(tags)"
+          q "my circle names" "select title, tags from public.journal_entries where user_id='$ME' and ('system_circle_def'=any(tags) or 'system_circle_metadata'=any(tags))"
   _old:
     runs-on: ubuntu-24.04
     if: false
