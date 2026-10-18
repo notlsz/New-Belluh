@@ -278,7 +278,7 @@ const App: React.FC = () => {
       setIsLoading(false);
   };
 
-  const loadUserData = async (sessionUser: any) => {
+  const loadUserData = async (sessionUser: any, attempt = 1): Promise<void> => {
       try {
         trackEvent('app_opened', { source: 'web' });
 
@@ -328,18 +328,23 @@ const App: React.FC = () => {
             .eq('status', 'connected')
             .or(`user_id.eq.${sessionUser.id},partner_id.eq.${sessionUser.id}`);
         
+        // Each partner once (a connection can exist in both directions), oldest first: your first partner is
+        // always chapter "c1", the way your entries were tagged when you wrote them
         let connectedUserIds: string[] = [];
         if (connections && connections.length > 0) {
-            connectedUserIds = connections.map((c: any) => c.user_id === sessionUser.id ? c.partner_id : c.user_id);
+            const sorted = [...connections].sort((a: any, b: any) => String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')));
+            connectedUserIds = [...new Set(sorted.map((c: any) => String(c.user_id === sessionUser.id ? c.partner_id : c.user_id).toLowerCase()))];
         }
 
         // 3. Fetch All Journal Entries (Content + System Data)
         const initialUserIds = [sessionUser.id, ...connectedUserIds];
-        const { data: dbEntries } = await supabase
+        const { data: dbEntries, error: entriesError } = await supabase
             .from('journal_entries')
             .select('*')
             .in('user_id', initialUserIds)
             .order('created_at', { ascending: false });
+        // A failed read must never look like an empty journal: try again rather than showing nothing
+        if (entriesError) throw new Error(`journal: ${entriesError.message}`);
 
         let extendedMemberIds: string[] = [];
         if (dbEntries) {
@@ -360,7 +365,8 @@ const App: React.FC = () => {
             .select('*')
             .in('id', allProfileIds);
         
-        const connectedProfiles = allProfiles?.filter((p: any) => connectedUserIds.includes(p.id)) || [];
+        // In the order you connected, so chapters never swap places between visits
+        const connectedProfiles = connectedUserIds.map(id => allProfiles?.find((p: any) => String(p.id).toLowerCase() === id)).filter(Boolean) as any[];
         const myProfile = allProfiles?.find((p: any) => p.id === sessionUser.id);
 
         // 5. Build Circles
@@ -509,6 +515,10 @@ const App: React.FC = () => {
             if (factsEntry) relationshipFacts = factsEntry.content;
         }
 
+        // Partner → the chapter you share with them
+        const chapterOf = new Map<string, string>();
+        newCircles.forEach((c: any) => { if (c.type === CircleType.Couple) c.members.filter((m: string) => m !== sessionUser.id).forEach((m: string) => { if (!chapterOf.has(String(m).toLowerCase())) chapterOf.set(String(m).toLowerCase(), c.id); }); });
+
         const contentEntries = dbEntries ? dbEntries.filter((e: any) => 
             // Never show another person's private entries
             (e.user_id === sessionUser.id || e.is_shared) &&
@@ -534,8 +544,17 @@ const App: React.FC = () => {
                 authorAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${e.user_id}`;
             }
 
+            // Which chapter it belongs to. A partner's entry belongs to your chapter with them, whatever they tagged
+            // on their side (their "c1" is their first partner, not necessarily you). Older apps wrote ids in capitals.
             const circleTag = e.tags && Array.isArray(e.tags) ? e.tags.find((t: string) => t.startsWith('circle:')) : null;
-            const entryCircleId = circleTag ? circleTag.split(':')[1] : 'c1';
+            const tagged = circleTag ? circleTag.slice('circle:'.length) : 'c1';
+            const norm = (id: string) => /^(partner_)?[0-9a-f-]{36}$/i.test(id) ? id.toLowerCase() : id;
+            let entryCircleId = norm(tagged);
+            if (!isMine) {
+                const theirs = chapterOf.get(String(e.user_id).toLowerCase());
+                const custom = newCircles.some((c: any) => c.id === entryCircleId && c.type === CircleType.Custom && c.members.includes(e.user_id));
+                if (theirs && !custom) entryCircleId = theirs;
+            }
 
             return {
                 id: e.id,
@@ -599,6 +618,8 @@ const App: React.FC = () => {
         setIsAuthenticated(true);
       } catch (err) {
           console.error("Failed to load user data", err);
+          if (attempt < 3) { await new Promise(r => setTimeout(r, 1200 * attempt)); return loadUserData(sessionUser, attempt + 1); }
+          showNotification("Couldn't load your journal. Check your connection and reload.", "error");
       } finally {
           setIsLoading(false);
       }
