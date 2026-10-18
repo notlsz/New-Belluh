@@ -19,14 +19,13 @@ jobs:
             jq -n --arg q "$2" '{query: $q}' | curl -sS -X POST -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
               --data @- "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" | jq -c '.'
           }
+          q "owner's app events (3h)" "select created_at, event_name, left(properties::text, 200) props from public.analytics_events where user_id='d95a25a6-e873-41d1-80ef-26258d3ff3b7' and created_at > now() - interval '3 hours' order by created_at desc limit 40"
           ME="d95a25a6-e873-41d1-80ef-26258d3ff3b7"
           V="(select '$ME'::uuid union select case when c.user_id='$ME' then c.partner_id else c.user_id end from public.partner_connections c where c.status='connected' and '$ME' in (c.user_id,c.partner_id))"
           A="begin read only; set local role authenticated; select set_config('request.jwt.claims', json_build_object('sub','$ME','role','authenticated')::text, true);"
           q "as me: size and time of the app's journal query" "$A explain (analyze, format json) select * from public.journal_entries where user_id in $V order by created_at desc;"
           q "as me: response size" "$A select count(*), sum(octet_length(row_to_json(j)::text)) bytes, max(octet_length(row_to_json(j)::text)) biggest_row from public.journal_entries j where user_id in $V;"
           q "statement timeouts" "select rolname, rolconfig from pg_roles where rolname in ('authenticated','anon','authenticator')"
-          echo "== postgrest config"
-          curl -sS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/$PROJECT_REF/postgrest" | jq -c '.'
           echo "== auth config"
           curl -sS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" | jq -c '{site_url, uri_allow_list, disable_signup, external_email_enabled, external_google_enabled, mailer_autoconfirm, mailer_secure_email_change_enabled, smtp_host: (.smtp_host != null and .smtp_host != ""), rate_limit_email_sent, password_min_length, password_required_characters, security_captcha_enabled, security_captcha_provider, sessions_timebox, external_google_skip_nonce_check, hook_custom_access_token_enabled, hook_before_user_created_enabled}'
           q "recent auth audit (48h)" "select created_at, payload->>'action' action, payload->>'actor_via_sso' sso, (payload->>'actor_id')='d95a25a6-e873-41d1-80ef-26258d3ff3b7' owner, payload->'traits'->>'provider' provider from auth.audit_log_entries where created_at > now() - interval '48 hours' order by created_at desc limit 40"
