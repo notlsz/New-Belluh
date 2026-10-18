@@ -12,6 +12,18 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || 'ctbsycrlakdanfzbaqmz' }}
     steps:
+      - name: Gemini key check
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          echo "key present: $([ -n "$GEMINI_API_KEY" ] && echo yes || echo no), length ${#GEMINI_API_KEY}"
+          echo "== models this key can use (flash only)"
+          curl -sS "https://generativelanguage.googleapis.com/v1beta/models?pageSize=200" -H "x-goog-api-key: $GEMINI_API_KEY" | jq -c '[.models[]?.name | select(test("flash"))] , .error'
+          for m in gemini-3.8-flash gemini-2.5-flash gemini-2.5-flash-lite gemini-3-flash-preview gemini-3.5-flash; do
+            r=$(curl -sS -w "\n%{http_code}" "https://generativelanguage.googleapis.com/v1beta/models/$m:generateContent" -H "x-goog-api-key: $GEMINI_API_KEY" -H 'Content-Type: application/json' -d '{"contents":[{"role":"user","parts":[{"text":"Say hi in two words."}]}]}')
+            code=$(echo "$r" | tail -1); body=$(echo "$r" | sed '$d')
+            echo "== $m -> $code $(echo "$body" | jq -c '.error.status // empty, .error.message // empty, (.candidates[0].content.parts[0].text // empty)' | tr '\n' ' ' | cut -c1-300)"
+          done
       - name: Agent check
         run: |
           q() {
