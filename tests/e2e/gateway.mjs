@@ -62,6 +62,8 @@ http.createServer((req, res) => {
       const b = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
       const exp = Math.floor(Date.now() / 1000) + 3600, h = b({ alg: 'HS256', typ: 'JWT' }), pl = b({ sub: ids[email], email, role: 'authenticated', aud: 'authenticated', exp });
       const access_token = `${h}.${pl}.${crypto.createHmac('sha256', SECRET).update(`${h}.${pl}`).digest('base64url')}`;
+      // Like the real network: sign-in takes a moment, so overlapping sign-ins can race
+      await new Promise(r => setTimeout(r, Number(process.env.TOKEN_DELAY_MS || 0)));
       res.writeHead(200, { 'content-type': 'application/json' });
       res.end(JSON.stringify({ access_token, token_type: 'bearer', expires_in: 3600, expires_at: exp, refresh_token: 'local', user: { id: ids[email], email, aud: 'authenticated', role: 'authenticated', created_at: '2025-04-04T00:00:00Z', app_metadata: { provider: 'email' }, user_metadata: {} } }));
     });

@@ -75,7 +75,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    // One sign-in at a time: a second one while the first is still running (Enter pressed again, a double tap)
+    // signs the first one out halfway, and the journal then loads as a logged-out visitor
+    if (loading || !email || !password) return;
     
     if (isSignUp && !isPasswordValid) {
         onShowToast("Please meet all password requirements.", "error");
