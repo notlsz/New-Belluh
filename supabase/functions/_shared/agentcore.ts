@@ -5,16 +5,18 @@ import {
   validateToolCall, cleanReply, naturalFallback, TOOL_DECLARATIONS, MEDIATE_INSTRUCTION, type Shape,
 } from './agent.ts';
 import { chatWithTools, type GeminiContent } from './gemini.ts';
-import { db, addMessage, history, weekView, buildSystem, buildUsSystem, type Ctx } from './agentdb.ts';
+import { db, addMessage, history, weekView, buildSystem, buildUsSystem, loadCtx, type Ctx } from './agentdb.ts';
 import { pairOf } from './weekly.ts';
 import type { CheckinStatus } from './weekly.ts';
 import { validatePlan, formatOption, localDateOf, type PlanOption } from './plans.ts';
 import { notify } from './notify.ts';
 import { searchShopify, type ShopProduct } from './shopify.ts';
 import { bookingFromTool, doneLabel, memoryFor, reminderFor, whenText, type BookingDraft } from './bookings.ts';
+import { callsOn, findPlace, startCall, okToCallNow, whyNot, type CallOutcome } from './vapi.ts';
+import { zonedToUtc } from './plans.ts';
 import { validateReminder, tableLinks, giftLinks, tripLinks, flowerLinks, foodLinks, buyLinks, groceryLinks, rideLinks, experienceLinks, type ActionLink } from './actions.ts';
 
-export type Channel = 'app' | 'whatsapp' | 'sms' | 'telegram'; // also the source recorded on dates saved this way
+export type Channel = 'app' | 'whatsapp' | 'sms' | 'telegram' | 'imessage'; // also the source recorded on dates saved this way
 export interface Result { status: number; body: any }
 const res = (body: any, status = 200): Result => ({ status, body });
 
@@ -156,6 +158,14 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           const l = tableLinks(call.args, ctx.timezone);
           links.push(...l);
           prepare('find_table', call.args, l[0]?.url ?? null);
+          // With calls on, Belluh can phone the place itself once they say so: find its number now
+          const people = Number(call.args.people);
+          const table = prepared.find(b => b.kind === 'table' && !b.phone);
+          if (table && callsOn() && table.starts_at && people >= 1 && people <= 20 && new Date(table.starts_at).getTime() > Date.now() + 3600_000) {
+            const found = await findPlace([call.args.what, call.args.where].filter(x => typeof x === 'string').join(' '));
+            if (found) Object.assign(table, { phone: found.phone, people, call_status: 'ready', place: found.name });
+            if (found) return { ok: true, restaurant: found.name, note: `Booking links are shown under your reply, plus a "Call for me" button: if they tap it, you phone ${found.name} yourself and book it. Say in one line what you set up (${found.name}, time, people) and that you can call them for it. Never say it is booked.` };
+          }
           return { ok: true, note: 'Booking links are shown under your reply, with an "I booked it" button that adds it to their calendar and reminds them. Say in one line what you set up (place, time, people); they finish the booking with one tap. Never say it is booked.' };
         }
         case 'plan_trip': {
@@ -441,19 +451,106 @@ export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Pro
 // ---------- Bookings: what Belluh got ready, until they've done it ----------
 
 /** The card shown under Belluh's reply for each thing it got ready. */
-export type BookingCard = { id: string; kind: string; title: string; when: string | null; surprise: boolean; label: string; status: 'prepared' | 'booked' | 'dismissed' };
+export type CallStatus = 'ready' | 'calling' | 'booked' | 'failed';
+export type BookingCard = {
+  id: string; kind: string; title: string; when: string | null; surprise: boolean; label: string; status: 'prepared' | 'booked' | 'dismissed';
+  call?: { place: string; phone: string; status: CallStatus; note?: string };   // Belluh can phone the restaurant for them
+};
 
 async function saveBookings(ctx: Ctx, prepared: BookingDraft[]): Promise<BookingCard[]> {
   if (!prepared.length) return [];
-  const { data } = await db.from('bookings').insert(prepared.map(b => ({ ...b, user_id: ctx.userId, partner_id: ctx.partnerId ?? null }))).select('id, kind, title, starts_at, all_day, surprise');
-  return (data ?? []).map((r: any) => ({ id: r.id, kind: r.kind, title: r.title, when: whenText(r, ctx.timezone), surprise: r.surprise, label: doneLabel(r.kind), status: 'prepared' as const }));
+  const { data } = await db.from('bookings').insert(prepared.map(b => ({ ...b, user_id: ctx.userId, partner_id: ctx.partnerId ?? null }))).select('id, kind, title, starts_at, all_day, surprise, place, phone, call_status');
+  return (data ?? []).map((r: any) => ({
+    id: r.id, kind: r.kind, title: r.title, when: whenText(r, ctx.timezone), surprise: r.surprise, label: doneLabel(r.kind), status: 'prepared' as const,
+    ...(r.phone && r.call_status ? { call: { place: r.place ?? r.title, phone: r.phone, status: r.call_status } } : {}),
+  }));
+}
+
+/** Updates one booking's card under Belluh's reply, so it shows the same state wherever it's opened. */
+async function patchCard(messageId: string | null, bookingId: string, patch: (c: BookingCard) => BookingCard) {
+  if (!messageId) return;
+  const { data: m } = await db.from('agent_messages').select('meta').eq('id', messageId).maybeSingle();
+  const cards = ((m?.meta as any)?.bookings ?? []) as BookingCard[];
+  if (cards.length) await db.from('agent_messages').update({ meta: { ...(m!.meta as object), bookings: cards.map(c => c.id === bookingId ? patch(c) : c) } }).eq('id', messageId);
+}
+
+const CALLS_PER_DAY = 3;
+
+/**
+ * "Call for me": Belluh phones the restaurant (saying up front it's an AI calling for them) and books the table. The
+ * answer comes back through vapi-webhook, which finishes the booking exactly like "I booked it".
+ */
+export async function placeCall(ctx: Ctx, bookingId: string): Promise<Result> {
+  const { data: b } = await db.from('bookings').select('*').eq('id', bookingId).maybeSingle();
+  if (!b || b.user_id !== ctx.userId) return res({ error: 'Not found' }, 404);
+  // Anything that stops the call is said in Belluh's voice, in the thread (the app and texting both show it)
+  const say = async (text: string) => res({ booking: b, message: await addMessage(ctx.userId, 'belluh', text, { kind: 'booking_call', booking_id: bookingId }), called: false });
+  if (b.status !== 'prepared' || (b.call_status && b.call_status !== 'ready')) return res({ booking: b, message: null, called: false });
+  if (!callsOn() || !b.phone || !b.people || !b.starts_at) return say("I can't call this one, but the links under my message will get you there in a tap.");
+  if (new Date(b.starts_at).getTime() < Date.now() + 45 * 60_000) return say(`That's too soon for me to call ahead. Give ${b.place ?? 'them'} a ring yourself: ${b.phone}.`);
+  if (!okToCallNow(ctx.timezone)) return say(`It's outside restaurant hours right now, so I'd rather not ring ${b.place}. Tap Call for me again after 10 in the morning and I'll do it.`);
+  const { count } = await db.from('bookings').select('id', { count: 'exact', head: true }).eq('user_id', ctx.userId).gte('called_at', new Date(Date.now() - 86_400_000).toISOString());
+  if ((count ?? 0) >= CALLS_PER_DAY) return say("I've made today's calls for you already. Use the links for this one, or tap Call for me again tomorrow.");
+
+  // Claim it first, so two taps never make two calls
+  const { data: claimed } = await db.from('bookings').update({ call_status: 'calling', called_at: new Date().toISOString() }).eq('id', bookingId).eq('call_status', 'ready').select('*');
+  if (!claimed?.length) return res({ booking: b, message: null });
+
+  const start = new Date(b.starts_at);
+  const day = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: ctx.timezone }).format(start);
+  const time = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: ctx.timezone }).format(start);
+  const callId = await startCall({
+    bookingId, restaurant: b.place ?? b.title, phone: b.phone, name: (ctx.myName || 'my client').split(' ')[0], people: b.people, day, time,
+  }, `${Deno.env.get('SUPABASE_URL')}/functions/v1/vapi-webhook`);
+  if (!callId) {
+    await db.from('bookings').update({ call_status: 'ready', called_at: null }).eq('id', bookingId);
+    return say("I couldn't get a line out just now. Try Call for me again in a minute, or use the links.");
+  }
+  await db.from('bookings').update({ call_id: callId }).eq('id', bookingId);
+  await patchCard(b.message_id, bookingId, c => ({ ...c, call: c.call ? { ...c.call, status: 'calling' } : c.call }));
+  const message = await addMessage(ctx.userId, 'belluh', `Calling ${b.place} now for ${b.people} at ${time} on ${day}. I'll tell you as soon as they answer.`, { kind: 'booking_call', booking_id: bookingId });
+  return res({ booking: { ...claimed[0], call_id: callId }, message, called: true });
+}
+
+/** The call's outcome: booked → finished like "I booked it" (calendar, reminder, partner); not booked → say why. */
+export async function finishCall(o: CallOutcome): Promise<'booked' | 'failed' | 'ignored'> {
+  const { data: b } = await db.from('bookings').select('*').eq('call_id', o.callId).maybeSingle();
+  if (!b || (o.bookingId && o.bookingId !== b.id) || b.call_status !== 'calling') return 'ignored';
+  const { data: s } = await db.from('agent_settings').select('timezone').eq('user_id', b.user_id).maybeSingle();
+  const ctx = await loadCtx(b.user_id, s?.timezone ?? 'America/Los_Angeles');
+  const summary = [o.booked ? 'Booked' : whyNot(o), o.notes].filter(Boolean).join('. ').slice(0, 2000);
+
+  if (!o.booked) {
+    const { data: claimed } = await db.from('bookings').update({ call_status: 'failed', call_summary: summary }).eq('id', b.id).eq('call_status', 'calling').select('id');
+    if (!claimed?.length) return 'ignored';
+    const note = whyNot(o);
+    await patchCard(b.message_id, b.id, c => ({ ...c, call: c.call ? { ...c.call, status: 'failed', note } : c.call }));
+    const text = `I called ${b.place}, but ${note}.${o.notes ? ` ${o.notes}` : ''} Want me to find another spot, or will you try the links?`;
+    await addMessage(ctx.userId, 'belluh', text, { kind: 'booking_call', booking_id: b.id });
+    await notify(ctx.userId, text, { push: text, tag: 'booking' });
+    return 'failed';
+  }
+
+  // They may have offered a slightly different time; the booking follows what the restaurant confirmed
+  let startsAt = b.starts_at as string;
+  if (o.time && b.starts_at) {
+    const day = new Intl.DateTimeFormat('en-CA', { timeZone: ctx.timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(b.starts_at));
+    startsAt = zonedToUtc(`${day}T${o.time}`, ctx.timezone) ?? startsAt;
+  }
+  const { data: claimed } = await db.from('bookings').update({ call_status: 'booked', call_summary: summary, starts_at: startsAt }).eq('id', b.id).eq('call_status', 'calling').select('id');
+  if (!claimed?.length) return 'ignored';
+  await patchCard(b.message_id, b.id, c => ({ ...c, when: whenText({ starts_at: startsAt, all_day: false }, ctx.timezone), call: c.call ? { ...c.call, status: 'booked' } : c.call }));
+  const r = await bookingDone(ctx, b.id, true, `They confirmed on the phone, under ${(ctx.myName || '').split(' ')[0] || 'your name'}.${o.notes ? ` ${o.notes}` : ''}`);
+  const line = (r.body?.message as any)?.body as string | undefined;
+  if (line) await notify(ctx.userId, line, { push: line, tag: 'booking' });
+  return 'booked';
 }
 
 /**
  * "I booked it" (or "Not now"): once it's done, it goes in their calendar feed, gets a reminder, is remembered, and the
  * partner hears about it in your shared thread (never for flowers or gifts, which are surprises).
  */
-export async function bookingDone(ctx: Ctx, bookingId: string, done: boolean): Promise<Result> {
+export async function bookingDone(ctx: Ctx, bookingId: string, done: boolean, lead?: string): Promise<Result> {
   const { data: b } = await db.from('bookings').select('*').eq('id', bookingId).maybeSingle();
   if (!b || b.user_id !== ctx.userId) return res({ error: 'Not found' }, 404);
   const status = done ? 'booked' : 'dismissed';
@@ -462,13 +559,10 @@ export async function bookingDone(ctx: Ctx, bookingId: string, done: boolean): P
   if (!claimed?.length) return res({ booking: b, message: null });
 
   // The card under Belluh's reply shows the new state wherever it's opened
-  if (b.message_id) {
-    const { data: m } = await db.from('agent_messages').select('meta').eq('id', b.message_id).maybeSingle();
-    const cards = ((m?.meta as any)?.bookings ?? []) as BookingCard[];
-    if (cards.length) await db.from('agent_messages').update({ meta: { ...(m!.meta as object), bookings: cards.map(c => c.id === bookingId ? { ...c, status } : c) } }).eq('id', b.message_id);
-  }
+  await patchCard(b.message_id, bookingId, c => ({ ...c, status }));
   if (!done) return res({ booking: claimed[0], message: null });
 
+  b.starts_at = claimed[0].starts_at;   // a call may have moved the time
   const when = whenText(b, ctx.timezone);
   const done_: string[] = [];
   // Remembered, so Belluh knows what they've tried and never suggests the same gift twice
@@ -498,7 +592,7 @@ export async function bookingDone(ctx: Ctx, bookingId: string, done: boolean): P
     r ? `I'll remind you ${new Date(r.due_at).getTime() - Date.now() > 20 * 3600_000 ? 'the evening before' : 'a couple of hours before'}` : null,
     b.surprise ? `${ctx.partnerName ?? 'Your partner'} won't see a thing` : null,
   ].filter(Boolean);
-  const text = `${b.kind === 'gift' || b.kind === 'flowers' || b.kind === 'dinner' ? 'Ordered' : 'Booked'}: ${b.title}${when ? `, ${when}` : ''}.${parts.length ? ` ${parts.join('. ')}.` : ''}`;
+  const text = `${b.kind === 'gift' || b.kind === 'flowers' || b.kind === 'dinner' ? 'Ordered' : 'Booked'}: ${b.call_status === 'booked' && b.place ? `${b.place}` : b.title}${when ? `, ${when}` : ''}.${lead ? ` ${lead}` : ''}${parts.length ? ` ${parts.join('. ')}.` : ''}`;
   const message = await addMessage(ctx.userId, 'belluh', text, { kind: 'booking_done', booking_id: b.id });
   return res({ booking: claimed[0], message, done: done_ });
 }

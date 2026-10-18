@@ -15,6 +15,9 @@ export interface BookingDraft {
   place: string | null;
   url: string | null;
   surprise: boolean;          // flowers and gifts stay hidden from the partner
+  phone?: string | null;      // a table Belluh can call to book (the restaurant's number, from Google Places)
+  people?: number | null;
+  call_status?: 'ready' | 'calling' | 'booked' | 'failed' | null;
 }
 export interface Booking extends BookingDraft { id: string; user_id: string; partner_id: string | null; status: 'prepared' | 'booked' | 'dismissed' }
 

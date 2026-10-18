@@ -13,7 +13,7 @@
 import { cleanReply, REACT_INSTRUCTION } from '../_shared/agent.ts';
 import { jsonAnswer } from '../_shared/gemini.ts';
 import { db, loadCtx, buildSystem, addMessage, history, weekView, type Ctx } from '../_shared/agentdb.ts';
-import { chat, underLimit, sendNote, planRespond, planCancel, checkin, ownPhoto, usHistory, usSend, offerRespond, bookingDone, type Result } from '../_shared/agentcore.ts';
+import { chat, underLimit, sendNote, planRespond, planCancel, checkin, ownPhoto, usHistory, usSend, offerRespond, bookingDone, placeCall, type Result } from '../_shared/agentcore.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
       case 'react': return json(await react(ctx, String(body.entry_id ?? '')));
       case 'offer_respond': return out(await offerRespond(ctx, String(body.message_id ?? ''), body.accept === true));
       case 'booking': return out(await bookingDone(ctx, String(body.booking_id ?? ''), body.done !== false));
+      case 'booking_call': return out(await placeCall(ctx, String(body.booking_id ?? '')));
       case 'us_history': return out(await usHistory(ctx));
       case 'us_send': return out(await usSend(ctx, String(body.message ?? ''), body.ask_belluh !== false));
       case 'send_note': return out(await sendNote(ctx, String(body.draft_id ?? ''), typeof body.text === 'string' ? body.text : undefined));
