@@ -20,6 +20,8 @@ jobs:
               --data @- "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" | jq -c '.'
           }
           ME="d95a25a6-e873-41d1-80ef-26258d3ff3b7"
+          q "sign-ins in the last 3 days (no emails)" "select u.id='$ME' is_owner, u.created_at::date created, u.last_sign_in_at, (select string_agg(provider, ',') from auth.identities i where i.user_id=u.id) providers, (select count(*) from public.journal_entries je where je.user_id=u.id) entries, (select count(*) from public.partner_connections c where c.status='connected' and u.id in (c.user_id,c.partner_id)) partners, split_part(u.email,'@',2) email_domain from auth.users u where u.last_sign_in_at > now() - interval '3 days' or u.created_at > now() - interval '3 days' order by u.last_sign_in_at desc nulls last"
+          q "owner sign-in methods" "select provider, last_sign_in_at from auth.identities where user_id='$ME'"
           logs() {
             echo "== logs: $1"
             curl -sS -G -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/$PROJECT_REF/analytics/endpoints/logs" \
