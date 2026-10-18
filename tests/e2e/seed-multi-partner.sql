@@ -22,15 +22,15 @@ insert into public.journal_entries (user_id, content, title, type, mood, is_shar
  ('aaaaaaaa-0000-0000-0000-000000000001','',null,'Photo','Playful',true,'{circle:c1}','2026-01-08','https://ctbsycrlakdanfzbaqmz.supabase.co/storage/v1/object/public/journal-media/photos/old.jpg',null),
  ('aaaaaaaa-0000-0000-0000-000000000001','Voice note from the beach',null,'Voice','Playful',true,'{circle:c1}','2026-01-10',null,'sb://journal-private/aaaaaaaa-0000-0000-0000-000000000001/voice/a.webm'),
  ('aaaaaaaa-0000-0000-0000-000000000001','Drop: thinking of you',null,'Drop',null,true,'{circle:c1}','2026-02-14',null,null),
- ('aaaaaaaa-0000-0000-0000-000000000001','A new chapter, coffee with Cara.',null,'Freeform',null,true,'{circle:partner_3ccccccc-0000-0000-0000-000000000003}','2026-05-20',null,null),
- ('aaaaaaaa-0000-0000-0000-000000000001','Cara and I painted the hallway.',null,'Prompt','Romantic',true,'{circle:partner_3ccccccc-0000-0000-0000-000000000003}','2026-05-25',null,null),
+ ('aaaaaaaa-0000-0000-0000-000000000001','A new chapter, coffee with Cara.',null,'Freeform',null,true,'{circle:partner_3CCCCCCC-0000-0000-0000-000000000003}','2026-05-20',null,null),
+ ('aaaaaaaa-0000-0000-0000-000000000001','Cara and I painted the hallway.',null,'Prompt','Romantic',true,'{circle:partner_3CCCCCCC-0000-0000-0000-000000000003}','2026-05-25',null,null),
  ('aaaaaaaa-0000-0000-0000-000000000001','Notes on us',null,'Milestone',null,true,'{system_facts,circle:c1}','2026-01-01',null,null);
 -- Custom chapters he made (one archived), and a member added to c1
 insert into public.journal_entries (user_id, title, content, type, is_shared, tags, created_at) values
  ('aaaaaaaa-0000-0000-0000-000000000001','College friends','#cbd5e1','Milestone',true,'{system_circle_def,status:archived}','2026-01-20'),
  ('aaaaaaaa-0000-0000-0000-000000000001','Family','#cbd5e1','Milestone',true,'{system_circle_def}','2026-01-21'),
  ('aaaaaaaa-0000-0000-0000-000000000001','Roommates','#cbd5e1','Milestone',true,'{system_circle_def}','2026-01-22'),
- ('aaaaaaaa-0000-0000-0000-000000000001','member','','Milestone',true,'{system_circle_member,circle:c1,member:bbbbbbbb-0000-0000-0000-000000000005}','2026-01-23');
+ ('aaaaaaaa-0000-0000-0000-000000000001','member','','Milestone',true,'{system_circle_member,circle:c1,member:bbbbbbbb-0000-0000-0000-000000000001}','2026-01-23');
 -- Partners' shared entries, tagged c1 from their own side
 insert into public.journal_entries (user_id, content, type, mood, is_shared, tags, created_at) values
  ('bbbbbbbb-0000-0000-0000-000000000001','Ana: our first winter together.','text','Joy',true,'{circle:c1}','2025-12-15'),
@@ -38,3 +38,6 @@ insert into public.journal_entries (user_id, content, type, mood, is_shared, tag
  ('bbbbbbbb-0000-0000-0000-000000000002','Bea: brunch with Eli.','text',null,true,'{circle:c1}','2026-01-15'),
  ('3ccccccc-0000-0000-0000-000000000003','Cara: the hallway is blue now.','Freeform',null,true,'{circle:c1}','2026-05-26'),
  ('bbbbbbbb-0000-0000-0000-000000000004','Dee: game night.','text',null,true,'{circle:c1}','2026-01-16');
+-- A fifth partner, to be sure more than three works
+insert into public.partner_connections (user_id, partner_id, status, created_at) values ('aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000005','connected','2026-02-01');
+insert into public.journal_entries (user_id, content, type, is_shared, tags, created_at) values ('bbbbbbbb-0000-0000-0000-000000000005','Eli: picnic in the park.','text',true,'{circle:c1}','2026-02-02');

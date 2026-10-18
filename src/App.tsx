@@ -408,16 +408,25 @@ const App: React.FC = () => {
         const getExtraMembers = (circleId: string) => {
             const members: string[] = [];
             if (dbEntries) {
-                const memberEntries = dbEntries.filter((e: any) => 
-                    e.tags && e.tags.includes('system_circle_member') && e.tags.includes(`circle:${circleId}`)
+                // "c1" and "partner_…" are your own names for your chapters (your partner's "c1" is a different
+                // chapter), so only the people you added count there
+                const mineOnly = circleId === 'c1' || circleId.startsWith('partner_');
+                const memberEntries = dbEntries.filter((e: any) =>
+                    e.tags && e.tags.includes('system_circle_member') && e.tags.includes(`circle:${circleId}`) && (!mineOnly || e.user_id === sessionUser.id)
                 );
                 memberEntries.forEach((m: any) => {
                     const tag = m.tags.find((t: string) => t.startsWith('member:'));
-                    if (tag) members.push(tag.split(':')[1]);
+                    if (tag) members.push(tag.split(':')[1].toLowerCase());
                 });
             }
             return members;
         };
+
+        // Your first chapter is with your first partner, unless you added that partner into it yourself: then it
+        // was built around the next one (that's how it looked when you added them), and stays that way
+        const addedToFirst = new Set(getExtraMembers('c1'));
+        const firstIdx = connectedProfiles.findIndex((pp: any) => !addedToFirst.has(String(pp.id).toLowerCase()));
+        if (firstIdx > 0) connectedProfiles.unshift(...connectedProfiles.splice(firstIdx, 1));
 
         if (connectedProfiles.length > 0) {
             connectedProfiles.forEach((pProfile, index) => {
@@ -576,6 +585,12 @@ const App: React.FC = () => {
                 const theirs = chapterOf.get(String(e.user_id).toLowerCase());
                 const custom = newCircles.some((c: any) => c.id === entryCircleId && c.type === CircleType.Custom && c.members.includes(e.user_id));
                 if (theirs && !custom) entryCircleId = theirs;
+            }
+            // Never lose an entry: a chapter id that no longer exists (a partner who is now your first chapter, say)
+            // goes to the chapter with that partner, or else your first chapter
+            if (!newCircles.some((c: any) => c.id === entryCircleId)) {
+                const pid = entryCircleId.startsWith('partner_') ? entryCircleId.slice('partner_'.length) : String(e.user_id).toLowerCase();
+                entryCircleId = chapterOf.get(pid) ?? 'c1';
             }
 
             return {

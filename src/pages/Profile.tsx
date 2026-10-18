@@ -462,7 +462,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                           <div className="relative flex items-center justify-center">
                               {activeMembers.map((member, index) => (
                                   <React.Fragment key={member.id}>
-                                      <div className={`relative w-24 h-24 md:w-28 md:h-28 rounded-full ring-[5px] ring-[#fcfcfc] shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] overflow-hidden bg-[#eef7fa] ${index > 0 ? '-ml-5' : ''}`} style={{ zIndex: 10 - index }}>
+                                      <div className={`relative ${activeMembers.length <= 2 ? 'w-24 h-24 md:w-28 md:h-28' : activeMembers.length <= 4 ? 'w-20 h-20 md:w-24 md:h-24' : 'w-16 h-16 md:w-20 md:h-20'} rounded-full ring-[5px] ring-[#fcfcfc] shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] overflow-hidden bg-[#eef7fa] ${index > 0 ? (activeMembers.length <= 4 ? '-ml-5' : '-ml-4') : ''}`} style={{ zIndex: 20 - index }}>
                                           <img src={member.avatar} className="w-full h-full object-cover" alt={member.name} />
                                       </div>
                                   </React.Fragment>
