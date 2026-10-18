@@ -4,6 +4,12 @@ import { belluhAgent, AgentMessage } from '../services/belluhAgent';
 import PlanCard from './PlanCard';
 import { trackEvent } from '../services/analytics';
 
+/** "+14085550134" → "(408) 555-0134"; other countries stay as they are. */
+const prettyPhone = (e164: string) => {
+  const m = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(e164);
+  return m ? `(${m[1]}) ${m[2]}-${m[3]}` : e164;
+};
+
 /**
  * What Belluh did or offers, under its message: links it prepared (a table to book, gifts to buy), a yes or not now
  * on something it noticed, a plan still waiting on you, or "write about it" after a plan happened.
@@ -103,7 +109,7 @@ const BelluhActions: React.FC<{
                   <p className="mt-1 text-xs text-slate-500">
                     {c.call.status === 'calling' ? `Belluh is on the phone with ${c.call.place}…`
                       : c.call.status === 'failed' ? `Called ${c.call.place}: ${c.call.note ?? "they couldn't fit you in"}.`
-                      : <>{c.call.place} <a href={`tel:${c.call.phone}`} className="font-semibold text-[#3f7486] hover:underline">{c.call.phone}</a></>}
+                      : <>{c.call.place} <a href={`tel:${c.call.phone}`} className="font-semibold text-[#3f7486] hover:underline">{prettyPhone(c.call.phone)}</a></>}
                   </p>
                 )}
                 {c.surprise && c.status !== 'booked' && <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-slate-400"><Lock size={11} /> A surprise. {partnerName ?? 'Your partner'} won't see this.</p>}
@@ -111,19 +117,21 @@ const BelluhActions: React.FC<{
             </div>
             {c.status === 'booked' ? (
               <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#3f7486]"><Check size={14} /> Done{c.when ? '. In your calendar, with a reminder.' : '. Belluh will remember.'}</p>
-            ) : (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+            ) : c.call?.status === 'calling' ? null : (
+              <div className="mt-3 flex flex-wrap items-center gap-1.5">
                 {c.call?.status === 'ready' && (
-                  <button disabled={cardBusy === c.id} onClick={() => callFor(c.id)} className="h-9 px-4 rounded-full bg-slate-900 text-white text-xs font-bold disabled:opacity-60 inline-flex items-center gap-1.5">
+                  <button disabled={cardBusy === c.id} onClick={() => callFor(c.id)} className="h-9 px-3.5 rounded-full bg-slate-900 text-white text-xs font-bold disabled:opacity-60 inline-flex items-center gap-1.5">
                     <Phone size={13} /> {cardBusy === c.id ? 'Calling…' : 'Call for me'}
                   </button>
                 )}
                 {c.call?.status !== 'calling' && (
-                  <button disabled={cardBusy === c.id} onClick={() => markBooking(c.id, true)} className={c.call?.status === 'ready' ? 'h-9 px-4 rounded-full border border-slate-200 text-slate-700 text-xs font-bold disabled:opacity-60' : 'h-9 px-4 rounded-full bg-slate-900 text-white text-xs font-bold disabled:opacity-60'}>
+                  <button disabled={cardBusy === c.id} onClick={() => markBooking(c.id, true)} className={c.call?.status === 'ready' ? 'h-9 px-3.5 rounded-full border border-slate-200 text-slate-700 text-xs font-bold disabled:opacity-60' : 'h-9 px-4 rounded-full bg-slate-900 text-white text-xs font-bold disabled:opacity-60'}>
                     {cardBusy === c.id && c.call?.status !== 'ready' ? 'Saving…' : c.label}
                   </button>
                 )}
-                <button disabled={cardBusy === c.id} onClick={() => markBooking(c.id, false)} className="h-9 px-3 rounded-full text-xs font-bold text-slate-400 hover:text-slate-700">Not now</button>
+                {c.call?.status !== 'calling' && (
+                  <button disabled={cardBusy === c.id} onClick={() => markBooking(c.id, false)} className="h-9 px-1 rounded-full text-xs font-bold text-slate-400 hover:text-slate-700">Not now</button>
+                )}
                 <span className="ml-auto text-[11px] text-slate-400 hidden sm:block">Tap once it's done</span>
               </div>
             )}
