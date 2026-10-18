@@ -279,6 +279,9 @@ const App: React.FC = () => {
   };
 
   const loadUserData = async (sessionUser: any, attempt = 1): Promise<void> => {
+      // Which step it reached, so a load that stalls says where (recorded after 12 seconds)
+      let stage = 'start';
+      const stall = setTimeout(() => { trackEvent('load_stalled', { attempt, stage }); }, 12000);
       try {
         trackEvent('app_opened', { source: 'web' });
 
@@ -314,6 +317,7 @@ const App: React.FC = () => {
             }
         } catch (e) { console.debug(e); }
 
+        stage = 'profile';
         // 1. Fetch User Profile
         const { data: profile } = await supabase
             .from('profiles')
@@ -321,6 +325,7 @@ const App: React.FC = () => {
             .eq('id', sessionUser.id)
             .maybeSingle();
 
+        stage = 'connections';
         // 2. Fetch Active Partner Connections
         const { data: connections } = await supabase
             .from('partner_connections')
@@ -336,6 +341,7 @@ const App: React.FC = () => {
             connectedUserIds = [...new Set(sorted.map((c: any) => String(c.user_id === sessionUser.id ? c.partner_id : c.user_id).toLowerCase()))];
         }
 
+        stage = 'entries';
         // 3. Fetch All Journal Entries (Content + System Data)
         const initialUserIds = [sessionUser.id, ...connectedUserIds];
         const { data: dbEntries, error: entriesError } = await supabase
@@ -358,6 +364,7 @@ const App: React.FC = () => {
              });
         }
         
+        stage = 'profiles';
         // 4. Fetch Profiles for ALL relevant users
         const allProfileIds = [...new Set([...initialUserIds, ...extendedMemberIds])];
         const { data: allProfiles } = await supabase
@@ -369,6 +376,7 @@ const App: React.FC = () => {
         const connectedProfiles = connectedUserIds.map(id => allProfiles?.find((p: any) => String(p.id).toLowerCase() === id)).filter(Boolean) as any[];
         const myProfile = allProfiles?.find((p: any) => p.id === sessionUser.id);
 
+        stage = 'circles';
         // 5. Build Circles
         const newCircles: any[] = [];
         const myFirstName = myProfile?.full_name?.trim().split(' ')[0] || sessionUser.email?.split('@')[0] || 'Me';
@@ -484,6 +492,7 @@ const App: React.FC = () => {
             });
         }
 
+        stage = 'pending';
         const { data: pendingRows } = await supabase
             .from('partner_connections')
             .select('*')
@@ -574,8 +583,13 @@ const App: React.FC = () => {
                 audioUrl: repairLegacyUrl(e.audio_url)
             };
         });
+        stage = 'media';
         // Private voice notes and photos get fresh links each time the journal loads
-        const links = await resolveMedia(mappedEntries.flatMap(e => [e.mediaUrl, e.audioUrl]));
+        // Never let slow storage hold up the journal: entries show, and media fills in what it can
+        const links = await Promise.race([
+            resolveMedia(mappedEntries.flatMap(e => [e.mediaUrl, e.audioUrl])).catch(() => new Map<string, string>()),
+            new Promise<Map<string, string>>(r => setTimeout(() => r(new Map()), 6000)),
+        ]);
         setEntries(mappedEntries.map(e => ({
             ...e,
             mediaUrl: e.mediaUrl && links.get(e.mediaUrl) || (e.mediaUrl?.startsWith('sb://') ? undefined : e.mediaUrl),
@@ -615,12 +629,18 @@ const App: React.FC = () => {
         const oldAccount = Number.isFinite(createdAt) && Date.now() - createdAt > 24 * 3600_000;
         setIsOnboarding(!oldAccount && !displayPartnerName && !primaryPartner && !hasWritten && !onboardedHere);
         
+        stage = 'done';
         setIsAuthenticated(true);
-      } catch (err) {
+      } catch (err: any) {
           console.error("Failed to load user data", err);
+          // Record exactly what broke (no journal text), so it can be fixed
+          trackEvent('load_failed', { attempt, stage, message: String(err?.message ?? err).slice(0, 300), stack: String(err?.stack ?? '').slice(0, 1200) });
           if (attempt < 3) { await new Promise(r => setTimeout(r, 1200 * attempt)); return loadUserData(sessionUser, attempt + 1); }
-          showNotification("Couldn't load your journal. Check your connection and reload.", "error");
+          // Let the next "Log in" try again instead of being ignored
+          loadedUserId.current = null;
+          showNotification("Couldn't load your journal. Try logging in again.", "error");
       } finally {
+          clearTimeout(stall);
           setIsLoading(false);
       }
   };
@@ -641,12 +661,13 @@ const App: React.FC = () => {
         if (event === 'SIGNED_IN') {
             if (session?.user && mounted && loadedUserId.current !== session.user.id) {
                 loadedUserId.current = session.user.id;
-                loadUserData(session.user);
+                const u = session.user;
+                setTimeout(() => loadUserData(u), 0);
                 setTimeout(flushCta, 1500); // which landing button brought them in
             }
         } else if (event === 'PASSWORD_RECOVERY') {
             if (mounted) setRecovering(true);
-            if (session?.user && mounted && loadedUserId.current !== session.user.id) { loadedUserId.current = session.user.id; loadUserData(session.user); }
+            if (session?.user && mounted && loadedUserId.current !== session.user.id) { loadedUserId.current = session.user.id; const u = session.user; setTimeout(() => loadUserData(u), 0); }
         } else if (event === 'SIGNED_OUT') {
             loadedUserId.current = null;
             if (mounted) resetUserState();
