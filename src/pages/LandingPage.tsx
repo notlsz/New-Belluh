@@ -31,16 +31,16 @@ const FAQ = [
 // restaurant call and hosting come to roughly $1.80 a month for an active couple and $3.60 for a heavy one. $7.77
 // covers the heavy couple with about 80% left over after payment fees, and an average couple at well over that.
 /**
- * Give a couple a year of Duo. Four things to fill in, the note is written for you, and the card they'll open builds
- * itself as you type. Set VITE_GIFT_CHECKOUT_URL (a Stripe Payment Link for $88.88) and the button goes straight to
- * checkout; until then the gift comes to us by email and we send it on by hand.
+ * Give a couple a year of Duo, presented like something worth keeping: a lacquered box in the occasion's colour, an
+ * ivory card with gold rules, and a quiet moment of thanks once it's given. Set VITE_GIFT_CHECKOUT_URL to a checkout
+ * and the button pays; until then the gift comes to us by email and we send it on by hand.
  */
+const GOLD = '#b08d57';
 const OCCASIONS = [
-  // Each occasion has its own deep tone (deepened from Belluh's pink and blue) for the envelope and the card's accents
-  { label: 'Wedding', note: 'For every chapter after the vows. Write it all down, together.', ink: '#b4547f', env: 'linear-gradient(145deg,#c96894,#8f3a62)', wash: '#fbeef3', line: '#ecc6d6' },
-  { label: 'Anniversary', note: "Here's to another year worth remembering.", ink: '#2f6577', env: 'linear-gradient(145deg,#3f7f94,#204a59)', wash: '#ecf4f7', line: '#c4dbe3' },
-  { label: 'New home', note: 'New keys, new rooms, new memories. Keep every one.', ink: '#4f6b55', env: 'linear-gradient(145deg,#68876d,#3a5040)', wash: '#eff3ec', line: '#cfdcc9' },
-  { label: 'Just because', note: 'You two are my favorite love story.', ink: '#6b4a82', env: 'linear-gradient(145deg,#8462a0,#4e3462)', wash: '#f3eef7', line: '#dcd0e7' },
+  { label: 'Wedding', note: 'For every chapter after the vows. Write it all down, together.', box: '#4a1f30', glow: '#7a3550' },
+  { label: 'Anniversary', note: "Here's to another year worth remembering.", box: '#12303a', glow: '#1f5263' },
+  { label: 'New home', note: 'New keys, new rooms, new memories. Keep every one.', box: '#1f3326', glow: '#35553f' },
+  { label: 'Just because', note: 'You two are my favorite love story.', box: '#2e1f3d', glow: '#4e3566' },
 ];
 const GIFT_CHECKOUT = (import.meta as any).env?.VITE_GIFT_CHECKOUT_URL as string | undefined;
 
@@ -50,77 +50,96 @@ function GiftCard() {
   const [two, setTwo] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [from, setFrom] = React.useState('');
-  const [when, setWhen] = React.useState('');           // '' means as soon as it's paid
-  const [note, setNote] = React.useState<string | null>(null); // null means the occasion's note
+  const [when, setWhen] = React.useState('');
+  const [note, setNote] = React.useState<string | null>(null);
   const [writing, setWriting] = React.useState(false);
+  const [given, setGiven] = React.useState(false);
   const tone = OCCASIONS[occasion];
   const today = new Date().toISOString().slice(0, 10);
-  const shownNote = (note ?? OCCASIONS[occasion].note).trim() || OCCASIONS[occasion].note;
+  const shownNote = (note ?? tone.note).trim() || tone.note;
   const names = [one.trim(), two.trim()].filter(Boolean).join(' & ');
   const ready = !!(one.trim() && two.trim() && /^\S+@\S+\.\S+$/.test(email.trim()));
   const opens = when ? new Date(`${when}T12:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : null;
-  const body = `For: ${names}\nTheir email: ${email}\nOccasion: ${OCCASIONS[occasion].label}\nSend on: ${opens ?? 'Right away'}\nFrom: ${from}\nNote: ${shownNote}`;
-  const href = GIFT_CHECKOUT ? `${GIFT_CHECKOUT}${GIFT_CHECKOUT.includes('?') ? '&' : '?'}client_reference_id=gift` : `mailto:hello@belluh.com?subject=${encodeURIComponent(`A Belluh gift for ${names}`)}&body=${encodeURIComponent(body)}`;
-  const field = 'h-12 w-full rounded-2xl border border-[#e2dacd] bg-[#fffdf9] px-4 text-[15px] text-slate-800 placeholder:text-[#a69c8e] focus:outline-none focus:border-slate-900 transition-colors';
+  const body = `For: ${names}\nTheir email: ${email}\nOccasion: ${tone.label}\nSend on: ${opens ?? 'Right away'}\nFrom: ${from}\nNote: ${shownNote}`;
+  const href = GIFT_CHECKOUT ? GIFT_CHECKOUT : `mailto:hello@belluh.com?subject=${encodeURIComponent(`A Belluh gift for ${names}`)}&body=${encodeURIComponent(body)}`;
+  const line = 'h-12 w-full bg-transparent border-0 border-b border-[#d8cfc0] px-0 text-[16px] text-slate-900 placeholder:text-[#a89d8c] focus:outline-none focus:border-slate-900 transition-colors rounded-none';
+  const caps = 'text-[10px] font-semibold uppercase tracking-[0.32em]';
   return (
-    <div id="gift" className="relative mt-5 overflow-hidden rounded-[2.5rem] border scroll-mt-24 transition-colors duration-700" style={{ background: `linear-gradient(135deg, #faf7f2 30%, ${tone.wash})`, borderColor: tone.line }}>
-      <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 p-6 md:p-12 lg:p-16 items-center">
-        <div>
-          <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] transition-colors duration-700" style={{ color: tone.ink }}><Gift size={14} strokeWidth={1.5} /> Give Belluh</p>
-          <h3 className="mt-5 font-serif text-4xl md:text-[3.25rem] tracking-tight leading-[1.04]">
-            <span className="text-slate-900">Flowers last a week.</span><br /><span className="italic transition-colors duration-700" style={{ color: tone.ink }}>This keeps every one.</span>
+    <div id="gift" className="relative mt-5 overflow-hidden rounded-[2.5rem] bg-[#f7f3ec] scroll-mt-24" style={{ boxShadow: `inset 0 0 0 1px ${GOLD}33` }}>
+      <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_1.05fr] gap-12 lg:gap-14 p-6 md:p-12 lg:p-16 items-center">
+        <div className="relative">
+          <p className={caps} style={{ color: GOLD }}>The gift</p>
+          <h3 className="mt-6 font-serif text-[2.6rem] md:text-[3.4rem] tracking-tight leading-[1.02] text-slate-900">
+            Some gifts are opened.<br /><span className="italic" style={{ color: GOLD }}>This one is kept.</span>
           </h3>
-          <p className="mt-5 text-lg text-[#6b6358] font-light leading-relaxed max-w-md">Most of what makes a couple is the small stuff, and it's gone in a year. Give them a journal they share, dates planned for them, and a nudge before the days that matter. A year of it, for both of them.</p>
+          <p className="mt-6 text-[17px] text-[#5f574c] leading-relaxed max-w-md">You're the one who remembers the little things. This is how they will too: a year of Belluh for both of them, every moment written down, every date planned, every anniversary kept.</p>
 
-          <div className="mt-8 flex flex-wrap gap-2" role="radiogroup" aria-label="Occasion">
-            {OCCASIONS.map((o, i) => (
-              <button key={o.label} role="radio" aria-checked={occasion === i} onClick={() => setOccasion(i)} style={occasion === i ? { background: o.ink, borderColor: o.ink } : undefined}
-                className={`h-10 px-4 rounded-full text-sm font-semibold transition-all ${occasion === i ? 'text-white border' : 'bg-transparent text-[#5c554b] border border-[#d9d0c2] hover:border-slate-900'}`}>{o.label}</button>
-            ))}
-          </div>
-
-          <div className="mt-5 space-y-3">
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-              <input value={one} onChange={e => setOne(e.target.value)} placeholder="Maya" autoComplete="off" aria-label="First partner's name" className={field} />
-              <span className="font-serif italic text-xl px-1 transition-colors duration-700" style={{ color: tone.ink }}>&amp;</span>
-              <input value={two} onChange={e => setTwo(e.target.value)} placeholder="Dan" autoComplete="off" aria-label="Second partner's name" className={field} />
+          {given ? (
+            <div className="mt-10 py-10 border-y" style={{ borderColor: `${GOLD}55` }} role="status">
+              <p className={caps} style={{ color: GOLD }}>Given</p>
+              <p className="mt-4 font-serif text-3xl md:text-4xl text-slate-900 leading-tight">Beautifully done{from.trim() ? `, ${from.trim()}` : ''}.</p>
+              <p className="mt-4 text-[17px] text-[#5f574c] leading-relaxed">{names} will open it {opens ? `on ${opens}` : 'soon'}. Years from now, they'll still know who gave it to them.</p>
+              {!GIFT_CHECKOUT && <p className="mt-4 text-sm text-[#8a7f70]">Send the email that just opened and we'll take it from there.</p>}
+              <button onClick={() => { setGiven(false); setOne(''); setTwo(''); setEmail(''); setWhen(''); setNote(null); setWriting(false); }} className="mt-7 text-sm font-semibold text-slate-900 underline underline-offset-[6px] decoration-1" style={{ textDecorationColor: GOLD }}>Give another</button>
             </div>
-            <input type="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Their email, we'll take it from there" autoComplete="off" aria-label="Their email" className={field} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-2">
-              <input value={from} onChange={e => setFrom(e.target.value)} placeholder="From" autoComplete="given-name" aria-label="Your name" className={field} />
-              <label className={`${field} flex items-center gap-2 cursor-pointer`}>
-                <span className="text-[#a69c8e] shrink-0">Send</span>
-                <input type="date" min={today} value={when} onChange={e => setWhen(e.target.value)} aria-label="Send on" className={`w-full bg-transparent focus:outline-none text-[15px] ${when ? 'text-slate-800' : 'text-[#a69c8e]'}`} />
-              </label>
-            </div>
-            {writing
-              ? <textarea autoFocus value={note ?? OCCASIONS[occasion].note} onChange={e => setNote(e.target.value.slice(0, 180))} rows={2} aria-label="Your note" className={`${field} h-auto py-3 resize-none leading-relaxed`} />
-              : <button onClick={() => setWriting(true)} className="text-sm font-medium text-[#5c554b] underline decoration-[#d9d0c2] underline-offset-4 hover:decoration-slate-900 transition-colors">Write your own note</button>}
-            <a href={ready ? href : undefined} target={GIFT_CHECKOUT ? '_blank' : undefined} rel="noreferrer" aria-disabled={!ready} onClick={() => ready && rememberCta('pricing-gift')}
-              className={`group mt-2 h-14 w-full rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 transition-all ${ready ? 'hover:bg-black cursor-pointer' : 'opacity-30 cursor-not-allowed'}`}>
-              Give it, $88.88 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
-            </a>
-            <p className="text-sm text-[#8a7f70] text-center">{ready ? (opens ? `It opens for them on ${opens}.` : 'It reaches them as soon as you pay.') : 'Their names and email, and you are done.'}</p>
-          </div>
+          ) : (
+            <>
+              <div className="mt-10 flex flex-wrap gap-x-7 gap-y-3" role="radiogroup" aria-label="Occasion">
+                {OCCASIONS.map((o, i) => (
+                  <button key={o.label} role="radio" aria-checked={occasion === i} onClick={() => setOccasion(i)}
+                    className={`pb-1.5 text-[15px] border-b transition-colors ${occasion === i ? 'text-slate-900 font-semibold' : 'text-[#8a7f70] border-transparent hover:text-slate-900'}`}
+                    style={occasion === i ? { borderColor: GOLD } : undefined}>{o.label}</button>
+                ))}
+              </div>
+              <div className="mt-8 space-y-4">
+                <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-4">
+                  <input value={one} onChange={e => setOne(e.target.value)} placeholder="Maya" autoComplete="off" aria-label="First partner's name" className={line} />
+                  <span className="font-serif italic text-2xl pb-2" style={{ color: GOLD }}>&amp;</span>
+                  <input value={two} onChange={e => setTwo(e.target.value)} placeholder="Dan" autoComplete="off" aria-label="Second partner's name" className={line} />
+                </div>
+                <input type="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Their email" autoComplete="off" aria-label="Their email" className={line} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <input value={from} onChange={e => setFrom(e.target.value)} placeholder="From" autoComplete="given-name" aria-label="Your name" className={line} />
+                  <label className={`${line} flex items-center gap-3 cursor-pointer`}>
+                    <span className="text-[#a89d8c] shrink-0">Deliver on</span>
+                    <input type="date" min={today} value={when} onChange={e => setWhen(e.target.value)} aria-label="Send on" className={`w-full bg-transparent focus:outline-none text-[16px] ${when ? 'text-slate-900' : 'text-[#a89d8c]'}`} />
+                  </label>
+                </div>
+                {writing
+                  ? <textarea autoFocus value={note ?? tone.note} onChange={e => setNote(e.target.value.slice(0, 180))} rows={2} aria-label="Your note" className={`${line} h-auto py-3 resize-none leading-relaxed font-serif italic`} />
+                  : <button onClick={() => setWriting(true)} className="text-sm text-[#5f574c] underline underline-offset-[6px] decoration-1 hover:text-slate-900" style={{ textDecorationColor: `${GOLD}88` }}>Write your own note</button>}
+              </div>
+              <a href={ready ? href : undefined} target={GIFT_CHECKOUT ? '_blank' : undefined} rel="noreferrer" aria-disabled={!ready}
+                onClick={() => { if (!ready) return; rememberCta('pricing-gift'); setTimeout(() => setGiven(true), 400); }}
+                className={`group mt-10 h-14 w-full rounded-full bg-slate-900 text-white text-[15px] font-semibold tracking-wide inline-flex items-center justify-center gap-3 transition-all ${ready ? 'hover:bg-black cursor-pointer' : 'opacity-30 cursor-not-allowed'}`}>
+                Present the gift <span className="h-4 w-px bg-white/30" /> $88.88
+              </a>
+              <p className="mt-4 text-sm text-[#8a7f70] text-center">{ready ? (opens ? `Sealed, and delivered to them on ${opens}.` : 'Sealed, and delivered to them as soon as you give it.') : 'Their names and email. Nothing else to do.'}</p>
+            </>
+          )}
         </div>
 
-        {/* The card they open, building itself as you type */}
-        <div className="relative mx-auto w-full max-w-[420px] lg:aspect-[4/5] order-first lg:order-none group/card" aria-label="Preview of the gift">
-          <div aria-hidden="true" style={{ background: tone.env }} className="absolute inset-x-2 top-6 -bottom-4 rounded-[1.75rem] rotate-[4deg] shadow-[0_40px_80px_-40px_rgba(15,23,42,0.7)] transition-transform duration-700 group-hover/card:rotate-[6deg] group-hover/card:translate-x-2" />
-          <div className="relative h-full min-h-[440px] rounded-[1.75rem] bg-[#fffdf9] shadow-[0_30px_60px_-30px_rgba(40,30,20,0.35)] p-7 md:p-10 flex flex-col -rotate-[1.5deg] transition-transform duration-700 group-hover/card:-rotate-[3deg] group-hover/card:-translate-y-2">
-            <div aria-hidden="true" className="absolute inset-3 rounded-[1.25rem] border pointer-events-none transition-colors duration-700" style={{ borderColor: tone.line }} />
-            <div className="flex items-center justify-between">
-              <span className="inline-flex items-center gap-2"><DragonflyMark size={26} rippleOnMount={false} /><span className="font-serif text-lg text-slate-900">Belluh</span></span>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.28em] transition-colors duration-700" style={{ color: tone.ink }}>{tone.label}</span>
+        {/* The presentation box, lacquered in the occasion's colour, with the card resting inside */}
+        <div className="relative mx-auto w-full max-w-[460px] order-first lg:order-none" aria-label="Preview of the gift">
+          <div className="relative rounded-[2rem] p-6 md:p-9 transition-[background] duration-700"
+            style={{ background: `radial-gradient(120% 80% at 30% 0%, ${tone.glow} 0%, ${tone.box} 55%, #0b0c10 130%)`, boxShadow: `0 60px 120px -50px ${tone.box}, inset 0 0 0 1px ${GOLD}40, inset 0 1px 0 rgba(255,255,255,0.08)` }}>
+            <div aria-hidden="true" className="absolute inset-3 rounded-[1.5rem] pointer-events-none" style={{ boxShadow: `inset 0 0 0 1px ${GOLD}26` }} />
+            <div className="flex items-center justify-between px-1 pb-5">
+              <span className={caps} style={{ color: `${GOLD}` }}>Belluh</span>
+              <span className={caps} style={{ color: `${GOLD}aa` }}>{tone.label}</span>
             </div>
-            <p className="mt-auto pt-10 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#a69c8e]">A year of us, for</p>
-            <p className={`mt-2 font-serif text-[2.1rem] md:text-[2.75rem] leading-[1.05] tracking-tight break-words transition-colors ${names ? 'text-slate-900' : 'text-[#d5ccbe]'}`}>{names || 'Maya & Dan'}</p>
-            <div className="mt-6 h-[2px] w-12 rounded-full transition-colors duration-700" style={{ background: tone.ink }} />
-            <p className="mt-6 font-serif italic text-lg leading-relaxed text-[#4a443c] min-h-[3.5rem] break-words">{shownNote}</p>
-            <p className="mt-4 pb-8 font-serif text-[15px] text-[#6b6358]">— {from.trim() || 'you'}</p>
-            <div style={{ borderColor: tone.line }} className="mt-auto pt-6 border-t flex items-end justify-between gap-4">
-              <span className="text-[13px] text-[#8a7f70] leading-snug">{opens ? <>Opens {opens}</> : <>Their shared journal,<br />ready the moment they open it</>}</span>
-              <span className="font-serif italic text-2xl tracking-tight shrink-0 transition-colors duration-700" style={{ color: tone.ink }}>One year</span>
+            <div className={`relative rounded-[1.25rem] bg-[#fffdf8] px-7 py-9 md:px-9 md:py-11 flex flex-col min-h-[400px] transition-transform duration-700 ${given ? 'rotate-0 -translate-y-1' : '-rotate-[1.25deg] hover:rotate-0'}`}
+              style={{ boxShadow: `0 30px 60px -30px rgba(0,0,0,0.6), inset 0 0 0 1px ${GOLD}55` }}>
+              <div aria-hidden="true" className="absolute inset-[7px] rounded-[0.9rem] pointer-events-none" style={{ boxShadow: `inset 0 0 0 1px ${GOLD}30` }} />
+              <div className="flex justify-center"><DragonflyMark size={30} rippleOnMount={false} /></div>
+              <p className={`${caps} mt-8 text-center`} style={{ color: GOLD }}>Presented to</p>
+              <p className={`mt-3 text-center font-serif text-[2.1rem] md:text-[2.6rem] leading-[1.08] tracking-tight break-words transition-colors ${names ? 'text-slate-900' : 'text-[#d6cdbd]'}`}>{names || 'Maya & Dan'}</p>
+              <div className="mt-6 mx-auto h-px w-20" aria-hidden="true" style={{ background: GOLD }} />
+              <p className="mt-6 text-center font-serif italic text-[17px] leading-relaxed text-[#4a443c] break-words">{shownNote}</p>
+              <p className="mt-4 text-center font-serif text-[15px] text-[#6b6358]">— {from.trim() || 'you'}</p>
+              <div className="mt-auto pt-8 text-center">
+                <p className={caps} style={{ color: '#8a7f70' }}>{given ? 'Sealed' : opens ? `To be opened ${opens}` : 'One year of Belluh, for both'}</p>
+              </div>
             </div>
           </div>
         </div>
