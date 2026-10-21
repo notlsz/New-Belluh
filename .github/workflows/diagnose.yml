@@ -12,31 +12,7 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || 'ctbsycrlakdanfzbaqmz' }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb
-        with: { version: latest }
-      - name: Which AI keys work (temporary check function)
-        run: |
-          T=$(openssl rand -hex 24); echo "::add-mask::$T"
-          supabase secrets set --project-ref "$PROJECT_REF" HEALTH_TOKEN="$T" > /dev/null
-          supabase functions deploy belluh-health --project-ref "$PROJECT_REF" --no-verify-jwt > /dev/null
-          sleep 5
-          echo "== AI keys"; curl -sS "https://${PROJECT_REF}.supabase.co/functions/v1/belluh-health" -H "x-health-token: $T" | jq -c '.'
-          supabase functions delete belluh-health --project-ref "$PROJECT_REF" > /dev/null || true
-          supabase secrets unset --project-ref "$PROJECT_REF" HEALTH_TOKEN > /dev/null || true
-      - name: Gemini key check
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: |
-          echo "key present: $([ -n "$GEMINI_API_KEY" ] && echo yes || echo no), length ${#GEMINI_API_KEY}"
-          echo "== models this key can use (flash only)"
-          curl -sS "https://generativelanguage.googleapis.com/v1beta/models?pageSize=200" -H "x-goog-api-key: $GEMINI_API_KEY" | jq -c '[.models[]?.name | select(test("flash"))] , .error'
-          for m in gemini-3.8-flash gemini-2.5-flash gemini-2.5-flash-lite gemini-3-flash-preview gemini-3.5-flash; do
-            r=$(curl -sS -w "\n%{http_code}" "https://generativelanguage.googleapis.com/v1beta/models/$m:generateContent" -H "x-goog-api-key: $GEMINI_API_KEY" -H 'Content-Type: application/json' -d '{"contents":[{"role":"user","parts":[{"text":"Say hi in two words."}]}]}')
-            code=$(echo "$r" | tail -1); body=$(echo "$r" | sed '$d')
-            echo "== $m -> $code $(echo "$body" | jq -c '.error.status // empty, .error.message // empty, (.candidates[0].content.parts[0].text // empty)' | tr '\n' ' ' | cut -c1-300)"
-          done
-      - name: Agent check
+      - name: Login check
         run: |
           q() {
             echo "== $1"
@@ -44,16 +20,9 @@ jobs:
               --data @- "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" | jq -c '.'
           }
           ME="d95a25a6-e873-41d1-80ef-26258d3ff3b7"
-          echo "== function secrets (names only)"
-          curl -sS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/$PROJECT_REF/secrets" | jq -c '[.[].name]'
-          echo "== deployed functions"
-          curl -sS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/$PROJECT_REF/functions" | jq -c '[.[] | {slug, status, version, verify_jwt}]'
-          q "owner agent messages today (no text)" "select created_at, role, length(body) len, left(coalesce(meta->>'kind',''),20) kind, jsonb_array_length(coalesce(meta->'links','[]'::jsonb)) links, jsonb_array_length(coalesce(meta->'bookings','[]'::jsonb)) bookings from public.agent_messages where user_id='$ME' and created_at > now() - interval '24 hours' order by created_at desc limit 30"
-          q "owner agent replies that are the trouble line" "select count(*) from public.agent_messages where user_id='$ME' and role='belluh' and body like '%having trouble%'"
-          q "all agent messages last 24h by role" "select role, count(*) from public.agent_messages where created_at > now() - interval '24 hours' group by 1"
-          q "ai usage" "select * from public.ai_usage order by 1 desc limit 5"
-          q "owner app events today" "select created_at, event_name, left(properties::text, 300) p from public.analytics_events where user_id='$ME' and created_at > now() - interval '3 hours' and event_name not in ('tab_changed') order by created_at desc limit 20"
-          q "bookings" "select kind, status, call_status, created_at from public.bookings order by created_at desc limit 10"
+          q "owner auth events since Oct 18 10:30 UTC" "select created_at, payload->>'action' action, payload->'traits'->>'provider' provider from auth.audit_log_entries where created_at > '2026-10-18 10:30+00' and (payload->>'actor_id')='$ME' order by created_at desc limit 40"
+          q "owner app events since Oct 18 10:30 UTC" "select created_at, event_name, left(properties::text, 400) p from public.analytics_events where user_id='$ME' and created_at > '2026-10-18 10:30+00' and event_name in ('app_opened','load_done','load_failed','load_stalled','client_error','render_error','media_failed') order by created_at desc limit 40"
+          q "any account load problems since Oct 18 10:30" "select event_name, count(*) from public.analytics_events where created_at > '2026-10-18 10:30+00' and event_name in ('load_done','load_failed','load_stalled','client_error','render_error') group by 1"
 
   _old:
     runs-on: ubuntu-24.04
