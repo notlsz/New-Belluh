@@ -152,7 +152,9 @@
       @media (prefers-reduced-motion: reduce) { .belluh-ripple { animation-duration: 0.01s; } .belluh-ripple ~ .belluh-mark { animation: none; } }
       @keyframes belluh-orb-breathe { 0%, 100% { transform: scale(0.92); opacity: 0.7; } 50% { transform: scale(1.06); opacity: 1; } }
       @media (prefers-reduced-motion: reduce) { .belluh-orb-glow { animation: none !important; } }
-    </style>
+      @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { [class*="animate-[fadeUp"] { animation: none !important; } }
+</style>
   <script type="importmap">
 {
   "imports": {
