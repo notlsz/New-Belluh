@@ -36,10 +36,11 @@ const FAQ = [
  * checkout; until then the gift comes to us by email and we send it on by hand.
  */
 const OCCASIONS = [
-  { label: 'Wedding', note: 'For every chapter after the vows. Write it all down, together.' },
-  { label: 'Anniversary', note: "Here's to another year worth remembering." },
-  { label: 'New home', note: 'New keys, new rooms, new memories. Keep every one.' },
-  { label: 'Just because', note: 'You two are my favorite love story.' },
+  // Each occasion has its own deep tone (deepened from Belluh's pink and blue) for the envelope and the card's accents
+  { label: 'Wedding', note: 'For every chapter after the vows. Write it all down, together.', ink: '#b4547f', env: 'linear-gradient(145deg,#c96894,#8f3a62)', wash: '#fbeef3', line: '#ecc6d6' },
+  { label: 'Anniversary', note: "Here's to another year worth remembering.", ink: '#2f6577', env: 'linear-gradient(145deg,#3f7f94,#204a59)', wash: '#ecf4f7', line: '#c4dbe3' },
+  { label: 'New home', note: 'New keys, new rooms, new memories. Keep every one.', ink: '#4f6b55', env: 'linear-gradient(145deg,#68876d,#3a5040)', wash: '#eff3ec', line: '#cfdcc9' },
+  { label: 'Just because', note: 'You two are my favorite love story.', ink: '#6b4a82', env: 'linear-gradient(145deg,#8462a0,#4e3462)', wash: '#f3eef7', line: '#dcd0e7' },
 ];
 const GIFT_CHECKOUT = (import.meta as any).env?.VITE_GIFT_CHECKOUT_URL as string | undefined;
 
@@ -52,6 +53,7 @@ function GiftCard() {
   const [when, setWhen] = React.useState('');           // '' means as soon as it's paid
   const [note, setNote] = React.useState<string | null>(null); // null means the occasion's note
   const [writing, setWriting] = React.useState(false);
+  const tone = OCCASIONS[occasion];
   const today = new Date().toISOString().slice(0, 10);
   const shownNote = (note ?? OCCASIONS[occasion].note).trim() || OCCASIONS[occasion].note;
   const names = [one.trim(), two.trim()].filter(Boolean).join(' & ');
@@ -61,26 +63,26 @@ function GiftCard() {
   const href = GIFT_CHECKOUT ? `${GIFT_CHECKOUT}${GIFT_CHECKOUT.includes('?') ? '&' : '?'}client_reference_id=gift` : `mailto:hello@belluh.com?subject=${encodeURIComponent(`A Belluh gift for ${names}`)}&body=${encodeURIComponent(body)}`;
   const field = 'h-12 w-full rounded-2xl border border-[#e2dacd] bg-[#fffdf9] px-4 text-[15px] text-slate-800 placeholder:text-[#a69c8e] focus:outline-none focus:border-slate-900 transition-colors';
   return (
-    <div id="gift" className="relative mt-5 overflow-hidden rounded-[2.5rem] border border-[#ebe4d8] bg-[#f8f4ee] scroll-mt-24">
+    <div id="gift" className="relative mt-5 overflow-hidden rounded-[2.5rem] border scroll-mt-24 transition-colors duration-700" style={{ background: `linear-gradient(135deg, #faf7f2 30%, ${tone.wash})`, borderColor: tone.line }}>
       <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 p-6 md:p-12 lg:p-16 items-center">
         <div>
-          <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#8a7f70]"><Gift size={14} strokeWidth={1.5} /> Give Belluh</p>
+          <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] transition-colors duration-700" style={{ color: tone.ink }}><Gift size={14} strokeWidth={1.5} /> Give Belluh</p>
           <h3 className="mt-5 font-serif text-4xl md:text-[3.25rem] tracking-tight leading-[1.04]">
-            <span className="text-slate-900">Flowers last a week.</span><br /><span className="text-[#8a7f70] italic">This keeps every one.</span>
+            <span className="text-slate-900">Flowers last a week.</span><br /><span className="italic transition-colors duration-700" style={{ color: tone.ink }}>This keeps every one.</span>
           </h3>
           <p className="mt-5 text-lg text-[#6b6358] font-light leading-relaxed max-w-md">Most of what makes a couple is the small stuff, and it's gone in a year. Give them a journal they share, dates planned for them, and a nudge before the days that matter. A year of it, for both of them.</p>
 
           <div className="mt-8 flex flex-wrap gap-2" role="radiogroup" aria-label="Occasion">
             {OCCASIONS.map((o, i) => (
-              <button key={o.label} role="radio" aria-checked={occasion === i} onClick={() => setOccasion(i)}
-                className={`h-10 px-4 rounded-full text-sm font-semibold transition-all ${occasion === i ? 'bg-slate-900 text-white' : 'bg-transparent text-[#5c554b] border border-[#d9d0c2] hover:border-slate-900'}`}>{o.label}</button>
+              <button key={o.label} role="radio" aria-checked={occasion === i} onClick={() => setOccasion(i)} style={occasion === i ? { background: o.ink, borderColor: o.ink } : undefined}
+                className={`h-10 px-4 rounded-full text-sm font-semibold transition-all ${occasion === i ? 'text-white border' : 'bg-transparent text-[#5c554b] border border-[#d9d0c2] hover:border-slate-900'}`}>{o.label}</button>
             ))}
           </div>
 
           <div className="mt-5 space-y-3">
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
               <input value={one} onChange={e => setOne(e.target.value)} placeholder="Maya" autoComplete="off" aria-label="First partner's name" className={field} />
-              <span className="font-serif italic text-xl text-[#a69c8e] px-1">&amp;</span>
+              <span className="font-serif italic text-xl px-1 transition-colors duration-700" style={{ color: tone.ink }}>&amp;</span>
               <input value={two} onChange={e => setTwo(e.target.value)} placeholder="Dan" autoComplete="off" aria-label="Second partner's name" className={field} />
             </div>
             <input type="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Their email, we'll take it from there" autoComplete="off" aria-label="Their email" className={field} />
@@ -104,21 +106,21 @@ function GiftCard() {
 
         {/* The card they open, building itself as you type */}
         <div className="relative mx-auto w-full max-w-[420px] lg:aspect-[4/5] order-first lg:order-none group/card" aria-label="Preview of the gift">
-          <div aria-hidden="true" className="absolute inset-x-2 top-6 -bottom-4 rounded-[1.75rem] bg-[#1c1f26] rotate-[4deg] shadow-[0_40px_80px_-40px_rgba(15,23,42,0.7)] transition-transform duration-700 group-hover/card:rotate-[6deg] group-hover/card:translate-x-2" />
+          <div aria-hidden="true" style={{ background: tone.env }} className="absolute inset-x-2 top-6 -bottom-4 rounded-[1.75rem] rotate-[4deg] shadow-[0_40px_80px_-40px_rgba(15,23,42,0.7)] transition-transform duration-700 group-hover/card:rotate-[6deg] group-hover/card:translate-x-2" />
           <div className="relative h-full min-h-[440px] rounded-[1.75rem] bg-[#fffdf9] shadow-[0_30px_60px_-30px_rgba(40,30,20,0.35)] p-7 md:p-10 flex flex-col -rotate-[1.5deg] transition-transform duration-700 group-hover/card:-rotate-[3deg] group-hover/card:-translate-y-2">
-            <div aria-hidden="true" className="absolute inset-3 rounded-[1.25rem] border border-[#e6ddcf] pointer-events-none" />
+            <div aria-hidden="true" className="absolute inset-3 rounded-[1.25rem] border pointer-events-none transition-colors duration-700" style={{ borderColor: tone.line }} />
             <div className="flex items-center justify-between">
               <span className="inline-flex items-center gap-2"><DragonflyMark size={26} rippleOnMount={false} /><span className="font-serif text-lg text-slate-900">Belluh</span></span>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#a69c8e]">{OCCASIONS[occasion].label}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.28em] transition-colors duration-700" style={{ color: tone.ink }}>{tone.label}</span>
             </div>
             <p className="mt-auto pt-10 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#a69c8e]">A year of us, for</p>
             <p className={`mt-2 font-serif text-[2.1rem] md:text-[2.75rem] leading-[1.05] tracking-tight break-words transition-colors ${names ? 'text-slate-900' : 'text-[#d5ccbe]'}`}>{names || 'Maya & Dan'}</p>
-            <div className="mt-6 h-px w-12 bg-[#cbbfae]" />
+            <div className="mt-6 h-[2px] w-12 rounded-full transition-colors duration-700" style={{ background: tone.ink }} />
             <p className="mt-6 font-serif italic text-lg leading-relaxed text-[#4a443c] min-h-[3.5rem] break-words">{shownNote}</p>
             <p className="mt-4 pb-8 font-serif text-[15px] text-[#6b6358]">— {from.trim() || 'you'}</p>
-            <div className="mt-auto pt-6 border-t border-[#e6ddcf] flex items-end justify-between gap-4">
+            <div style={{ borderColor: tone.line }} className="mt-auto pt-6 border-t flex items-end justify-between gap-4">
               <span className="text-[13px] text-[#8a7f70] leading-snug">{opens ? <>Opens {opens}</> : <>Their shared journal,<br />ready the moment they open it</>}</span>
-              <span className="font-serif text-2xl text-slate-900 tracking-tight shrink-0">One year</span>
+              <span className="font-serif italic text-2xl tracking-tight shrink-0 transition-colors duration-700" style={{ color: tone.ink }}>One year</span>
             </div>
           </div>
         </div>
