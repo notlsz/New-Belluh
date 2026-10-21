@@ -23,7 +23,7 @@ const FAQ = [
   { q: 'Why is Belluh made of water?', a: "So you can see what it's doing. It ripples when you type, swirls while it thinks, and moves with every word it says. Ask it to become something, a cat, a lighthouse, the first letter of your name, and it takes that shape." },
   { q: 'What happens to my data?', a: "Your entries are encrypted in storage and in transit, and never sold. Belluh's replies are written by Google's Gemini models, which process your entries to write them." },
   { q: 'Is it free?', a: "Yes. Writing together, your shared memory and a few chats with Belluh a week are free for good. Duo is $7.77 a month or $88.88 a year, one price for the two of you." },
-  { q: 'Can I give Belluh to a couple?', a: "Yes. Give a year of Duo for $88.88 for a wedding, an anniversary or a new home. Pick the day it arrives and we send it to them with your note." },
+  { q: 'Can I give Belluh to a couple?', a: "Yes. Give a year of Duo for $88.88 to a new couple, for an engagement, a wedding, an anniversary or a new home. Pick the day it arrives and we send it to them with your note." },
   { q: 'What happens to our shared memory if we stop paying?', a: "Nothing is lost. Every entry and everything Belluh remembers stays yours, and the free plan keeps all of it." },
 ];
 
@@ -36,6 +36,8 @@ const FAQ = [
  * VITE_GIFT_CHECKOUT_URL to a checkout and the button pays; until then the gift comes to us by email.
  */
 const OCCASIONS = [
+  { label: 'New couple', note: 'To the start of something. Write it down from day one.', ink: '#4a7aa3', stripe: '#5b8cb5' },
+  { label: 'Engagement', note: 'Before the wedding plans take over, keep the story of how you got here.', ink: '#a8693f', stripe: '#bb7b50' },
   { label: 'Wedding', note: 'For every chapter after the vows. Write it all down, together.', ink: '#b4547f', stripe: '#c96894' },
   { label: 'Anniversary', note: "Here's to another year worth remembering.", ink: '#3f7486', stripe: '#4f8aa0' },
   { label: 'New home', note: 'New keys, new rooms, new memories. Keep every one.', ink: '#5f7d66', stripe: '#6f9077' },
@@ -237,9 +239,9 @@ function GiftSection() {
         <div className="text-center max-w-2xl mx-auto">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-5">Give Belluh</p>
           <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
-            <span className="text-slate-900">Some gifts are opened.</span><br /><span className="text-[#f0addd] italic">This one is kept.</span>
+            <span className="text-slate-900">A gift worth</span><br /><span className="text-[#f0addd] italic">remembering.</span>
           </h2>
-          <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed">You're the one who remembers the little things. Tell Belluh who it's for, and it wraps a year of their story, ready to keep.</p>
+          <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed">Every couple you love is living moments they'll forget: the first months, the proposal, the move, the years in between. Give them a year of Belluh, and none of it slips away.</p>
         </div>
 
         <div className="mt-16 md:mt-20 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
