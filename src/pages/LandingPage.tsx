@@ -59,68 +59,65 @@ function GiftCard() {
   const opens = when ? new Date(`${when}T12:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : null;
   const body = `For: ${names}\nTheir email: ${email}\nOccasion: ${OCCASIONS[occasion].label}\nSend on: ${opens ?? 'Right away'}\nFrom: ${from}\nNote: ${shownNote}`;
   const href = GIFT_CHECKOUT ? `${GIFT_CHECKOUT}${GIFT_CHECKOUT.includes('?') ? '&' : '?'}client_reference_id=gift` : `mailto:hello@belluh.com?subject=${encodeURIComponent(`A Belluh gift for ${names}`)}&body=${encodeURIComponent(body)}`;
-  const field = 'h-12 w-full rounded-2xl border border-slate-200/80 bg-white/85 px-4 text-[15px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white transition-colors';
+  const field = 'h-12 w-full rounded-2xl border border-[#e2dacd] bg-[#fffdf9] px-4 text-[15px] text-slate-800 placeholder:text-[#a69c8e] focus:outline-none focus:border-slate-900 transition-colors';
   return (
-    <div id="gift" className="relative mt-5 overflow-hidden rounded-[2.5rem] border border-white bg-gradient-to-br from-[#fdf0f8] via-white to-[#eef7fa] shadow-[0_40px_100px_-60px_rgba(63,116,134,0.6)] scroll-mt-24">
-      <div aria-hidden="true" className="pointer-events-none absolute -top-32 -left-24 h-80 w-80 rounded-full bg-[#f0addd]/30 blur-3xl" />
-      <div aria-hidden="true" className="pointer-events-none absolute -bottom-40 right-0 h-96 w-96 rounded-full bg-[#CDE9F2]/70 blur-3xl" />
+    <div id="gift" className="relative mt-5 overflow-hidden rounded-[2.5rem] border border-[#ebe4d8] bg-[#f8f4ee] scroll-mt-24">
       <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 p-6 md:p-12 lg:p-16 items-center">
         <div>
-          <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d77fbd]"><Gift size={15} /> Give Belluh</p>
+          <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#8a7f70]"><Gift size={14} strokeWidth={1.5} /> Give Belluh</p>
           <h3 className="mt-5 font-serif text-4xl md:text-[3.25rem] tracking-tight leading-[1.04]">
-            <span className="text-slate-900">Flowers last a week.</span><br /><span className="text-[#f0addd] italic">This keeps every one.</span>
+            <span className="text-slate-900">Flowers last a week.</span><br /><span className="text-[#8a7f70] italic">This keeps every one.</span>
           </h3>
-          <p className="mt-5 text-lg text-slate-500 font-light leading-relaxed max-w-md">Most of what makes a couple is the small stuff, and it's gone in a year. Give them a journal they share, dates planned for them, and a nudge before the days that matter. A year of it, for both of them.</p>
+          <p className="mt-5 text-lg text-[#6b6358] font-light leading-relaxed max-w-md">Most of what makes a couple is the small stuff, and it's gone in a year. Give them a journal they share, dates planned for them, and a nudge before the days that matter. A year of it, for both of them.</p>
 
           <div className="mt-8 flex flex-wrap gap-2" role="radiogroup" aria-label="Occasion">
             {OCCASIONS.map((o, i) => (
               <button key={o.label} role="radio" aria-checked={occasion === i} onClick={() => setOccasion(i)}
-                className={`h-10 px-4 rounded-full text-sm font-semibold transition-all ${occasion === i ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/15' : 'bg-white/80 text-slate-600 border border-slate-200/80 hover:border-slate-400'}`}>{o.label}</button>
+                className={`h-10 px-4 rounded-full text-sm font-semibold transition-all ${occasion === i ? 'bg-slate-900 text-white' : 'bg-transparent text-[#5c554b] border border-[#d9d0c2] hover:border-slate-900'}`}>{o.label}</button>
             ))}
           </div>
 
           <div className="mt-5 space-y-3">
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
               <input value={one} onChange={e => setOne(e.target.value)} placeholder="Maya" autoComplete="off" aria-label="First partner's name" className={field} />
-              <span className="font-serif italic text-xl text-[#f0addd] px-1">&amp;</span>
+              <span className="font-serif italic text-xl text-[#a69c8e] px-1">&amp;</span>
               <input value={two} onChange={e => setTwo(e.target.value)} placeholder="Dan" autoComplete="off" aria-label="Second partner's name" className={field} />
             </div>
             <input type="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Their email, we'll take it from there" autoComplete="off" aria-label="Their email" className={field} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-2">
               <input value={from} onChange={e => setFrom(e.target.value)} placeholder="From" autoComplete="given-name" aria-label="Your name" className={field} />
               <label className={`${field} flex items-center gap-2 cursor-pointer`}>
-                <span className="text-slate-400 shrink-0">Send</span>
-                <input type="date" min={today} value={when} onChange={e => setWhen(e.target.value)} aria-label="Send on" className={`w-full bg-transparent focus:outline-none text-[15px] ${when ? 'text-slate-800' : 'text-slate-400'}`} />
+                <span className="text-[#a69c8e] shrink-0">Send</span>
+                <input type="date" min={today} value={when} onChange={e => setWhen(e.target.value)} aria-label="Send on" className={`w-full bg-transparent focus:outline-none text-[15px] ${when ? 'text-slate-800' : 'text-[#a69c8e]'}`} />
               </label>
             </div>
             {writing
               ? <textarea autoFocus value={note ?? OCCASIONS[occasion].note} onChange={e => setNote(e.target.value.slice(0, 180))} rows={2} aria-label="Your note" className={`${field} h-auto py-3 resize-none leading-relaxed`} />
-              : <button onClick={() => setWriting(true)} className="text-sm font-semibold text-[#3f7486] hover:text-slate-900 transition-colors">Write your own note</button>}
+              : <button onClick={() => setWriting(true)} className="text-sm font-medium text-[#5c554b] underline decoration-[#d9d0c2] underline-offset-4 hover:decoration-slate-900 transition-colors">Write your own note</button>}
             <a href={ready ? href : undefined} target={GIFT_CHECKOUT ? '_blank' : undefined} rel="noreferrer" aria-disabled={!ready} onClick={() => ready && rememberCta('pricing-gift')}
-              className={`group mt-2 h-14 w-full rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 transition-all ${ready ? 'hover:bg-black hover:shadow-xl hover:shadow-slate-900/20 cursor-pointer' : 'opacity-35 cursor-not-allowed'}`}>
+              className={`group mt-2 h-14 w-full rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 transition-all ${ready ? 'hover:bg-black cursor-pointer' : 'opacity-30 cursor-not-allowed'}`}>
               Give it, $88.88 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
             </a>
-            <p className="text-sm text-slate-400 text-center">{ready ? (opens ? `It opens for them on ${opens}.` : 'It reaches them as soon as you pay.') : 'Their names and email, and you are done.'}</p>
+            <p className="text-sm text-[#8a7f70] text-center">{ready ? (opens ? `It opens for them on ${opens}.` : 'It reaches them as soon as you pay.') : 'Their names and email, and you are done.'}</p>
           </div>
         </div>
 
         {/* The card they open, building itself as you type */}
         <div className="relative mx-auto w-full max-w-[420px] lg:aspect-[4/5] order-first lg:order-none group/card" aria-label="Preview of the gift">
-          <div aria-hidden="true" className="absolute inset-0 rounded-[2rem] bg-[#CDE9F2] rotate-[7deg] translate-x-4 translate-y-2 transition-transform duration-700 group-hover/card:rotate-[10deg]" />
-          <div aria-hidden="true" className="absolute inset-0 rounded-[2rem] bg-[#f0addd]/70 -rotate-[5deg] -translate-x-3 transition-transform duration-700 group-hover/card:-rotate-[8deg]" />
-          <div className="relative h-full min-h-[440px] rounded-[2rem] bg-[linear-gradient(160deg,#ffffff_0%,#fffafd_55%,#f6fbfd_100%)] border border-white shadow-[0_50px_90px_-40px_rgba(15,23,42,0.45)] p-7 md:p-10 flex flex-col -rotate-1 transition-transform duration-700 group-hover/card:rotate-0">
-            <div aria-hidden="true" className="absolute inset-3 rounded-[1.5rem] border border-[#f0addd]/25 pointer-events-none" />
+          <div aria-hidden="true" className="absolute inset-x-2 top-6 -bottom-4 rounded-[1.75rem] bg-[#1c1f26] rotate-[4deg] shadow-[0_40px_80px_-40px_rgba(15,23,42,0.7)] transition-transform duration-700 group-hover/card:rotate-[6deg] group-hover/card:translate-x-2" />
+          <div className="relative h-full min-h-[440px] rounded-[1.75rem] bg-[#fffdf9] shadow-[0_30px_60px_-30px_rgba(40,30,20,0.35)] p-7 md:p-10 flex flex-col -rotate-[1.5deg] transition-transform duration-700 group-hover/card:-rotate-[3deg] group-hover/card:-translate-y-2">
+            <div aria-hidden="true" className="absolute inset-3 rounded-[1.25rem] border border-[#e6ddcf] pointer-events-none" />
             <div className="flex items-center justify-between">
-              <span className="inline-flex items-center gap-2"><DragonflyMark size={26} rippleOnMount={false} /><span className="font-serif text-lg text-[#9bbecb]">Belluh</span></span>
-              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">{OCCASIONS[occasion].label}</span>
+              <span className="inline-flex items-center gap-2"><DragonflyMark size={26} rippleOnMount={false} /><span className="font-serif text-lg text-slate-900">Belluh</span></span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#a69c8e]">{OCCASIONS[occasion].label}</span>
             </div>
-            <p className="mt-auto pt-10 text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb]">A year of us, for</p>
-            <p className={`mt-2 font-serif text-[2.1rem] md:text-[2.75rem] leading-[1.05] tracking-tight break-words transition-colors ${names ? 'text-slate-900' : 'text-slate-300'}`}>{names || 'Maya & Dan'}</p>
-            <div className="mt-6 h-px w-16 bg-[#f0addd]" />
-            <p className="mt-6 font-serif italic text-lg leading-relaxed text-slate-600 min-h-[3.5rem] break-words">{shownNote}</p>
-            <p className="mt-4 pb-8 text-sm text-slate-500">— {from.trim() || 'you'}</p>
-            <div className="mt-auto pt-6 border-t border-dashed border-slate-200 flex items-end justify-between gap-4">
-              <span className="text-sm text-slate-400 leading-snug">{opens ? <>Opens {opens}</> : <>Their shared journal,<br />ready the moment they open it</>}</span>
+            <p className="mt-auto pt-10 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#a69c8e]">A year of us, for</p>
+            <p className={`mt-2 font-serif text-[2.1rem] md:text-[2.75rem] leading-[1.05] tracking-tight break-words transition-colors ${names ? 'text-slate-900' : 'text-[#d5ccbe]'}`}>{names || 'Maya & Dan'}</p>
+            <div className="mt-6 h-px w-12 bg-[#cbbfae]" />
+            <p className="mt-6 font-serif italic text-lg leading-relaxed text-[#4a443c] min-h-[3.5rem] break-words">{shownNote}</p>
+            <p className="mt-4 pb-8 font-serif text-[15px] text-[#6b6358]">— {from.trim() || 'you'}</p>
+            <div className="mt-auto pt-6 border-t border-[#e6ddcf] flex items-end justify-between gap-4">
+              <span className="text-[13px] text-[#8a7f70] leading-snug">{opens ? <>Opens {opens}</> : <>Their shared journal,<br />ready the moment they open it</>}</span>
               <span className="font-serif text-2xl text-slate-900 tracking-tight shrink-0">One year</span>
             </div>
           </div>
