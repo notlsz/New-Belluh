@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Lock, Menu, X, ChevronDown, Heart, MessageCircle, CalendarCheck, Plus } from 'lucide-react';
+import { ArrowRight, Lock, Menu, X, ChevronDown, Heart, MessageCircle, CalendarCheck, Plus, Check } from 'lucide-react';
 import { Receipt } from './About';
 import { rememberCta } from '../services/analytics';
 import BelluhOrb from '../components/BelluhOrb';
@@ -21,7 +21,20 @@ const FAQ = [
   { q: 'Can I use it from WhatsApp or text?', a: "Yes. Connect WhatsApp, SMS or Telegram in Settings with one tap and text Belluh like you'd talk to it in the app. Same Belluh, same memory." },
   { q: 'Why is Belluh made of water?', a: "So you can see what it's doing. It ripples when you type, swirls while it thinks, and moves with every word it says. Ask it to become something, a cat, a lighthouse, the first letter of your name, and it takes that shape." },
   { q: 'What happens to my data?', a: "Your entries are encrypted in storage and in transit, and never sold. Belluh's replies are written by Google's Gemini models, which process your entries to write them." },
-  { q: 'Is it free?', a: 'Yes, Belluh is free to start.' },
+  { q: 'Is it free?', a: "Yes. Writing together, your shared memory and a few chats with Belluh a week are free for good. Together is $6.99 a month for the two of you, one price per couple." },
+  { q: 'What happens to our shared memory if we stop paying?', a: "Nothing is lost. Every entry and everything Belluh remembers stays yours,, and the free plan keeps all of it." },
+];
+
+// Priced from what a couple costs to run, not from what the market will bear: AI for both partners, texting, the odd
+// restaurant call and hosting come to roughly $1.80 a month for an active couple and $3.60 for a heavy one. $6.99
+// covers the heavy couple with about 80% left over after payment fees, and an average couple at well over that.
+const PLANS = [
+  { name: 'Free', price: '$0', per: 'for good', blurb: 'Start your shared memory today.', cta: 'Start free',
+    items: ['Unlimited entries, private or shared', 'Your shared memory, kept for both of you', 'Belluh a few times a week', 'Weekly thing to try together'] },
+  { name: 'Together', price: '$6.99', per: 'a month, for the two of you', alt: 'or $59 a year', blurb: 'Belluh, all in, for both of you.', cta: 'Start free', featured: true,
+    items: ['Belluh whenever you want it', 'Text it on iMessage, WhatsApp or SMS', 'Dates planned, tables booked, flowers ready', 'Reminders, calendar, how-was-it follow ups'] },
+  { name: 'For teams', price: 'Talk to us', per: 'employers, therapists, platforms', blurb: 'Belluh for the people you care for.', cta: 'Get in touch', team: true,
+    items: ['A relationship benefit for your people', 'Between-sessions support for couples therapy', 'Belluh as a layer inside your platform', 'Private by design: you never see entries'] },
 ];
 
 const STEPS = [
@@ -308,6 +321,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       { label: 'What it does', action: () => scrollToSection('features') },
       { label: 'Inside', action: () => scrollToSection('inside') },
       { label: 'Stories', action: () => scrollToSection('stories') },
+      { label: 'Pricing', action: () => scrollToSection('pricing') },
       { label: 'FAQ', action: () => scrollToSection('faq') },
       { label: 'Privacy', action: () => { toggleMenu(); onShowLegal('privacy'); } },
       { label: 'Our Why', action: () => { toggleMenu(); onGoToAbout(); } },
@@ -331,6 +345,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
               { label: 'What it does', onClick: () => scrollToSection('features'), section: 'features' },
               { label: 'Inside', onClick: () => scrollToSection('inside'), section: 'inside' },
               { label: 'Stories', onClick: () => scrollToSection('stories'), section: 'stories' },
+              { label: 'Pricing', onClick: () => scrollToSection('pricing'), section: 'pricing' },
               { label: 'FAQ', onClick: () => scrollToSection('faq'), section: 'faq' },
           ]}
           onHome={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -561,6 +576,39 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
               <button onClick={onGoToAbout} aria-label="Read the story behind Belluh" className="block w-full max-w-[340px] mx-auto lg:mr-0">
                   <Receipt />
               </button>
+          </div>
+      </section>
+
+      {/* Pricing: the shared memory is the product; you pay for Belluh doing more with it */}
+      <section id="pricing" className="relative z-10 px-6 py-24 md:py-32 scroll-mt-24">
+          <div className="max-w-6xl mx-auto">
+              <div className="max-w-2xl">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-5">Pricing</p>
+                  <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
+                      <span className="text-slate-900">One memory.</span><br /><span className="text-[#f0addd] italic">Two of you.</span>
+                  </h2>
+                  <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed">Everything you write becomes a memory you both own, and it only grows. One price covers the couple, never each of you.</p>
+              </div>
+              <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-5">
+                  {PLANS.map(plan => (
+                      <div key={plan.name} className={`relative rounded-[2rem] p-8 flex flex-col ${plan.featured ? 'bg-white border-2 border-slate-900 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.45)]' : 'bg-white/70 border border-slate-100'}`}>
+                          {plan.featured && <span className="absolute -top-3 left-8 h-6 px-3 rounded-full bg-slate-900 text-white text-[11px] font-bold tracking-wide inline-flex items-center">Most couples</span>}
+                          <p className="font-serif text-2xl text-slate-900">{plan.name}</p>
+                          <p className="mt-1 text-sm text-slate-500">{plan.blurb}</p>
+                          <p className="mt-7 flex items-baseline gap-2 flex-wrap"><span className={`font-serif ${plan.team ? 'text-3xl' : 'text-5xl'} text-slate-900 tracking-tight`}>{plan.price}</span><span className="text-sm text-slate-400">{plan.per}</span></p>
+                          {plan.alt ? <p className="mt-1 text-sm text-[#3f7486] font-semibold">{plan.alt}</p> : <p className="mt-1 text-sm">&nbsp;</p>}
+                          <ul className="mt-7 space-y-3 flex-1">
+                              {plan.items.map(it => <li key={it} className="flex items-start gap-3 text-[15px] text-slate-600"><Check size={17} className="mt-0.5 shrink-0 text-[#9bbecb]" />{it}</li>)}
+                          </ul>
+                          {plan.team ? (
+                              <a href="mailto:hello@belluh.com?subject=Belluh%20for%20teams" className="mt-8 h-12 rounded-full border border-slate-200 text-slate-800 text-sm font-bold inline-flex items-center justify-center gap-2 hover:border-slate-400 transition-colors">{plan.cta} <ArrowRight size={15} /></a>
+                          ) : (
+                              <button onClick={() => { rememberCta(`pricing-${plan.name.toLowerCase()}`); onGetStarted(); }} className={`mt-8 h-12 rounded-full text-sm font-bold inline-flex items-center justify-center gap-2 transition-colors ${plan.featured ? 'bg-slate-900 text-white hover:bg-black' : 'bg-white border border-slate-200 text-slate-800 hover:border-slate-400'}`}>{plan.cta} <ArrowRight size={15} /></button>
+                          )}
+                      </div>
+                  ))}
+              </div>
+              <p className="mt-8 text-sm text-slate-400">No card to start. Your entries are never sold.</p>
           </div>
       </section>
 
