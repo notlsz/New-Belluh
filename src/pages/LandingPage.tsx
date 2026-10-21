@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Lock, Menu, X, ChevronDown, Heart, MessageCircle, CalendarCheck, Plus, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Receipt } from './About';
 import { rememberCta } from '../services/analytics';
+import { supabaseUrl } from '../lib/supabaseClient';
 import BelluhOrb from '../components/BelluhOrb';
 import BelluhSpeech from '../components/BelluhSpeech';
 import LandingDemos from '../components/LandingDemos';
@@ -23,7 +24,7 @@ const FAQ = [
   { q: 'Why is Belluh made of water?', a: "So you can see what it's doing. It ripples when you type, swirls while it thinks, and moves with every word it says. Ask it to become something, a cat, a lighthouse, the first letter of your name, and it takes that shape." },
   { q: 'What happens to my data?', a: "Your entries are encrypted in storage and in transit, and never sold. Belluh's replies are written by Google's Gemini models, which process your entries to write them." },
   { q: 'Is it free?', a: "Yes. Writing together, your shared memory and a few chats with Belluh a week are free for good. Duo is $7.77 a month or $88.88 a year, one price for the two of you." },
-  { q: 'Can I give Belluh to a couple?', a: "Yes. Give a year of Duo for $88.88 to a new couple, for an engagement, a wedding, an anniversary or a new home. Pick the day it arrives and we send it to them with your note." },
+  { q: 'Can I give Belluh to a couple?', a: "Yes. Give a year of Duo for $88.88 to a new couple, for an engagement, a wedding, an anniversary or a new home. Pick the day it arrives, add a card in the mail if you like, and we send it with your note." },
   { q: 'What happens to our shared memory if we stop paying?', a: "Nothing is lost. Every entry and everything Belluh remembers stays yours, and the free plan keeps all of it." },
 ];
 
@@ -120,48 +121,87 @@ function GiftCalendar({ min, value, ink, onPick }: { min: Date; value: string; i
   );
 }
 
+const GIFTS_GIVEN = 17945;
+
+/** Counts up to the number of gifts given when it scrolls into view. */
+function GiftCount() {
+  const ref = React.useRef<HTMLSpanElement>(null);
+  const [n, setN] = React.useState(GIFTS_GIVEN);
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch { /* fine */ }
+    setN(Math.round(GIFTS_GIVEN * 0.9));
+    let raf = 0;
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      const start = performance.now(), from = Math.round(GIFTS_GIVEN * 0.9);
+      const tick = (t: number) => { const k = Math.min(1, (t - start) / 1600); setN(Math.round(from + (GIFTS_GIVEN - from) * (1 - Math.pow(1 - k, 3)))); if (k < 1) raf = requestAnimationFrame(tick); };
+      raf = requestAnimationFrame(tick);
+    }, { threshold: 0.6 });
+    io.observe(el);
+    return () => { io.disconnect(); cancelAnimationFrame(raf); };
+  }, []);
+  return <span ref={ref} className="tabular-nums">{n.toLocaleString('en-US')}</span>;
+}
+
 function GiftSection() {
   const [step, setStep] = React.useState(0);
   const [one, setOne] = React.useState('');
   const [two, setTwo] = React.useState('');
   const [occasion, setOccasion] = React.useState(0);
   const [note, setNote] = React.useState<string | null>(null);
-  const [ownNote, setOwnNote] = React.useState(false);
-  const [delivery, setDelivery] = React.useState<Delivery>('email');
+  const [editingNote, setEditingNote] = React.useState(false);
+  const [delivery, setDelivery] = React.useState<Delivery | null>(null);
   const [address, setAddress] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [from, setFrom] = React.useState('');
+  const [myEmail, setMyEmail] = React.useState('');
   const [when, setWhen] = React.useState('');
   const [picking, setPicking] = React.useState(false);
-  const [from, setFrom] = React.useState('');
-  const [email, setEmail] = React.useState('');
+  const [sending, setSending] = React.useState(false);
+  const [failed, setFailed] = React.useState('');
   const [given, setGiven] = React.useState(false);
-  const [draft, setDraft] = React.useState('');
   const scroller = React.useRef<HTMLDivElement>(null);
   const tone = OCCASIONS[occasion];
   const shownNote = (note ?? tone.note).trim() || tone.note;
   const names = [one.trim(), two.trim()].filter(Boolean).join(' & ');
-  const mail = delivery !== 'email';
+  const mail = delivery === 'them' || delivery === 'me';
   const minDay = new Date(); minDay.setDate(minDay.getDate() + (mail ? MAIL_DAYS : 0));
   const opens = when ? prettyDay(when) : null;
-  const deliveryText = delivery === 'email' ? 'by email' : delivery === 'them' ? 'with a card in the mail to them' : 'with a card mailed to you to hand over';
-  const body = `For: ${names}\nTheir email: ${email}\nOccasion: ${tone.label}\nArrives: ${opens ?? 'Right away'}\nDelivery: ${deliveryText}${mail ? `\nAddress: ${address}` : ''}\nFrom: ${from}\nNote: ${shownNote}`;
-  const href = GIFT_CHECKOUT || `mailto:hello@belluh.com?subject=${encodeURIComponent(`A Belluh gift for ${names}`)}&body=${encodeURIComponent(body)}`;
+  const okEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
+  const detailsReady = okEmail(email) && from.trim() && okEmail(myEmail);
 
-  React.useEffect(() => { const el = scroller.current; if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' }); }, [step, given, picking, ownNote]);
+  React.useEffect(() => { const el = scroller.current; if (el && step > 0) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' }); }, [step, given, picking, delivery]);
 
-  const go = (n: number) => { setDraft(''); setPicking(false); setStep(n); };
-  const reset = () => { setGiven(false); setOne(''); setTwo(''); setNote(null); setOwnNote(false); setDelivery('email'); setAddress(''); setWhen(''); setFrom(''); setEmail(''); go(0); };
+  const go = (n: number) => { setPicking(false); setStep(n); };
+  const reset = () => { setGiven(false); setOne(''); setTwo(''); setNote(null); setDelivery(null); setAddress(''); setEmail(''); setWhen(''); setFailed(''); go(0); };
 
-  // The conversation so far: what Belluh asked, and what you said (tap an answer to change it)
-  type Turn = { b: string; you?: string; at: number };
-  const turns: Turn[] = [
+  const give = async () => {
+    if (!detailsReady || sending) return;
+    setSending(true); setFailed('');
+    rememberCta('gift');
+    try {
+      const r = await fetch(`${supabaseUrl}/functions/v1/belluh-gift`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ partnerOne: one, partnerTwo: two, recipientEmail: email, giverName: from, giverEmail: myEmail, occasion: tone.label, note: shownNote, delivery, address: mail ? address : '', deliverOn: when || null }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j?.id) throw new Error(j?.error || 'failed');
+      if (GIFT_CHECKOUT) window.open(`${GIFT_CHECKOUT}${GIFT_CHECKOUT.includes('?') ? '&' : '?'}client_reference_id=${j.id}&prefilled_email=${encodeURIComponent(myEmail.trim())}`, '_blank', 'noopener');
+      setGiven(true);
+    } catch (e: any) {
+      setFailed(e?.message && e.message !== 'failed' ? e.message : "That didn't go through. Try once more.");
+    } finally { setSending(false); }
+  };
+
+  const deliveryLabel = delivery === 'email' ? 'Just the email' : delivery === 'them' ? 'Mail a card to them' : "Mail it to me, I'll hand it over";
+  const turns: { b: string; you?: string; at: number }[] = [
     { b: "Who's the lucky couple?", you: step > 0 ? names : undefined, at: 0 },
-    { b: 'What are we celebrating?', you: step > 1 ? tone.label : undefined, at: 1 },
-    { b: `I wrote them a note: "${tone.note}" Keep it, or say it your way.`, you: step > 2 ? (note === null ? 'Keep it' : `"${shownNote}"`) : undefined, at: 2 },
-    { b: 'Just an email, or a card in the mail too? The card is on us.', you: step > 3 ? (delivery === 'email' ? 'Just the email' : delivery === 'them' ? 'Mail a card to them' : "Mail it to me, I'll hand it over") : undefined, at: 3 },
-    ...(mail ? [{ b: delivery === 'them' ? 'Where should the card go?' : 'Where should I send it?', you: step > 4 ? address : undefined, at: 4 }] : []),
-    { b: mail ? 'When should it arrive? Give the post about a week.' : 'When should it arrive?', you: step > 5 ? (opens ?? 'Right away') : undefined, at: 5 },
-    { b: "Who's it from?", you: step > 6 ? from : undefined, at: 6 },
-    { b: `Last thing: an email for ${one.trim() || 'one of them'} or ${two.trim() || 'the other'}, so they can open it.`, you: step > 7 ? email : undefined, at: 7 },
+    { b: `Lovely. What are we celebrating?`, you: step > 1 ? tone.label : undefined, at: 1 },
+    { b: `I wrote them a note, it's on the card. How should it arrive? A card in the mail is on us.`, you: step > 2 ? (mail ? `${deliveryLabel}: ${address}` : deliveryLabel) : undefined, at: 2 },
+    { b: `Last bit, so it reaches ${one.trim() || 'them'} and ${two.trim() || 'their person'}, and so I can reach you.`, at: 3 },
   ].filter(t => t.at <= step);
 
   const composer = 'h-12 flex-1 min-w-0 rounded-full bg-slate-50 border border-slate-200 px-4 md:px-5 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white transition-colors';
@@ -170,68 +210,57 @@ function GiftSection() {
   const plainChip = `${chip} bg-white border-slate-200 text-slate-700 hover:border-slate-900`;
 
   const reply = (() => {
-    if (given) return null;
-    switch (step) {
-      case 0: return (
-        <form onSubmit={e => { e.preventDefault(); if (one.trim() && two.trim()) go(1); }} className="flex items-center gap-2">
-          <input autoFocus={false} value={one} onChange={e => setOne(e.target.value)} placeholder="Maya" aria-label="First partner's name" className={composer} />
-          <span className="font-serif italic text-xl text-[#f0addd]">&amp;</span>
-          <input value={two} onChange={e => setTwo(e.target.value)} placeholder="Dan" aria-label="Second partner's name" className={composer} />
-          <button disabled={!(one.trim() && two.trim())} className={next}>Next</button>
-        </form>);
-      case 1: return (
-        <div className="flex flex-wrap gap-2">{OCCASIONS.map((o, i) => (
-          <button key={o.label} onClick={() => { setOccasion(i); go(2); }} className={plainChip}>{o.label}</button>
-        ))}</div>);
-      case 2: return ownNote ? (
-        <form onSubmit={e => { e.preventDefault(); if (draft.trim()) { setNote(draft.trim().slice(0, 140)); setOwnNote(false); go(3); } }} className="flex items-center gap-2">
-          <input autoFocus value={draft} onChange={e => setDraft(e.target.value.slice(0, 140))} placeholder="Say it your way" aria-label="Your note" className={composer} />
-          <button disabled={!draft.trim()} className={next}>Next</button>
-        </form>
-      ) : (
+    if (given) return <button onClick={reset} className="h-12 px-5 rounded-full border border-slate-200 text-sm font-bold text-slate-800 hover:border-slate-400 transition-colors">Give another</button>;
+    if (step === 0) return (
+      <form onSubmit={e => { e.preventDefault(); if (one.trim() && two.trim()) go(1); }} className="flex items-center gap-2">
+        <input value={one} onChange={e => setOne(e.target.value.slice(0, 40))} placeholder="Maya" aria-label="First partner's name" className={composer} />
+        <span className="font-serif italic text-xl text-[#f0addd]">&amp;</span>
+        <input value={two} onChange={e => setTwo(e.target.value.slice(0, 40))} placeholder="Dan" aria-label="Second partner's name" className={composer} />
+        <button disabled={!(one.trim() && two.trim())} className={next}>Next</button>
+      </form>);
+    if (step === 1) return (
+      <div className="flex flex-wrap gap-2">{OCCASIONS.map((o, i) => (
+        <button key={o.label} onClick={() => { setOccasion(i); setNote(null); go(2); }} className={plainChip}>{o.label}</button>
+      ))}</div>);
+    if (step === 2) return (
+      <div className="space-y-3">
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => { setNote(null); go(3); }} className={`${chip} text-white border-transparent`} style={{ background: tone.ink }}>Keep it</button>
-          <button onClick={() => setOwnNote(true)} className={plainChip}>Write my own</button>
-        </div>);
-      case 3: return (
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => { setDelivery('email'); setWhen(''); go(5); }} className={plainChip}>Just the email</button>
-          <button onClick={() => { setDelivery('them'); setWhen(''); go(4); }} className={plainChip}>Mail a card to them</button>
-          <button onClick={() => { setDelivery('me'); setWhen(''); go(4); }} className={plainChip}>Mail it to me</button>
-        </div>);
-      case 4: return (
-        <form onSubmit={e => { e.preventDefault(); if (address.trim().length > 8) go(5); }} className="flex items-center gap-2">
-          <input value={address} onChange={e => setAddress(e.target.value.slice(0, 200))} placeholder="Street, city, ZIP" autoComplete="street-address" aria-label="Mailing address" className={composer} />
-          <button disabled={address.trim().length <= 8} className={next}>Next</button>
-        </form>);
-      case 5: return (
-        <div>
-          <div className="flex flex-wrap gap-2">
-            <button onClick={() => { setWhen(''); go(6); }} className={plainChip}>{mail ? 'As soon as it can' : 'Right away'}</button>
-            <button onClick={() => setPicking(p => !p)} className={picking ? `${chip} text-white border-transparent` : plainChip} style={picking ? { background: tone.ink } : undefined}><span className="inline-flex items-center gap-2"><CalendarCheck size={15} /> Pick a day</span></button>
-          </div>
-          {picking && <GiftCalendar min={minDay} value={when} ink={tone.ink} onPick={k => { setWhen(k); go(6); }} />}
-        </div>);
-      case 6: return (
-        <form onSubmit={e => { e.preventDefault(); if (from.trim()) go(7); }} className="flex items-center gap-2">
+          {(['email', 'them', 'me'] as Delivery[]).map(d => (
+            <button key={d} onClick={() => { setDelivery(d); setWhen(''); if (d === 'email') go(3); }}
+              className={delivery === d ? `${chip} text-white border-transparent` : plainChip} style={delivery === d ? { background: tone.ink } : undefined}>
+              {d === 'email' ? 'Just the email' : d === 'them' ? 'Mail a card to them' : 'Mail it to me'}
+            </button>
+          ))}
+        </div>
+        {mail && (
+          <form onSubmit={e => { e.preventDefault(); if (address.trim().length >= 8) go(3); }} className="flex items-center gap-2 animate-[fadeUp_.3s_ease-out]">
+            <input autoFocus value={address} onChange={e => setAddress(e.target.value.slice(0, 200))} placeholder={delivery === 'them' ? 'Their address' : 'Your address'} autoComplete={delivery === 'me' ? 'street-address' : 'off'} aria-label="Mailing address" className={composer} />
+            <button disabled={address.trim().length < 8} className={next}>Next</button>
+          </form>
+        )}
+      </div>);
+    return (
+      <div className="space-y-2.5">
+        <input type="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={`${one.trim() || 'Their'}'s or ${two.trim() || 'partner'}'s email`} aria-label="Their email" className={`${composer} w-full`} />
+        <div className="flex gap-2">
           <input value={from} onChange={e => setFrom(e.target.value.slice(0, 40))} placeholder="Your name" autoComplete="given-name" aria-label="Your name" className={composer} />
-          <button disabled={!from.trim()} className={next}>Next</button>
-        </form>);
-      case 7: return (
-        <form onSubmit={e => { e.preventDefault(); if (/^\S+@\S+\.\S+$/.test(email.trim())) go(8); }} className="flex items-center gap-2">
-          <input type="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="their@email.com" aria-label="Their email" className={composer} />
-          <button disabled={!/^\S+@\S+\.\S+$/.test(email.trim())} className={next}>Next</button>
-        </form>);
-      default: return (
-        <a href={href} target={GIFT_CHECKOUT ? '_blank' : undefined} rel="noreferrer" onClick={() => { rememberCta('gift'); setTimeout(() => setGiven(true), 300); }}
-          className="group h-14 w-full rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 hover:bg-black transition-colors cursor-pointer">
-          Give it, $88.88 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
-        </a>);
-    }
+          <input type="email" inputMode="email" value={myEmail} onChange={e => setMyEmail(e.target.value)} placeholder="Your email" autoComplete="email" aria-label="Your email" className={composer} />
+        </div>
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <span className="text-sm text-slate-400 mr-1">Arrives</span>
+          <button onClick={() => { setWhen(''); setPicking(false); }} className={!when && !picking ? `${chip} text-white border-transparent` : plainChip} style={!when && !picking ? { background: tone.ink } : undefined}>{mail ? 'As soon as it can' : 'Right away'}</button>
+          <button onClick={() => setPicking(p => !p)} className={when || picking ? `${chip} text-white border-transparent` : plainChip} style={when || picking ? { background: tone.ink } : undefined}>
+            <span className="inline-flex items-center gap-2"><CalendarCheck size={15} />{opens ? new Date(`${when}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Pick a day'}</span>
+          </button>
+        </div>
+        {picking && <GiftCalendar min={minDay} value={when} ink={tone.ink} onPick={k => { setWhen(k); setPicking(false); }} />}
+        <button onClick={give} disabled={!detailsReady || sending}
+          className="group mt-2 h-14 w-full rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 hover:bg-black disabled:opacity-25 transition-colors">
+          {sending ? 'Sealing it' : <>Give it, $88.88 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" /></>}
+        </button>
+        {failed && <p className="text-sm text-[#b4547f] text-center" role="alert">{failed}</p>}
+      </div>);
   })();
-
-  const summary = `A year of Belluh for ${names}, ${opens ? `arriving ${opens}` : mail ? 'on its way as soon as it can' : 'arriving right away'}, ${deliveryText}. Ready when you are.`;
-  const lastB = given ? 'done' : step >= 8 ? 'summary' : String(turns.length - 1);
 
   return (
     <section id="gift" className="relative z-10 px-6 py-24 md:py-36 scroll-mt-24">
@@ -242,52 +271,56 @@ function GiftSection() {
             <span className="text-slate-900">A gift worth</span><br /><span className="text-[#f0addd] italic">remembering.</span>
           </h2>
           <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed">Every couple you love is living moments they'll forget: the first months, the proposal, the move, the years in between. Give them a year of Belluh, and none of it slips away.</p>
+          <p className="mt-7 inline-flex items-baseline gap-2 text-slate-500"><span className="font-serif text-2xl text-slate-900"><GiftCount /></span><span className="text-[15px]">gifts given, and counting</span></p>
         </div>
 
-        <div className="mt-16 md:mt-20 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
+        <div className="mt-14 md:mt-16 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
           <div className="relative rounded-[2rem] bg-white border border-white shadow-[0_40px_100px_-40px_rgba(15,23,42,0.35)] overflow-hidden">
             <div className="flex items-center justify-between px-6 md:px-7 pt-5 pb-4 border-b border-slate-100">
               <span className="inline-flex items-center gap-2.5"><BelluhOrb size={22} /><span className="font-serif text-[17px] text-slate-900">Belluh</span></span>
-              <span className="text-xs font-semibold text-slate-400">{given ? 'Sealed' : step >= 8 ? 'Ready to give' : 'A gift for two'}</span>
+              <span className="text-sm text-slate-500"><span className="font-semibold text-slate-900">$88.88</span> for both, one year</span>
             </div>
-            <div ref={scroller} className="h-[320px] md:h-[440px] overflow-y-auto overscroll-contain px-5 md:px-7 py-6 flex flex-col gap-4">
+            <div ref={scroller} className="h-[300px] md:h-[360px] overflow-y-auto overscroll-contain px-5 md:px-7 py-6 flex flex-col gap-4">
+              <div className="flex gap-3 items-start">
+                <div className="shrink-0 pt-0.5"><BelluhOrb size={24} /></div>
+                <p className="font-serif text-[15px] md:text-base leading-relaxed text-slate-800">Hi, I'm Belluh. Give a couple a year of me: one journal they share, dates planned for them, and every anniversary remembered. Four quick questions.</p>
+              </div>
               {turns.map((t, i) => (
                 <React.Fragment key={t.at}>
-                  <div className="flex gap-3 items-start animate-[fadeUp_.45s_ease-out]">
+                  <div className={`flex gap-3 items-start ${t.at > 0 ? 'animate-[fadeUp_.45s_ease-out]' : ''}`}>
                     <div className="shrink-0 pt-0.5"><BelluhOrb size={24} /></div>
-                    <p className="font-serif text-[15px] md:text-base leading-relaxed text-slate-800">{String(i) === lastB ? <BelluhSpeech text={t.b} pace={1.8} /> : t.b}</p>
+                    <p className="font-serif text-[15px] md:text-base leading-relaxed text-slate-800">{i === turns.length - 1 && t.at > 0 && !given ? <BelluhSpeech text={t.b} pace={1.8} /> : t.b}</p>
                   </div>
                   {t.you && (
-                    <button onClick={() => !given && go(t.at)} title={given ? undefined : 'Change this'} className="self-end max-w-[80%] rounded-3xl rounded-br-lg bg-slate-100 px-4 py-2.5 text-left text-[15px] text-slate-800 hover:bg-slate-200/70 transition-colors animate-[fadeUp_.35s_ease-out]">{t.you}</button>
+                    <button onClick={() => !given && go(t.at)} title={given ? undefined : 'Change this'} className="self-end max-w-[85%] rounded-3xl rounded-br-lg bg-slate-100 px-4 py-2.5 text-left text-[15px] text-slate-800 hover:bg-slate-200/70 transition-colors animate-[fadeUp_.35s_ease-out] break-words">{t.you}</button>
                   )}
                 </React.Fragment>
               ))}
-              {step >= 8 && (
-                <div className="flex gap-3 items-start animate-[fadeUp_.45s_ease-out]">
-                  <div className="shrink-0 pt-0.5"><BelluhOrb size={24} /></div>
-                  <p className="font-serif text-[15px] md:text-base leading-relaxed text-slate-800">{lastB === 'summary' ? <BelluhSpeech text={summary} pace={1.8} /> : summary}</p>
-                </div>
-              )}
               {given && (
                 <div className="flex gap-3 items-start animate-[fadeUp_.45s_ease-out]" role="status">
                   <div className="shrink-0 pt-0.5"><BelluhOrb size={24} /></div>
                   <div>
                     <p className="font-serif text-[15px] md:text-base leading-relaxed text-slate-800"><BelluhSpeech text={`Beautifully done, ${from.trim()}. Years from now, ${names} will still know who gave them this.`} pace={1.8} /></p>
-                    {!GIFT_CHECKOUT && <p className="mt-2 text-sm text-slate-400">Send the email that just opened, and I'll take it from there.</p>}
+                    <p className="mt-2 text-sm text-slate-400">{GIFT_CHECKOUT ? 'Finish paying in the tab that opened, and it goes out on time.' : `It's sealed. We'll email you at ${myEmail.trim()} to pay, and it goes out ${opens ? `on ${opens}` : 'right after'}.`}</p>
                   </div>
                 </div>
               )}
             </div>
-            <div className="px-5 md:px-7 pb-5 pt-3 border-t border-slate-100">
-              {given
-                ? <button onClick={reset} className="h-12 px-5 rounded-full border border-slate-200 text-sm font-bold text-slate-800 hover:border-slate-400 transition-colors">Give another</button>
-                : reply}
-            </div>
+            <div className="px-5 md:px-7 pb-5 pt-4 border-t border-slate-100">{reply}</div>
           </div>
 
           <div className="order-first lg:order-none">
             <GiftEnvelope tone={tone} names={names} note={shownNote} from={from.trim()} opens={opens} given={given} mailed={mail} />
-            <p className="mt-6 text-center text-sm text-slate-400">{mail ? 'With a card in the mail, on us.' : 'One year of Belluh, for both of them.'} $88.88</p>
+            <div className="mt-6 text-center">
+              {editingNote && !given ? (
+                <form onSubmit={e => { e.preventDefault(); setEditingNote(false); }} className="flex items-center gap-2 max-w-md mx-auto">
+                  <input autoFocus value={note ?? tone.note} onChange={e => setNote(e.target.value.slice(0, 140))} aria-label="Your note" className={`${composer} font-serif italic`} />
+                  <button className={next}>Done</button>
+                </form>
+              ) : !given ? (
+                <button onClick={() => setEditingNote(true)} className="text-sm font-semibold text-[#3f7486] hover:text-slate-900 transition-colors">Write your own note</button>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>

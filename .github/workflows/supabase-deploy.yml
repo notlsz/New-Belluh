@@ -153,6 +153,7 @@ jobs:
           supabase functions deploy belluh-calendar --project-ref "$PROJECT_REF" --no-verify-jwt
           supabase functions deploy belluh-push --project-ref "$PROJECT_REF"
           supabase functions deploy belluh-nudges --project-ref "$PROJECT_REF" --no-verify-jwt
+          supabase functions deploy belluh-gift --project-ref "$PROJECT_REF" --no-verify-jwt
 
       - name: Belluh calls restaurants (Vapi)
         if: steps.setup.outputs.ready == 'true'
