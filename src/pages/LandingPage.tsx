@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Lock, Menu, X, ChevronDown, Heart, MessageCircle, CalendarCheck, Plus, Check } from 'lucide-react';
+import { ArrowRight, Lock, Menu, X, ChevronDown, Heart, MessageCircle, CalendarCheck, Plus, Check, Gift } from 'lucide-react';
 import { Receipt } from './About';
 import { rememberCta } from '../services/analytics';
 import BelluhOrb from '../components/BelluhOrb';
@@ -21,17 +21,43 @@ const FAQ = [
   { q: 'Can I use it from WhatsApp or text?', a: "Yes. Connect WhatsApp, SMS or Telegram in Settings with one tap and text Belluh like you'd talk to it in the app. Same Belluh, same memory." },
   { q: 'Why is Belluh made of water?', a: "So you can see what it's doing. It ripples when you type, swirls while it thinks, and moves with every word it says. Ask it to become something, a cat, a lighthouse, the first letter of your name, and it takes that shape." },
   { q: 'What happens to my data?', a: "Your entries are encrypted in storage and in transit, and never sold. Belluh's replies are written by Google's Gemini models, which process your entries to write them." },
-  { q: 'Is it free?', a: "Yes. Writing together, your shared memory and a few chats with Belluh a week are free for good. Together is $6.99 a month for the two of you, one price per couple." },
-  { q: 'What happens to our shared memory if we stop paying?', a: "Nothing is lost. Every entry and everything Belluh remembers stays yours,, and the free plan keeps all of it." },
+  { q: 'Is it free?', a: "Yes. Writing together, your shared memory and a few chats with Belluh a week are free for good. Duo is $7.77 a month or $88.88 a year, one price for the two of you." },
+  { q: 'Can I give Belluh to a couple?', a: "Yes. Gift a year of Duo for $88.88 to newlyweds, friends who just moved in together, or your parents. Add a note and we send it to both of them." },
+  { q: 'What happens to our shared memory if we stop paying?', a: "Nothing is lost. Every entry and everything Belluh remembers stays yours, and the free plan keeps all of it." },
 ];
 
 // Priced from what a couple costs to run, not from what the market will bear: AI for both partners, texting, the odd
-// restaurant call and hosting come to roughly $1.80 a month for an active couple and $3.60 for a heavy one. $6.99
+// restaurant call and hosting come to roughly $1.80 a month for an active couple and $3.60 for a heavy one. $7.77
 // covers the heavy couple with about 80% left over after payment fees, and an average couple at well over that.
+/** Give a couple a year of Duo. Checkout isn't wired yet, so the gift arrives as an email to us and we send it on by hand. */
+function GiftCard() {
+  const [to, setTo] = React.useState('');
+  const [from, setFrom] = React.useState('');
+  const [note, setNote] = React.useState('');
+  const body = `Couple: ${to}\nFrom: ${from}\nNote: ${note}`;
+  const href = `mailto:hello@belluh.com?subject=${encodeURIComponent('Gift a year of Belluh Duo')}&body=${encodeURIComponent(body)}`;
+  const field = 'h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-[15px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-400';
+  return (
+    <div id="gift" className="mt-5 rounded-[2rem] bg-gradient-to-br from-[#fdf0f8] via-white to-[#eef7fa] border border-white p-8 md:p-10 grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-8 items-center scroll-mt-24">
+      <div>
+        <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d77fbd]"><Gift size={15} /> Gift Belluh</p>
+        <p className="mt-4 font-serif text-3xl md:text-4xl text-slate-900 tracking-tight leading-tight">Give a couple their first year of memories.</p>
+        <p className="mt-4 text-slate-500 leading-relaxed">A year of Duo for both of them, <span className="font-semibold text-slate-800">$88.88</span>. For newlyweds, friends who just moved in, or your parents. We send it to both with your note.</p>
+      </div>
+      <div className="space-y-3">
+        <input value={to} onChange={e => setTo(e.target.value)} placeholder="Who it's for, like Maya and Dan" className={field} />
+        <input value={from} onChange={e => setFrom(e.target.value)} placeholder="From" className={field} />
+        <textarea value={note} onChange={e => setNote(e.target.value)} rows={3} placeholder="Your note to them" className={`${field} h-auto py-3 resize-none`} />
+        <a href={href} onClick={() => rememberCta('pricing-gift')} className={`h-12 w-full rounded-full bg-slate-900 text-white text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-black transition-colors ${to.trim() ? '' : 'pointer-events-none opacity-40'}`}>Gift a year, $88.88 <ArrowRight size={15} /></a>
+      </div>
+    </div>
+  );
+}
+
 const PLANS = [
   { name: 'Free', price: '$0', per: 'for good', blurb: 'Start your shared memory today.', cta: 'Start free',
     items: ['Unlimited entries, private or shared', 'Your shared memory, kept for both of you', 'Belluh a few times a week', 'Weekly thing to try together'] },
-  { name: 'Together', price: '$6.99', per: 'a month, for the two of you', alt: 'or $59 a year', blurb: 'Belluh, all in, for both of you.', cta: 'Start free', featured: true,
+  { name: 'Duo', price: '$7.77', per: 'a month for both of you, not each', alt: 'or $88.88 a year for both', blurb: 'Belluh, all in, for both of you.', cta: 'Start free', featured: true,
     items: ['Belluh whenever you want it', 'Text it on iMessage, WhatsApp or SMS', 'Dates planned, tables booked, flowers ready', 'Reminders, calendar, how-was-it follow ups'] },
   { name: 'For teams', price: 'Talk to us', per: 'employers, therapists, platforms', blurb: 'Belluh for the people you care for.', cta: 'Get in touch', team: true,
     items: ['A relationship benefit for your people', 'Between-sessions support for couples therapy', 'Belluh as a layer inside your platform', 'Private by design: you never see entries'] },
@@ -608,6 +634,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                       </div>
                   ))}
               </div>
+              <GiftCard />
               <p className="mt-8 text-sm text-slate-400">No card to start. Your entries are never sold.</p>
           </div>
       </section>
