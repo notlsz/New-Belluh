@@ -2,13 +2,9 @@ import React, { useState } from 'react';
 import { ExternalLink, PenLine, ArrowUpRight, CalendarCheck, Gift, Flower2, UtensilsCrossed, Plane, Ticket, Check, Lock, Phone } from 'lucide-react';
 import { belluhAgent, AgentMessage } from '../services/belluhAgent';
 import PlanCard from './PlanCard';
+import { prettyPhone } from '../lib/phone';
 import { trackEvent } from '../services/analytics';
 
-/** "+14085550134" → "(408) 555-0134"; other countries stay as they are. */
-const prettyPhone = (e164: string) => {
-  const m = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(e164);
-  return m ? `(${m[1]}) ${m[2]}-${m[3]}` : e164;
-};
 
 /**
  * What Belluh did or offers, under its message: links it prepared (a table to book, gifts to buy), a yes or not now

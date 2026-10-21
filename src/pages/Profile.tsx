@@ -653,7 +653,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
       {/* Settings Dialog Overlay */}
       {showSettingsModal && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-end md:items-center justify-center md:p-6" onClick={() => setShowSettingsModal(false)}>
-              <div className="bg-[#fcfcfc] rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-8 w-full md:max-w-lg max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <div className="bg-paper rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-8 w-full md:max-w-lg max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                   <h3 className="font-serif text-2xl mb-8 text-slate-900">Settings</h3>
 
                   {/* Connected: texting Belluh and calendars */}
@@ -666,16 +666,25 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                       <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] mb-4 flex items-center gap-2">
                           <Palette size={14} /> Appearance
                       </p>
-                      <div className="flex gap-2 flex-wrap">
-                          {Object.keys(THEMES).map((themeKey) => (
-                              <button
-                                key={themeKey}
-                                onClick={() => onUpdateUser({ settings: { ...user.settings, colorTheme: themeKey as ColorTheme } })}
-                                className={`w-10 h-10 rounded-full border-2 transition-all hover:scale-110 active:scale-95 ${user.settings.colorTheme === themeKey ? 'border-slate-900 shadow-lg scale-110' : 'border-transparent'}`}
-                                style={{ backgroundColor: THEMES[themeKey as ColorTheme][300] }}
-                                title={themeKey.charAt(0).toUpperCase() + themeKey.slice(1)}
-                              />
-                          ))}
+                      <p className="text-sm text-slate-500 mb-4">A color for the page, the side panel and the menus.</p>
+                      <div className="grid grid-cols-4 sm:grid-cols-6 gap-x-2 gap-y-4">
+                          {Object.keys(THEMES).map((themeKey) => {
+                              const on = (user.settings.colorTheme || 'pink') === themeKey;
+                              const name = themeKey.charAt(0).toUpperCase() + themeKey.slice(1);
+                              return (
+                                  <button
+                                    key={themeKey}
+                                    onClick={() => onUpdateUser({ settings: { ...user.settings, colorTheme: themeKey as ColorTheme } })}
+                                    aria-label={`${name} theme`}
+                                    aria-pressed={on}
+                                    className="flex flex-col items-center gap-1.5 group"
+                                  >
+                                    <span className={`w-11 h-11 rounded-full transition-transform group-hover:scale-105 group-active:scale-95 ${on ? 'ring-2 ring-offset-2 ring-slate-900' : 'ring-1 ring-black/5'}`}
+                                      style={{ background: `linear-gradient(135deg, ${THEMES[themeKey as ColorTheme][100]}, ${THEMES[themeKey as ColorTheme][300]})` }} />
+                                    <span className={`text-[11px] ${on ? 'text-slate-900 font-semibold' : 'text-slate-400'}`}>{name}</span>
+                                  </button>
+                              );
+                          })}
                       </div>
                   </div>
 

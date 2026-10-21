@@ -20,6 +20,37 @@ export const THEMES: Record<ColorTheme, Record<number, string>> = {
   },
   butter: {
     25: '#FFFEFA', 50: '#FFFDF2', 100: '#FFF9DB', 200: '#FEF08A', 300: '#FFF1B8', 400: '#FACC15', 500: '#EAB308', 600: '#CA8A04', 900: '#713F12'
+  },
+  // More pastels: each a soft wash for the page and panels (25 to 100), a pastel accent (300) and deeper tones for text
+  mint: {
+    25: '#F8FDFB', 50: '#F0FBF6', 100: '#DDF5EA', 200: '#C3EEDB', 300: '#B5EAD7', 400: '#7DD3B4', 500: '#3FB68F', 600: '#1F8F6C', 900: '#0F4A38'
+  },
+  sky: {
+    25: '#F7FCFE', 50: '#EEF8FC', 100: '#DCF0F8', 200: '#C5E6F3', 300: '#CDE9F2', 400: '#9BBECB', 500: '#6FA3B6', 600: '#3F7486', 900: '#1E3A44'
+  },
+  lilac: {
+    25: '#FDFAFE', 50: '#F9F3FC', 100: '#F1E4F8', 200: '#E6D0F2', 300: '#DCC6F0', 400: '#C3A2E6', 500: '#A47BD6', 600: '#7E52B8', 900: '#40285E'
+  },
+  coral: {
+    25: '#FFFAF9', 50: '#FFF3F1', 100: '#FFE3DE', 200: '#FFCFC6', 300: '#FFC1B6', 400: '#FF9D8C', 500: '#F7765F', 600: '#D9533C', 900: '#6E2519'
+  },
+  sage: {
+    25: '#FAFCF9', 50: '#F3F7F1', 100: '#E5EEE1', 200: '#D3E2CC', 300: '#C9DBC0', 400: '#A3C196', 500: '#7FA46E', 600: '#5A7E4B', 900: '#2D4025'
+  },
+  periwinkle: {
+    25: '#FAFAFF', 50: '#F3F4FF', 100: '#E4E7FE', 200: '#D2D7FC', 300: '#C7CEFA', 400: '#A1ABF3', 500: '#7A86E8', 600: '#5560CC', 900: '#272D66'
+  },
+  apricot: {
+    25: '#FFFCF8', 50: '#FFF7EE', 100: '#FFEDD9', 200: '#FFE0BF', 300: '#FFD8B0', 400: '#FFBA7A', 500: '#F79A45', 600: '#D5771F', 900: '#6B3A0C'
+  },
+  seafoam: {
+    25: '#F7FDFC', 50: '#EEFBF8', 100: '#D8F5EF', 200: '#BDEDE3', 300: '#B2E8DE', 400: '#78D4C3', 500: '#3BB8A2', 600: '#1E907E', 900: '#0E4840'
+  },
+  rose: {
+    25: '#FFFAFC', 50: '#FEF2F7', 100: '#FCE2EE', 200: '#F9CCE1', 300: '#F0ADDD', 400: '#E78BC9', 500: '#D965AF', 600: '#B4428C', 900: '#5A1F45'
+  },
+  sand: {
+    25: '#FDFCFA', 50: '#FAF7F2', 100: '#F3EDE3', 200: '#EAE1D1', 300: '#E3D7C3', 400: '#CDBA9A', 500: '#B19870', 600: '#8A734F', 900: '#463A27'
   }
 };
 

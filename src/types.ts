@@ -55,7 +55,7 @@ export interface Circle {
   endDate?: Date;
 }
 
-export type ColorTheme = 'pink' | 'blue' | 'green' | 'peach' | 'lavender' | 'butter';
+export type ColorTheme = 'pink' | 'blue' | 'green' | 'peach' | 'lavender' | 'butter' | 'mint' | 'sky' | 'lilac' | 'coral' | 'sage' | 'periwinkle' | 'apricot' | 'seafoam' | 'rose' | 'sand';
 
 export interface UserSettings {
   notifications: boolean;

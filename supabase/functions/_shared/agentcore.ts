@@ -216,6 +216,8 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
         }
         case 'take_shape': {
           shape = call.shape;
+          // Kept on the account, so it's still this shape next visit, on any device
+          { const sh: any = call.shape; await db.from('agent_settings').upsert({ user_id: ctx.userId, shape: sh?.water ? null : sh, updated_at: new Date().toISOString() }, { onConflict: 'user_id' }); }
           return { ok: true, note: channel === 'app' ? 'Your water body is taking that shape as your reply appears. Say one short, playful line about it.' : 'They are texting, so they cannot see your shape right now. Say you will look like that next time they open Belluh.' };
         }
         case 'draft_note_to_partner': {
