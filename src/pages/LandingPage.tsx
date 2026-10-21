@@ -9,6 +9,7 @@ import BelluhSpeech from '../components/BelluhSpeech';
 import LandingDemos from '../components/LandingDemos';
 import SiteFooter from '../components/SiteFooter';
 import SiteNav from '../components/SiteNav';
+import DragonflyMark from '../components/DragonflyMark';
 import { belluh, type BelluhState } from '../lib/belluhPresence';
 import { ORGANIZATIONS } from '../constants';
 
@@ -30,25 +31,79 @@ const FAQ = [
 // restaurant call and hosting come to roughly $1.80 a month for an active couple and $3.60 for a heavy one. $7.77
 // covers the heavy couple with about 80% left over after payment fees, and an average couple at well over that.
 /** Give a couple a year of Duo. Checkout isn't wired yet, so the gift arrives as an email to us and we send it on by hand. */
+const OCCASIONS = [
+  { label: 'Wedding', note: 'For every chapter after the vows. Write it all down, together.' },
+  { label: 'Anniversary', note: "Here's to another year worth remembering." },
+  { label: 'New home', note: 'New keys, new rooms, new memories. Keep them all.' },
+  { label: 'Just because', note: 'You two are my favorite love story.' },
+];
+
 function GiftCard() {
-  const [to, setTo] = React.useState('');
+  const [one, setOne] = React.useState('');
+  const [two, setTwo] = React.useState('');
   const [from, setFrom] = React.useState('');
-  const [note, setNote] = React.useState('');
-  const body = `Couple: ${to}\nFrom: ${from}\nNote: ${note}`;
+  const [occasion, setOccasion] = React.useState(0);
+  const [note, setNote] = React.useState(OCCASIONS[0].note);
+  const names = [one.trim(), two.trim()].filter(Boolean).join(' & ');
+  const ready = !!(one.trim() && two.trim());
+  const body = `For: ${names}\nOccasion: ${OCCASIONS[occasion].label}\nFrom: ${from}\nNote: ${note}`;
   const href = `mailto:hello@belluh.com?subject=${encodeURIComponent('Gift a year of Belluh Duo')}&body=${encodeURIComponent(body)}`;
-  const field = 'h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-[15px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-400';
+  const field = 'h-12 w-full rounded-2xl border border-slate-200/80 bg-white/80 backdrop-blur px-4 text-[15px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white transition-colors';
   return (
-    <div id="gift" className="mt-5 rounded-[2rem] bg-gradient-to-br from-[#fdf0f8] via-white to-[#eef7fa] border border-white p-8 md:p-10 grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-8 items-center scroll-mt-24">
-      <div>
-        <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d77fbd]"><Gift size={15} /> Gift Belluh</p>
-        <p className="mt-4 font-serif text-3xl md:text-4xl text-slate-900 tracking-tight leading-tight">Give a couple their first year of memories.</p>
-        <p className="mt-4 text-slate-500 leading-relaxed">A year of Duo for both of them, <span className="font-semibold text-slate-800">$88.88</span>. For newlyweds, friends who just moved in, or your parents. We send it to both with your note.</p>
-      </div>
-      <div className="space-y-3">
-        <input value={to} onChange={e => setTo(e.target.value)} placeholder="Who it's for, like Maya and Dan" className={field} />
-        <input value={from} onChange={e => setFrom(e.target.value)} placeholder="From" className={field} />
-        <textarea value={note} onChange={e => setNote(e.target.value)} rows={3} placeholder="Your note to them" className={`${field} h-auto py-3 resize-none`} />
-        <a href={href} onClick={() => rememberCta('pricing-gift')} className={`h-12 w-full rounded-full bg-slate-900 text-white text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-black transition-colors ${to.trim() ? '' : 'pointer-events-none opacity-40'}`}>Gift a year, $88.88 <ArrowRight size={15} /></a>
+    <div id="gift" className="relative mt-5 overflow-hidden rounded-[2.5rem] border border-white bg-gradient-to-br from-[#fdf0f8] via-white to-[#eef7fa] shadow-[0_40px_100px_-60px_rgba(63,116,134,0.6)] scroll-mt-24">
+      <div aria-hidden="true" className="pointer-events-none absolute -top-32 -left-24 h-80 w-80 rounded-full bg-[#f0addd]/30 blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-40 right-0 h-96 w-96 rounded-full bg-[#CDE9F2]/70 blur-3xl" />
+      <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 p-7 md:p-12 lg:p-16 items-center">
+        <div>
+          <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d77fbd]"><Gift size={15} /> Gift Belluh</p>
+          <h3 className="mt-5 font-serif text-4xl md:text-5xl tracking-tight leading-[1.04]">
+            <span className="text-slate-900">Give a couple</span><br /><span className="text-[#f0addd] italic">their first year of memories.</span>
+          </h3>
+          <p className="mt-5 text-lg text-slate-500 font-light leading-relaxed max-w-md">A full year of Duo for both of them, <span className="font-semibold text-slate-900">$88.88</span>. We send it to each of them with your note.</p>
+
+          <div className="mt-8 flex flex-wrap gap-2" role="radiogroup" aria-label="Occasion">
+            {OCCASIONS.map((o, i) => (
+              <button key={o.label} role="radio" aria-checked={occasion === i} onClick={() => { setOccasion(i); if (OCCASIONS.some(x => x.note === note) || !note.trim()) setNote(o.note); }}
+                className={`h-10 px-4 rounded-full text-sm font-semibold transition-all ${occasion === i ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/15' : 'bg-white/80 text-slate-600 border border-slate-200/80 hover:border-slate-400'}`}>{o.label}</button>
+            ))}
+          </div>
+
+          <div className="mt-5 space-y-3">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              <input value={one} onChange={e => setOne(e.target.value)} placeholder="Maya" aria-label="First partner's name" className={field} />
+              <span className="font-serif italic text-xl text-[#f0addd] px-1">&amp;</span>
+              <input value={two} onChange={e => setTwo(e.target.value)} placeholder="Dan" aria-label="Second partner's name" className={field} />
+            </div>
+            <input value={from} onChange={e => setFrom(e.target.value)} placeholder="From you" aria-label="Your name" className={field} />
+            <textarea value={note} onChange={e => setNote(e.target.value.slice(0, 180))} rows={2} aria-label="Your note" className={`${field} h-auto py-3 resize-none leading-relaxed`} />
+            <a href={ready ? href : undefined} aria-disabled={!ready} onClick={() => ready && rememberCta('pricing-gift')}
+              className={`group h-14 w-full rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 transition-all ${ready ? 'hover:bg-black hover:shadow-xl hover:shadow-slate-900/20 cursor-pointer' : 'opacity-35 cursor-not-allowed'}`}>
+              Gift a year, $88.88 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+            </a>
+            <p className="text-sm text-slate-400 text-center">{ready ? 'Ready to send.' : 'Add both of their names to send it.'}</p>
+          </div>
+        </div>
+
+        {/* The gift they open, filling in as you type */}
+        <div className="relative mx-auto w-full max-w-[420px] lg:aspect-[4/5] order-first lg:order-none group/card" aria-label="Preview of the gift">
+          <div aria-hidden="true" className="absolute inset-0 rounded-[2rem] bg-[#CDE9F2] rotate-[7deg] translate-x-4 translate-y-2 transition-transform duration-700 group-hover/card:rotate-[10deg]" />
+          <div aria-hidden="true" className="absolute inset-0 rounded-[2rem] bg-[#f0addd]/70 -rotate-[5deg] -translate-x-3 transition-transform duration-700 group-hover/card:-rotate-[8deg]" />
+          <div className="relative h-full min-h-[420px] rounded-[2rem] bg-white border border-white shadow-[0_50px_90px_-40px_rgba(15,23,42,0.45)] p-7 md:p-10 flex flex-col -rotate-1 transition-transform duration-700 group-hover/card:rotate-0">
+            <div className="flex items-center justify-between">
+              <span className="inline-flex items-center gap-2"><DragonflyMark size={26} rippleOnMount={false} /><span className="font-serif text-lg text-[#9bbecb]">Belluh</span></span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">{OCCASIONS[occasion].label}</span>
+            </div>
+            <p className="mt-auto pt-10 text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb]">A year of Duo for</p>
+            <p className={`mt-2 font-serif text-[2.1rem] md:text-[2.75rem] leading-[1.05] tracking-tight break-words ${names ? 'text-slate-900' : 'text-slate-300'}`}>{names || 'Maya & Dan'}</p>
+            <div className="mt-6 h-px w-16 bg-[#f0addd]" />
+            <p className="mt-6 font-serif italic text-lg leading-relaxed text-slate-600 min-h-[3.5rem] break-words">{note.trim() || OCCASIONS[occasion].note}</p>
+            <p className="mt-4 pb-8 text-sm text-slate-500">— {from.trim() || 'you'}</p>
+            <div className="mt-auto pt-6 flex items-end justify-between gap-4 border-t border-dashed border-slate-200">
+              <span className="text-sm text-slate-400 leading-snug">Every entry, every memory,<br />kept for both of them.</span>
+              <span className="font-serif text-3xl text-slate-900 tracking-tight shrink-0">$88.88</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
