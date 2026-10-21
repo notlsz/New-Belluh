@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Lock, Menu, X, ChevronDown, Heart, MessageCircle, CalendarCheck, Plus, Check, Gift } from 'lucide-react';
+import { ArrowRight, Lock, Menu, X, ChevronDown, Heart, MessageCircle, CalendarCheck, Plus, Check } from 'lucide-react';
 import { Receipt } from './About';
 import { rememberCta } from '../services/analytics';
 import BelluhOrb from '../components/BelluhOrb';
@@ -31,20 +31,54 @@ const FAQ = [
 // restaurant call and hosting come to roughly $1.80 a month for an active couple and $3.60 for a heavy one. $7.77
 // covers the heavy couple with about 80% left over after payment fees, and an average couple at well over that.
 /**
- * Give a couple a year of Duo, presented like something worth keeping: a lacquered box in the occasion's colour, an
- * ivory card with gold rules, and a quiet moment of thanks once it's given. Set VITE_GIFT_CHECKOUT_URL to a checkout
- * and the button pays; until then the gift comes to us by email and we send it on by hand.
+ * Give a couple a year of Duo. The gift is a paper envelope, lined in the occasion's colour, with the card standing half
+ * out of it and filling in as you type. Giving slides the card in, closes the flap and addresses the front. Set
+ * VITE_GIFT_CHECKOUT_URL to a checkout and the button pays; until then the gift comes to us by email.
  */
-const GOLD = '#b08d57';
 const OCCASIONS = [
-  { label: 'Wedding', note: 'For every chapter after the vows. Write it all down, together.', box: '#4a1f30', glow: '#7a3550' },
-  { label: 'Anniversary', note: "Here's to another year worth remembering.", box: '#12303a', glow: '#1f5263' },
-  { label: 'New home', note: 'New keys, new rooms, new memories. Keep every one.', box: '#1f3326', glow: '#35553f' },
-  { label: 'Just because', note: 'You two are my favorite love story.', box: '#2e1f3d', glow: '#4e3566' },
+  { label: 'Wedding', note: 'For every chapter after the vows. Write it all down, together.', ink: '#b4547f', stripe: '#c96894' },
+  { label: 'Anniversary', note: "Here's to another year worth remembering.", ink: '#3f7486', stripe: '#4f8aa0' },
+  { label: 'New home', note: 'New keys, new rooms, new memories. Keep every one.', ink: '#5f7d66', stripe: '#6f9077' },
+  { label: 'Just because', note: 'You two are my favorite love story.', ink: '#6b4a82', stripe: '#7d5a96' },
 ];
 const GIFT_CHECKOUT = (import.meta as any).env?.VITE_GIFT_CHECKOUT_URL as string | undefined;
+const PAPER = '#fbf8f3';
 
-function GiftCard() {
+function GiftEnvelope({ tone, names, note, from, opens, given }: { tone: typeof OCCASIONS[number]; names: string; note: string; from: string; opens: string | null; given: boolean }) {
+  const liner = `repeating-linear-gradient(135deg, ${tone.ink} 0 10px, ${tone.stripe} 10px 20px)`;
+  const ease = 'cubic-bezier(.65,0,.35,1)';
+  return (
+    <div className="relative mx-auto w-full max-w-[460px] aspect-[460/610] sm:aspect-[460/540]" aria-label="Preview of the gift">
+      {/* Flap: open and lined behind the card, then it folds down over the front once the card is in */}
+      <div className="absolute inset-x-0 origin-bottom" style={{ top: '22%', height: '26.2%', zIndex: 5, clipPath: 'polygon(0 100%, 50% 0, 100% 100%)', background: liner, transform: given ? 'scaleY(0)' : 'scaleY(1)', transition: `transform 380ms ease-in ${given ? '800ms' : '0ms'}, background 700ms` }} />
+      <div className="absolute inset-x-0 origin-top" style={{ top: '47.8%', height: '26%', zIndex: 30, filter: 'drop-shadow(0 6px 8px rgba(15,23,42,0.10))', transform: given ? 'scaleY(1)' : 'scaleY(0)', transition: `transform 420ms ease-out ${given ? '1180ms' : '0ms'}` }}>
+        <div className="absolute inset-0" style={{ clipPath: 'polygon(0 0, 50% 100%, 100% 0)', background: 'linear-gradient(180deg, #f3ede3, #f8f4ec)' }} />
+      </div>
+      {/* Back of the envelope, lined */}
+      <div className="absolute inset-x-0 bottom-0 rounded-b-md" style={{ top: '48%', background: liner, transition: 'background 700ms', zIndex: 6 }} />
+      {/* The card */}
+      <div className="absolute rounded-md bg-[#fffdf9] px-7 pt-7 text-center" style={{ left: '7%', right: '7%', top: '4%', height: '50%', zIndex: 10, boxShadow: '0 1px 0 rgba(0,0,0,0.03), 0 18px 40px -24px rgba(15,23,42,0.35), inset 0 0 0 1px #eee7dc', transform: given ? 'translateY(88%)' : 'translateY(0)', transition: `transform 900ms ${ease}` }}>
+        <div className="flex justify-center"><DragonflyMark size={24} rippleOnMount={false} /></div>
+        <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.3em] transition-colors duration-700" style={{ color: tone.ink }}>A year of Belluh for</p>
+        <p className={`mt-2 font-serif text-[1.7rem] md:text-[2.1rem] leading-[1.1] tracking-tight break-words ${names ? 'text-slate-900' : 'text-slate-300'}`}>{names || 'Maya & Dan'}</p>
+        <p className="mt-3 font-serif italic text-[15px] md:text-base leading-relaxed text-slate-500 line-clamp-2">{note}</p>
+        <p className="mt-2 font-serif text-sm text-slate-400">— {from || 'you'}</p>
+      </div>
+      {/* Front pocket, with the side folds meeting in a V */}
+      <div className="absolute inset-x-0 bottom-0" style={{ top: '48%', zIndex: 20, filter: 'drop-shadow(0 -1px 0 rgba(15,23,42,0.06)) drop-shadow(0 30px 40px rgba(15,23,42,0.12))' }}>
+        <div className="absolute inset-0 rounded-b-md" style={{ clipPath: 'polygon(0 0, 50% 46%, 100% 0, 100% 100%, 0 100%)', background: `linear-gradient(180deg, ${PAPER}, #f4efe6)` }} />
+        <div className="absolute inset-0" style={{ clipPath: 'polygon(0 0, 50% 46%, 0 100%)', background: 'linear-gradient(90deg, rgba(15,23,42,0.035), transparent)' }} />
+        <div className="absolute inset-0" style={{ clipPath: 'polygon(100% 0, 50% 46%, 100% 100%)', background: 'linear-gradient(270deg, rgba(15,23,42,0.035), transparent)' }} />
+        <div className="absolute inset-x-0 bottom-[14%] text-center px-8 transition-opacity duration-700" style={{ opacity: given ? 1 : 0, transitionDelay: given ? '1600ms' : '0ms' }}>
+          <p className="font-serif italic text-2xl md:text-[1.75rem] text-slate-800 break-words">{names}</p>
+          <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.3em]" style={{ color: tone.ink }}>{opens ? `To be opened ${opens}` : 'With love'}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GiftSection() {
   const [occasion, setOccasion] = React.useState(0);
   const [one, setOne] = React.useState('');
   const [two, setTwo] = React.useState('');
@@ -61,90 +95,71 @@ function GiftCard() {
   const ready = !!(one.trim() && two.trim() && /^\S+@\S+\.\S+$/.test(email.trim()));
   const opens = when ? new Date(`${when}T12:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : null;
   const body = `For: ${names}\nTheir email: ${email}\nOccasion: ${tone.label}\nSend on: ${opens ?? 'Right away'}\nFrom: ${from}\nNote: ${shownNote}`;
-  const href = GIFT_CHECKOUT ? GIFT_CHECKOUT : `mailto:hello@belluh.com?subject=${encodeURIComponent(`A Belluh gift for ${names}`)}&body=${encodeURIComponent(body)}`;
-  const line = 'h-12 w-full bg-transparent border-0 border-b border-[#d8cfc0] px-0 text-[16px] text-slate-900 placeholder:text-[#a89d8c] focus:outline-none focus:border-slate-900 transition-colors rounded-none';
-  const caps = 'text-[10px] font-semibold uppercase tracking-[0.32em]';
+  const href = GIFT_CHECKOUT || `mailto:hello@belluh.com?subject=${encodeURIComponent(`A Belluh gift for ${names}`)}&body=${encodeURIComponent(body)}`;
+  const line = 'h-12 w-full bg-transparent border-0 border-b border-slate-200 px-0 text-base text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 transition-colors rounded-none';
+  const reset = () => { setGiven(false); setOne(''); setTwo(''); setEmail(''); setWhen(''); setNote(null); setWriting(false); };
   return (
-    <div id="gift" className="relative mt-5 overflow-hidden rounded-[2.5rem] bg-[#f7f3ec] scroll-mt-24" style={{ boxShadow: `inset 0 0 0 1px ${GOLD}33` }}>
-      <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_1.05fr] gap-12 lg:gap-14 p-6 md:p-12 lg:p-16 items-center">
-        <div className="relative">
-          <p className={caps} style={{ color: GOLD }}>The gift</p>
-          <h3 className="mt-6 font-serif text-[2.6rem] md:text-[3.4rem] tracking-tight leading-[1.02] text-slate-900">
-            Some gifts are opened.<br /><span className="italic" style={{ color: GOLD }}>This one is kept.</span>
-          </h3>
-          <p className="mt-6 text-[17px] text-[#5f574c] leading-relaxed max-w-md">You're the one who remembers the little things. This is how they will too: a year of Belluh for both of them, every moment written down, every date planned, every anniversary kept.</p>
-
-          {given ? (
-            <div className="mt-10 py-10 border-y" style={{ borderColor: `${GOLD}55` }} role="status">
-              <p className={caps} style={{ color: GOLD }}>Given</p>
-              <p className="mt-4 font-serif text-3xl md:text-4xl text-slate-900 leading-tight">Beautifully done{from.trim() ? `, ${from.trim()}` : ''}.</p>
-              <p className="mt-4 text-[17px] text-[#5f574c] leading-relaxed">{names} will open it {opens ? `on ${opens}` : 'soon'}. Years from now, they'll still know who gave it to them.</p>
-              {!GIFT_CHECKOUT && <p className="mt-4 text-sm text-[#8a7f70]">Send the email that just opened and we'll take it from there.</p>}
-              <button onClick={() => { setGiven(false); setOne(''); setTwo(''); setEmail(''); setWhen(''); setNote(null); setWriting(false); }} className="mt-7 text-sm font-semibold text-slate-900 underline underline-offset-[6px] decoration-1" style={{ textDecorationColor: GOLD }}>Give another</button>
-            </div>
-          ) : (
-            <>
-              <div className="mt-10 flex flex-wrap gap-x-7 gap-y-3" role="radiogroup" aria-label="Occasion">
-                {OCCASIONS.map((o, i) => (
-                  <button key={o.label} role="radio" aria-checked={occasion === i} onClick={() => setOccasion(i)}
-                    className={`pb-1.5 text-[15px] border-b transition-colors ${occasion === i ? 'text-slate-900 font-semibold' : 'text-[#8a7f70] border-transparent hover:text-slate-900'}`}
-                    style={occasion === i ? { borderColor: GOLD } : undefined}>{o.label}</button>
-                ))}
-              </div>
-              <div className="mt-8 space-y-4">
-                <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-4">
-                  <input value={one} onChange={e => setOne(e.target.value)} placeholder="Maya" autoComplete="off" aria-label="First partner's name" className={line} />
-                  <span className="font-serif italic text-2xl pb-2" style={{ color: GOLD }}>&amp;</span>
-                  <input value={two} onChange={e => setTwo(e.target.value)} placeholder="Dan" autoComplete="off" aria-label="Second partner's name" className={line} />
-                </div>
-                <input type="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Their email" autoComplete="off" aria-label="Their email" className={line} />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <input value={from} onChange={e => setFrom(e.target.value)} placeholder="From" autoComplete="given-name" aria-label="Your name" className={line} />
-                  <label className={`${line} flex items-center gap-3 cursor-pointer`}>
-                    <span className="text-[#a89d8c] shrink-0">Deliver on</span>
-                    <input type="date" min={today} value={when} onChange={e => setWhen(e.target.value)} aria-label="Send on" className={`w-full bg-transparent focus:outline-none text-[16px] ${when ? 'text-slate-900' : 'text-[#a89d8c]'}`} />
-                  </label>
-                </div>
-                {writing
-                  ? <textarea autoFocus value={note ?? tone.note} onChange={e => setNote(e.target.value.slice(0, 180))} rows={2} aria-label="Your note" className={`${line} h-auto py-3 resize-none leading-relaxed font-serif italic`} />
-                  : <button onClick={() => setWriting(true)} className="text-sm text-[#5f574c] underline underline-offset-[6px] decoration-1 hover:text-slate-900" style={{ textDecorationColor: `${GOLD}88` }}>Write your own note</button>}
-              </div>
-              <a href={ready ? href : undefined} target={GIFT_CHECKOUT ? '_blank' : undefined} rel="noreferrer" aria-disabled={!ready}
-                onClick={() => { if (!ready) return; rememberCta('pricing-gift'); setTimeout(() => setGiven(true), 400); }}
-                className={`group mt-10 h-14 w-full rounded-full bg-slate-900 text-white text-[15px] font-semibold tracking-wide inline-flex items-center justify-center gap-3 transition-all ${ready ? 'hover:bg-black cursor-pointer' : 'opacity-30 cursor-not-allowed'}`}>
-                Present the gift <span className="h-4 w-px bg-white/30" /> $88.88
-              </a>
-              <p className="mt-4 text-sm text-[#8a7f70] text-center">{ready ? (opens ? `Sealed, and delivered to them on ${opens}.` : 'Sealed, and delivered to them as soon as you give it.') : 'Their names and email. Nothing else to do.'}</p>
-            </>
-          )}
+    <section id="gift" className="relative z-10 px-6 py-24 md:py-36 scroll-mt-24">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center max-w-2xl mx-auto">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-5">Give Belluh</p>
+          <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
+            <span className="text-slate-900">Some gifts are opened.</span><br /><span className="text-[#f0addd] italic">This one is kept.</span>
+          </h2>
+          <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed">You're the one who remembers the little things. Give a couple a year of Belluh, and every moment, every date and every anniversary is kept for both of them.</p>
         </div>
 
-        {/* The presentation box, lacquered in the occasion's colour, with the card resting inside */}
-        <div className="relative mx-auto w-full max-w-[460px] order-first lg:order-none" aria-label="Preview of the gift">
-          <div className="relative rounded-[2rem] p-6 md:p-9 transition-[background] duration-700"
-            style={{ background: `radial-gradient(120% 80% at 30% 0%, ${tone.glow} 0%, ${tone.box} 55%, #0b0c10 130%)`, boxShadow: `0 60px 120px -50px ${tone.box}, inset 0 0 0 1px ${GOLD}40, inset 0 1px 0 rgba(255,255,255,0.08)` }}>
-            <div aria-hidden="true" className="absolute inset-3 rounded-[1.5rem] pointer-events-none" style={{ boxShadow: `inset 0 0 0 1px ${GOLD}26` }} />
-            <div className="flex items-center justify-between px-1 pb-5">
-              <span className={caps} style={{ color: `${GOLD}` }}>Belluh</span>
-              <span className={caps} style={{ color: `${GOLD}aa` }}>{tone.label}</span>
-            </div>
-            <div className={`relative rounded-[1.25rem] bg-[#fffdf8] px-7 py-9 md:px-9 md:py-11 flex flex-col min-h-[400px] transition-transform duration-700 ${given ? 'rotate-0 -translate-y-1' : '-rotate-[1.25deg] hover:rotate-0'}`}
-              style={{ boxShadow: `0 30px 60px -30px rgba(0,0,0,0.6), inset 0 0 0 1px ${GOLD}55` }}>
-              <div aria-hidden="true" className="absolute inset-[7px] rounded-[0.9rem] pointer-events-none" style={{ boxShadow: `inset 0 0 0 1px ${GOLD}30` }} />
-              <div className="flex justify-center"><DragonflyMark size={30} rippleOnMount={false} /></div>
-              <p className={`${caps} mt-8 text-center`} style={{ color: GOLD }}>Presented to</p>
-              <p className={`mt-3 text-center font-serif text-[2.1rem] md:text-[2.6rem] leading-[1.08] tracking-tight break-words transition-colors ${names ? 'text-slate-900' : 'text-[#d6cdbd]'}`}>{names || 'Maya & Dan'}</p>
-              <div className="mt-6 mx-auto h-px w-20" aria-hidden="true" style={{ background: GOLD }} />
-              <p className="mt-6 text-center font-serif italic text-[17px] leading-relaxed text-[#4a443c] break-words">{shownNote}</p>
-              <p className="mt-4 text-center font-serif text-[15px] text-[#6b6358]">— {from.trim() || 'you'}</p>
-              <div className="mt-auto pt-8 text-center">
-                <p className={caps} style={{ color: '#8a7f70' }}>{given ? 'Sealed' : opens ? `To be opened ${opens}` : 'One year of Belluh, for both'}</p>
+        <div className="mt-16 md:mt-20 grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-20 items-center">
+          <GiftEnvelope tone={tone} names={names} note={shownNote} from={from.trim()} opens={opens} given={given} />
+
+          <div className="w-full max-w-md mx-auto lg:mx-0">
+            {given ? (
+              <div role="status">
+                <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: tone.ink }}>Sealed</p>
+                <p className="mt-4 font-serif text-4xl md:text-5xl tracking-tight leading-[1.05] text-slate-900">Beautifully done{from.trim() ? `, ${from.trim()}` : ''}.</p>
+                <p className="mt-5 text-lg text-slate-500 font-light leading-relaxed">{names} open it {opens ? `on ${opens}` : 'soon'}. Years from now, they'll still know who gave it to them.</p>
+                {!GIFT_CHECKOUT && <p className="mt-4 text-sm text-slate-400">Send the email that just opened, and we'll take it from there.</p>}
+                <button onClick={reset} className="mt-8 h-11 px-5 rounded-full border border-slate-200 text-sm font-bold text-slate-800 hover:border-slate-400 transition-colors">Give another</button>
               </div>
-            </div>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-x-6 gap-y-2" role="radiogroup" aria-label="Occasion">
+                  {OCCASIONS.map((o, i) => (
+                    <button key={o.label} role="radio" aria-checked={occasion === i} onClick={() => setOccasion(i)}
+                      className={`pb-1.5 text-[15px] border-b-2 transition-colors ${occasion === i ? 'text-slate-900 font-semibold' : 'text-slate-400 border-transparent hover:text-slate-700'}`}
+                      style={occasion === i ? { borderColor: o.ink } : undefined}>{o.label}</button>
+                  ))}
+                </div>
+                <div className="mt-7 space-y-3">
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-4">
+                    <input value={one} onChange={e => setOne(e.target.value)} placeholder="Maya" autoComplete="off" aria-label="First partner's name" className={line} />
+                    <span className="font-serif italic text-2xl pb-2 text-[#f0addd]">&amp;</span>
+                    <input value={two} onChange={e => setTwo(e.target.value)} placeholder="Dan" autoComplete="off" aria-label="Second partner's name" className={line} />
+                  </div>
+                  <input type="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Their email" autoComplete="off" aria-label="Their email" className={line} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
+                    <input value={from} onChange={e => setFrom(e.target.value)} placeholder="From" autoComplete="given-name" aria-label="Your name" className={line} />
+                    <label className={`${line} flex items-center gap-3 cursor-pointer`}>
+                      <span className="text-slate-400 shrink-0">Deliver</span>
+                      <input type="date" min={today} value={when} onChange={e => setWhen(e.target.value)} aria-label="Send on" className={`w-full bg-transparent focus:outline-none text-base ${when ? 'text-slate-900' : 'text-slate-400'}`} />
+                    </label>
+                  </div>
+                  {writing
+                    ? <textarea autoFocus value={note ?? tone.note} onChange={e => setNote(e.target.value.slice(0, 140))} rows={2} aria-label="Your note" className={`${line} h-auto py-3 resize-none leading-relaxed font-serif italic`} />
+                    : <button onClick={() => setWriting(true)} className="pt-2 text-sm font-semibold text-[#3f7486] hover:text-slate-900 transition-colors">Write your own note</button>}
+                </div>
+                <a href={ready ? href : undefined} target={GIFT_CHECKOUT ? '_blank' : undefined} rel="noreferrer" aria-disabled={!ready}
+                  onClick={() => { if (!ready) return; rememberCta('gift'); setTimeout(() => setGiven(true), 300); }}
+                  className={`group mt-9 h-14 w-full rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 transition-colors ${ready ? 'hover:bg-black cursor-pointer' : 'opacity-30 cursor-not-allowed'}`}>
+                  Give it, $88.88 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+                </a>
+                <p className="mt-4 text-sm text-slate-400 text-center">{ready ? (opens ? `A year for both of them, delivered ${opens}.` : 'A year for both of them, delivered right away.') : 'Their names and email. That is all.'}</p>
+              </>
+            )}
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -728,10 +743,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                       </div>
                   ))}
               </div>
-              <GiftCard />
               <p className="mt-8 text-sm text-slate-400">No card to start. Your entries are never sold.</p>
           </div>
       </section>
+
+      <GiftSection />
 
       {/* FAQ */}
       <section id="faq" className="relative z-10 px-6 py-24 md:py-32 scroll-mt-24">
