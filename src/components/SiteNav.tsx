@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import BelluhOrb from './BelluhOrb';
+import DragonflyMark from './DragonflyMark';
 
 // The top bar for the public pages, modeled on devin.ai: 60px, flat, links on laptops, the menu button on phones.
 const SiteNav: React.FC<{
@@ -29,7 +29,7 @@ const SiteNav: React.FC<{
     <header className="fixed top-0 inset-x-0 z-50 bg-[#fcfcfc]/90 backdrop-blur-md">
       <div className="max-w-7xl mx-auto h-[60px] px-4 md:px-6 flex items-center gap-6">
         <button onClick={onHome} className="flex items-center gap-2 shrink-0 h-9 pl-1 pr-2" aria-label="Belluh home">
-          <BelluhOrb size={22} />
+          <DragonflyMark size={26} />
           <span className="font-serif text-[21px] font-bold tracking-tight text-[#9bbecb]">Belluh</span>
         </button>
         <nav className="hidden md:flex items-center">

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import BelluhOrb from './components/BelluhOrb';
+import DragonflyMark from './components/DragonflyMark';
 import TabBar from './components/TabBar';
 import Journal from './pages/Journal';
 import Timeline from './pages/Timeline';
@@ -21,6 +22,7 @@ import { supabase, readAs } from './lib/supabaseClient';
 import { useAdminAccess } from './hooks/useAdminAccess';
 import { trackEvent, flushCta } from './services/analytics';
 import { belluhAgent } from './services/belluhAgent';
+import { belluh } from './lib/belluhPresence';
 import { resolveMedia, repairLegacyUrl } from './services/media';
 import { computeStreak, hideLockedAnswer, questionForDay } from './lib/daily';
 
@@ -78,6 +80,13 @@ const App: React.FC = () => {
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Added loading state to prevent flash
+  const [opening, setOpening] = useState(false); // signed in, journal on its way
+  // Laptops: the side panel can fold down to its icons, and stays the way you left it
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => { try { return localStorage.getItem('belluh_sidebar') === 'collapsed'; } catch { return false; } });
+  useEffect(() => {
+    document.documentElement.style.setProperty('--sidebar-w', sidebarCollapsed ? '5rem' : '16rem');
+    try { localStorage.setItem('belluh_sidebar', sidebarCollapsed ? 'collapsed' : 'open'); } catch { /* storage off */ }
+  }, [sidebarCollapsed]);
   const [isOnboarding, setIsOnboarding] = useState(false);
   
   // View State for Unauthenticated Users ('landing' | 'auth' | 'about' | 'careers' | 'acquisition' | 'report')
@@ -666,6 +675,16 @@ const App: React.FC = () => {
         const oldAccount = Number.isFinite(createdAt) && Date.now() - createdAt > 24 * 3600_000;
         setIsOnboarding(!oldAccount && !displayPartnerName && !primaryPartner && !hasWritten && !onboardedHere);
         
+        // Belluh looks the way they left it: the shape saved on the account, on any device
+        try {
+            const { data: st } = await db.from('agent_settings').select('shape').eq('user_id', sessionUser.id).maybeSingle();
+            const here = belluh.savedHere();
+            if (st && 'shape' in st && st.shape) belluh.restore(st.shape as any);
+            else if (here) await db.from('agent_settings').upsert({ user_id: sessionUser.id, shape: here, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+            // (a Supabase query only runs once it's awaited or .then-ed)
+            belluh.keepOnAccount(saved => { readAs(lastSession.current?.access_token ?? token).from('agent_settings').upsert({ user_id: sessionUser.id, shape: saved, updated_at: new Date().toISOString() }, { onConflict: 'user_id' }).then(({ error }) => { if (error) trackEvent('shape_save_failed', { message: error.message.slice(0, 200) }); }); });
+        } catch { /* the shape is a nicety: never hold up the journal */ }
+
         stage = 'done';
         setIsAuthenticated(true);
         trackEvent('load_done', { attempt, entries: mappedEntries.length });
@@ -681,7 +700,7 @@ const App: React.FC = () => {
           showNotification("Couldn't load your journal. Try logging in again.", "error");
       } finally {
           clearTimeout(stall);
-          setIsLoading(false);
+          setIsLoading(false); setOpening(false);
       }
   };
 
@@ -703,6 +722,8 @@ const App: React.FC = () => {
             if (session?.user && mounted && loadedUserId.current !== session.user.id) {
                 loadedUserId.current = session.user.id;
                 const u = session.user;
+                // The moment the login is accepted, leave the login screen: the journal opens in front of them
+                setOpening(true); setIsLoading(true);
                 setTimeout(() => loadUserData(u), 0);
                 setTimeout(flushCta, 1500); // which landing button brought them in
             }
@@ -711,6 +732,7 @@ const App: React.FC = () => {
             if (session?.user && mounted && loadedUserId.current !== session.user.id) { loadedUserId.current = session.user.id; const u = session.user; setTimeout(() => loadUserData(u), 0); }
         } else if (event === 'SIGNED_OUT') {
             loadedUserId.current = null;
+            belluh.keepOnAccount(null);
             if (mounted) resetUserState();
         }
     });
@@ -1088,7 +1110,7 @@ const App: React.FC = () => {
   const handleCircleChange = (circleId: string) => setUser({...user, activeCircleId: circleId});
 
   // --- Rendering ---
-  if (isLoading) return <div className="min-h-screen bg-[#fcfcfc] flex items-center justify-center"><Sparkles className="text-belluh-300 w-10 h-10 mb-4 animate-pulse" /></div>;
+  if (isLoading) return <div className="min-h-screen bg-[#fcfcfc] flex flex-col items-center justify-center gap-5" role="status" aria-label="Opening your journal"><DragonflyMark size={64} rippleOnMount={false} className="animate-pulse" />{opening && <p className="text-sm text-slate-400">Opening your journal</p>}</div>;
   if (showAdmin && isUserAdmin) return <AdminMetrics onBack={() => setShowAdmin(false)} />;
 
   if (!isAuthenticated) {
@@ -1198,11 +1220,11 @@ const App: React.FC = () => {
   if (isOnboarding) return <>{inviteModal}{recoveryModal}<Onboarding onComplete={handleOnboardingComplete} /></>;
 
   return (
-    <div className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in lg:pl-64">
+    <div className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in lg:pl-[var(--sidebar-w,16rem)] lg:transition-[padding] lg:duration-300">
       {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} partnerName={user.partnerName} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} onAskBelluh={askBelluh} onOpenBelluh={() => askBelluh('')} />}
       {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => handleCompose(prompt)} initialSpace={hasPartner ? tabSpace : undefined} />}
       {belluhSheet && (
-        <div className="fixed inset-0 z-[70] bg-white animate-slide-up" role="dialog" aria-label="Belluh">
+        <div className="fixed inset-0 z-[70] bg-paper animate-slide-up" role="dialog" aria-label="Belluh">
           <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => { setBelluhSheet(false); handleCompose(prompt); }} initialSpace="me" inSheet onClose={() => setBelluhSheet(false)} />
         </div>
       )}
@@ -1212,7 +1234,7 @@ const App: React.FC = () => {
       {inviteModal}
       {recoveryModal}
       {belluhReply && currentTab !== 'ai-coach' && !isComposeOpen && (
-        <div className="fixed bottom-28 left-0 right-0 px-6 z-[55] flex justify-center animate-slide-up lg:bottom-8 lg:left-64">
+        <div className="fixed bottom-28 left-0 right-0 px-6 z-[55] flex justify-center animate-slide-up lg:bottom-8 lg:left-[var(--sidebar-w,16rem)]">
           <div className="max-w-[360px] w-full bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-900/10 border border-white p-4 flex gap-3">
             <div className="shrink-0 pt-0.5"><BelluhOrb size={24} /></div>
             <button className="text-left flex-1" onClick={() => { setBelluhReply(null); setCurrentTab('ai-coach'); }}>
@@ -1224,7 +1246,7 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
-      <TabBar currentTab={currentTab} usTab={hasPartner} badges={{ 'ai-coach': unreadNotes > 0 || newFromBelluh }} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); if (tab === 'ai-coach') { setTabSpace(unreadNotes > 0 || newFromBelluh ? 'me' : 'us'); setUnreadNotes(0); setNewFromBelluh(false); setBelluhReply(null); } setCurrentTab(tab); }} onCompose={() => handleCompose()} />
+      <TabBar currentTab={currentTab} usTab={hasPartner} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(c => !c)} badges={{ 'ai-coach': unreadNotes > 0 || newFromBelluh }} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); if (tab === 'ai-coach') { setTabSpace(unreadNotes > 0 || newFromBelluh ? 'me' : 'us'); setUnreadNotes(0); setNewFromBelluh(false); setBelluhReply(null); } setCurrentTab(tab); }} onCompose={() => handleCompose()} />
       {isComposeOpen && <div className="fixed inset-0 z-[60] bg-paper animate-slide-up"><button onClick={() => setIsComposeOpen(false)} aria-label="Close" className="absolute top-5 right-4 w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 z-50 transition-colors"><X size={22} /></button><Journal onAddEntry={handleAddEntry} partnerName={user.partnerName || 'Partner'} onTriggerPremium={handleTriggerPremium} initialPrompt={composePrompt} userName={user.name} partnerHasEntry={partnerHasEntry} /></div>}
       
       {showIntro && <IntroGuide onClose={() => setShowIntro(false)} />}

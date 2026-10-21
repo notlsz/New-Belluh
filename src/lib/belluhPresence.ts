@@ -14,6 +14,14 @@ const KEY = 'belluh_shape';
 /** A shape Belluh chose (from the take_shape tool): back to water, an emoji, or an SVG path in a 100x100 box. */
 export type AgentShape = { water: true } | { label?: string; emoji?: string; path?: string };
 
+/**
+ * A clean heart. Emoji hearts come with sparkles, a ribbon, an arrow or a second heart, which melt into a lumpy
+ * blob as water; any heart someone asks for becomes this one instead.
+ */
+export const HEART_PATH = 'M50 89 C46 86 6 62 6 33 C6 18 17 8 30 8 C39 8 46 13 50 21 C54 13 61 8 70 8 C83 8 94 18 94 33 C94 62 54 86 50 89 Z';
+const HEART_EMOJI = /^(?:❤️?|♥️?|💖|💗|💓|💕|💞|💘|💝|💟|❣️?|🩷|🧡|💛|💚|💙|🩵|💜|🤎|🖤|🩶|🤍|♡)$/u;
+export const cleanShape = (spec: ShapeSpec): ShapeSpec => (spec.emoji && HEART_EMOJI.test(spec.emoji.trim()) ? { path: HEART_PATH } : spec);
+
 /** What Belluh is doing right now, as people see it. */
 export type BelluhState = 'idle' | 'listening' | 'thinking' | 'talking';
 
@@ -43,7 +51,11 @@ function mark(key: 'belluhState' | 'belluhShape' | 'belluhHeard', value: string)
   try { document.documentElement.dataset[key] = value; } catch { /* no document */ }
 }
 
+// Where a kept shape is saved beyond this browser (the account), set once someone is signed in
+let keepElsewhere: ((saved: { label: string } & ShapeSpec | null) => void) | null = null;
+
 function remember(spec: ShapeSpec | 'water', label: string) {
+  try { keepElsewhere?.(spec === 'water' ? null : { label, ...spec }); } catch { /* best effort */ }
   try {
     if (spec === 'water') localStorage.removeItem(KEY);
     else localStorage.setItem(KEY, JSON.stringify({ spec, label }));
@@ -73,7 +85,7 @@ export function belluhWater(): BelluhWater | null {
   if (water) {
     try {
       const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
-      if (saved?.spec && water.setShape(saved.spec, saved.label)) mark('belluhShape', saved.label);
+      if (saved?.spec && water.setShape(cleanShape(saved.spec), saved.label)) mark('belluhShape', saved.label);
     } catch { /* nothing saved */ }
   }
   return water;
@@ -113,11 +125,27 @@ export const belluh = {
   word(w: string) { belluhWater()?.word(w); },
   /** Take a shape now. Returns false if it couldn't be drawn. */
   become(spec: ShapeSpec | 'water', label = 'shape', keep = true): boolean {
+    if (spec !== 'water') spec = cleanShape(spec);
     const w = belluhWater();
     if (!w || !w.setShape(spec, label)) return false;
     if (keep) remember(spec, label);
     mark('belluhShape', spec === 'water' ? 'water' : label);
     return true;
+  },
+  /** Save kept shapes to the signed-in account too (null to stop). */
+  keepOnAccount(fn: typeof keepElsewhere) { keepElsewhere = fn; },
+  /** The shape saved on this browser, if any (to carry over to the account the first time). */
+  savedHere(): ({ label: string } & ShapeSpec) | null {
+    try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); return v?.spec ? { label: String(v.label || 'shape'), ...v.spec } : null; } catch { return null; }
+  },
+  /** Take the shape saved on the account (or water), and keep it on this browser too. */
+  restore(saved: ({ label?: string } & ShapeSpec) | null) {
+    if (!saved) { if (belluh.savedHere()) belluh.become('water', 'water', false), remember('water', 'water'); return; }
+    const { label, ...spec } = saved as any;
+    const clean: ShapeSpec = spec.emoji ? { emoji: String(spec.emoji).slice(0, 16) } : spec.path ? { path: String(spec.path).slice(0, 4000) } : spec.text ? { text: String(spec.text).slice(0, 2) } : {};
+    if (!clean.emoji && !clean.path && !clean.text) return;
+    const keep = keepElsewhere; keepElsewhere = null; // it came from the account: don't write it straight back
+    try { belluh.become(clean, String(label || 'shape').slice(0, 40)); } finally { keepElsewhere = keep; }
   },
   /** A shape Belluh picked itself, from its reply. */
   applyAgentShape(shape: AgentShape | null | undefined): boolean {

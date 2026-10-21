@@ -134,13 +134,13 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
 
       <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6">
         {!phone && !code && (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+          <div className="flex flex-col gap-4">
             <div>
               <p className="font-serif text-lg text-slate-900">Text Belluh like you'd text a friend.</p>
               <p className="text-sm text-slate-500 mt-1">Dates, plans, "remind me to call his mom Sunday". Belluh texts you first when something's coming up, and replies where you are.</p>
             </div>
             {BELLUH_NUMBER || SMS_NUMBER || TG_BOT || IMESSAGE_NUMBER ? (
-              <div className="flex flex-wrap gap-2 shrink-0">
+              <div className="flex flex-wrap gap-2">
                 {IMESSAGE_NUMBER && (readyCode ? (
                   <a href={imHref(readyCode)} onClick={() => connect('imessage')} className={btn}>
                     <MessageCircle size={17} className="text-[#0A84FF]" /> Connect iMessage

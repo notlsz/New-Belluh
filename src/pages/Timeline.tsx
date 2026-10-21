@@ -306,7 +306,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
        )}
 
        {/* Redesigned Header */}
-       <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-transparent transition-all duration-300">
+       <div className="sticky top-0 z-40 bg-paper backdrop-blur-xl border-b border-transparent transition-all duration-300">
           <div className="px-6 pt-8 pb-4 max-w-3xl mx-auto">
              <div className="flex items-start justify-between mb-6">
                 <div className="relative">
@@ -327,7 +327,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                     </button>
 
                     {isCircleMenuOpen && (
-                        <div className="absolute top-full left-0 mt-4 bg-white rounded-[2rem] shadow-2xl border border-slate-100 p-2 w-72 animate-scale-in z-50 origin-top-left ring-1 ring-black/5 max-h-[60vh] overflow-y-auto">
+                        <div className="absolute top-full left-0 mt-4 bg-belluh-25 rounded-[2rem] shadow-2xl border border-belluh-100 p-2 w-72 animate-scale-in z-50 origin-top-left ring-1 ring-black/5 max-h-[60vh] overflow-y-auto">
                             <div className="text-[10px] font-bold text-slate-400 px-3 py-2 uppercase tracking-widest">Active Circles</div>
                             {circles.filter(c => c.status === CircleStatus.Active).map(c => (
                                 <button key={c.id} className="w-full p-3 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors flex items-center gap-3 text-left group" onClick={() => { onCircleChange(c.id); setIsCircleMenuOpen(false); }}>

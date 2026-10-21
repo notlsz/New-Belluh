@@ -34,3 +34,12 @@ test('Shapes: what the model asks for is checked before the app draws it', () =>
   assert.equal(validateToolCall('take_shape', { label: 'x', path: 'M0 0 url(javascript:alert(1))' }), null);
   assert.equal(validateToolCall('take_shape', { label: 'x' }), null);
 });
+
+test('any heart someone asks for is one clean heart, not an emoji with sparkles', async () => {
+  const { shapeRequest, instantShape } = await import('../src/lib/shapeWords.ts');
+  for (const t of ['become a heart', 'turn into a heart', 'make yourself a heart shape', 'turn into a love heart', 'be a pink heart']) {
+    const spec = instantShape(shapeRequest(t)!) as any;
+    assert.ok(spec?.path?.startsWith('M50 89'), `${t} -> ${JSON.stringify(spec)}`);
+  }
+  assert.deepEqual(instantShape(shapeRequest('become a broken heart')!), { emoji: '💔' }, 'a broken heart stays broken');
+});

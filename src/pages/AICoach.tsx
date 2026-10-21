@@ -471,7 +471,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
        </div>
 
        {/* Input Area */}
-       <div className={`fixed bottom-0 left-0 right-0 p-4 ${inSheet ? 'pb-6' : 'pb-28 lg:pb-8 lg:left-64'} bg-gradient-to-t from-white via-white to-transparent pt-12 z-40`}>
+       <div className={`fixed bottom-0 left-0 right-0 p-4 ${inSheet ? 'pb-6' : 'pb-28 lg:pb-8 lg:left-[var(--sidebar-w,16rem)]'} bg-gradient-to-t from-belluh-25 via-belluh-25 to-transparent pt-12 z-40`}>
             <div className="max-w-2xl mx-auto relative flex flex-col">
                 <div className="flex items-center gap-2 mb-3 -mx-4 px-4 overflow-x-auto no-scrollbar">
                     {starters.map(t => (
