@@ -199,7 +199,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-belluh-25">
        <div className="pb-32 pt-0 px-0 max-w-2xl md:max-w-3xl mx-auto">
        {/* Weekly Report Modal Overlay */}
        {showWeeklyReport && belluhLive && (
@@ -441,7 +441,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
              {belluhLive === false && forecast && !isConstellation && !isArchived && showPatterns && (
                  <div className="mb-6 animate-scale-in">
                      <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-float flex items-center gap-5 relative overflow-hidden">
-                         <div className="absolute top-0 left-0 w-1 h-full bg-[#f0addd]"></div>
+                         <div className="absolute top-0 left-0 w-1 h-full bg-belluh-300"></div>
                          <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center shrink-0">
                              {isLoadingForecast ? <Loader2 size={20} className="animate-spin text-slate-400" /> : getWeatherIcon(forecast.weather)}
                          </div>
@@ -477,19 +477,19 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
 
        <div className="relative min-h-[400px]">
           {/* Timeline Stem */}
-          <div className="absolute left-14 md:left-20 top-0 bottom-0 w-px bg-slate-100"></div>
+          <div className="absolute left-14 md:left-20 top-0 bottom-0 w-px bg-belluh-200"></div>
 
           {/* Today: what needs you now, before the story */}
           {!isArchived && !isConstellation && (
               <div className="relative pl-20 md:pl-24 pr-6 mb-5 flex items-center gap-3">
-                  <span className="text-[11px] font-bold text-[#e58fc9] uppercase tracking-[0.18em]">Today</span>
+                  <span className="text-[11px] font-bold text-belluh-500 uppercase tracking-[0.18em]">Today</span>
               </div>
           )}
 
           {/* Plans: one waiting for you to pick a time, or one coming up */}
           {homePlans.length > 0 && !isArchived && !isConstellation && (
               <div className="relative pl-20 md:pl-24 pr-6 mb-10 animate-slide-up space-y-4">
-                  <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-[#f0addd] border-[2px] border-[#fcfcfc] rounded-full z-10 -translate-x-[3.5px]"></div>
+                  <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-belluh-300 border-[2px] border-belluh-25 rounded-full z-10 -translate-x-[3.5px]"></div>
                   {homePlans.slice(0, 2).map(p => <PlanCard key={p.id} planId={p.id} partnerName={(partnerName || '').split(' ')[0] || null} />)}
               </div>
           )}
@@ -497,7 +497,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
           {/* This week's thing to try together: one tap to check in */}
           {week && !isArchived && !isConstellation && (
               <div className="relative pl-20 md:pl-24 pr-6 mb-10 animate-slide-up">
-                  <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-[#9bbecb] border-[2px] border-[#fcfcfc] rounded-full z-10 -translate-x-[3.5px]"></div>
+                  <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-[#9bbecb] border-[2px] border-belluh-25 rounded-full z-10 -translate-x-[3.5px]"></div>
                   <WeeklyCard week={week} onChange={w => setWeek(w)} />
               </div>
           )}
@@ -505,26 +505,26 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
           {/* Today's question: you both answer; your partner's answer opens once you've written yours */}
           {!isArchived && !isConstellation && (
               <div className="relative pl-20 md:pl-24 pr-6 mb-16 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-                  <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-belluh-300 border-[2px] border-[#fcfcfc] rounded-full z-10 shadow-glow -translate-x-[3.5px]"></div>
+                  <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-belluh-300 border-[2px] border-belluh-25 rounded-full z-10 shadow-glow -translate-x-[3.5px]"></div>
 
                   {!myAnswer ? (
                   <button onClick={() => { trackEvent('daily_question_opened', { partner_answered: !!partnerAnswer }); onCompose(todaysPrompt); }} className="w-full text-left group">
                       <div className="bg-white border border-slate-100 shadow-sm hover:shadow-lg rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden group-hover:-translate-y-0.5">
                           <div className="relative z-10">
                               <div className="flex items-center gap-2 mb-4">
-                                  <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#e58fc9]">Today's question</span>
+                                  <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-belluh-500">Today's question</span>
                               </div>
                               <h3 className="font-serif text-2xl md:text-[1.7rem] text-slate-900 leading-tight mb-6">
                                   {todaysPrompt}
                               </h3>
                               {partnerAnswer && (
-                                  <div className="mb-6 rounded-2xl bg-[#f7d8ee]/60 p-4">
-                                      <p className="text-xs font-bold text-[#831843] mb-2">{partnerFirst} answered</p>
+                                  <div className="mb-6 rounded-2xl bg-belluh-100 p-4">
+                                      <p className="text-xs font-bold text-belluh-900 mb-2">{partnerFirst} answered</p>
                                       <div className="space-y-2 py-1" aria-hidden="true">
-                                          <div className="h-2.5 rounded-full bg-[#f0addd]/50 w-11/12" />
-                                          <div className="h-2.5 rounded-full bg-[#f0addd]/50 w-8/12" />
+                                          <div className="h-2.5 rounded-full bg-belluh-200 w-11/12" />
+                                          <div className="h-2.5 rounded-full bg-belluh-200 w-8/12" />
                                       </div>
-                                      <p className="text-xs text-[#831843]/80 mt-2">Write yours to see it.</p>
+                                      <p className="text-xs text-belluh-900 mt-2">Write yours to see it.</p>
                                   </div>
                               )}
                               <div className="flex items-center text-sm font-bold">
@@ -536,7 +536,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                   ) : (
                   <div className="w-full bg-white border border-slate-100 shadow-sm rounded-[2rem] p-8">
                       <div className="flex items-center gap-2 mb-4">
-                          <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#e58fc9]">Today's question</span>
+                          <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-belluh-500">Today's question</span>
                       </div>
                       <h3 className="font-serif text-xl text-slate-800 leading-tight mb-5">{todaysPrompt}</h3>
                       <div className="grid gap-3 sm:grid-cols-2">
@@ -545,9 +545,9 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                               <p className="font-serif text-[15px] text-slate-700 leading-relaxed line-clamp-5">{myAnswer.content || 'Answered with a photo or voice note'}</p>
                           </div>
                           {partnerAnswer ? (
-                              <div className="rounded-2xl bg-[#f7d8ee] p-4 animate-scale-in">
-                                  <p className="text-xs font-bold text-[#831843] mb-2">{partnerFirst}</p>
-                                  <p className="font-serif text-[15px] text-[#5e1c43] leading-relaxed line-clamp-5">{partnerAnswer.content || 'Answered with a photo or voice note'}</p>
+                              <div className="rounded-2xl bg-belluh-100 p-4 animate-scale-in">
+                                  <p className="text-xs font-bold text-belluh-900 mb-2">{partnerFirst}</p>
+                                  <p className="font-serif text-[15px] text-belluh-900 leading-relaxed line-clamp-5">{partnerAnswer.content || 'Answered with a photo or voice note'}</p>
                               </div>
                           ) : (
                               <div className="rounded-2xl border border-dashed border-slate-200 p-4 flex items-center">
@@ -566,7 +566,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
               if ('type' in item && item.type === 'header') {
                   return (
                       <div key={`header-${index}`} className="relative pl-20 md:pl-24 pr-6 mb-6 mt-10">
-                           <span className="font-serif text-lg text-slate-400">{item.title}</span>
+                           <span className="font-serif text-lg text-belluh-500">{item.title}</span>
                       </div>
                   );
               }
@@ -578,7 +578,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                   
                   return (
                     <div key={pattern.id} className="relative pl-20 md:pl-24 pr-6 mb-8 animate-pop">
-                        <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-white border-[2px] border-slate-200 rounded-full z-10 ring-4 ring-[#fcfcfc] -translate-x-[3.5px]"></div>
+                        <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-white border-[2px] border-slate-200 rounded-full z-10 ring-4 ring-belluh-25 -translate-x-[3.5px]"></div>
                         
                         <div 
                             onClick={() => setSelectedPattern(pattern)}
@@ -634,7 +634,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
 
               return (
                   <div key={entry.id} className="relative pl-20 md:pl-24 pr-6 group transition-[padding] duration-300" style={{ animationDelay: `${index * 50}ms` }}>
-                    <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-white border-[2px] border-slate-200 rounded-full z-10 shadow-sm group-hover:border-belluh-300 group-hover:scale-110 transition-all duration-300 ring-4 ring-[#fcfcfc] -translate-x-[3.5px]"></div>
+                    <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-white border-[2px] border-slate-200 rounded-full z-10 shadow-sm group-hover:border-belluh-300 group-hover:scale-110 transition-all duration-300 ring-4 ring-belluh-25 -translate-x-[3.5px]"></div>
                     <div className="w-full">
                         <EntryCard 
                             entry={entry} 

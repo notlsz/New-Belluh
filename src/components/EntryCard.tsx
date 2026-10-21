@@ -76,8 +76,8 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
           ${entry.isPrivate 
             ? 'bg-[#fafafa] border border-dashed border-slate-200' 
             : isCurrentUser 
-                ? 'bg-white border border-slate-100 hover:shadow-xl hover:shadow-slate-200/40 hover:-translate-y-0.5'
-                : 'bg-[#f8fdff] border border-slate-100 hover:shadow-xl hover:shadow-cyan-100/40 hover:-translate-y-0.5' // Distinct background for partner
+                ? 'bg-white border border-belluh-100 hover:shadow-xl hover:shadow-slate-200/40 hover:-translate-y-0.5'
+                : 'bg-belluh-50 border border-belluh-100 hover:shadow-xl hover:shadow-cyan-100/40 hover:-translate-y-0.5' // Distinct background for partner
           }
       `}>
         
@@ -225,8 +225,8 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
                   aria-label={entry.isLiked ? 'Unlike' : 'Like'}
                   className={`h-9 min-w-[2.25rem] inline-flex items-center justify-center gap-1.5 px-2.5 rounded-full transition-colors duration-300 ${
                       entry.isLiked 
-                      ? 'text-[#e58fc9] bg-[#fdf0f8]' 
-                      : 'text-slate-400 hover:text-[#e58fc9] hover:bg-[#fdf0f8]'
+                      ? 'text-belluh-500 bg-belluh-50' 
+                      : 'text-slate-400 hover:text-belluh-500 hover:bg-belluh-50'
                   }`}
                >
                   <Heart size={16} className={`transition-transform active:scale-75 ${entry.isLiked ? 'fill-current' : ''}`} />
