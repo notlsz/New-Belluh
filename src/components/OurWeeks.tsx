@@ -60,7 +60,7 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
         <div className="px-6 py-5 space-y-6">
           {weeks === null && <div className="h-24 rounded-2xl bg-slate-50 animate-pulse" />}
           {weeks && weeks.length === 0 && (
-            <p className="text-sm text-slate-500 leading-relaxed">Every Sunday, Belluh suggests one small thing for the two of you to try, based on what you share. Your weeks will collect here.</p>
+            <p className="text-sm text-slate-500 leading-relaxed">Every Sunday, Bella suggests one small thing for the two of you to try, based on what you share. Your weeks will collect here.</p>
           )}
 
           {weeks && weeks.length > 1 && (

@@ -66,7 +66,7 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
           {messages !== null && messages.length === 0 && (
             <div className="text-center py-10 px-6">
               <div className="mx-auto w-fit"><BelluhOrb size={48} /></div>
-              <p className="mt-4 font-serif text-xl text-slate-900">You, {partnerName} and Belluh</p>
+              <p className="mt-4 font-serif text-xl text-slate-900">You, {partnerName} and Bella</p>
               <p className="mt-2 text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">Plan together, decide together, ask Bella together. Bella here only knows what you've both shared, never anyone's private entries.</p>
               <div className="mt-5 flex flex-wrap justify-center gap-2">
                 {['Plan a date night for us this week', 'What have we both been writing about?', 'Give us something small to try tonight'].map(s => (
@@ -118,7 +118,7 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
             <textarea value={text} onChange={e => setText(e.target.value)} rows={1}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               placeholder={ask ? `Ask Bella, with ${partnerName}…` : `Message ${partnerName}…`}
-              aria-label={`Message ${partnerName} and Belluh`}
+              aria-label={`Message ${partnerName} and Bella`}
               className="flex-1 bg-transparent border-none px-3 py-2 max-h-32 resize-none focus:outline-none text-[16px] text-slate-800 placeholder:text-slate-400" style={{ overflow: 'hidden' }} />
             <button aria-label="Send to Us" onClick={send} disabled={!text.trim() || busy}
               className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${text.trim() ? 'bg-[#9bbecb] text-white' : 'bg-slate-100 text-slate-300'}`}>

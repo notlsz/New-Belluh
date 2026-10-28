@@ -388,7 +388,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
              {belluhLive && !isConstellation && !isArchived && showPatterns && (() => {
                  const cards = waiting.length ? waiting : (latest && !(latest.meta?.kind === 'weekly' && week) ? [latest] : []);
                  if (!cards.length) return null;
-                 const LABEL: Record<string, string> = { weekly: 'Your week from Belluh', checkin: 'Check-in from Belluh', reminder: 'Reminder from Belluh', remind: 'Reminder you asked for', offer: 'Belluh noticed', plan_nudge: 'Waiting on you', after_plan: 'From Belluh' };
+                 const LABEL: Record<string, string> = { weekly: 'Your week from Bella', checkin: 'Check-in from Bella', reminder: 'Reminder from Bella', remind: 'Reminder you asked for', offer: 'Bella noticed', plan_nudge: 'Waiting on you', after_plan: 'From Belluh' };
                  const update = (id: string, next: AgentMessage | null) => setWaiting(prev => next ? prev.map(m => (m.id === id ? next : m)) : prev.filter(m => m.id !== id));
                  const shown = stackOpen ? cards : cards.slice(0, 1);
                  const hidden = cards.length - shown.length;
@@ -396,7 +396,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                      <div className="mb-6">
                          {cards.length > 1 && (
                              <div className="flex items-center justify-between mb-2.5 px-1">
-                                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Belluh has {cards.length} things for you</p>
+                                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Bella has {cards.length} things for you</p>
                                  <button type="button" onClick={() => setStackOpen(o => !o)} className="text-xs font-bold text-[#3f7486] hover:text-slate-900 transition-colors">{stackOpen ? 'Show less' : `Show ${hidden} more`}</button>
                              </div>
                          )}

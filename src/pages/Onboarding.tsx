@@ -318,7 +318,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         {step === 4 && (
           <div className="w-full max-w-md ob-in text-center">
             <h2 className="text-3xl md:text-4xl font-serif text-slate-900 mb-3">Bring {name || 'your partner'} in.</h2>
-            <p className="text-slate-500 mb-7 leading-relaxed">Send them your link. When they join, your journals connect and Belluh knows you both.</p>
+            <p className="text-slate-500 mb-7 leading-relaxed">Send them your link. When they join, your journals connect and Bella knows you both.</p>
 
             <button
               onClick={shareLink}

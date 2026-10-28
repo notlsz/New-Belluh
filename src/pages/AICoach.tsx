@@ -409,7 +409,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                      <div className="max-w-[85%] md:max-w-[80%]">
                        {msg.meta?.entry_id && <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6] mb-1.5">About your latest entry</p>}
                        {msg.meta?.kind === 'weekly' && <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6] mb-1.5">Your week, from Belluh</p>}
-                       {msg.meta?.kind === 'offer' && <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6] mb-1.5">Belluh noticed</p>}
+                       {msg.meta?.kind === 'offer' && <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6] mb-1.5">Bella noticed</p>}
                        {msg.meta?.kind === 'remind' && <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6] mb-1.5">Reminder you asked for</p>}
                        <p className="font-serif text-lg leading-relaxed text-slate-900 whitespace-pre-wrap">{revealIds.has(msg.id) ? <Reveal text={msg.body} onTick={() => messagesEndRef.current?.scrollIntoView({ block: 'end' })} /> : msg.body}</p>
                        {Array.isArray(msg.meta?.saved) && msg.meta.saved.length > 0 && (

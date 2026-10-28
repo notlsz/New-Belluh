@@ -137,7 +137,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
           <div className="flex flex-col gap-4">
             <div>
               <p className="font-serif text-lg text-slate-900">Text Bella like you'd text a friend.</p>
-              <p className="text-sm text-slate-500 mt-1">Dates, plans, "remind me to call his mom Sunday". Belluh texts you first when something's coming up, and replies where you are.</p>
+              <p className="text-sm text-slate-500 mt-1">Dates, plans, "remind me to call his mom Sunday". Bella texts you first when something's coming up, and replies where you are.</p>
             </div>
             {BELLUH_NUMBER || SMS_NUMBER || TG_BOT || IMESSAGE_NUMBER ? (
               <div className="flex flex-wrap gap-2">

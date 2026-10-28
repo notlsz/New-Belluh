@@ -1224,7 +1224,7 @@ const App: React.FC = () => {
       {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} partnerName={user.partnerName} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} onAskBelluh={askBelluh} onOpenBelluh={() => askBelluh('')} />}
       {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => handleCompose(prompt)} initialSpace={hasPartner ? tabSpace : undefined} />}
       {belluhSheet && (
-        <div className="fixed inset-0 z-[70] bg-paper animate-slide-up" role="dialog" aria-label="Belluh">
+        <div className="fixed inset-0 z-[70] bg-paper animate-slide-up" role="dialog" aria-label="Bella">
           <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => { setBelluhSheet(false); handleCompose(prompt); }} initialSpace="me" inSheet onClose={() => setBelluhSheet(false)} />
         </div>
       )}
