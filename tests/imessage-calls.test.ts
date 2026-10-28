@@ -59,3 +59,15 @@ test('Texting: CALL asks Belluh to phone the place', () => {
   for (const t of ['CALL', 'call them', 'Call for me', 'call it!']) assert.deepEqual(parseCommand(t), { type: 'call' }, t);
   assert.notDeepEqual(parseCommand('call mom tomorrow'), { type: 'call' });
 });
+
+test('Calls without Google: OpenStreetMap finds the restaurant and a callable number for free', async () => {
+  const { parseOsmPlaces } = await import('../supabase/functions/_shared/vapi.ts');
+  const lilia = [
+    { name: 'Lilia Gift Shop', category: 'shop', type: 'gift', extratags: { phone: '+1 718 555 0100' } },
+    { name: 'Lilia', category: 'amenity', type: 'restaurant', extratags: { phone: '+1-718-576-3095' }, address: { house_number: '567', road: 'Union Avenue', suburb: 'Williamsburg', state: 'New York', postcode: '11211' } },
+  ];
+  assert.deepEqual(parseOsmPlaces(lilia), { name: 'Lilia', phone: '+17185763095', address: '567 Union Avenue, Williamsburg, New York 11211' });
+  assert.equal(parseOsmPlaces([{ name: 'Tartine', category: 'amenity', type: 'cafe', extratags: { 'contact:phone': '(415) 487-2600' } }])?.phone, '+14154872600');
+  assert.equal(parseOsmPlaces([{ name: 'No Phone Bistro', category: 'amenity', type: 'restaurant', extratags: {} }]), null);
+  assert.equal(parseOsmPlaces('nope'), null);
+});

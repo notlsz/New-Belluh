@@ -11,8 +11,9 @@ import { sendTemplate } from '../_shared/whatsapp.ts';
 import { sendSms, smsReminder } from '../_shared/sms.ts';
 import { sendTelegram, telegramChat } from '../_shared/telegram.ts';
 import { sameSecret } from '../_shared/secret.ts';
+import { serverKey } from '../_shared/keys.ts';
 
-const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
+const db = createClient(Deno.env.get('SUPABASE_URL')!, serverKey(), {
   auth: { persistSession: false },
 });
 

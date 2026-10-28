@@ -6,8 +6,9 @@ import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 import { buildGeminiBody, MAX_BODY_BYTES } from '../_shared/proxy.ts';
 import { geminiFirst, MODELS, type GeminiContent } from '../_shared/gemini.ts';
 import { backups, askBackup, toJsonSchema } from '../_shared/backups.ts';
+import { serverKey } from '../_shared/keys.ts';
 
-const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
+const db = createClient(Deno.env.get('SUPABASE_URL')!, serverKey(), { auth: { persistSession: false } });
 const HOURLY_LIMIT = Number(Deno.env.get('AI_HOURLY_LIMIT') ?? 120);
 
 const CORS = {

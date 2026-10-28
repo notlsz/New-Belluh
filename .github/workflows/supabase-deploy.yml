@@ -115,7 +115,7 @@ jobs:
         run: |
           SERVICE_KEY=$(curl -sf -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
             "https://api.supabase.com/v1/projects/$PROJECT_REF/api-keys?reveal=true" \
-            | jq -r '[.[] | select(.name == "service_role" or .type == "secret")][0].api_key // empty')
+            | jq -r '([.[] | select(.type == "secret")][0] // [.[] | select(.name == "service_role")][0]).api_key // empty')
           if [ -z "$SERVICE_KEY" ]; then
             echo "::warning::Couldn't read the service key; old media was not moved. Re-run this workflow to retry."
             exit 0
@@ -147,24 +147,26 @@ jobs:
       - name: Deploy edge functions
         if: steps.setup.outputs.ready == 'true'
         run: |
-          supabase functions deploy gemini-proxy --project-ref "$PROJECT_REF"
-          supabase functions deploy belluh-agent --project-ref "$PROJECT_REF"
+          supabase functions deploy gemini-proxy --project-ref "$PROJECT_REF" --no-verify-jwt
+          supabase functions deploy belluh-agent --project-ref "$PROJECT_REF" --no-verify-jwt
           supabase functions deploy belluh-weekly --project-ref "$PROJECT_REF" --no-verify-jwt
           supabase functions deploy belluh-calendar --project-ref "$PROJECT_REF" --no-verify-jwt
-          supabase functions deploy belluh-push --project-ref "$PROJECT_REF"
+          supabase functions deploy belluh-push --project-ref "$PROJECT_REF" --no-verify-jwt
           supabase functions deploy belluh-nudges --project-ref "$PROJECT_REF" --no-verify-jwt
           supabase functions deploy belluh-gift --project-ref "$PROJECT_REF" --no-verify-jwt
 
       - name: Belluh calls restaurants (Vapi)
         if: steps.setup.outputs.ready == 'true'
         run: |
-          if [ -n "$VAPI_API_KEY" ] && [ -n "$VAPI_PHONE_NUMBER_ID" ] && [ -n "$GOOGLE_PLACES_API_KEY" ]; then
-            supabase secrets set --project-ref "$PROJECT_REF" VAPI_API_KEY="$VAPI_API_KEY" VAPI_PHONE_NUMBER_ID="$VAPI_PHONE_NUMBER_ID" GOOGLE_PLACES_API_KEY="$GOOGLE_PLACES_API_KEY"
+          if [ -n "$VAPI_API_KEY" ] && [ -n "$VAPI_PHONE_NUMBER_ID" ]; then
+            supabase secrets set --project-ref "$PROJECT_REF" VAPI_API_KEY="$VAPI_API_KEY" VAPI_PHONE_NUMBER_ID="$VAPI_PHONE_NUMBER_ID"
+            # Restaurants' numbers: Google Places when its key is set, otherwise OpenStreetMap (free, no key)
+            if [ -n "$GOOGLE_PLACES_API_KEY" ]; then supabase secrets set --project-ref "$PROJECT_REF" GOOGLE_PLACES_API_KEY="$GOOGLE_PLACES_API_KEY"; fi
             # The call webhook's secret is derived from the key inside the functions (vapi.ts), so there's nothing else to store
             supabase functions deploy vapi-webhook --project-ref "$PROJECT_REF" --no-verify-jwt
-            echo "Calls are on. Belluh can phone restaurants once someone taps Call for me."
+            echo "Calls are on. Bella can phone restaurants once someone taps Call for me."
           else
-            echo "::notice::Calls are off: add VAPI_API_KEY, VAPI_PHONE_NUMBER_ID and GOOGLE_PLACES_API_KEY to let Belluh phone restaurants."
+            echo "::notice::Calls are off: add VAPI_API_KEY and VAPI_PHONE_NUMBER_ID (GOOGLE_PLACES_API_KEY is optional) to let Bella phone restaurants."
           fi
 
       - name: Texting Belluh (WhatsApp, SMS, Telegram, iMessage) and reminders

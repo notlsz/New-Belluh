@@ -5,8 +5,9 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 import { icsCalendar, localDateOf, type CalDate, type CalEvent, type PlanOption } from '../_shared/plans.ts';
+import { serverKey } from '../_shared/keys.ts';
 
-const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
+const db = createClient(Deno.env.get('SUPABASE_URL')!, serverKey(), { auth: { persistSession: false } });
 
 Deno.serve(async (req) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') return new Response('Method not allowed', { status: 405 });

@@ -1,14 +1,15 @@
 // Belluh calls the restaurant: once someone taps "Call for me" on a table Belluh found, a Vapi voice agent phones the
 // place, says up front that it's an AI calling for them, asks for the table, and reports back. The number comes from
-// Google Places. Nothing is recorded; only the outcome (booked or not, the time, any alternative) comes back.
+// Google Places when a key is set, otherwise from OpenStreetMap (free, no key). Nothing is recorded; only the outcome (booked or not, the time, any alternative) comes back.
 // Docs: https://docs.vapi.ai (POST /call; end-of-call-report webhook), https://developers.google.com/maps/documentation/places/web-service/text-search
 
 const env = (k: string) => { try { return (globalThis as any).Deno?.env.get(k) ?? undefined; } catch { return undefined; } };
 const VAPI = () => env('VAPI_API_BASE') || 'https://api.vapi.ai';
 const PLACES = () => env('GOOGLE_PLACES_BASE') || 'https://places.googleapis.com';
 
-/** Calls are on only with all three keys: Vapi, the number Vapi calls from, and Places to find the restaurant's number. */
-export const callsOn = () => !!(env('VAPI_API_KEY') && env('VAPI_PHONE_NUMBER_ID') && env('GOOGLE_PLACES_API_KEY'));
+/** Calls are on with Vapi's key and the number it calls from. Restaurants' numbers come from Places or OpenStreetMap. */
+export const callsOn = () => !!(env('VAPI_API_KEY') && env('VAPI_PHONE_NUMBER_ID'));
+const OSM = () => env('OSM_SEARCH_BASE') || 'https://nominatim.openstreetmap.org';
 
 export interface FoundPlace { name: string; phone: string; address: string | null }
 
@@ -16,7 +17,8 @@ export interface FoundPlace { name: string; phone: string; address: string | nul
 export async function findPlace(query: string, fetchImpl: typeof fetch = fetch): Promise<FoundPlace | null> {
   const key = env('GOOGLE_PLACES_API_KEY');
   const q = query.replace(/\s+/g, ' ').trim().slice(0, 160);
-  if (!key || q.length < 2) return null;
+  if (q.length < 2) return null;
+  if (!key) return findPlaceOsm(q, fetchImpl);
   try {
     const r = await fetchImpl(`${PLACES()}/v1/places:searchText`, {
       method: 'POST',
@@ -39,6 +41,42 @@ export async function findPlace(query: string, fetchImpl: typeof fetch = fetch):
     console.error('Places search failed', e);
     return null;
   }
+}
+
+/** The same lookup on OpenStreetMap (Nominatim): free, no key, a real User-Agent and at most one request a second.
+ *  Only eating and drinking places with a phone number on the map count. */
+export async function findPlaceOsm(query: string, fetchImpl: typeof fetch = fetch): Promise<FoundPlace | null> {
+  try {
+    const u = new URL(`${OSM()}/search`);
+    u.searchParams.set('q', query); u.searchParams.set('format', 'jsonv2'); u.searchParams.set('extratags', '1');
+    u.searchParams.set('addressdetails', '1'); u.searchParams.set('limit', '8'); u.searchParams.set('countrycodes', 'us,ca');
+    const r = await fetchImpl(u.toString(), { headers: { 'User-Agent': 'Belluh/1.0 (https://belluh.com; hello@belluh.com)', 'Accept-Language': 'en' }, signal: AbortSignal.timeout(5000) });
+    if (!r.ok) { console.error('OSM search failed', r.status); return null; }
+    return parseOsmPlaces(await r.json());
+  } catch (e) {
+    console.error('OSM search failed', e);
+    return null;
+  }
+}
+
+const EATING = /^(restaurant|cafe|bar|pub|fast_food|food_court|biergarten|ice_cream)$/;
+
+/** Nominatim results as the first restaurant with a callable number, and a short street address. */
+export function parseOsmPlaces(json: unknown): FoundPlace | null {
+  for (const p of (Array.isArray(json) ? json : []) as any[]) {
+    if (p?.category !== 'amenity' || !EATING.test(String(p?.type ?? ''))) continue;
+    const t = p.extratags ?? {};
+    const raw = String(t.phone ?? t['contact:phone'] ?? '').split(';')[0].trim();
+    const digits = raw.replace(/\D/g, '');
+    const phone = toE164(raw.startsWith('+') ? raw : digits.length === 10 ? `+1${digits}` : digits.length === 11 && digits.startsWith('1') ? `+${digits}` : '');
+    const name = typeof p.name === 'string' ? p.name.trim().slice(0, 120) : '';
+    if (!phone || !name) continue;
+    const a = p.address ?? {};
+    const street = [a.house_number, a.road].filter(Boolean).join(' ');
+    const address = [street, a.city ?? a.town ?? a.village ?? a.suburb, [a.state, a.postcode].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+    return { name, phone, address: address ? address.slice(0, 200) : null };
+  }
+  return null;
 }
 
 /** "+1 415-555-0134" → "+14155550134"; anything that isn't an international number → null. */
