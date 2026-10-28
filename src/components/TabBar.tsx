@@ -18,7 +18,7 @@ const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose, bad
   const tabs = [
     { id: 'timeline', icon: BookHeart, label: 'Story' }, // Main Home
     { id: 'compose', icon: Plus, label: 'Capture', isAction: true },
-    usTab ? { id: 'ai-coach', icon: Infinity, label: 'Us' } : { id: 'ai-coach', icon: Sparkles, label: 'Belluh' },
+    usTab ? { id: 'ai-coach', icon: Infinity, label: 'Us' } : { id: 'ai-coach', icon: Sparkles, label: 'Bella' },
     { id: 'profile', icon: User, label: 'Me' },
   ];
 

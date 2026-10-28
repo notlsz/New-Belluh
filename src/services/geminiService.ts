@@ -196,7 +196,7 @@ export const detectPatterns = async (entries: JournalEntry[]): Promise<Insight[]
 
 export const chatWithBelluh = async (message: string, history: { role: string, text: string }[], persona: UserPersona): Promise<string> => {
   try {
-    const context = history.map(h => `${h.role === 'model' ? 'Belluh' : 'User'}: ${h.text}`).join('\n');
+    const context = history.map(h => `${h.role === 'model' ? 'Bella' : 'User'}: ${h.text}`).join('\n');
     const response = await retryOperation<GenerateContentResponse>(() =>
       getAI().models.generateContent({
         model: 'gemini-3.8-flash',

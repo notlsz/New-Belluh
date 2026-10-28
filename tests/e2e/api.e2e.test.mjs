@@ -1121,7 +1121,7 @@ test('43. "Call for me": Belluh phones the restaurant, says it is an AI, and the
   assert.equal(v.auth, 'Bearer vapi-test');
   assert.equal(v.vapi.phoneNumberId, 'pn-test');
   assert.equal(v.vapi.customer.number, '+14085550134');
-  assert.match(v.vapi.assistant.firstMessage, /^Hi, this is Belluh, an AI assistant calling for Dan\. I'd like to book a table for 2 on .* at 7:00 PM\./);
+  assert.match(v.vapi.assistant.firstMessage, /^Hi, this is Bella, an AI assistant calling for Dan\. I'd like to book a table for 2 on .* at 7:00 PM\./);
   assert.match(v.vapi.assistant.model.messages[0].content, /Never pretend to be human/);
   assert.equal(v.vapi.assistant.artifactPlan.recordingEnabled, false, 'nothing is recorded');
   assert.equal(v.vapi.assistant.server.url, 'http://127.0.0.1:3000/functions/v1/vapi-webhook');

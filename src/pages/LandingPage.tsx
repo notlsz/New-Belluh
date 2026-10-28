@@ -19,9 +19,10 @@ const FAQ = [
   { q: "We're already busy. Isn't this one more thing to keep up with?", a: "It's the opposite. Write one line a day, or none at all. Belluh does the remembering, the planning and the reminding, so neither of you has to keep track." },
   { q: 'What does Belluh actually do?', a: 'It remembers what matters to you both, plans dates your partner can accept with one tap, and gets things ready to finish in a tap: the date-night table, dinner delivered, the gift, the groceries, a ride, tickets, the honeymoon and the flowers. It reminds you before birthdays and anniversaries, sends the reminders you ask for, helps you find the words for a note, and every Sunday gives you one insight and one small thing to try together.' },
   { q: 'Do we both need to sign up?', a: "Belluh is made for two, so it's best together. You can start on your own and send your partner the link whenever you're ready." },
+  { q: 'Who is Bella?', a: "Bella is the AI inside Belluh. She remembers what matters to you both, plans dates you can both say yes to, and gets the table, the flowers and the gift ready to pay for in one tap. She never buys anything without you." },
   { q: 'Is Belluh an AI girlfriend or boyfriend?', a: "No. Belluh doesn't flirt or play a partner. It works for the two of you and points you back to each other." },
-  { q: 'Can I use it from WhatsApp or text?', a: "Yes. Connect WhatsApp, SMS or Telegram in Settings with one tap and text Belluh like you'd talk to it in the app. Same Belluh, same memory." },
-  { q: 'Why is Belluh made of water?', a: "So you can see what it's doing. It ripples when you type, swirls while it thinks, and moves with every word it says. Ask it to become something, a cat, a lighthouse, the first letter of your name, and it takes that shape." },
+  { q: 'Can I use it from WhatsApp or text?', a: "Yes. Connect WhatsApp, SMS or Telegram in Settings with one tap and text Bella like you'd talk to her in the app. Same Bella, same memory." },
+  { q: 'Why is Bella made of water?', a: "So you can see what she's doing. She ripples when you type, swirls while she thinks, and moves with every word she says. Ask her to become something, a cat, a lighthouse, the first letter of your name, and she takes that shape." },
   { q: 'What happens to my data?', a: "Your entries are encrypted in storage and in transit, and never sold. Belluh's replies are written by Google's Gemini models, which process your entries to write them." },
   { q: 'Is it free?', a: "Yes. Writing together, your shared memory and a few chats with Belluh a week are free for good. Duo is $7.77 a month or $88.88 a year, one price for the two of you." },
   { q: 'Can I give Belluh to a couple?', a: "Yes. Give a year of Duo for $88.88 to a new couple, for an engagement, a wedding, an anniversary or a new home. Pick the day it arrives, add a card in the mail if you like, and we send it with your note." },
@@ -277,13 +278,13 @@ function GiftSection() {
         <div className="mt-14 md:mt-16 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
           <div className="relative rounded-[2rem] bg-white border border-white shadow-[0_40px_100px_-40px_rgba(15,23,42,0.35)] overflow-hidden">
             <div className="flex items-center justify-between px-6 md:px-7 pt-5 pb-4 border-b border-slate-100">
-              <span className="inline-flex items-center gap-2.5"><BelluhOrb size={22} /><span className="font-serif text-[17px] text-slate-900">Belluh</span></span>
+              <span className="inline-flex items-center gap-2.5"><BelluhOrb size={22} /><span className="font-serif text-[17px] text-slate-900">Bella</span></span>
               <span className="text-sm text-slate-500"><span className="font-semibold text-slate-900">$88.88</span> for both, one year</span>
             </div>
             <div ref={scroller} className="h-[300px] md:h-[360px] overflow-y-auto overscroll-contain px-5 md:px-7 py-6 flex flex-col gap-4">
               <div className="flex gap-3 items-start">
                 <div className="shrink-0 pt-0.5"><BelluhOrb size={24} /></div>
-                <p className="font-serif text-[15px] md:text-base leading-relaxed text-slate-800">Hi, I'm Belluh. Give a couple a year of me: one journal they share, dates planned for them, and every anniversary remembered. Four quick questions.</p>
+                <p className="font-serif text-[15px] md:text-base leading-relaxed text-slate-800">Hi, I'm Bella. Give a couple a year of Belluh: one journal they share, dates planned for them, and every anniversary remembered. Four quick questions.</p>
               </div>
               {turns.map((t, i) => (
                 <React.Fragment key={t.at}>
@@ -475,7 +476,7 @@ const MeetBelluh: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =>
   const [state, setState] = useState<BelluhState>(belluh.state());
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
-  const [reply, setReply] = useState({ id: 0, text: "Hi, I'm Belluh. Ask me to become anything." });
+  const [reply, setReply] = useState({ id: 0, text: "Hi, I'm Bella. Ask me to become anything." });
   const [hint, setHint] = useState(0);
   const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
   useEffect(() => belluh.subscribe(setState), []);
@@ -736,7 +737,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
 
                      <div className="hidden sm:block absolute left-0 top-[6%] w-[60%] max-w-[300px]" style={{ animation: 'slideUp 0.8s 0.9s cubic-bezier(0.16,1,0.3,1) both' }}>
                          <div className="animate-float rounded-3xl bg-white/90 backdrop-blur-xl border border-white shadow-[0_24px_60px_-24px_rgba(15,23,42,0.35)] p-4">
-                             <div className="flex items-center gap-2"><BelluhOrb size={22} /><span className="text-[13px] font-bold text-slate-900">Belluh</span><span className="ml-auto text-[11px] text-slate-400">now</span></div>
+                             <div className="flex items-center gap-2"><BelluhOrb size={22} /><span className="text-[13px] font-bold text-slate-900">Bella</span><span className="ml-auto text-[11px] text-slate-400">now</span></div>
                              <p className="mt-2 font-serif text-[14px] sm:text-[15px] leading-snug text-slate-800">Dan's birthday is in 12 days. He wrote that he misses shooting film. Want me to plan it?</p>
                              <div className="mt-3 flex items-center gap-2"><span className="h-8 px-3.5 inline-flex items-center rounded-full bg-slate-900 text-white text-xs font-bold">Plan it</span><span className="h-8 px-3 inline-flex items-center text-xs font-semibold text-slate-400">Not now</span></div>
                          </div>
@@ -794,7 +795,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                   <div className="w-full max-w-[340px] rounded-3xl bg-white border border-slate-100 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.25)] p-3.5 flex gap-3">
                       <div className="shrink-0 pt-0.5"><BelluhOrb size={32} /></div>
                       <div className="min-w-0">
-                          <div className="flex items-center justify-between gap-3"><span className="text-sm font-bold text-slate-900">Belluh</span><span className="text-xs text-slate-400">now</span></div>
+                          <div className="flex items-center justify-between gap-3"><span className="text-sm font-bold text-slate-900">Bella</span><span className="text-xs text-slate-400">now</span></div>
                           <p className="text-[13px] md:text-sm text-slate-600 leading-snug mt-0.5">Dan picked Friday at 7:00 PM for "Ramen, then the night market".</p>
                       </div>
                   </div>
@@ -844,7 +845,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                                 <p className="mt-5 flex-1 font-serif text-xl md:text-[1.45rem] leading-snug text-slate-800 whitespace-normal">{m.text}</p>
                                 <div className="mt-7 flex items-start gap-2.5 rounded-2xl bg-white/70 px-3.5 py-3 whitespace-normal">
                                     <BelluhOrb size={18} className="mt-0.5" />
-                                    <p className="text-[13px] leading-snug text-slate-600"><span className="font-serif font-bold text-[#7fa7b6]">Belluh</span> {m.belluh}</p>
+                                    <p className="text-[13px] leading-snug text-slate-600"><span className="font-serif font-bold text-[#7fa7b6]">Bella</span> {m.belluh}</p>
                                 </div>
                             </article>
                         ))}
@@ -922,7 +923,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                   <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
                       <span className="text-slate-900">Questions,</span><br /><span className="text-[#f0addd] italic">answered.</span>
                   </h2>
-                  <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed max-w-sm">Anything else, ask Belluh. It knows how it works, and it's free to try.</p>
+                  <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed max-w-sm">Anything else, ask Bella. She knows how it all works, and it's free to try.</p>
                   <button onClick={() => { rememberCta('faq'); onGetStarted(); }} className="mt-7 group inline-flex items-center gap-2 h-11 px-5 rounded-full bg-slate-900 text-white text-sm font-bold hover:bg-black transition-colors">Start free <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" /></button>
               </div>
               <div className="space-y-1.5 -mx-5 md:mx-0">

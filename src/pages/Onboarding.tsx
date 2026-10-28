@@ -30,7 +30,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [partnerName, setPartnerName] = useState('');
   const [entry, setEntry] = useState('');
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [line, setLine] = useState({ id: 0, text: "Hi. I'm Belluh." });
+  const [line, setLine] = useState({ id: 0, text: "Hi. I'm Bella." });
   const [moment, setMoment] = useState<'none' | 'named' | 'keeping'>('none');
   const [taps, setTaps] = useState(0);
   const [finishing, setFinishing] = useState(false);
@@ -192,7 +192,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               })}
             </div>
           )}
-          <BelluhOrb size={orbSize} onTap={tapOrb} label="Belluh" />
+          <BelluhOrb size={orbSize} onTap={tapOrb} label="Bella" />
         </div>
         <p className="min-h-[2rem] mb-6 text-center font-serif text-lg md:text-xl text-slate-600 max-w-sm" aria-live="polite">
           <BelluhSpeech key={line.id} text={line.text} delay={line.id === 0 ? 600 : 0} />
@@ -318,7 +318,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         {step === 4 && (
           <div className="w-full max-w-md ob-in text-center">
             <h2 className="text-3xl md:text-4xl font-serif text-slate-900 mb-3">Bring {name || 'your partner'} in.</h2>
-            <p className="text-slate-500 mb-7 leading-relaxed">Send them your link. When they join, your journals connect and Belluh knows you both.</p>
+            <p className="text-slate-500 mb-7 leading-relaxed">Send them your link. When they join, your journals connect and Bella knows you both.</p>
 
             <button
               onClick={shareLink}

@@ -82,9 +82,9 @@ export interface CallRequest {
 
 /** The voice agent's instructions: honest that it's an AI, brief, and never commits to anything it wasn't asked to. */
 export function callPrompt(c: CallRequest): { system: string; first: string } {
-  const first = `Hi, this is Belluh, an AI assistant calling for ${c.name}. I'd like to book a table for ${c.people} on ${c.day} at ${c.time}. Do you have anything?`;
+  const first = `Hi, this is Bella, an AI assistant calling for ${c.name}. I'd like to book a table for ${c.people} on ${c.day} at ${c.time}. Do you have anything?`;
   const system = [
-    `You are Belluh, an AI assistant on a phone call to ${c.restaurant} to book a table for ${c.name}.`,
+    `You are Bella, an AI assistant on a phone call to ${c.restaurant} to book a table for ${c.name}.`,
     `The request: ${c.people} ${c.people === 1 ? 'person' : 'people'}, ${c.day}, at ${c.time}, under the name ${c.name}.${c.notes ? ` Mention if it fits naturally: ${c.notes}.` : ''}`,
     'You already said you are an AI calling on their behalf. If asked again, say so plainly. Never pretend to be human.',
     'Speak like a polite regular: short sentences, one thing at a time, warm, no filler.',
@@ -122,7 +122,7 @@ export async function startCall(c: CallRequest, webhookUrl: string, fetchImpl: t
         phoneNumberId: from,
         customer: { number: c.phone, name: c.restaurant.slice(0, 40) },
         assistant: {
-          name: 'Belluh',
+          name: 'Bella',
           firstMessage: first,
           firstMessageMode: 'assistant-waits-for-user',   // let the host say hello first
           model: { provider: 'google', model: env('VAPI_MODEL') || 'gemini-2.5-flash', messages: [{ role: 'system', content: system }], tools: [{ type: 'endCall' }] },

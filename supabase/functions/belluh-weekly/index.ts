@@ -51,7 +51,7 @@ async function ensurePairAction(ctx: Ctx, ws: string, lastWeek: LastWeek | null)
   // Shared entries only (both of them see the result); system rows like circle settings never count as writing
   const entries = visibleEntries(ctx.userId, ctx.partnerId ? [ctx.partnerId] : [], (rows ?? []) as EntryRow[]).filter(e => e.is_shared === true);
   const prompt = pairActionPrompt({ names, entries, lastWeek, today: ws, facts: factsBlock((factRows ?? []) as EntryRow[], names) });
-  const picked = validateAction(await jsonAnswer('You are Belluh. Answer with JSON only.', prompt, ACTION_SCHEMA));
+  const picked = validateAction(await jsonAnswer('You are Bella, the AI in Belluh. Answer with JSON only.', prompt, ACTION_SCHEMA));
   if (!picked) return null;
 
   const { error } = await db.from('weekly_actions').insert({ ...pairOf(ctx.userId, ctx.partnerId), week_start: ws, ...picked });
