@@ -8,8 +8,9 @@ import {
 } from './agent.ts';
 import { localDateParts, isoDate } from './occasions.ts';
 import { weekStart, pairOf, type CheckinStatus } from './weekly.ts';
+import { serverKey } from './keys.ts';
 
-export const db: SupabaseClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
+export const db: SupabaseClient = createClient(Deno.env.get('SUPABASE_URL')!, serverKey(), {
   auth: { persistSession: false },
 });
 

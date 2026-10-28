@@ -54,6 +54,7 @@ export default defineConfig(({ mode }) => {
     define: {
       'process.env.NEXT_PUBLIC_SUPABASE_URL': JSON.stringify(env.NEXT_PUBLIC_SUPABASE_URL),
       'process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY': JSON.stringify(env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+      'process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY': JSON.stringify(env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY),
       'process.env.VITE_SPOTIFY_CLIENT_ID': JSON.stringify(spotifyClientId),
       'process.env.VITE_APPLE_DEVELOPER_TOKEN': JSON.stringify(appleDeveloperToken),
     },

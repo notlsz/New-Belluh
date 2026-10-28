@@ -3,8 +3,9 @@
 // Deploy with: supabase functions deploy belluh-gift --no-verify-jwt
 
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
+import { serverKey } from '../_shared/keys.ts';
 
-const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
+const db = createClient(Deno.env.get('SUPABASE_URL')!, serverKey(), { auth: { persistSession: false } });
 const ORIGINS = ['https://belluh.com', 'https://www.belluh.com', 'http://localhost:5173', 'http://localhost:4173'];
 const cors = (origin: string | null) => ({
   'Access-Control-Allow-Origin': origin && (ORIGINS.includes(origin) || /^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(origin)) ? origin : ORIGINS[0],
