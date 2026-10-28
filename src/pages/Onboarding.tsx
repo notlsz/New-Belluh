@@ -30,7 +30,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [partnerName, setPartnerName] = useState('');
   const [entry, setEntry] = useState('');
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [line, setLine] = useState({ id: 0, text: "Hi. I'm Belluh." });
+  const [line, setLine] = useState({ id: 0, text: "Hi. I'm Bella." });
   const [moment, setMoment] = useState<'none' | 'named' | 'keeping'>('none');
   const [taps, setTaps] = useState(0);
   const [finishing, setFinishing] = useState(false);
@@ -192,7 +192,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               })}
             </div>
           )}
-          <BelluhOrb size={orbSize} onTap={tapOrb} label="Belluh" />
+          <BelluhOrb size={orbSize} onTap={tapOrb} label="Bella" />
         </div>
         <p className="min-h-[2rem] mb-6 text-center font-serif text-lg md:text-xl text-slate-600 max-w-sm" aria-live="polite">
           <BelluhSpeech key={line.id} text={line.text} delay={line.id === 0 ? 600 : 0} />

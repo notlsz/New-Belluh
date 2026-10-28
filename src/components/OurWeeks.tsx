@@ -50,7 +50,7 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
       <div className="bg-white w-full md:max-w-lg rounded-t-[2rem] md:rounded-[2rem] max-h-[88vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="sticky top-0 bg-white/95 backdrop-blur px-6 pt-6 pb-4 flex items-start justify-between border-b border-slate-50">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-belluh-500">Belluh</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-belluh-500">Bella</p>
             <h2 className="font-serif text-2xl text-slate-900 mt-1">Our weeks</h2>
             {weeks && weeks.length > 0 && <p className="text-sm text-slate-500 mt-1">Of {weeks.length} {weeks.length === 1 ? 'suggestion' : 'suggestions'}, you did {did(true)} and {other} did {did(false)}.</p>}
           </div>

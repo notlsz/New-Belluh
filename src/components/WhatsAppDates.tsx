@@ -76,7 +76,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
     return () => { clearInterval(t); clearTimeout(stop); };
   }, [code, phone, load]);
 
-  useEffect(() => { if (phone && code) { setCode(null); onShowToast('Connected. Text Belluh any date.', 'success'); } }, [phone, code, onShowToast]);
+  useEffect(() => { if (phone && code) { setCode(null); onShowToast('Connected. Text Bella any date.', 'success'); } }, [phone, code, onShowToast]);
 
   const [readyCode, setReadyCode] = useState<string | null>(null);
   // Get a fresh code ready ahead of time, so one tap opens WhatsApp with "LINK <code>" already typed
@@ -128,7 +128,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
   return (
     <div className="mb-12">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] pl-1">Text Belluh</h3>
+        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] pl-1">Text Bella</h3>
         {phone && <button onClick={disconnect} className="text-xs font-bold text-slate-400 hover:text-slate-700">Disconnect texting</button>}
       </div>
 
@@ -136,7 +136,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
         {!phone && !code && (
           <div className="flex flex-col gap-4">
             <div>
-              <p className="font-serif text-lg text-slate-900">Text Belluh like you'd text a friend.</p>
+              <p className="font-serif text-lg text-slate-900">Text Bella like you'd text a friend.</p>
               <p className="text-sm text-slate-500 mt-1">Dates, plans, "remind me to call his mom Sunday". Belluh texts you first when something's coming up, and replies where you are.</p>
             </div>
             {BELLUH_NUMBER || SMS_NUMBER || TG_BOT || IMESSAGE_NUMBER ? (
@@ -200,7 +200,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
 
         {phone && (
           <p className="text-sm text-slate-500 mb-2">
-            Connected to {phone.startsWith('tg:') ? 'Telegram' : phone}. Text Belluh anything: a date, a plan, "remind me to book dinner Friday". Send LIST anytime to see your dates.
+            Connected to {phone.startsWith('tg:') ? 'Telegram' : phone}. Text Bella anything: a date, a plan, "remind me to book dinner Friday". Send LIST anytime to see your dates.
           </p>
         )}
 

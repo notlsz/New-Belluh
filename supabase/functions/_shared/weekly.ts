@@ -75,7 +75,7 @@ export function pairActionPrompt(opts: {
     .join('\n') || '(No shared entries yet.)';
   const people = Object.values(opts.names).join(' and ');
   return [
-    `You are Belluh, the AI in a shared journal for couples. Today is ${opts.today}. Choose ONE small thing ${people} can try together this week.`,
+    `You are Bella, the AI in Belluh, a shared journal for couples. Today is ${opts.today}. Choose ONE small thing ${people} can try together this week.`,
     'It must be concrete, doable in under an hour, and grounded in something specific from their shared entries (a tension, a ritual they love, something one of them wished for).',
     'Write it as a short instruction to both of them, under 20 words, warm and plain. No therapy jargon, no markdown.',
     "Also give a one-sentence 'why' that points to what you noticed, without quoting anything word for word.",

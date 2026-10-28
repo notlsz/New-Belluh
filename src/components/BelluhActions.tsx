@@ -20,7 +20,7 @@ const BelluhActions: React.FC<{
   const [status, setStatus] = useState<string | undefined>(msg.meta?.status);
   const [busy, setBusy] = useState(false);
   // Real products Belluh found (Shopify brands), each opening the shop's checkout with it in the cart
-  const products: { title: string; price: string; seller: string; image: string | null; url: string }[] = Array.isArray(msg.meta?.products) ? msg.meta.products.filter((p: any) => typeof p?.url === 'string' && p.url.startsWith('https://')) : [];
+  const products: { title: string; price: string; seller: string; image: string | null; url: string; total?: string; deliversTo?: string; ready?: boolean }[] = Array.isArray(msg.meta?.products) ? msg.meta.products.filter((p: any) => typeof p?.url === 'string' && p.url.startsWith('https://')) : [];
   const links: { label: string; url: string }[] = (Array.isArray(msg.meta?.links) ? msg.meta.links : []).filter((l: any) => !products.some(p => p.url === l.url));
   const kind = msg.meta?.kind;
   // What Belluh got ready, waiting for "I booked it" so it can go in the calendar, the reminders and the journal
@@ -73,9 +73,12 @@ const BelluhActions: React.FC<{
               <div className="p-3.5">
                 <p className="text-[13px] font-semibold text-slate-900 leading-snug line-clamp-2">{p.title}</p>
                 <p className="mt-1 text-xs text-slate-400 truncate">{p.seller}</p>
-                <div className="mt-2.5 flex items-center justify-between">
-                  <span className="font-serif text-base text-slate-900">{p.price}</span>
-                  <span className="inline-flex items-center gap-1 text-xs font-bold text-[#3f7486]">Checkout <ArrowUpRight size={13} /></span>
+                {p.ready && p.deliversTo && <p className="mt-1.5 text-xs text-slate-500 line-clamp-2">To {p.deliversTo}</p>}
+                <div className="mt-2.5 flex items-center justify-between gap-2">
+                  <span className="font-serif text-base text-slate-900">{p.ready && p.total ? p.total : p.price}{p.ready && <span className="ml-1 font-sans text-[11px] text-slate-400">with tax</span>}</span>
+                  {p.ready
+                    ? <span className="inline-flex items-center gap-1 h-8 px-3 rounded-full bg-slate-900 text-white text-xs font-bold">Review and pay</span>
+                    : <span className="inline-flex items-center gap-1 text-xs font-bold text-[#3f7486]">Checkout <ArrowUpRight size={13} /></span>}
                 </div>
               </div>
             </a>

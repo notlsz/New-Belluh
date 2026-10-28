@@ -50,7 +50,7 @@ test('Calls: numbers, hours and an honest opening line', () => {
   assert.equal(okToCallNow('America/New_York', noonNY), true);
   assert.equal(okToCallNow('America/New_York', lateNY), false, 'not at 11pm');
   const p = callPrompt({ bookingId: 'b', restaurant: 'Lilia', phone: '+1', name: 'Dan', people: 2, day: 'Saturday, October 24', time: '7:00 PM' });
-  assert.match(p.first, /^Hi, this is Belluh, an AI assistant calling for Dan\./);
+  assert.match(p.first, /^Hi, this is Bella, an AI assistant calling for Dan\./);
   assert.match(p.system, /Never pretend to be human/);
   assert.match(p.system, /credit card/);
 });

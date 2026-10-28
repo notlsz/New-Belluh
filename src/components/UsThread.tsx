@@ -67,7 +67,7 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
             <div className="text-center py-10 px-6">
               <div className="mx-auto w-fit"><BelluhOrb size={48} /></div>
               <p className="mt-4 font-serif text-xl text-slate-900">You, {partnerName} and Belluh</p>
-              <p className="mt-2 text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">Plan together, decide together, ask Belluh together. Belluh here only knows what you've both shared, never anyone's private entries.</p>
+              <p className="mt-2 text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">Plan together, decide together, ask Bella together. Bella here only knows what you've both shared, never anyone's private entries.</p>
               <div className="mt-5 flex flex-wrap justify-center gap-2">
                 {['Plan a date night for us this week', 'What have we both been writing about?', 'Give us something small to try tonight'].map(s => (
                   <button key={s} onClick={() => setText(s)} className="px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:border-[#9bbecb] hover:text-[#3f7486]">{s}</button>
@@ -101,7 +101,7 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
           })}
           {busy && ask && (
             <div className="flex items-center gap-3 pl-1.5 text-xs font-bold text-slate-400">
-              <BelluhOrb size={20} thinking /> Belluh is thinking
+              <BelluhOrb size={20} thinking /> Bella is thinking
             </div>
           )}
           <div ref={end} className="h-64" aria-hidden="true" />
@@ -113,11 +113,11 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
           <div className="w-full rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-200 bg-white flex items-center p-2 pr-3 min-h-[60px] focus-within:border-belluh-200">
             <button type="button" onClick={() => setAsk(!ask)} aria-pressed={ask} title={ask ? 'Belluh will answer' : `Just to ${partnerName}`}
               className={`shrink-0 h-9 px-3 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors ${ask ? 'bg-[#9bbecb] text-white' : 'bg-slate-100 text-slate-500'}`}>
-              <Sparkles size={13} /> {ask ? 'Belluh' : 'Off'}
+              <Sparkles size={13} /> {ask ? 'Bella' : 'Off'}
             </button>
             <textarea value={text} onChange={e => setText(e.target.value)} rows={1}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-              placeholder={ask ? `Ask Belluh, with ${partnerName}…` : `Message ${partnerName}…`}
+              placeholder={ask ? `Ask Bella, with ${partnerName}…` : `Message ${partnerName}…`}
               aria-label={`Message ${partnerName} and Belluh`}
               className="flex-1 bg-transparent border-none px-3 py-2 max-h-32 resize-none focus:outline-none text-[16px] text-slate-800 placeholder:text-slate-400" style={{ overflow: 'hidden' }} />
             <button aria-label="Send to Us" onClick={send} disabled={!text.trim() || busy}

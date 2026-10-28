@@ -407,7 +407,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                                          <div className="shrink-0 pt-0.5"><BelluhOrb size={30} /></div>
                                          <div className="min-w-0 flex-1">
                                              <button type="button" onClick={() => onOpenBelluh?.()} className="w-full text-left">
-                                                 <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6]">{LABEL[m.meta?.kind] ?? 'Belluh'}</span>
+                                                 <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6]">{LABEL[m.meta?.kind] ?? 'Bella'}</span>
                                                  <p className="mt-1 text-[16px] font-serif text-slate-800 leading-snug line-clamp-3">{m.meta?.kind === 'remind' ? m.body.replace(/^Reminder:\s*/, '') : m.body}</p>
                                              </button>
                                              <BelluhActions key={m.id + (m.meta?.status ?? '')} msg={m} partnerName={partnerName} onCompose={(p) => onCompose(p)}
@@ -466,7 +466,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                 }`}
              >
                 <div className="mr-3">{isSearching ? <Loader2 size={18} className="animate-spin text-belluh-400" /> : <BelluhOrb size={20} />}</div>
-                <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={isArchived ? "Search past memories..." : isConstellation ? "Search across all constellations..." : "Ask Belluh..."} className="flex-1 bg-transparent text-[16px] focus:outline-none font-normal placeholder:text-slate-400" />
+                <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={isArchived ? "Search past memories..." : isConstellation ? "Search across all constellations..." : "Ask Bella..."} className="flex-1 bg-transparent text-[16px] focus:outline-none font-normal placeholder:text-slate-400" />
                 {searchQuery && <button type="button" onClick={() => { setSearchQuery(''); setSearchAnswer(null); }}><X size={16} className="text-slate-400" /></button>}
              </form>
 
@@ -651,7 +651,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                             <div className="mt-3 ml-3 flex items-start gap-3 animate-slide-up">
                                 <div className="shrink-0 mt-3"><BelluhOrb size={20} /></div>
                                 <div className="min-w-0 rounded-2xl rounded-tl-md bg-white border border-slate-100 px-4 py-3 shadow-sm">
-                                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6]">Belluh</p>
+                                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6]">Bella</p>
                                     <p className="mt-0.5 font-serif text-[15px] leading-snug text-slate-700">{replies[entry.id].body}</p>
                                     <button type="button" onClick={() => onOpenBelluh?.()} className="mt-1.5 text-[13px] font-bold text-[#3f7486] hover:text-slate-900">Reply</button>
                                 </div>

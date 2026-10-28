@@ -11,6 +11,7 @@ import type { CheckinStatus } from './weekly.ts';
 import { validatePlan, formatOption, localDateOf, type PlanOption } from './plans.ts';
 import { notify } from './notify.ts';
 import { searchShopify, type ShopProduct } from './shopify.ts';
+import { readyOrder, parseUsAddress, NOT_FRESH_FLOWERS } from './shopcheckout.ts';
 import { bookingFromTool, doneLabel, memoryFor, reminderFor, whenText, type BookingDraft } from './bookings.ts';
 import { instacartCart } from './instacart.ts';
 import { callsOn, findPlace, startCall, okToCallNow, whyNot, type CallOutcome } from './vapi.ts';
@@ -181,17 +182,36 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
         }
         case 'send_flowers': {
           const fl = flowerLinks(call.args);
+          const when = typeof call.args.deliver_on === 'string' ? call.args.deliver_on : null;
+          const what = typeof call.args.what === 'string' && call.args.what.trim() ? call.args.what.trim().slice(0, 60) : 'flowers';
+          const to = parseUsAddress(call.args.address, typeof call.args.recipient === 'string' ? call.args.recipient : ctx.partnerName);
+          const budget = Number(call.args.max_price) > 0 ? Math.round(Number(call.args.max_price) * 100) : null;
+          // A real order at a florist that delivers there, ready to pay, when there's an address
+          const order = to ? await readyOrder(`${what} fresh flowers bouquet delivery`, to, { maxCents: budget, exclude: NOT_FRESH_FLOWERS, intent: 'fresh flowers to send as a gift', tries: 4 }) : null;
+          if (order) {
+            products.unshift(order);
+            links.push(...fl.slice(1));
+            prepare('send_flowers', call.args, order.url, order.title);
+            return { ok: true, note: `A real order is ready under your reply: ${order.title} from ${order.seller}, ${order.total} including tax, delivering to ${order.deliversTo}. They tap "Review and pay"; on the florist's page they pick the delivery day${when ? ` (${when})` : ''}, add a phone number for the driver and paste the card message. Say what you picked and why it fits, and offer a two-line card message. Never say it's ordered until they've paid. Do not paste links.` };
+          }
           links.push(...fl);
           prepare('send_flowers', call.args, fl[0]?.url ?? null);
-          const when = typeof call.args.deliver_on === 'string' ? call.args.deliver_on : null;
-          return { ok: true, note: `The order and nearby florists are shown under your reply. Say what you'd send and why it fits${when ? `, and that it should arrive ${when}` : ''}. Offer a two-line card message and a reminder the day before. They place the order. Do not paste links.` };
+          return { ok: true, note: to
+            ? `No florist on Shop could deliver ${what} to ${to.address_locality}${budget ? ' within that budget' : ''} right now, so florists and a nationwide delivery are shown under your reply instead. Say so in a few words, what you'd send and why. Do not paste links.`
+            : `Florists are shown under your reply. Say what you'd send and why it fits${when ? `, arriving ${when}` : ''}, and ask for the street address with ZIP it should go to: with it you get a real order ready they can pay for in one tap. Do not paste links.` };
         }
         case 'order_food': case 'buy_item': case 'order_groceries': case 'book_ride': case 'find_experience': {
           if (call.name === 'book_ride' && restaurant?.address) {
             const to = String(call.args.to ?? '').toLowerCase();
             if (!to || /restaurant|dinner|table|there|the place/.test(to) || to.includes(restaurant.name.toLowerCase())) call.args = { ...call.args, to: `${restaurant.name}, ${restaurant.address}` };
           }
-          if (call.name === 'buy_item' && typeof call.args.item === 'string') addProducts(await searchShopify(call.args.item, Number(call.args.max_price) || null, 3));
+          let shipped: Awaited<ReturnType<typeof readyOrder>> = null;
+          if (call.name === 'buy_item' && typeof call.args.item === 'string') {
+            const to = parseUsAddress(call.args.ship_to, typeof call.args.recipient === 'string' ? call.args.recipient : null);
+            shipped = to ? await readyOrder(call.args.item, to, { maxCents: Number(call.args.max_price) > 0 ? Math.round(Number(call.args.max_price) * 100) : null }) : null;
+            if (shipped) products.unshift(shipped);
+            addProducts(await searchShopify(call.args.item, Number(call.args.max_price) || null, 3));
+          }
           let l = call.name === 'order_food' ? foodLinks(call.args) : call.name === 'buy_item' ? buyLinks(call.args) : call.name === 'order_groceries' ? groceryLinks(call.args) : call.name === 'book_ride' ? rideLinks(call.args) : experienceLinks(call.args);
           // Groceries as one cart when Instacart is connected: every item on one page, one checkout
           const cart = call.name === 'order_groceries' && l.length ? await instacartCart(`Groceries from Belluh`, l.map(x => x.label.replace(/^Add /, ''))) : null;
@@ -201,8 +221,9 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           if (call.name === 'buy_item') prepare('buy_item', call.args, products[0]?.url ?? l[0]?.url ?? null, products[0]?.title ?? null);
           else if (call.name === 'order_food' || call.name === 'find_experience') prepare(call.name, call.args, l[0]?.url ?? null);
           const what = { order_food: 'The order is ready on DoorDash and Uber Eats', buy_item: 'It is ready to buy on Amazon and Target, with a price comparison', order_groceries: cart ? 'Every item is in one Instacart cart, ready to check out' : 'Each item is one tap from their Instacart cart', book_ride: 'Uber and Lyft are ready with the destination filled in', find_experience: 'Tickets and experiences are shown' }[call.name];
+          const ready = shipped ? ` A real order is ready first under your reply: ${shipped.title} from ${shipped.seller}, ${shipped.total} including tax, shipping to ${shipped.deliversTo}; they tap "Review and pay".` : '';
           const found = call.name === 'buy_item' && products.length ? ` Also ${products.length} real products from independent Shopify shops, each with its checkout ready: ${products.map(p => `${p.title} (${p.price}, ${p.seller})`).join('; ')}. You may name the one you'd pick and why.` : '';
-          return { ok: true, note: `${what}, under your reply.${found} In one or two lines say what you chose and why it fits them; they finish it with a tap. Never say it is ordered, bought or booked. Do not paste links.` };
+          return { ok: true, note: `${what}, under your reply.${ready}${found} In one or two lines say what you chose and why it fits them; they finish it with a tap. Never say it is ordered, bought or booked. Do not paste links.` };
         }
         case 'gift_ideas': {
           const l = giftLinks(call.args);
