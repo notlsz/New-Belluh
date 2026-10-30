@@ -14,6 +14,7 @@ import { searchShopify, type ShopProduct } from './shopify.ts';
 import { readyOrder, parseUsAddress, NOT_FRESH_FLOWERS, shopStyle } from './shopcheckout.ts';
 import { findSpots, type Spot } from './places.ts';
 import { regionLinks, osmCountry, KITS } from './region.ts';
+import { playlistLinks } from './jarvis.ts';
 import { bookingFromTool, doneLabel, memoryFor, reminderFor, whenText, type BookingDraft } from './bookings.ts';
 import { instacartCart } from './instacart.ts';
 import { callsOn, findPlace, startCall, okToCallNow, whyNot, type CallOutcome } from './vapi.ts';
@@ -260,6 +261,12 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           links.push(...l);
           prepare('gift_ideas', call.args, products[before]?.url ?? l[0]?.url ?? null, products[before]?.title ?? null);
           return { ok: true, note: `The ideas are shown under your reply as links to buy${products.length ? `, with real products from independent Shopify shops, checkout ready: ${products.map(p => `${p.title} (${p.price}, ${p.seller})`).join('; ')}` : ''}. In one or two lines, say why each fits, from what their partner said. Do not paste links.` };
+        }
+        case 'mood_playlist': {
+          const l = playlistLinks(call.vibe, ctx.country);
+          if (!l.length) return { ok: false, error: 'Say the vibe.' };
+          links.push(...l);
+          return { ok: true, note: 'Playlists are shown under your reply. In a line say why that vibe fits the two of them. Do not paste links.' };
         }
         case 'set_country': {
           const { error } = await db.from('agent_settings').upsert({ user_id: ctx.userId, timezone: ctx.timezone, country: call.country, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });

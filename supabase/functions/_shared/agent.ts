@@ -149,6 +149,7 @@ export interface PersonContext {
   pastWeeks?: string | null; // what they tried in earlier weeks and how it went
   plans?: string | null;     // plans they made together through Belluh
   region?: string | null;    // where they live: stores, booking sites, money and customs there (region.ts)
+  watch?: string | null;     // what a good assistant keeps an eye on: day counts, the night sky, time since a date (jarvis.ts)
 }
 
 // How Belluh sounds, in every chat and text. cleanReply() enforces the same rules on whatever comes back.
@@ -156,7 +157,8 @@ const VOICE = `- Talk like a thoughtful person texting a friend: full, natural s
 - Plain text only. No markdown, asterisks, underscores, hashtags or headings. No bullet points or numbered lists unless they ask for a list. No emoji. No em dashes, arrows, slashes between options or other symbols; use commas and periods.
 - Never show tool names, JSON, IDs, code or raw links. Links and products appear under your reply on their own, so just say what you got ready.
 - What a tool sends back (status, private_guidance and the rest) is a private note to you. Never quote it, its keys or its wording; just talk to them.
-- Write times and money the way people say them: "Saturday at 7", "$69", "in 12 days".`;
+- Write times and money the way people say them: "Saturday at 7", "$69", "in 12 days".
+- Reply in the language they write to you in (Japanese if they write Japanese, and so on), keeping names and places as they wrote them.`;
 
 export function systemPrompt(c: PersonContext): string {
   const partner = c.partnerName ?? 'their partner';
@@ -222,6 +224,10 @@ Looking after them (like a chief of staff who knows the relationship, not a chat
 - Dates and logistics: think the whole evening through: the table, the time to leave, the ride, the weather if it matters, what to do after, a reminder the day before. Remember allergies, what ${partner} doesn't eat, places they didn't like.
 - Moods: if their recent entries show ${partner} stressed, sad or stretched thin, suggest one small, specific thing ${c.myName} could do this week (take a chore, order their comfort food, a note). One suggestion, not a lecture.
 - Follow through: when something is coming up in their saved dates or plans, or a promise they made is due, bring it up and offer to handle it, without being asked.
+- Milestones: when a day count, a monthly anniversary or a saved date is coming (see "Keeping watch" and their saved dates), bring it up early enough to act: two weeks ahead for anything that ships, a few days for a table. Offer to plan it; don't just announce it.
+- Something new: when it's been weeks since they did anything together, suggest one fresh idea (a place they've never been, something one of them said they wanted to try). When a meteor shower is coming, a night under the sky is a lovely, free date: say when and where to look.
+- The evening itself: for a date night at home or out, offer a playlist that fits them (mood_playlist) and suggest phones on Do Not Disturb for the evening. You can't control their lights or devices; say so if asked.
+- Rest: if their own entries show ${c.myName} running on empty (late nights, skipped meals, no sleep, work swallowing everything), say it once, kindly and briefly, and point back to ${partner}: an early night, a proper dinner together. Not a lecture, never medical advice.
 - You can't read their texts, emails or calls, or watch where they are; if asked, say so plainly and offer what you can do (help them write the reply, set a reminder).
 
 Where they live
@@ -252,6 +258,9 @@ ${c.memories.length ? c.memories.map(m => `- ${m}`).join('\n') : '(Nothing yet.)
 
 Their saved dates
 ${c.dates}
+
+Keeping watch
+${c.watch ?? '(Nothing coming up.)'}
 
 Recent journal (newest first)
 ${c.entries}`;
@@ -485,6 +494,11 @@ export const TOOL_DECLARATIONS = [
     }, required: ['pieces'] },
   },
   {
+    name: 'mood_playlist',
+    description: 'A playlist for a date night or a moment ("slow jazz dinner", "90s R&B road trip", "city pop"), from what they both like.',
+    parameters: { type: 'OBJECT', properties: { vibe: { type: 'STRING', description: 'A short playlist search, like "candlelit jazz" or "Japanese city pop"' } }, required: ['vibe'] },
+  },
+  {
     name: 'set_country',
     description: 'Save which country they live in, when they say so ("we live in Tokyo", "I moved to Seoul"). Changes the stores, booking sites, money and customs Bella uses.',
     parameters: { type: 'OBJECT', properties: { country: { type: 'STRING', description: 'The country, as a two-letter code (JP, CN, KR, GB, US) or its name' } }, required: ['country'] },
@@ -525,6 +539,7 @@ export type ToolCall =
   | { name: 'shop_style'; pieces: string[]; style: string | null; budgetEach: number | null }
   | { name: 'find_spots'; what: string; where: string }
   | { name: 'set_country'; country: string }
+  | { name: 'mood_playlist'; vibe: string }
   | { name: 'order_food' | 'buy_item' | 'order_groceries' | 'book_ride' | 'find_experience'; args: Record<string, unknown> }
   | { name: 'write_entry'; text: string; shared: boolean }
   | { name: 'take_shape'; shape: Shape };
@@ -558,6 +573,10 @@ export function validateToolCall(name: string, args: Record<string, unknown> | u
     case 'find_spots': {
       const what = clean(a.what, 60), where = clean(a.where, 80);
       return what.length >= 2 && where.length >= 2 ? { name, what, where } : null;
+    }
+    case 'mood_playlist': {
+      const vibe = clean(a.vibe, 60);
+      return vibe.length >= 2 ? { name, vibe } : null;
     }
     case 'set_country': {
       const country = countryCode(a.country);
@@ -657,6 +676,7 @@ const DID: Record<string, string> = {
   write_entry: "It's in your journal.",
   take_shape: 'How do I look?',
   set_country: "Got it, I'll use what works where you live.",
+  mood_playlist: 'Your playlist is right below.',
 };
 export function naturalFallback(ran: string[]): string | null {
   for (let i = ran.length - 1; i >= 0; i--) if (DID[ran[i]]) return DID[ran[i]];
