@@ -6,6 +6,7 @@ import { Receipt } from './About';
 import { rememberCta } from '../services/analytics';
 import { supabaseUrl } from '../lib/supabaseClient';
 import BelluhOrb from '../components/BelluhOrb';
+import BellaAtWork from '../components/BellaAtWork';
 import BelluhSpeech from '../components/BelluhSpeech';
 import LandingDemos from '../components/LandingDemos';
 import SiteFooter from '../components/SiteFooter';
@@ -523,10 +524,10 @@ const MeetBelluh: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =>
             </div>
             <div className="order-2 text-center md:text-left">
               <h2 className="text-4xl md:text-6xl font-serif leading-[1.05] tracking-tight mb-5 drop-shadow-sm">
-                <span className="text-[#9bbecb]">Meet</span> <span className="text-[#f0addd] italic">Belluh.</span>
+                <span className="text-[#9bbecb]">Meet</span> <span className="text-[#f0addd] italic">Bella.</span>
               </h2>
               <p className="text-lg md:text-xl text-slate-500 font-light leading-relaxed mb-8 max-w-md mx-auto md:mx-0">
-                You're both busy. Someone should be paying attention. Belluh listens to you both, remembers what matters and nudges you back toward each other. Type below and watch it think.
+                You're both busy. Someone should be paying attention. Bella listens to you both, remembers what matters and nudges you back toward each other. Type below and watch her think.
               </p>
               <div className="mb-8">
                 <div className="inline-flex p-1 rounded-full bg-white/70 border border-white shadow-[0_8px_24px_-16px_rgba(15,23,42,0.3)]" aria-label="What Belluh is doing">
@@ -618,7 +619,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const menuItems = [
-      { label: 'Meet Belluh', action: () => scrollToSection('meet') },
+      { label: 'Meet Bella', action: () => scrollToSection('meet') },
       { label: 'What it does', action: () => scrollToSection('features') },
       { label: 'Inside', action: () => scrollToSection('inside') },
       { label: 'Stories', action: () => scrollToSection('stories') },
@@ -642,7 +643,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       {/* Top bar */}
       <SiteNav
           links={[
-              { label: 'Meet Belluh', onClick: () => scrollToSection('meet'), section: 'meet' },
+              { label: 'Meet Bella', onClick: () => scrollToSection('meet'), section: 'meet' },
               { label: 'What it does', onClick: () => scrollToSection('features'), section: 'features' },
               { label: 'Inside', onClick: () => scrollToSection('inside'), section: 'inside' },
               { label: 'Stories', onClick: () => scrollToSection('stories'), section: 'stories' },
@@ -732,7 +733,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                      <div className="absolute inset-[8%] rounded-full bg-[radial-gradient(circle,rgba(205,233,242,0.95)_0%,rgba(240,173,221,0.18)_45%,rgba(255,255,255,0)_70%)] blur-2xl animate-breathing pointer-events-none" />
                      <div className="absolute inset-0 flex flex-col items-center justify-center sm:pb-[6%]">
                          <BelluhOrb size={heroOrb} onTap={heroTap.tap} label="Belluh. Tap to change its shape." />
-                         <p className="mt-2 sm:mt-3 h-5 text-xs font-semibold tracking-wide text-slate-400" aria-live="polite">{heroTap.label ? `A ${heroTap.label}. Tap again.` : 'Tap Belluh'}</p>
+                         <p className="mt-2 sm:mt-3 h-5 text-xs font-semibold tracking-wide text-slate-400" aria-live="polite">{heroTap.label ? `A ${heroTap.label}. Tap again.` : 'Tap Bella'}</p>
                      </div>
 
                      <div className="hidden sm:block absolute left-0 top-[6%] w-[60%] max-w-[300px]" style={{ animation: 'slideUp 0.8s 0.9s cubic-bezier(0.16,1,0.3,1) both' }}>
@@ -767,6 +768,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       <MeetBelluh onGetStarted={onGetStarted} />
 
       <LandingDemos onShowPrivacy={() => onShowLegal('privacy')} />
+
+      <BellaAtWork />
 
       {/* Real app screens */}
       <section id="inside" className="relative z-10 px-6 pb-28 scroll-mt-24">
@@ -949,7 +952,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                   </div>
                   <div className="flex flex-col items-center">
                       <BelluhOrb size={isDesktop ? 220 : 150} onTap={ctaTap.tap} label="Belluh. Tap to change its shape." />
-                      <p className="mt-3 h-5 text-xs font-semibold text-slate-400" aria-live="polite">{ctaTap.label ? `A ${ctaTap.label}. Tap again.` : 'Tap Belluh'}</p>
+                      <p className="mt-3 h-5 text-xs font-semibold text-slate-400" aria-live="polite">{ctaTap.label ? `A ${ctaTap.label}. Tap again.` : 'Tap Bella'}</p>
                   </div>
               </div>
           </div>
