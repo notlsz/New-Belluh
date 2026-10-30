@@ -110,7 +110,7 @@ const BellaAtWork: React.FC = () => {
     <section id="at-work" ref={ref} className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         <div className="min-w-0 lg:col-span-5 lg:sticky lg:top-28">
-          <h2 className="font-display text-5xl md:text-6xl tracking-tight leading-[1.02]">
+          <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
             <span className="text-slate-900">It’s tonight.</span><br />
             <span className="text-slate-900">You forgot.</span>
           </h2>
@@ -129,7 +129,7 @@ const BellaAtWork: React.FC = () => {
                 <button key={x.city} role="tab" aria-selected={on} onClick={() => pick(i)}
                   className="group shrink-0 text-left py-2 lg:py-3.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#9bbecb] rounded-lg">
                   <span className="flex items-baseline justify-between gap-4">
-                    <span className={`font-display text-lg sm:text-xl lg:text-2xl transition-colors ${on ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'}`}>{x.city}</span>
+                    <span className={`font-serif text-lg sm:text-xl lg:text-2xl transition-colors ${on ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'}`}>{x.city}</span>
                     <span className={`hidden lg:inline text-sm transition-colors ${on ? 'text-slate-500' : 'text-slate-400 group-hover:text-slate-500'}`}>{x.via}</span>
                   </span>
                   <span className="mt-2 lg:mt-3 block h-[2px] rounded-full bg-slate-100 overflow-hidden" aria-hidden="true">
