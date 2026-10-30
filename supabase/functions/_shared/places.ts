@@ -36,7 +36,7 @@ export function cityOf(where: string): string | null {
 /** Asking for food or drinks (a cuisine, dinner, a bar) rather than a museum, a park or a show. */
 export const wantsFood = (what: string) => !/museum|park|gallery|beach|garden|trail|hike|theat|cinema|movie|view|zoo|aquarium|book|shop|store|market|spa|bowling|arcade|concert|music|comedy|class|studio|climb|skat|golf|kayak|boat|tour/i.test(what);
 
-export function parseSpots(json: unknown, city: string | null, limit = 6, foodOnly = false): Spot[] {
+export function parseSpots(json: unknown, city: string | null, limit = 6, foodOnly = false, us = true): Spot[] {
   const out: Spot[] = [];
   const seen = new Set<string>();
   for (const p of (Array.isArray(json) ? json : []) as any[]) {
@@ -55,7 +55,8 @@ export function parseSpots(json: unknown, city: string | null, limit = 6, foodOn
     const kind = EAT.test(type) && cuisine ? titleCase(cuisine) + (type === 'restaurant' ? '' : ` ${type === 'bar' || type === 'pub' ? 'bar' : titleCase(type).toLowerCase()}`) : titleCase(type);
     const rawPhone = String(t.phone ?? t['contact:phone'] ?? '').split(';')[0].trim();
     const digits = rawPhone.replace(/\D/g, '');
-    const phone = toE164(rawPhone.startsWith('+') ? rawPhone : digits.length === 10 ? `+1${digits}` : digits.length === 11 && digits.startsWith('1') ? `+${digits}` : '');
+    // Outside the US a number without its country code can't be dialed from here, so only full international ones count
+    const phone = toE164(rawPhone.startsWith('+') ? rawPhone : !us ? '' : digits.length === 10 ? `+1${digits}` : digits.length === 11 && digits.startsWith('1') ? `+${digits}` : '');
     const web = String(t.website ?? t['contact:website'] ?? '').trim();
     const street = [a.house_number, a.road].filter(Boolean).join(' ');
     const address = [street, a.suburb ?? a.neighbourhood, a.city ?? a.town ?? a.village].filter(Boolean).join(', ') || null;
@@ -83,10 +84,10 @@ export function spotQueries(what: string, where: string): string[] {
 
 /** Real places for what they asked (a cuisine, a kind of place) in where they are. Nominatim asks for at most one
  *  request a second, so phrasings are tried one after another and it stops as soon as it has enough. */
-export async function findSpots(what: string, where: string, fetchImpl: typeof fetch = fetch, limit = 6): Promise<Spot[]> {
+export async function findSpots(what: string, where: string, fetchImpl: typeof fetch = fetch, limit = 6, country = 'us'): Promise<Spot[]> {
   const w = what.replace(/\s+/g, ' ').trim().slice(0, 60), at = where.replace(/\s+/g, ' ').trim().slice(0, 80);
   if (w.length < 2 || at.length < 2) return [];
-  const city = cityOf(at);
+  const city = country === 'us' ? cityOf(at) : cityOf(at.replace(/,\s*[a-z]{2}$/i, ''));
   const found: Spot[] = [];
   let first = true;
   for (const q of spotQueries(w, at)) {
@@ -94,10 +95,10 @@ export async function findSpots(what: string, where: string, fetchImpl: typeof f
     first = false;
     try {
       const u = new URL(`${OSM()}/search`);
-      for (const [k, v] of Object.entries({ q, format: 'jsonv2', extratags: '1', addressdetails: '1', limit: '12', countrycodes: 'us' })) u.searchParams.set(k, v);
+      for (const [k, v] of Object.entries({ q, format: 'jsonv2', extratags: '1', addressdetails: '1', limit: '12', countrycodes: /^[a-z]{2}$/.test(country) ? country : 'us' })) u.searchParams.set(k, v);
       const r = await fetchImpl(u.toString(), { headers: { 'User-Agent': 'Belluh/1.0 (https://belluh.com; hello@belluh.com)', 'Accept-Language': 'en' }, signal: AbortSignal.timeout(6000) });
       if (!r.ok) continue;
-      for (const s of parseSpots(await r.json(), city, limit, wantsFood(w))) if (!found.some(f => f.name === s.name && f.address === s.address)) found.push(s);
+      for (const s of parseSpots(await r.json(), city, limit, wantsFood(w), country === 'us')) if (!found.some(f => f.name === s.name && f.address === s.address)) found.push(s);
     } catch { /* try the next phrasing */ }
     if (found.length >= Math.min(limit, 4)) break;
   }

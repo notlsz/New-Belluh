@@ -9,6 +9,7 @@ import {
 import { localDateParts, isoDate } from './occasions.ts';
 import { weekStart, pairOf, type CheckinStatus } from './weekly.ts';
 import { serverKey } from './keys.ts';
+import { countryOf, partnerCountryOf, regionBrief } from './region.ts';
 
 export const db: SupabaseClient = createClient(Deno.env.get('SUPABASE_URL')!, serverKey(), {
   auth: { persistSession: false },
@@ -21,6 +22,8 @@ export interface Ctx {
   partnerName: string | null;
   partnerIds: string[];
   timezone: string;
+  country: string;                 // where they live (region.ts): what they told Bella, else their time zone
+  partnerCountry: string | null;   // where their partner lives, when it's somewhere else matters (long distance)
 }
 
 const first = (n?: string | null) => (n ?? '').trim().split(/\s+/)[0] || null;
@@ -34,8 +37,12 @@ export async function loadCtx(userId: string, timezone: string): Promise<Ctx> {
   const me = profiles?.find(p => p.id === userId);
   const partnerId = partnerIds[0] ?? null;
   const partnerProfile = profiles?.find(p => p.id === partnerId);
+  const { data: settings } = await db.from('agent_settings').select('user_id, timezone, country').in('user_id', partnerId ? [userId, partnerId] : [userId]);
+  const mine = settings?.find(s => s.user_id === userId), theirs = partnerId ? settings?.find(s => s.user_id === partnerId) : null;
   return {
     userId, partnerIds, partnerId, timezone,
+    country: countryOf(mine?.country, timezone),
+    partnerCountry: partnerCountryOf(mine ?? null, theirs ?? null),
     myName: first(me?.full_name) ?? 'there',
     partnerName: first(partnerProfile?.full_name) ?? first(me?.partner_name) ?? null,
   };
@@ -98,6 +105,7 @@ export async function buildSystem(ctx: Ctx): Promise<string> {
     notes: notesBlock(notes, names),
     plans: plansBlock(plans, names, ctx.timezone),
     pastWeeks: weeksBlock(pastWeeks),
+    region: regionBrief(ctx.country, ctx.partnerCountry, ctx.partnerName),
   });
 }
 
@@ -125,6 +133,7 @@ export async function buildUsSystem(ctx: Ctx): Promise<string> {
     pastWeeks: weeksBlock(pastWeeks),
     plans: plansBlock(plans, names, ctx.timezone),
     entries: neutral(sharedBetween(ctx.userId, ctx.partnerId, all)),
+    region: regionBrief(ctx.country, ctx.partnerCountry, ctx.partnerName),
   });
 }
 
