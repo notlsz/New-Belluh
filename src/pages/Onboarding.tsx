@@ -4,33 +4,23 @@ import { supabase } from '../lib/supabaseClient';
 import BelluhOrb from '../components/BelluhOrb';
 import BelluhSpeech from '../components/BelluhSpeech';
 import { belluh } from '../lib/belluhPresence';
+import { useI18n, useUi } from '../i18n';
+import onboardingStrings from '../i18n/ui/onboarding';
 
 interface OnboardingProps {
   onComplete: (partnerName: string, firstEntry: string) => void | Promise<void>;
 }
 
-const PLACEHOLDERS = [
-  'They made me coffee...',
-  'The way they laughed...',
-  'How they listened when I was stressed...',
-  'A quiet moment we shared...',
-  'The look they gave me...',
-  'How safe I feel with them...',
-  'Their patience with me today...',
-  'A text that made me smile...',
-];
-
-// What Belluh says when you tap it on the welcome screen
-const TAPS = ['That tickles.', "I'm made of water. Every word I say moves me.", 'Later, ask me to become anything. A cat, a lighthouse, the first letter of their name.', 'Ready when you are.'];
-
-const STEPS = ['Welcome', 'Your partner', 'First words', 'Saved', 'Invite'];
-
 const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
+  const T = useUi(onboardingStrings);
+  const { f } = useI18n();
+  // Ideas for the first entry, what Bella says when tapped on the welcome screen, and the step names
+  const PLACEHOLDERS = T.placeholders, TAPS = T.taps, STEPS = T.steps;
   const [step, setStep] = useState(0);
   const [partnerName, setPartnerName] = useState('');
   const [entry, setEntry] = useState('');
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [line, setLine] = useState({ id: 0, text: "Hi. I'm Bella." });
+  const [line, setLine] = useState({ id: 0, text: '' }); // id 0 is the hello, read from the table so it follows the language
   const [moment, setMoment] = useState<'none' | 'named' | 'keeping'>('none');
   const [taps, setTaps] = useState(0);
   const [finishing, setFinishing] = useState(false);
@@ -44,6 +34,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [inviteStatus, setInviteStatus] = useState<'idle' | 'searching' | 'sent' | 'error' | 'not-found' | 'self'>('idle');
 
   const name = partnerName.trim();
+  /** The line that names your partner, or the one for before you've typed a name. */
+  const named = (withName: string, without: string) => name ? f(withName, { name }) : without;
   const say = (text: string) => setLine(l => ({ id: l.id + 1, text }));
 
   useEffect(() => { belluh.prefetch(); return () => { releaseRef.current?.(); }; }, []);
@@ -69,11 +61,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     // A little moment: the water becomes a heart, then on to the first entry
     belluh.become({ emoji: '❤️' }, 'heart', false);
     setMoment('named');
-    say(`${name}. I like them already.`);
+    say(f(T.say.named, { name }));
     setTimeout(() => {
       setMoment('none');
       belluh.become('water', 'water', false);
-      go(2, `Tell me one thing you love about ${name} today.`);
+      go(2, f(T.say.askLove, { name }));
     }, 2600);
   };
 
@@ -85,7 +77,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     setTimeout(() => {
       releaseRef.current?.(); releaseRef.current = null;
       setMoment('none');
-      go(3, "I've saved this forever.");
+      go(3, T.say.saved);
     }, 1800);
   };
 
@@ -106,13 +98,13 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     setLinkState('making');
     const url = await makeLink().catch(() => null);
     if (!url) { setLinkState('error'); return; }
-    const text = `Join me on Belluh, our journal for two: ${url}`;
+    const text = f(T.shareText, { url });
     try {
-      if (navigator.share) { await navigator.share({ title: 'Belluh', text, url }); setLinkState('shared'); say(`Sent. I'll tell you when ${name || 'they'} joins.`); return; }
+      if (navigator.share) { await navigator.share({ title: 'Belluh', text, url }); setLinkState('shared'); say(named(T.say.shared, T.say.sharedNoName)); return; }
     } catch (err: any) {
       if (err?.name === 'AbortError') { setLinkState('idle'); return; }
     }
-    try { await navigator.clipboard.writeText(url); setLinkState('copied'); say(`Copied. Send it to ${name || 'them'} however you like.`); }
+    try { await navigator.clipboard.writeText(url); setLinkState('copied'); say(named(T.say.copied, T.say.copiedNoName)); }
     catch { setLinkState('idle'); } // the link is on screen to copy by hand
   };
 
@@ -134,7 +126,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       const { error } = await supabase.from('partner_connections').insert({ user_id: user.id, partner_id: partnerId, status: 'pending' });
       if (error && error.code !== '23505') throw error;
       setInviteStatus('sent');
-      say(`Invite sent. ${name || 'They'} will see it next time they open Belluh.`);
+      say(named(T.say.invited, T.say.invitedNoName));
     } catch (err) {
       console.error(err);
       setInviteStatus('error');
@@ -172,7 +164,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       <div className="ob-drift absolute -bottom-40 -right-32 w-[560px] h-[560px] rounded-full bg-[#f0addd]/30 blur-[120px] pointer-events-none" style={{ animationDelay: '-7s' }}></div>
 
       {/* Progress: four steps, filled as you go */}
-      <div className="relative z-10 w-full max-w-md flex gap-1.5" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={step + 1} aria-label={`Step ${step + 1} of ${STEPS.length}: ${STEPS[step]}`}>
+      <div className="relative z-10 w-full max-w-md flex gap-1.5" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={step + 1} aria-label={f(T.progress, { n: step + 1, total: STEPS.length, step: STEPS[step] })}>
         {STEPS.map((s, i) => (
           <div key={s} className="h-1 flex-1 rounded-full bg-slate-200/70 overflow-hidden">
             <div className="h-full rounded-full bg-gradient-to-r from-[#9bbecb] to-[#f0addd] transition-all duration-700 ease-out" style={{ width: i <= step ? '100%' : '0%' }} />
@@ -195,24 +187,24 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           <BelluhOrb size={orbSize} onTap={tapOrb} label="Bella" />
         </div>
         <p className="min-h-[2rem] mb-6 text-center font-serif text-lg md:text-xl text-slate-600 max-w-sm" aria-live="polite">
-          <BelluhSpeech key={line.id} text={line.text} delay={line.id === 0 ? 600 : 0} />
+          <BelluhSpeech key={line.id} text={line.id === 0 ? T.say.hi : line.text} delay={line.id === 0 ? 600 : 0} />
         </p>
 
         {/* Step 0: welcome and trust */}
         {step === 0 && (
           <div className="w-full max-w-md md:max-w-lg mx-auto text-center">
             <h1 className="ob-in text-[2.5rem] md:text-6xl font-serif leading-[1.08] tracking-tight mb-4" style={{ animationDelay: '.5s' }}>
-              <span className="text-[#9bbecb]">Your story,</span><br />
-              <span className="text-[#f0addd] italic">kept between you.</span>
+              <span className="text-[#9bbecb]">{T.welcome.line1}</span><br />
+              <span className="text-[#f0addd] italic">{T.welcome.line2}</span>
             </h1>
             <p className="ob-in text-lg text-slate-500 font-light leading-relaxed mb-7 max-w-sm mx-auto" style={{ animationDelay: '.7s' }}>
-              A private journal for the two of you, and an AI that knows you both.
+              {T.welcome.sub}
             </p>
             <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] border border-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] px-2 py-1.5 text-left mb-7">
               {[
-                { icon: <Lock size={18} strokeWidth={1.75} />, title: 'Just me, when you want', text: 'Mark any entry Just me and only you can read it.' },
-                { icon: <Heart size={18} strokeWidth={1.75} />, title: 'Shared with your partner', text: 'Everything else lands in the story you write together.' },
-                { icon: <EyeOff size={18} strokeWidth={1.75} />, title: 'Belluh keeps secrets too', text: 'It never tells your partner what you wrote privately.' },
+                { icon: <Lock size={18} strokeWidth={1.75} />, title: T.welcome.privateTitle, text: T.welcome.privateText },
+                { icon: <Heart size={18} strokeWidth={1.75} />, title: T.welcome.sharedTitle, text: T.welcome.sharedText },
+                { icon: <EyeOff size={18} strokeWidth={1.75} />, title: T.welcome.secretsTitle, text: T.welcome.secretsText },
               ].map((r, i) => (
                 <div key={r.title} className="ob-in flex items-start gap-4 px-5 py-3.5 [@media(max-height:860px)]:py-2.5" style={{ animationDelay: `${0.9 + i * 0.15}s` }}>
                   <div className="w-5 pt-0.5 text-[#9bbecb] shrink-0">{r.icon}</div>
@@ -224,27 +216,27 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               ))}
             </div>
             <button
-              onClick={() => go(1, 'First things first.')}
+              onClick={() => go(1, T.say.firstThings)}
               className="ob-in w-full bg-slate-900 text-white h-14 rounded-full font-bold text-[15px] hover:bg-black shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)] flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 active:scale-[0.98]"
               style={{ animationDelay: '1.4s' }}
             >
-              <span>Begin</span>
+              <span>{T.welcome.begin}</span>
               <ArrowRight size={16} />
             </button>
-            <p className="ob-in mt-4 text-xs text-slate-400" style={{ animationDelay: '1.6s' }}>Tip: tap Belluh.</p>
+            <p className="ob-in mt-4 text-xs text-slate-400" style={{ animationDelay: '1.6s' }}>{T.welcome.tip}</p>
           </div>
         )}
 
         {/* Step 1: partner's name */}
         {step === 1 && (
           <form onSubmit={handleName} className="w-full max-w-md ob-in">
-            <h2 className="text-3xl md:text-4xl font-serif text-slate-900 mb-8 text-center">What do you call your partner?</h2>
+            <h2 className="text-3xl md:text-4xl font-serif text-slate-900 mb-8 text-center">{T.partner.question}</h2>
             <input
               autoFocus
               type="text"
               value={partnerName}
               onChange={(e) => { setPartnerName(e.target.value); belluh.key(); }}
-              placeholder="Name or nickname"
+              placeholder={T.partner.placeholder}
               maxLength={40}
               disabled={moment !== 'none'}
               className="w-full bg-transparent border-b-2 border-slate-200 py-4 text-center text-4xl font-serif italic text-[#f0addd] placeholder:not-italic placeholder:text-slate-300 focus:outline-none focus:border-[#9bbecb] transition-colors"
@@ -254,7 +246,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               disabled={!name || moment !== 'none'}
               className="mt-12 w-full bg-slate-900 text-white h-14 rounded-full font-bold text-[15px] hover:bg-black shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)] flex items-center justify-center gap-2 transition-all disabled:opacity-25 disabled:shadow-none disabled:cursor-not-allowed hover:-translate-y-0.5"
             >
-              <span>Continue</span>
+              <span>{T.continue}</span>
               <ArrowRight size={16} />
             </button>
           </form>
@@ -277,8 +269,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                 type="button"
                 onClick={() => setPlaceholderIndex(i => (i + 1) % PLACEHOLDERS.length)}
                 className="absolute right-4 bottom-4 p-2 text-slate-400 hover:text-[#9bbecb] transition-colors active:scale-95"
-                title="Another idea"
-                aria-label="Show another idea"
+                title={T.entry.anotherIdea}
+                aria-label={T.entry.showAnotherIdea}
               >
                 <RefreshCw size={18} />
               </button>
@@ -288,9 +280,9 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               disabled={!entry.trim() || moment !== 'none'}
               className="w-full bg-slate-900 text-white h-14 rounded-full font-bold text-[15px] hover:bg-black shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)] flex items-center justify-center gap-2 transition-all disabled:opacity-25 disabled:shadow-none"
             >
-              {moment === 'keeping' ? <span>Keeping it safe...</span> : <><span>Keep it</span><ArrowRight size={16} /></>}
+              {moment === 'keeping' ? <span>{T.entry.keeping}</span> : <><span>{T.entry.keep}</span><ArrowRight size={16} /></>}
             </button>
-            <p className="mt-4 text-center text-xs text-slate-400">Only you can see this one. You choose what to share later.</p>
+            <p className="mt-4 text-center text-xs text-slate-400">{T.entry.onlyYou}</p>
           </form>
         )}
 
@@ -298,17 +290,17 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         {step === 3 && (
           <div className="w-full max-w-md ob-in text-center">
             <div className="bg-white/85 backdrop-blur-xl p-7 md:p-8 rounded-[2.5rem] shadow-[0_30px_80px_-30px_rgba(63,116,134,0.4)] border border-white relative overflow-hidden">
-              <p className="text-[13px] font-semibold text-[#9bbecb] mb-4">Page one of your story</p>
+              <p className="text-[13px] font-semibold text-[#9bbecb] mb-4">{T.page.label}</p>
               <p className="font-serif text-xl md:text-2xl leading-relaxed text-slate-800">"{entry.trim()}"</p>
               <p className="mt-6 text-sm text-slate-500 leading-relaxed">
-                Every Sunday Belluh reads what you both write and brings you one small thing to try together.
+                {T.page.sunday}
               </p>
             </div>
             <button
-              onClick={() => go(4, `Belluh is better with ${name || 'two'}.`)}
+              onClick={() => go(4, named(T.say.betterWith, T.say.betterWithNoName))}
               className="mt-7 w-full bg-slate-900 text-white h-14 rounded-full font-bold text-[15px] hover:bg-black shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)] transition-all active:scale-95 flex items-center justify-center gap-2"
             >
-              <span>Continue</span>
+              <span>{T.continue}</span>
               <ArrowRight size={16} />
             </button>
           </div>
@@ -317,30 +309,30 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         {/* Step 4: invite */}
         {step === 4 && (
           <div className="w-full max-w-md ob-in text-center">
-            <h2 className="text-3xl md:text-4xl font-serif text-slate-900 mb-3">Bring {name || 'your partner'} in.</h2>
-            <p className="text-slate-500 mb-7 leading-relaxed">Send them your link. When they join, your journals connect and Bella knows you both.</p>
+            <h2 className="text-3xl md:text-4xl font-serif text-slate-900 mb-3">{named(T.invite.title, T.invite.titleNoName)}</h2>
+            <p className="text-slate-500 mb-7 leading-relaxed">{T.invite.sub}</p>
 
             <button
               onClick={shareLink}
               disabled={linkState === 'making'}
               className="w-full bg-slate-900 text-white h-14 rounded-full font-bold text-[15px] hover:bg-black shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)] flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-70"
             >
-              {linkState === 'copied' || linkState === 'shared' ? <><Check size={18} /><span>{linkState === 'copied' ? 'Link copied' : 'Link sent'}</span></> : <><Link2 size={18} /><span>{linkState === 'making' ? 'Making your link...' : `Send ${name || 'them'} your link`}</span></>}
+              {linkState === 'copied' || linkState === 'shared' ? <><Check size={18} /><span>{linkState === 'copied' ? T.invite.linkCopied : T.invite.linkSent}</span></> : <><Link2 size={18} /><span>{linkState === 'making' ? T.invite.making : named(T.invite.send, T.invite.sendNoName)}</span></>}
             </button>
-            {linkState === 'error' && <p className="mt-3 text-sm text-rose-500">Couldn't make a link just now. Try again, or invite by email.</p>}
+            {linkState === 'error' && <p className="mt-3 text-sm text-rose-500">{T.invite.linkError}</p>}
             {link && (
               <div className="mt-3 flex items-center gap-2 bg-white/80 border border-white rounded-2xl pl-4 pr-1.5 py-1.5 shadow-sm">
                 <span className="flex-1 min-w-0 truncate text-left text-sm text-slate-500 select-all">{link}</span>
-                <button onClick={copyLink} aria-label="Copy link" className="shrink-0 p-2 text-slate-400 hover:text-[#9bbecb]"><Copy size={16} /></button>
+                <button onClick={copyLink} aria-label={T.invite.copyLink} className="shrink-0 p-2 text-slate-400 hover:text-[#9bbecb]"><Copy size={16} /></button>
               </div>
             )}
 
             {!showEmail ? (
               <button onClick={() => setShowEmail(true)} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors">
-                <Mail size={15} /> Already on Belluh? Invite by email
+                <Mail size={15} /> {T.invite.byEmail}
               </button>
             ) : inviteStatus === 'sent' ? (
-              <p className="mt-5 text-sm font-bold text-[#3f7486] flex items-center justify-center gap-2"><Check size={16} /> Invite sent. They'll see it when they open Belluh.</p>
+              <p className="mt-5 text-sm font-bold text-[#3f7486] flex items-center justify-center gap-2"><Check size={16} /> {T.invite.sentDone}</p>
             ) : (
               <form onSubmit={handleInviteSubmit} className="mt-5 flex gap-2">
                 <input
@@ -349,25 +341,25 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
                   autoFocus
                   value={inviteEmail}
                   onChange={(e) => { setInviteEmail(e.target.value); setInviteStatus('idle'); }}
-                  placeholder={`${(name || 'partner').toLowerCase().replace(/\s+/g, '')}@email.com`}
-                  aria-label="Their email"
+                  placeholder={`${(name || T.invite.emailFallback).toLowerCase().replace(/\s+/g, '')}@email.com`}
+                  aria-label={T.invite.theirEmail}
                   className="flex-1 min-w-0 bg-white/80 border border-white rounded-full px-5 py-3 text-slate-900 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#CDE9F2]"
                 />
                 <button type="submit" disabled={inviteStatus === 'searching'} className="shrink-0 px-5 rounded-full bg-slate-900 text-white text-sm font-bold disabled:opacity-60">
-                  {inviteStatus === 'searching' ? 'Sending...' : 'Invite'}
+                  {inviteStatus === 'searching' ? T.invite.sending : T.invite.invite}
                 </button>
               </form>
             )}
-            {inviteStatus === 'not-found' && <p className="mt-3 text-sm text-slate-500">They're not on Belluh yet. Send them your link instead, it works for new accounts.</p>}
-            {inviteStatus === 'self' && <p className="mt-3 text-sm text-slate-500">That's your own email. Try theirs.</p>}
-            {inviteStatus === 'error' && <p className="mt-3 text-sm text-rose-500">Couldn't send that invite. Try again, or send your link.</p>}
+            {inviteStatus === 'not-found' && <p className="mt-3 text-sm text-slate-500">{T.invite.notFound}</p>}
+            {inviteStatus === 'self' && <p className="mt-3 text-sm text-slate-500">{T.invite.self}</p>}
+            {inviteStatus === 'error' && <p className="mt-3 text-sm text-rose-500">{T.invite.error}</p>}
 
             <button
               onClick={finish}
               disabled={finishing}
               className={`mt-8 w-full py-4 rounded-full font-bold transition-all active:scale-[0.98] disabled:opacity-60 ${invited ? 'bg-slate-900 text-white hover:bg-black shadow-lg' : 'text-slate-500 hover:text-slate-900'}`}
             >
-              {finishing ? 'Opening your journal...' : invited ? 'Start writing' : 'Skip for now'}
+              {finishing ? T.opening : invited ? T.startWriting : T.skip}
             </button>
           </div>
         )}

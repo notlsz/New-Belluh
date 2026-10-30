@@ -1,5 +1,6 @@
 
-import { useI18n } from '../i18n';
+import { useI18n, useUi } from '../i18n';
+import bellaUi from '../i18n/ui/bella';
 import React, { useState, useEffect, useRef } from 'react';
 import BelluhOrb from '../components/BelluhOrb';
 import { belluh } from '../lib/belluhPresence';
@@ -60,6 +61,8 @@ const BelluhAvatar: React.FC<{ thinking?: boolean }> = ({ thinking }) => (
 const NoteDraft: React.FC<{ msg: AgentMessage; onSend: (id: string, text: string) => Promise<void>; onDiscard: (id: string) => Promise<void> }> = ({ msg, onSend, onDiscard }) => {
   const [text, setText] = useState(msg.body);
   const [busy, setBusy] = useState(false);
+  const { f } = useI18n();
+  const T = useUi(bellaUi);
   const boxRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     const fit = () => {
@@ -73,22 +76,22 @@ const NoteDraft: React.FC<{ msg: AgentMessage; onSend: (id: string, text: string
     return () => window.removeEventListener('resize', fit);
   }, [text]);
   const status = msg.meta?.status ?? 'draft';
-  const to = msg.meta?.to_name || 'your partner';
+  const to = msg.meta?.to_name || T.partnerTo;
 
   if (status === 'sent') {
     return (
       <div className="ml-12 max-w-[85%] rounded-3xl border border-belluh-100 bg-belluh-50/40 p-5">
         <p className="font-serif text-[16px] leading-relaxed text-slate-700 whitespace-pre-wrap">{msg.body}</p>
-        <p className="mt-3 text-xs font-bold text-belluh-500 flex items-center gap-1.5"><Check size={12} /> Sent to {to}</p>
+        <p className="mt-3 text-xs font-bold text-belluh-500 flex items-center gap-1.5"><Check size={12} /> {f(T.sentTo, { name: to })}</p>
       </div>
     );
   }
   if (status === 'discarded') {
-    return <p className="ml-12 text-xs text-slate-300 italic">Note to {to} not sent.</p>;
+    return <p className="ml-12 text-xs text-slate-300 italic">{f(T.notSent, { name: to })}</p>;
   }
   return (
     <div className="ml-12 max-w-[85%] rounded-3xl border border-belluh-200 bg-white shadow-sm p-5">
-      <p className="text-xs font-bold text-slate-400 mb-2">Note to {to}</p>
+      <p className="text-xs font-bold text-slate-400 mb-2">{f(T.noteTo, { name: to })}</p>
       <textarea
         ref={boxRef}
         value={text}
@@ -102,14 +105,14 @@ const NoteDraft: React.FC<{ msg: AgentMessage; onSend: (id: string, text: string
           onClick={async () => { setBusy(true); await onSend(msg.id, text); setBusy(false); }}
           className="px-5 py-2.5 rounded-full bg-[#9bbecb] text-white text-sm font-bold hover:bg-[#8aaab7] disabled:opacity-50 flex items-center gap-2"
         >
-          <Heart size={14} className="fill-white" /> Send to {to}
+          <Heart size={14} className="fill-white" /> {f(T.sendTo, { name: to })}
         </button>
         <button
           disabled={busy}
           onClick={async () => { setBusy(true); await onDiscard(msg.id); setBusy(false); }}
           className="px-4 py-2.5 rounded-full text-sm font-bold text-slate-400 hover:text-slate-700"
         >
-          Don't send
+          {T.dontSend}
         </button>
       </div>
     </div>
@@ -118,6 +121,7 @@ const NoteDraft: React.FC<{ msg: AgentMessage; onSend: (id: string, text: string
 
 const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremium, userName, initialMessage, onInitialMessageSent, onCompose, initialSpace, inSheet, onClose }) => {
   const { d, f } = useI18n(); const ch = d.app.chat;
+  const T = useUi(bellaUi);
   // 'agent' = server-side Belluh with memory; 'legacy' = the original in-browser chat, used if the agent isn't deployed
   const [mode, setMode] = useState<'loading' | 'agent' | 'legacy'>('loading');
   const [partnerName, setPartnerName] = useState<string | null>(null);
@@ -153,6 +157,8 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
   const entryTextsRef = useRef(entryTexts);
   entryTextsRef.current = entryTexts;
   const initialRef = useRef({ message: initialMessage, done: onInitialMessageSent });
+  const uiRef = useRef(T);
+  uiRef.current = T;
   useEffect(() => {
     const entryTexts = entryTextsRef.current;
     let cancelled = false;
@@ -181,13 +187,14 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
       setDetectedPersona(persona);
       setReflection(await generateDailyReflection(entryTexts, persona));
       setArchetype(await getRelationshipArchetype(entryTexts));
-      let initialMsg = "Hello. I'm Bella. I've been reading your story. How are you feeling today?";
+      const L = uiRef.current;
+      let initialMsg = L.hello;
       switch (persona) {
-        case UserPersona.Kafka: initialMsg = "I've analyzed your recent entries. I notice a pattern of anxiety following moments of closeness. Shall we unpack that?"; break;
-        case UserPersona.Hemingway: initialMsg = "I've reviewed the log. Ready to process."; break;
-        case UserPersona.Nietzsche: initialMsg = "You are asking big questions. Let's see if the answers are already in your writing."; break;
-        case UserPersona.Fitzgerald: initialMsg = "Your journal reads like a novel. Let's look at the latest chapter together."; break;
-        case UserPersona.Camus: initialMsg = "Life is made of fleeting moments. Let's examine the ones you've captured."; break;
+        case UserPersona.Kafka: initialMsg = L.introKafka; break;
+        case UserPersona.Hemingway: initialMsg = L.introHemingway; break;
+        case UserPersona.Nietzsche: initialMsg = L.introNietzsche; break;
+        case UserPersona.Fitzgerald: initialMsg = L.introFitzgerald; break;
+        case UserPersona.Camus: initialMsg = L.introCamus; break;
       }
       setMessages([{ id: '1', role: 'model', text: initialMsg, timestamp: new Date() }]);
       const first = initialRef.current;
@@ -248,7 +255,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
     setAgentMessages(prev => {
       const rest = prev.filter(m => m.id !== temp.id);
       if (res?.messages?.length) return [...rest, ...res.messages];
-      return [...rest, temp, { id: `err-${Date.now()}`, role: 'belluh', body: "I couldn't reach my thoughts just now. Try sending that again in a moment.", meta: {}, created_at: new Date().toISOString() }];
+      return [...rest, temp, { id: `err-${Date.now()}`, role: 'belluh', body: uiRef.current.errorReach, meta: {}, created_at: new Date().toISOString() }];
     });
     setIsConflictMode(false);
   };
@@ -322,7 +329,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
   // Ways in, from what Belluh knows, until the person has started talking to it
   const starters: string[] = mode !== 'agent' || agentMessages.some(m => m.role === 'user') ? [] : [
     ...(partnerName ? [f(ch.starterMind, { partner: partnerName }), f(ch.starterSay, { partner: partnerName })] : [ch.starterPatterns]),
-    ...(week && !week.mine ? [`How do we make time for this week's thing?`] : []),
+    ...(week && !week.mine ? [T.makeTime] : []),
     partnerName ? ch.starterPlan : ch.starterWrite,
   ];
   const sendNow = async (text: string) => {
@@ -333,7 +340,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
 
   const me = firstName(userName);
   const spaceSwitch = (
-    <div role="tablist" aria-label="Conversation" className="flex items-center bg-slate-100 rounded-full p-0.5 text-xs font-bold">
+    <div role="tablist" aria-label={T.conversation} className="flex items-center bg-slate-100 rounded-full p-0.5 text-xs font-bold">
       <button role="tab" aria-selected={space === 'me'} onClick={() => pickSpace('me')} className={`px-3 py-1.5 rounded-full whitespace-nowrap transition-colors ${space === 'me' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>{ch.justYou}</button>
       <button role="tab" aria-selected={space === 'us'} onClick={() => { pickSpace('us'); trackEvent('us_opened'); }} className={`px-3 py-1.5 rounded-full whitespace-nowrap transition-colors ${space === 'us' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>{f(ch.you, { partner: partnerName ?? '' })}</button>
     </div>
@@ -353,12 +360,12 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
   const toastEl = toast && <div role="status" className="fixed left-1/2 -translate-x-1/2 bottom-28 z-[95] px-4 py-2.5 rounded-full bg-slate-900 text-white text-sm font-semibold shadow-lg">{toast}</div>;
 
   const closeBtn = inSheet && onClose ? (
-    <button aria-label="Close" onClick={onClose} className="ml-auto w-9 h-9 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900"><X size={16} /></button>
+    <button aria-label={T.close} onClick={onClose} className="ml-auto w-9 h-9 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900"><X size={16} /></button>
   ) : null;
 
   const greeting = partnerName
-    ? `Hi${me ? ` ${me}` : ''}. I've read your journal, and the entries ${partnerName} shares with you. Tell me what's on your mind, ask me about a pattern, or ask me to help you say something to ${partnerName}.`
-    : `Hi${me ? ` ${me}` : ''}. I've read your journal. Tell me what's on your mind, or ask me about a pattern you've noticed.`;
+    ? f(me ? T.greetPartnerNamed : T.greetPartner, { me, partner: partnerName })
+    : f(me ? T.greetNamed : T.greet, { me });
 
   if (mode === 'agent' && partnerName && space === 'us') {
     return <UsThread partnerName={partnerName} myName={userName} header={
@@ -383,12 +390,12 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                 <span className="lg:hidden text-belluh-200">/</span></>}
                 {mode === 'agent' && partnerName ? spaceSwitch : (
                 <span className="text-sm font-medium text-slate-500">
-                  {mode === 'agent' ? 'Just you' : `${detectedPersona} Mode`}
+                  {mode === 'agent' ? ch.justYou : f(T.personaMode, { persona: detectedPersona })}
                 </span>)}
             </div>
             <div className="flex items-center gap-2">
               {isConflictMode && (
-                  <div className="px-3 py-1 bg-[#fdf0f8] text-[#b0457f] rounded-full text-xs font-semibold">Mediating</div>
+                  <div className="px-3 py-1 bg-[#fdf0f8] text-[#b0457f] rounded-full text-xs font-semibold">{T.mediatingBadge}</div>
               )}
               {mode === 'agent' && ideasBtn}
               {mode === 'agent' && (
@@ -426,7 +433,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                    <div key={msg.id} className="animate-slide-up flex gap-4 md:gap-6">
                      <div className="w-8 shrink-0 mt-1.5 flex justify-center" aria-hidden="true"><Heart size={18} className="fill-[#f0addd] text-[#f0addd]" /></div>
                      <div className="max-w-[85%] rounded-3xl bg-[#f7d8ee] p-5">
-                       <p className="text-xs font-bold text-[#831843] mb-2">From {msg.meta?.from_name || 'your partner'}, via Belluh</p>
+                       <p className="text-xs font-bold text-[#831843] mb-2">{msg.meta?.from_name ? f(T.fromPartner, { name: msg.meta.from_name }) : T.fromYourPartner}</p>
                        <p className="font-serif text-[17px] leading-relaxed text-[#5e1c43] whitespace-pre-wrap">{msg.body}</p>
                      </div>
                    </div>
@@ -435,10 +442,10 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                    <div key={msg.id} className="group animate-slide-up flex justify-end">
                      <div className={`max-w-[85%] md:max-w-[80%] rounded-3xl p-5 md:p-6 text-[16px] leading-relaxed ${msg.meta?.mode === 'mediate' ? 'bg-[#fdf0f8] text-slate-800' : 'bg-slate-100 text-slate-800'}`}>
                        {(msg.meta?.photo_preview || (msg.meta?.photo && photoLinks.get(msg.meta.photo))) && (
-                         <img src={msg.meta.photo_preview || photoLinks.get(msg.meta.photo)} alt="Your photo" className="mb-2 max-h-64 w-auto rounded-2xl object-cover" />
+                         <img src={msg.meta.photo_preview || photoLinks.get(msg.meta.photo)} alt={T.yourPhoto} className="mb-2 max-h-64 w-auto rounded-2xl object-cover" />
                        )}
                        {!(msg.meta?.photo || msg.meta?.photo_preview) || msg.body !== '(sent a photo)' ? <p className="font-medium whitespace-pre-wrap">{msg.body}</p> : null}
-                       {(msg.meta as any)?.channel && <p className="mt-1.5 text-[12px] font-semibold text-slate-400">via {(msg.meta as any).channel === 'sms' ? 'text' : (msg.meta as any).channel === 'telegram' ? 'Telegram' : 'WhatsApp'}</p>}
+                       {(msg.meta as any)?.channel && <p className="mt-1.5 text-[12px] font-semibold text-slate-400">{(msg.meta as any).channel === 'sms' ? T.viaText : (msg.meta as any).channel === 'telegram' ? T.viaTelegram : T.viaWhatsApp}</p>}
                      </div>
                    </div>
                  );
@@ -446,14 +453,14 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                    <div key={msg.id} className="group animate-slide-up flex gap-4 md:gap-6">
                      <BelluhAvatar />
                      <div className="max-w-[85%] md:max-w-[80%]">
-                       {msg.meta?.entry_id && <p className="text-[13px] font-semibold text-[#7fa7b6] mb-1.5">About your latest entry</p>}
-                       {msg.meta?.kind === 'weekly' && <p className="text-[13px] font-semibold text-[#7fa7b6] mb-1.5">Your week, from Belluh</p>}
-                       {msg.meta?.kind === 'offer' && <p className="text-[13px] font-semibold text-[#7fa7b6] mb-1.5">Bella noticed</p>}
-                       {msg.meta?.kind === 'remind' && <p className="text-[13px] font-semibold text-[#7fa7b6] mb-1.5">Reminder you asked for</p>}
+                       {msg.meta?.entry_id && <p className="text-[13px] font-semibold text-[#7fa7b6] mb-1.5">{T.aboutEntry}</p>}
+                       {msg.meta?.kind === 'weekly' && <p className="text-[13px] font-semibold text-[#7fa7b6] mb-1.5">{T.yourWeek}</p>}
+                       {msg.meta?.kind === 'offer' && <p className="text-[13px] font-semibold text-[#7fa7b6] mb-1.5">{T.noticed}</p>}
+                       {msg.meta?.kind === 'remind' && <p className="text-[13px] font-semibold text-[#7fa7b6] mb-1.5">{T.reminder}</p>}
                        <p className="font-serif text-lg leading-relaxed text-slate-900 whitespace-pre-wrap">{revealIds.has(msg.id) ? <Reveal text={msg.body} onTick={() => messagesEndRef.current?.scrollIntoView({ block: 'end' })} /> : msg.body}</p>
                        {Array.isArray(msg.meta?.saved) && msg.meta.saved.length > 0 && (
                          <button onClick={openMemories} className="mt-2 flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-700 text-left">
-                           <Brain size={12} /> Saved to memory: {msg.meta.saved.join(', ')}
+                           <Brain size={12} /> {f(T.savedToMemory, { items: msg.meta.saved.join(', ') })}
                          </button>
                        )}
                        <BelluhActions msg={msg} partnerName={partnerName} onCompose={onCompose} onAsk={t => setChatInput(t)} onBusy={setIsTyping} onAdded={(added, updated) => {
@@ -471,7 +478,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                    <div className="mb-12 animate-fade-in bg-belluh-50/50 p-6 rounded-3xl border border-belluh-100">
                         <div className="flex items-center gap-2 mb-3 text-belluh-400">
                             <Activity size={14} />
-                            <span className="text-[13px] font-semibold">Current Context</span>
+                            <span className="text-[13px] font-semibold">{T.currentContext}</span>
                         </div>
                         <h2 className="text-xl md:text-2xl font-serif text-belluh-900 leading-relaxed italic opacity-90">
                             "{reflection.replace(/[*#]/g, '').trim()}"
@@ -532,8 +539,8 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
 
                 {photo && (
                     <div className="mb-2 ml-2 relative inline-block">
-                        <img src={photo.preview} alt="Photo to send" className="h-20 w-20 object-cover rounded-2xl border border-slate-100 shadow-sm" />
-                        <button aria-label="Remove photo" onClick={() => setPhoto(null)} className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center"><X size={12} /></button>
+                        <img src={photo.preview} alt={T.photoToSend} className="h-20 w-20 object-cover rounded-2xl border border-slate-100 shadow-sm" />
+                        <button aria-label={T.removePhoto} onClick={() => setPhoto(null)} className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center"><X size={12} /></button>
                     </div>
                 )}
                 <input ref={photoInput} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) setPhoto({ file: f, preview: URL.createObjectURL(f) }); e.target.value = ''; }} />
@@ -548,13 +555,13 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                         style={{ overflow: 'hidden' }}
                     />
                     {mode === 'agent' && (
-                        <button aria-label="Add a photo" title="Show Belluh a photo" onClick={() => photoInput.current?.click()} disabled={isTyping}
+                        <button aria-label={T.addPhoto} title={T.showPhoto} onClick={() => photoInput.current?.click()} disabled={isTyping}
                             className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-slate-400 hover:text-belluh-600 hover:bg-belluh-50 transition-colors">
                             <ImagePlus size={19} />
                         </button>
                     )}
                     <button
-                        aria-label="Send"
+                        aria-label={T.send}
                         onClick={handleSendMessage}
                         disabled={(!chatInput.trim() && !photo) || isTyping}
                         className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 ml-2 ${chatInput.trim() || photo ? 'bg-[#9bbecb] text-white hover:bg-belluh-700 active:scale-95' : 'bg-slate-100 text-slate-300'}`}
@@ -575,17 +582,17 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
          <div className="fixed inset-0 z-[90] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-fade-in" onClick={() => setMemories(null)}>
            <div className="bg-white rounded-[2rem] w-full max-w-md max-h-[75vh] overflow-y-auto p-6 shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}>
              <div className="flex items-center justify-between mb-1">
-               <h3 className="font-serif text-xl text-slate-900">What Bella remembers</h3>
-               <button onClick={() => setMemories(null)} aria-label="Close" className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center text-slate-500"><X size={18} /></button>
+               <h3 className="font-serif text-xl text-slate-900">{T.memoryTitle}</h3>
+               <button onClick={() => setMemories(null)} aria-label={T.close} className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center text-slate-500"><X size={18} /></button>
              </div>
-             <p className="text-sm text-slate-500 mb-5">Only you see this. Remove anything, or tell Bella "forget that" in the chat.</p>
-             {memories.length === 0 && <p className="text-sm text-slate-400 italic">Nothing yet. Belluh saves lasting things you tell it, like what helps after a hard day.</p>}
+             <p className="text-sm text-slate-500 mb-5">{T.memoryNote}</p>
+             {memories.length === 0 && <p className="text-sm text-slate-400 italic">{T.memoryEmpty}</p>}
              <ul className="divide-y divide-slate-100">
                {memories.map(m => (
                  <li key={m.id} className="flex items-start justify-between gap-3 py-3">
                    <p className="font-serif text-[15px] text-slate-800 leading-relaxed">{m.fact}</p>
                    <button
-                     aria-label="Forget"
+                     aria-label={T.forget}
                      onClick={async () => { if (await belluhAgent.forget(m.id)) setMemories(prev => prev?.filter(x => x.id !== m.id) ?? null); }}
                      className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50"
                    >

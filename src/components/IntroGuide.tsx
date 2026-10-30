@@ -2,32 +2,36 @@
 import React, { useState } from 'react';
 import { BookHeart, PenLine, ArrowRight, Check } from 'lucide-react';
 import BelluhOrb from './BelluhOrb';
+import { useI18n, useUi } from '../i18n';
+import introStrings from '../i18n/ui/introGuide';
 
 interface IntroGuideProps {
   onClose: () => void;
 }
 
 const IntroGuide: React.FC<IntroGuideProps> = ({ onClose }) => {
+  const T = useUi(introStrings);
+  const { f } = useI18n();
   const [step, setStep] = useState(0);
 
   const steps = [
     {
       icon: <BookHeart size={52} strokeWidth={1.5} className="text-[#f0addd]" />,
-      title: "Your story",
-      desc: "Every entry, note and photo the two of you keep lives here, newest first.",
-      highlight: "Home"
+      title: T.story.title,
+      desc: T.story.desc,
+      highlight: T.story.where
     },
     {
       icon: <PenLine size={52} strokeWidth={1.5} className="text-[#9bbecb]" />,
-      title: "Write a few lines",
-      desc: "Tap the plus to write. Keep it to yourself with Just me, or share it with your partner. A minute a day is plenty.",
-      highlight: "The plus button"
+      title: T.write.title,
+      desc: T.write.desc,
+      highlight: T.write.where
     },
     {
       icon: <BelluhOrb size={76} />,
-      title: "Ask Belluh",
-      desc: "Ask anything from the bar on Home. Belluh plans dates, remembers the little things, and becomes anything you ask it to.",
-      highlight: "Ask Belluh, on Home"
+      title: T.ask.title,
+      desc: T.ask.desc,
+      highlight: T.ask.where
     }
   ];
 
@@ -44,7 +48,7 @@ const IntroGuide: React.FC<IntroGuideProps> = ({ onClose }) => {
       <div className="w-full max-w-sm bg-white rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden flex flex-col items-center text-center animate-scale-in">
         
         {/* Progress */}
-        <div className="flex gap-1.5 w-28 mb-10" aria-label={`Step ${step + 1} of ${steps.length}`}>
+        <div className="flex gap-1.5 w-28 mb-10" aria-label={f(T.progress, { n: step + 1, total: steps.length })}>
           {steps.map((_, i) => (
             <div key={i} className="h-1 flex-1 rounded-full bg-slate-100 overflow-hidden">
               <div className="h-full rounded-full bg-gradient-to-r from-[#9bbecb] to-[#f0addd] transition-all duration-500" style={{ width: i <= step ? '100%' : '0%' }} />
@@ -75,9 +79,9 @@ const IntroGuide: React.FC<IntroGuideProps> = ({ onClose }) => {
           className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm hover:bg-black transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2"
         >
           {step === steps.length - 1 ? (
-            <><span>Let's Go</span> <Check size={18} /></>
+            <><span>{T.letsGo}</span> <Check size={18} /></>
           ) : (
-            <><span>Next</span> <ArrowRight size={18} /></>
+            <><span>{T.next}</span> <ArrowRight size={18} /></>
           )}
         </button>
 

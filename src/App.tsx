@@ -29,6 +29,8 @@ import { computeStreak, hideLockedAnswer, questionForDay } from './lib/daily';
 
 import Acquisition from './pages/Acquisition';
 import Report from './pages/Report';
+import { useI18n, useUi } from './i18n';
+import shell from './i18n/ui/shell';
 
 // Toast Component
 const Toast = ({ message, type, onClose }: { message: string, type: 'success' | 'error' | 'info', onClose: () => void }) => {
@@ -77,6 +79,8 @@ const loadSavedSettings = (): Record<string, unknown> => {
 };
 
 const App: React.FC = () => {
+  const { f } = useI18n();
+  const T = useUi(shell).app;
   const loadedUserId = useRef<string | null>(null);
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -165,9 +169,9 @@ const App: React.FC = () => {
     setInviteBusy(true);
     if (accept) {
       const { error } = await supabase.rpc('accept_partner_invite', { p_token: inviteOffer.token });
-      if (error) showNotification("That invite link has expired or was already used. Ask for a new one.", "error");
+      if (error) showNotification(T.inviteExpired, "error");
       else {
-        showNotification(`You're connected with ${inviteOffer.name}.`, "success");
+        showNotification(f(T.connectedWith, { name: inviteOffer.name }), "success");
         const { data: { user: u } } = await supabase.auth.getUser();
         if (u) loadUserData(u);
       }
@@ -321,10 +325,10 @@ const App: React.FC = () => {
                 // Before the new invite system is installed: send a request the other person must accept
                 const { error: reqError } = await db.from('partner_connections')
                     .insert({ user_id: sessionUser.id, partner_id: inviteToken, status: 'pending' });
-                if (!reqError || reqError.code === '23505') showNotification("Request sent. It connects once they accept it in their profile.", "success");
+                if (!reqError || reqError.code === '23505') showNotification(T.requestSent, "success");
                 try { localStorage.removeItem('pending_invite_id'); } catch { /* ignore */ }
             } else {
-                showNotification("That invite link has expired or was already used. Ask for a new one.", "error");
+                showNotification(T.inviteExpired, "error");
                 try { localStorage.removeItem('pending_invite_id'); } catch { /* ignore */ }
             }
         }
@@ -402,7 +406,7 @@ const App: React.FC = () => {
         stage = 'circles';
         // 5. Build Circles
         const newCircles: any[] = [];
-        const myFirstName = myProfile?.full_name?.trim().split(' ')[0] || sessionUser.email?.split('@')[0] || 'Me';
+        const myFirstName = myProfile?.full_name?.trim().split(' ')[0] || sessionUser.email?.split('@')[0] || T.me;
         
         const getCircleMetadata = (circleId: string) => {
             const isMeta = (e: any) => e.tags && e.tags.includes('system_circle_metadata') && e.tags.includes(`circle:${circleId}`);
@@ -440,8 +444,8 @@ const App: React.FC = () => {
 
         if (connectedProfiles.length > 0) {
             connectedProfiles.forEach((pProfile, index) => {
-                const partnerFirstName = pProfile.full_name?.trim().split(' ')[0] || 'Partner';
-                let circleName = `${myFirstName} & ${partnerFirstName}`;
+                const partnerFirstName = pProfile.full_name?.trim().split(' ')[0] || T.partner;
+                let circleName = f(T.pairName, { me: myFirstName, partner: partnerFirstName });
                 const circleId = index === 0 ? 'c1' : `partner_${pProfile.id}`;
                 const meta = getCircleMetadata(circleId);
                 if (meta.name) circleName = meta.name;
@@ -454,7 +458,7 @@ const App: React.FC = () => {
                     const prof = allProfiles?.find((p: any) => p.id === mid);
                     return {
                         id: mid,
-                        name: prof?.full_name || 'Unknown',
+                        name: prof?.full_name || T.unknown,
                         avatar: calmAvatar(prof?.avatar_url) || avatarFor(mid)
                     };
                 });
@@ -480,14 +484,14 @@ const App: React.FC = () => {
                 const prof = allProfiles?.find((p: any) => p.id === mid);
                 return {
                     id: mid,
-                    name: prof?.full_name || 'Unknown',
+                    name: prof?.full_name || T.unknown,
                     avatar: calmAvatar(prof?.avatar_url) || avatarFor(mid)
                 };
             });
 
              newCircles.push({
                 id: circleId,
-                name: meta.name || `${myFirstName}'s Space`,
+                name: meta.name || f(T.ownSpace, { name: myFirstName }),
                 type: CircleType.Custom as any,
                 status: meta.isArchived ? CircleStatus.Archived : CircleStatus.Active,
                 members: allMembers,
@@ -506,14 +510,14 @@ const App: React.FC = () => {
                     const prof = allProfiles?.find((p: any) => p.id === mid);
                     return {
                         id: mid,
-                        name: prof?.full_name || 'Unknown',
+                        name: prof?.full_name || T.unknown,
                         avatar: calmAvatar(prof?.avatar_url) || avatarFor(mid)
                     };
                 });
                 const isArchived = e.tags && e.tags.includes('status:archived');
                 newCircles.push({
                     id: e.id,
-                    name: e.title || 'Untitled Circle',
+                    name: e.title || T.untitledCircle,
                     type: CircleType.Custom,
                     status: isArchived ? CircleStatus.Archived : CircleStatus.Active,
                     members: allMembers,
@@ -540,7 +544,7 @@ const App: React.FC = () => {
                     id: r.id,
                     inviter: {
                         id: inviter?.id || r.user_id,
-                        name: inviter?.full_name || 'Unknown User',
+                        name: inviter?.full_name || T.unknownUser,
                         avatar: calmAvatar(inviter?.avatar_url) || avatarFor(r.user_id)
                     }
                 };
@@ -573,15 +577,15 @@ const App: React.FC = () => {
         
         const mappedEntries: JournalEntry[] = contentEntries.map((e: any) => {
             const isMine = e.user_id === sessionUser.id;
-            let authorName = 'Unknown';
+            let authorName = T.unknown;
             let authorAvatar = '';
 
             const authorProfile = allProfiles?.find((p: any) => p.id === e.user_id);
             if (authorProfile) {
-                authorName = isMine ? (myProfile?.full_name || 'Me') : authorProfile.full_name;
+                authorName = isMine ? (myProfile?.full_name || T.me) : authorProfile.full_name;
                 authorAvatar = calmAvatar(authorProfile.avatar_url) || avatarFor(e.user_id);
             } else {
-                authorName = isMine ? 'Me' : 'Friend';
+                authorName = isMine ? T.me : T.friend;
                 authorAvatar = avatarFor(e.user_id);
             }
 
@@ -655,7 +659,7 @@ const App: React.FC = () => {
         setUser(prev => ({ 
             ...prev, 
             id: sessionUser.id, 
-            name: myProfile?.full_name || sessionUser.email?.split('@')[0] || 'User',
+            name: myProfile?.full_name || sessionUser.email?.split('@')[0] || T.user,
             avatar: calmAvatar(myProfile?.avatar_url) || prev.avatar,
             partnerName: displayPartnerName,
             partnerAvatar: calmAvatar(primaryPartner?.avatar_url) || undefined,
@@ -698,7 +702,7 @@ const App: React.FC = () => {
           if (attempt < 5) { await new Promise(r => setTimeout(r, 700 * attempt)); return loadUserData(sessionUser, attempt + 1); }
           // Let the next "Log in" try again instead of being ignored
           loadedUserId.current = null;
-          showNotification("Couldn't load your journal. Try logging in again.", "error");
+          showNotification(T.loadFailed, "error");
       } finally {
           clearTimeout(stall);
           setIsLoading(false); setOpening(false);
@@ -858,7 +862,7 @@ const App: React.FC = () => {
 
       await supabase.from('profiles').upsert(updatePayload);
       setUser(prev => ({ ...prev, name: updatePayload.full_name, avatar: updatePayload.avatar_url }));
-      showNotification('Profile updated', 'success');
+      showNotification(T.profileUpdated, 'success');
   };
 
   const handleCreateCircle = async (name: string) => {
@@ -877,10 +881,10 @@ const App: React.FC = () => {
       }]);
 
       if (!error) {
-          showNotification('New circle created!', 'success');
+          showNotification(T.circleCreated, 'success');
           loadUserData(currentUser);
       } else {
-          showNotification('Failed to create circle.', 'error');
+          showNotification(T.circleCreateFailed, 'error');
       }
   };
 
@@ -897,7 +901,7 @@ const App: React.FC = () => {
                   ...prev,
                   circles: prev.circles.map(c => c.id === circleId ? { ...c, name: newName } : c)
               }));
-              showNotification('Circle renamed', 'success');
+              showNotification(T.circleRenamed, 'success');
           }
       } else {
           const { data: existingMeta } = await supabase
@@ -921,13 +925,13 @@ const App: React.FC = () => {
                   date: new Date().toISOString()
               }]));
           }
-          if (renameError) { showNotification("Couldn't rename the circle. Try again.", 'error'); return; }
+          if (renameError) { showNotification(T.renameFailed, 'error'); return; }
           
           setUser(prev => ({
               ...prev,
               circles: prev.circles.map(c => c.id === circleId ? { ...c, name: newName } : c)
           }));
-          showNotification('Circle renamed', 'success');
+          showNotification(T.circleRenamed, 'success');
       }
   };
 
@@ -980,7 +984,7 @@ const App: React.FC = () => {
           ...prev,
           circles: prev.circles.map(c => c.id === circleId ? { ...c, status: newStatus } : c)
       }));
-      showNotification(isArchiving ? 'Circle archived' : 'Circle restored', 'success');
+      showNotification(isArchiving ? T.circleArchived : T.circleRestored, 'success');
   };
 
   const handleAcceptInvite = async (connectionId: string) => {
@@ -991,11 +995,11 @@ const App: React.FC = () => {
               .update({ status: 'connected' })
               .eq('id', connectionId);
           if (error) throw error;
-          showNotification('Invite accepted!', 'success');
+          showNotification(T.inviteAccepted, 'success');
           const { data: { user } } = await supabase.auth.getUser();
           if (user) loadUserData(user);
       } catch (error) {
-          showNotification('Failed to accept', 'error');
+          showNotification(T.acceptFailed, 'error');
           const { data: { user } } = await supabase.auth.getUser();
           if (user) loadUserData(user);
       }
@@ -1005,9 +1009,9 @@ const App: React.FC = () => {
       setPendingInvites(prev => prev.filter(i => i.id !== connectionId));
       try {
           await supabase.from('partner_connections').delete().eq('id', connectionId);
-          showNotification('Invite declined', 'success');
+          showNotification(T.inviteDeclined, 'success');
       } catch (error) {
-          showNotification('Failed to decline', 'error');
+          showNotification(T.declineFailed, 'error');
       }
   };
 
@@ -1064,7 +1068,7 @@ const App: React.FC = () => {
         });
         setIsComposeOpen(false); 
         setComposePrompt(undefined);
-        showNotification('Memory captured!', 'success');
+        showNotification(T.memoryCaptured, 'success');
         // Belluh may have something to add. Quietly skipped if it doesn't, or if the agent isn't deployed.
         belluhAgent.react(data.id).then(res => {
           if (!res?.message?.body) return;
@@ -1073,7 +1077,7 @@ const App: React.FC = () => {
           if (currentTabRef.current !== 'ai-coach' && currentTabRef.current !== 'timeline') setBelluhReply(res.message.body);
         });
     } else {
-        showNotification('Failed to save.', 'error');
+        showNotification(T.saveFailed, 'error');
     }
   };
 
@@ -1081,7 +1085,7 @@ const App: React.FC = () => {
     const { error } = await supabase.from('journal_entries').update({ content: newContent }).eq('id', entryId);
     if (!error) {
         setEntries(prev => prev.map(e => e.id === entryId ? { ...e, content: newContent } : e));
-        showNotification('Entry updated', 'success');
+        showNotification(T.entryUpdated, 'success');
     }
   };
 
@@ -1089,7 +1093,7 @@ const App: React.FC = () => {
       const { error } = await supabase.from('journal_entries').delete().eq('id', entryId);
       if (!error) {
         setEntries(prev => prev.filter(e => e.id !== entryId));
-        showNotification('Entry deleted', 'success');
+        showNotification(T.entryDeleted, 'success');
       }
   };
 
@@ -1111,7 +1115,7 @@ const App: React.FC = () => {
   const handleCircleChange = (circleId: string) => setUser({...user, activeCircleId: circleId});
 
   // --- Rendering ---
-  if (isLoading) return <div className="min-h-screen bg-[#fcfcfc] flex flex-col items-center justify-center gap-5" role="status" aria-label="Opening your journal"><DragonflyMark size={64} rippleOnMount={false} className="animate-pulse" />{opening && <p className="text-sm text-slate-400">Opening your journal</p>}</div>;
+  if (isLoading) return <div className="min-h-screen bg-[#fcfcfc] flex flex-col items-center justify-center gap-5" role="status" aria-label={T.opening}><DragonflyMark size={64} rippleOnMount={false} className="animate-pulse" />{opening && <p className="text-sm text-slate-400">{T.opening}</p>}</div>;
   if (showAdmin && isUserAdmin) return <AdminMetrics onBack={() => setShowAdmin(false)} />;
 
   if (!isAuthenticated) {
@@ -1190,10 +1194,10 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-[150] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
           <div className="bg-white rounded-[2rem] max-w-sm w-full p-8 text-center shadow-2xl animate-scale-in">
             <div className="w-fit mx-auto mb-5 text-[#9bbecb]" aria-hidden="true"><Sparkles size={30} strokeWidth={1.5} /></div>
-            <h2 className="font-serif text-2xl text-slate-900 mb-3">Connect with {inviteOffer.name}?</h2>
-            <p className="text-sm text-slate-500 leading-relaxed mb-7">You'll each see the entries the other chooses to share. Private entries stay private. You can disconnect anytime.</p>
-            <button disabled={inviteBusy} onClick={() => answerInvite(true)} className="w-full py-4 rounded-full bg-[#f0addd] text-white font-bold hover:bg-[#e57ec3] disabled:opacity-60">Connect</button>
-            <button disabled={inviteBusy} onClick={() => answerInvite(false)} className="w-full py-3 mt-2 text-sm font-bold text-slate-400 hover:text-slate-700">Not now</button>
+            <h2 className="font-serif text-2xl text-slate-900 mb-3">{f(T.inviteTitle, { name: inviteOffer.name })}</h2>
+            <p className="text-sm text-slate-500 leading-relaxed mb-7">{T.inviteBody}</p>
+            <button disabled={inviteBusy} onClick={() => answerInvite(true)} className="w-full py-4 rounded-full bg-[#f0addd] text-white font-bold hover:bg-[#e57ec3] disabled:opacity-60">{T.connect}</button>
+            <button disabled={inviteBusy} onClick={() => answerInvite(false)} className="w-full py-3 mt-2 text-sm font-bold text-slate-400 hover:text-slate-700">{T.notNow}</button>
           </div>
         </div>
       ) : null;
@@ -1204,16 +1208,16 @@ const App: React.FC = () => {
           <form className="bg-white rounded-[2rem] max-w-sm w-full p-8 shadow-2xl animate-scale-in" onSubmit={async e => {
               e.preventDefault();
               const ok = newPassword.length >= 8 && /[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword);
-              if (!ok) { showNotification('Use 8+ characters with upper and lowercase letters and a number.', 'error'); return; }
+              if (!ok) { showNotification(T.passwordRule, 'error'); return; }
               const { error } = await supabase.auth.updateUser({ password: newPassword });
               if (error) { showNotification(error.message, 'error'); return; }
-              setRecovering(false); setNewPassword(''); showNotification('Password updated.', 'success');
+              setRecovering(false); setNewPassword(''); showNotification(T.passwordUpdated, 'success');
           }}>
-            <h2 className="font-serif text-2xl text-slate-900">Choose a new password</h2>
-            <p className="mt-2 text-sm text-slate-500">8+ characters, with upper and lowercase letters and a number.</p>
-            <input type="password" autoComplete="new-password" autoFocus value={newPassword} onChange={e => setNewPassword(e.target.value)} aria-label="New password" className="mt-6 w-full bg-white border border-slate-200 rounded-2xl px-4 py-3.5 text-[16px] focus:outline-none focus:ring-4 focus:ring-[#CDE9F2]/70 focus:border-[#9bbecb]" />
-            <button type="submit" className="mt-5 w-full h-12 rounded-full bg-slate-900 text-white font-bold text-sm hover:bg-black">Save password</button>
-            <button type="button" onClick={() => setRecovering(false)} className="mt-2 w-full h-10 text-sm font-semibold text-slate-400 hover:text-slate-700">Not now</button>
+            <h2 className="font-serif text-2xl text-slate-900">{T.newPasswordTitle}</h2>
+            <p className="mt-2 text-sm text-slate-500">{T.passwordHint}</p>
+            <input type="password" autoComplete="new-password" autoFocus value={newPassword} onChange={e => setNewPassword(e.target.value)} aria-label={T.newPasswordLabel} className="mt-6 w-full bg-white border border-slate-200 rounded-2xl px-4 py-3.5 text-[16px] focus:outline-none focus:ring-4 focus:ring-[#CDE9F2]/70 focus:border-[#9bbecb]" />
+            <button type="submit" className="mt-5 w-full h-12 rounded-full bg-slate-900 text-white font-bold text-sm hover:bg-black">{T.savePassword}</button>
+            <button type="button" onClick={() => setRecovering(false)} className="mt-2 w-full h-10 text-sm font-semibold text-slate-400 hover:text-slate-700">{T.notNow}</button>
           </form>
         </div>
       ) : null;
@@ -1241,21 +1245,21 @@ const App: React.FC = () => {
             <button className="text-left flex-1" onClick={() => { setBelluhReply(null); setCurrentTab('ai-coach'); }}>
               <p className="text-xs font-bold text-slate-400">Belluh</p>
               <p className="font-serif text-[15px] leading-snug text-slate-800 line-clamp-3">{belluhReply}</p>
-              <p className="text-xs font-bold text-belluh-500 mt-1.5">Reply</p>
+              <p className="text-xs font-bold text-belluh-500 mt-1.5">{T.reply}</p>
             </button>
-            <button aria-label="Dismiss" onClick={() => setBelluhReply(null)} className="text-slate-300 hover:text-slate-500 self-start"><X size={16} /></button>
+            <button aria-label={T.dismiss} onClick={() => setBelluhReply(null)} className="text-slate-300 hover:text-slate-500 self-start"><X size={16} /></button>
           </div>
         </div>
       )}
       <TabBar currentTab={currentTab} usTab={hasPartner} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(c => !c)} badges={{ 'ai-coach': unreadNotes > 0 || newFromBelluh }} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); if (tab === 'ai-coach') { setTabSpace(unreadNotes > 0 || newFromBelluh ? 'me' : 'us'); setUnreadNotes(0); setNewFromBelluh(false); setBelluhReply(null); } setCurrentTab(tab); }} onCompose={() => handleCompose()} />
-      {isComposeOpen && <div className="fixed inset-0 z-[60] bg-paper animate-slide-up"><button onClick={() => setIsComposeOpen(false)} aria-label="Close" className="absolute top-5 right-4 w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 z-50 transition-colors"><X size={22} /></button><Journal onAddEntry={handleAddEntry} partnerName={user.partnerName || 'Partner'} onTriggerPremium={handleTriggerPremium} initialPrompt={composePrompt} userName={user.name} partnerHasEntry={partnerHasEntry} /></div>}
+      {isComposeOpen && <div className="fixed inset-0 z-[60] bg-paper animate-slide-up"><button onClick={() => setIsComposeOpen(false)} aria-label={T.close} className="absolute top-5 right-4 w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 z-50 transition-colors"><X size={22} /></button><Journal onAddEntry={handleAddEntry} partnerName={user.partnerName || ''} onTriggerPremium={handleTriggerPremium} initialPrompt={composePrompt} userName={user.name} partnerHasEntry={partnerHasEntry} /></div>}
       
       {showIntro && <IntroGuide onClose={() => setShowIntro(false)} />}
 
       {legalModalOpen && <LegalModal type={legalModalOpen} onClose={() => setLegalModalOpen(null)} />}
       
-      {artifactModalOpen && <ArtifactModal type={artifactModalOpen} onClose={() => setArtifactModalOpen(null)} entries={readableEntries} currentUserId={user.id} userName={user.name} partnerName={user.partnerName || 'Partner'} />}
-      {showPremiumOverlay && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-fade-in" onClick={() => setShowPremiumOverlay(false)}><div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full text-center relative overflow-hidden shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}><div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-belluh-300 via-purple-300 to-indigo-300" /><div className="w-20 h-20 bg-belluh-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-apple animate-float"><Sparkles size={32} className="text-belluh-500" /></div><h2 className="text-3xl font-serif text-slate-900 mb-3 tracking-tight">Belluh Premium</h2><p className="text-slate-500 mb-8 text-sm leading-relaxed font-medium">Unlock deeper intimacy.</p><button onClick={() => setShowPremiumOverlay(false)} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm hover:bg-black transition-transform active:scale-95 shadow-xl shadow-slate-200">Start Free Trial</button><button onClick={() => setShowPremiumOverlay(false)} className="w-full py-3 text-xs text-slate-400 hover:text-slate-600 font-bold uppercase tracking-widest">Maybe Later</button></div></div>}
+      {artifactModalOpen && <ArtifactModal type={artifactModalOpen} onClose={() => setArtifactModalOpen(null)} entries={readableEntries} currentUserId={user.id} userName={user.name} partnerName={user.partnerName || T.partner} />}
+      {showPremiumOverlay && <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-6 animate-fade-in" onClick={() => setShowPremiumOverlay(false)}><div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full text-center relative overflow-hidden shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}><div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-belluh-300 via-purple-300 to-indigo-300" /><div className="w-20 h-20 bg-belluh-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-apple animate-float"><Sparkles size={32} className="text-belluh-500" /></div><h2 className="text-3xl font-serif text-slate-900 mb-3 tracking-tight">Belluh Premium</h2><p className="text-slate-500 mb-8 text-sm leading-relaxed font-medium">{T.premiumBody}</p><button onClick={() => setShowPremiumOverlay(false)} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm hover:bg-black transition-transform active:scale-95 shadow-xl shadow-slate-200">{T.startTrial}</button><button onClick={() => setShowPremiumOverlay(false)} className="w-full py-3 text-xs text-slate-400 hover:text-slate-600 font-bold uppercase tracking-widest">{T.maybeLater}</button></div></div>}
     </div>
   );
 };

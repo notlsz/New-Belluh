@@ -5,6 +5,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import en, { type Dict } from './en';
 import { detect, localeTag, dictFor, fill, TEXT_APPS, type Lang, type Country } from './core';
+import { pickUi, type UiTable } from './ui';
 
 export { LANGS, detect, localeTag, dictFor, fill, localQuestion } from './core';
 export type { Lang, Country } from './core';
@@ -57,3 +58,10 @@ export function useI18n(): I18n {
   if (v) return v;
   return { lang: 'en', country: 'US', tag: 'en-US', d: en, textApps: en.textApps, f: fill, date: (x, o) => x.toLocaleDateString('en-US', o), num: n => n.toLocaleString('en-US'), setLang: () => {} };
 }
+
+/** A part of the app's own strings (src/i18n/ui/*.ts) in the reader's language and their country's way of writing it. */
+export function useUi<T>(table: UiTable<T>): T {
+  const { lang, country } = useI18n();
+  return useMemo(() => pickUi(table, lang, country), [table, lang, country]);
+}
+export type { UiTable };

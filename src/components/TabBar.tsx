@@ -1,4 +1,5 @@
-import { useI18n } from '../i18n';
+import { useI18n, useUi } from '../i18n';
+import shell from '../i18n/ui/shell';
 import DragonflyMark from './DragonflyMark';
 import React from 'react';
 import { BookHeart, Sparkles, User, Plus, Infinity, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
@@ -17,6 +18,7 @@ interface TabBarProps {
 
 const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose, badges = {}, usTab = false, collapsed = false, onToggleCollapse }) => {
   const tb = useI18n().d.app.tabs;
+  const T = useUi(shell).tabs;
   const tabs = [
     { id: 'timeline', icon: BookHeart, label: tb.story }, // Main Home
     { id: 'compose', icon: Plus, label: tb.capture, isAction: true },
@@ -67,13 +69,13 @@ const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose, bad
                 <span className="absolute -bottom-2 w-1 h-1 bg-belluh-300 rounded-full animate-scale-in lg:hidden" />
               )}
               {badges[tab.id] && !isActive && (
-                <span aria-label="New note" className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#f0addd] rounded-full ring-2 ring-white lg:static lg:ml-auto lg:ring-0" />
+                <span aria-label={T.newNote} className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#f0addd] rounded-full ring-2 ring-white lg:static lg:ml-auto lg:ring-0" />
               )}
             </button>
           );
         })}
         {onToggleCollapse && (
-          <button onClick={onToggleCollapse} aria-label={collapsed ? 'Expand side panel' : 'Collapse side panel'} title={collapsed ? 'Expand' : 'Collapse'}
+          <button onClick={onToggleCollapse} aria-label={collapsed ? T.expandPanel : T.collapsePanel} title={collapsed ? T.expand : T.collapse}
             className={`hidden lg:flex order-3 mt-auto h-10 items-center gap-3 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-belluh-100 transition-colors ${collapsed ? 'justify-center' : 'px-3'}`}>
             {collapsed ? <PanelLeftOpen size={19} /> : <><PanelLeftClose size={19} /><span className="text-sm font-medium">{tb.collapse}</span></>}
           </button>
