@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExternalLink, PenLine, ArrowUpRight, CalendarCheck, Gift, Flower2, UtensilsCrossed, Plane, Ticket, Check, Lock, Phone } from 'lucide-react';
+import { ExternalLink, PenLine, ArrowUpRight, CalendarCheck, Gift, Flower2, UtensilsCrossed, Plane, Ticket, Check, Lock, Phone, MapPin, Clock } from 'lucide-react';
 import { belluhAgent, AgentMessage } from '../services/belluhAgent';
 import PlanCard from './PlanCard';
 import { prettyPhone } from '../lib/phone';
@@ -15,14 +15,19 @@ const BelluhActions: React.FC<{
   partnerName?: string | null;
   onAdded?: (added: AgentMessage[], updated: AgentMessage) => void;
   onCompose?: (prompt: string) => void;
+  /** Puts a request to Bella in the chat box, for them to finish (a day and time) and send. */
+  onAsk?: (prompt: string) => void;
   onBusy?: (busy: boolean) => void;
-}> = ({ msg, partnerName, onAdded, onCompose, onBusy }) => {
+}> = ({ msg, partnerName, onAdded, onCompose, onAsk, onBusy }) => {
   const [status, setStatus] = useState<string | undefined>(msg.meta?.status);
   const [busy, setBusy] = useState(false);
   // Real products Belluh found (Shopify brands), each opening the shop's checkout with it in the cart
   const products: { title: string; price: string; seller: string; image: string | null; url: string; total?: string; deliversTo?: string; ready?: boolean }[] = Array.isArray(msg.meta?.products) ? msg.meta.products.filter((p: any) => typeof p?.url === 'string' && p.url.startsWith('https://')) : [];
   const links: { label: string; url: string }[] = (Array.isArray(msg.meta?.links) ? msg.meta.links : []).filter((l: any) => !products.some(p => p.url === l.url));
   const kind = msg.meta?.kind;
+  // Real places Bella found for a plan, each one tap from booking or directions
+  type SpotCard = { name: string; kind: string; address: string | null; phone: string | null; website: string | null; hours: string | null; map: string; bookable: boolean };
+  const spots: SpotCard[] = Array.isArray(msg.meta?.spots) ? msg.meta.spots.filter((x: any) => typeof x?.name === 'string' && typeof x?.map === 'string' && x.map.startsWith('https://')) : [];
   // What Belluh got ready, waiting for "I booked it" so it can go in the calendar, the reminders and the journal
   type Card = { id: string; kind: string; title: string; when: string | null; surprise: boolean; label: string; status: string; call?: { place: string; phone: string; status: string; note?: string } };
   const [cards, setCards] = useState<Card[]>(Array.isArray(msg.meta?.bookings) ? msg.meta.bookings : []);
@@ -82,6 +87,27 @@ const BelluhActions: React.FC<{
                 </div>
               </div>
             </a>
+          ))}
+        </div>
+      )}
+      {spots.length > 0 && (
+        <div className="mt-2 -mx-2 px-2 pt-1 pb-5 -mb-3 flex gap-3 overflow-x-auto no-scrollbar">
+          {spots.map(x => (
+            <div key={`${x.name}|${x.address}`} className="shrink-0 w-[268px] rounded-2xl bg-white border border-slate-100 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.35)] p-4 flex flex-col">
+              <p className="font-serif text-[17px] leading-snug text-slate-900 line-clamp-2">{x.name}</p>
+              <p className="mt-1 text-xs font-semibold text-[#3f7486]">{x.kind}</p>
+              {x.address && <p className="mt-2.5 flex items-start gap-1.5 text-xs text-slate-500 leading-snug"><MapPin size={13} className="mt-px shrink-0 text-slate-300" /><span className="line-clamp-2">{x.address}</span></p>}
+              {x.hours && <p className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500"><Clock size={13} className="shrink-0 text-slate-300" /><span className="truncate">{x.hours}</span></p>}
+              <div className="mt-auto pt-4 flex items-center gap-1.5">
+                {x.bookable && onAsk && (
+                  <button onClick={() => { trackEvent('belluh_spot_reserve', {}); onAsk(`Book us a table at ${x.name}${x.address ? `, ${x.address}` : ''}, for 2, at `); }}
+                    className="h-9 px-3.5 rounded-full bg-slate-900 text-white text-xs font-bold inline-flex items-center gap-1.5 hover:bg-black">Reserve</button>
+                )}
+                <a href={x.map} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent('belluh_spot_map', {})}
+                  className="h-9 px-3 rounded-full border border-slate-200 text-xs font-bold text-slate-700 inline-flex items-center gap-1.5 hover:border-slate-400">Map <ArrowUpRight size={13} /></a>
+                {x.phone && <a href={`tel:${x.phone}`} aria-label={`Call ${x.name}`} className="h-9 px-3 rounded-full border border-slate-200 text-xs font-bold text-slate-700 inline-flex items-center gap-1.5 hover:border-slate-400"><Phone size={13} />Call</a>}
+              </div>
+            </div>
           ))}
         </div>
       )}

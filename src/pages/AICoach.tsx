@@ -417,7 +417,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                            <Brain size={12} /> Saved to memory: {msg.meta.saved.join(', ')}
                          </button>
                        )}
-                       <BelluhActions msg={msg} partnerName={partnerName} onCompose={onCompose} onBusy={setIsTyping} onAdded={(added, updated) => {
+                       <BelluhActions msg={msg} partnerName={partnerName} onCompose={onCompose} onAsk={t => setChatInput(t)} onBusy={setIsTyping} onAdded={(added, updated) => {
                          if (added.length) setRevealIds(prev => { const n = new Set(prev); added.forEach(m => { if (m.role === 'belluh') n.add(m.id); }); return n; });
                          setAgentMessages(prev => [...prev.map(m => (m.id === updated.id ? updated : m)), ...added]);
                        }} />

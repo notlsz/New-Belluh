@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types --test tests/occasions.test.ts tests/agent.test.ts tests/daily.test.ts tests/weekly.test.ts tests/plans.test.ts tests/facts.test.ts tests/sms.test.ts tests/webpush.test.ts tests/belluh-acts.test.ts tests/shape.test.ts tests/imessage-calls.test.ts tests/phone.test.ts tests/shop-checkout.test.ts",
+    "test": "node --experimental-strip-types --test tests/occasions.test.ts tests/agent.test.ts tests/daily.test.ts tests/weekly.test.ts tests/plans.test.ts tests/facts.test.ts tests/sms.test.ts tests/webpush.test.ts tests/belluh-acts.test.ts tests/shape.test.ts tests/imessage-calls.test.ts tests/phone.test.ts tests/shop-checkout.test.ts tests/spots-style.test.ts",
     "test:e2e": "node --test tests/e2e/api.e2e.test.mjs"
   },
   "dependencies": {

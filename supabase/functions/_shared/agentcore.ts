@@ -11,7 +11,8 @@ import type { CheckinStatus } from './weekly.ts';
 import { validatePlan, formatOption, localDateOf, type PlanOption } from './plans.ts';
 import { notify } from './notify.ts';
 import { searchShopify, type ShopProduct } from './shopify.ts';
-import { readyOrder, parseUsAddress, NOT_FRESH_FLOWERS } from './shopcheckout.ts';
+import { readyOrder, parseUsAddress, NOT_FRESH_FLOWERS, shopStyle } from './shopcheckout.ts';
+import { findSpots, type Spot } from './places.ts';
 import { bookingFromTool, doneLabel, memoryFor, reminderFor, whenText, type BookingDraft } from './bookings.ts';
 import { instacartCart } from './instacart.ts';
 import { callsOn, findPlace, startCall, okToCallNow, whyNot, type CallOutcome } from './vapi.ts';
@@ -69,6 +70,7 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   const links: ActionLink[] = [];
   // Real products from Shopify brands, shown as cards in the app (and as links when texting)
   const products: ShopProduct[] = [];
+  let spots: Spot[] = [];
   const addProducts = (ps: ShopProduct[]) => { for (const p of ps) { if (products.length >= 4 || products.some(x => x.url === p.url)) continue; products.push(p); links.push({ label: `${p.title}, ${p.price} at ${p.seller}`, url: p.url }); } };
   let shape: Shape | null = null;
   const ran: string[] = [];
@@ -225,6 +227,18 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           const found = call.name === 'buy_item' && products.length ? ` Also ${products.length} real products from independent Shopify shops, each with its checkout ready: ${products.map(p => `${p.title} (${p.price}, ${p.seller})`).join('; ')}. You may name the one you'd pick and why.` : '';
           return { ok: true, note: `${what}, under your reply.${ready}${found} In one or two lines say what you chose and why it fits them; they finish it with a tap. Never say it is ordered, bought or booked. Do not paste links.` };
         }
+        case 'shop_style': {
+          const found = await shopStyle(call.pieces, { style: call.style ?? undefined, maxCentsEach: call.budgetEach ? Math.round(call.budgetEach * 100) : null });
+          if (!found.length) return { ok: false, error: 'Nothing came back for those pieces right now. Try simpler names for each piece, or no budget.' };
+          for (const p of found) if (products.length < 8 && !products.some(x => x.url === p.url)) products.push({ title: p.title, price: p.price, seller: p.seller, image: p.image, url: p.url });
+          return { ok: true, note: `Real options are shown under your reply as cards with photos, each opening its checkout: ${found.map(p => `${p.piece}: ${p.title} (${p.price}, ${p.seller})`).join('; ')}. Compare in a few lines: your pick for each piece and why it fits them and their space, and the rough total of your picks. Do not paste links or list every card.` };
+        }
+        case 'find_spots': {
+          const found = await findSpots(call.what, call.where);
+          if (!found.length) return { ok: false, error: `Couldn't find ${call.what} in ${call.where}. Try the city alone, or a broader kind of place.` };
+          spots = found;
+          return { ok: true, note: `${found.length} real places are shown under your reply as cards with the address, hours and a ${found.some(s => s.bookable) ? 'Reserve button (it books the table; you call the place when it has a phone and calls are on)' : 'map'}: ${found.map(s => `${s.name} (${s.kind}${s.address ? `, ${s.address}` : ''})`).join('; ')}. Recommend the two or three that fit them best, a line each on why. Never say anything is booked. Do not paste links.` };
+        }
         case 'gift_ideas': {
           const l = giftLinks(call.args);
           if (!l.length) return { ok: false, error: 'Give one to three short gift ideas.' };
@@ -256,7 +270,7 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   const final = cleanReply(reply ?? '') || naturalFallback(ran) || "I'm having trouble thinking right now. Try me again in a moment.";
   const bookings = await saveBookings(ctx, prepared);
   // Every new memory is shown under the reply, so nothing is remembered silently
-  const msg = await addMessage(ctx.userId, 'belluh', final, { ...(saved.length ? { saved } : {}), ...(links.length ? { links: links.slice(0, 7) } : {}), ...(products.length ? { products } : {}), ...(shape ? { shape } : {}), ...(bookings.length ? { bookings } : {}) });
+  const msg = await addMessage(ctx.userId, 'belluh', final, { ...(saved.length ? { saved } : {}), ...(links.length ? { links: links.slice(0, 7) } : {}), ...(products.length ? { products } : {}), ...(spots.length ? { spots } : {}), ...(shape ? { shape } : {}), ...(bookings.length ? { bookings } : {}) });
   if (msg && bookings.length) await db.from('bookings').update({ message_id: msg.id }).in('id', bookings.map(b => b.id));
   created.push(msg);
   return { messages: created };
