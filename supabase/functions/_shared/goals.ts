@@ -8,7 +8,18 @@ export type GoalKind = 'save' | 'habit' | 'budget';
 export interface Goal {
   id?: string; kind: GoalKind; title: string; target: number; progress: number;
   currency: string | null; period: 'week' | 'month' | null; period_key: string | null; due_on: string | null; status?: string;
+  steps?: Step[];          // the action plan: a few steps Bella broke it into
 }
+export interface Step { text: string; done: boolean }
+
+/** Two to six short steps, in their words; anything else is dropped. */
+export function cleanSteps(x: unknown): Step[] {
+  return (Array.isArray(x) ? x : []).map(v => (typeof v === 'string' ? v : (v as any)?.text)).filter((v): v is string => typeof v === 'string')
+    .map(v => v.replace(/\s+/g, ' ').trim().slice(0, 80)).filter(v => v.length >= 3).slice(0, 6).map(text => ({ text, done: false }));
+}
+
+/** The step to do next, if there's a plan. */
+export const nextStep = (g: Goal): string | null => g.steps?.find(x => !x.done)?.text ?? null;
 
 /** The money people there use, for saving and budgets. */
 export const CURRENCY: Record<string, string> = {
@@ -49,7 +60,7 @@ export function validateGoal(a: Record<string, unknown>, country: string, today:
     const ok = m >= 1 && m <= 12 && d >= 1 && d <= 31 && Date.UTC(y, m - 1, d) > Date.UTC(today.y, today.m - 1, today.d) && y <= today.y + 10;
     if (ok) due = a.due_on;
   }
-  return { kind, title, target, progress: 0, currency: kind === 'habit' ? null : cur, period, period_key: periodKey(period, today), due_on: kind === 'save' ? due : null };
+  return { kind, title, target, progress: 0, currency: kind === 'habit' ? null : cur, period, period_key: periodKey(period, today), due_on: kind === 'save' ? due : null, steps: cleanSteps(a.steps) };
 }
 
 /** This week's or month's progress: what was logged in an earlier one no longer counts. */
@@ -68,6 +79,10 @@ export function logProgress(g: Goal, amount: number, today: LocalDate): { progre
 
 /** How it's going, in a line Bella can read (and say back): "Kyoto trip: saved 1,200 of 3,000 EUR, due 2027-04-01". */
 export function goalLine(g: Goal, today: LocalDate): string {
+  const step = nextStep(g);
+  return goalLineBare(g, today) + (step ? `; next step: ${step}` : '');
+}
+function goalLineBare(g: Goal, today: LocalDate): string {
   const now = current(g, today), n = (x: number) => x.toLocaleString('en-US', { maximumFractionDigits: 2 });
   if (g.kind === 'save') {
     const left = g.due_on ? Math.max(1, Math.round((Date.UTC(+g.due_on.slice(0, 4), +g.due_on.slice(5, 7) - 1, +g.due_on.slice(8, 10)) - Date.UTC(today.y, today.m - 1, today.d)) / (30.44 * 86_400_000))) : null;

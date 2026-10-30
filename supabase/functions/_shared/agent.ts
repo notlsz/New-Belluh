@@ -228,7 +228,7 @@ Looking after them (like a chief of staff who knows the relationship, not a chat
 - Something new: when it's been weeks since they did anything together, suggest one fresh idea (a place they've never been, something one of them said they wanted to try). When a meteor shower is coming, a night under the sky is a lovely, free date: say when and where to look.
 - The evening itself: for a date night at home or out, offer a playlist that fits them (mood_playlist) and suggest phones on Do Not Disturb for the evening. You can't control their lights or devices; say so if asked.
 - Rest: if their own entries show ${c.myName} running on empty (late nights, skipped meals, no sleep, work swallowing everything), say it once, kindly and briefly, and point back to ${partner}: an early night, a proper dinner together. Not a lecture, never medical advice.
-- Goals and watches: when they want to work toward something together (saving for a trip, a weekly date night, a budget for dates and gifts), use set_goal; when they say they did it, log_goal. When they want something the moment it's available (tickets going on sale, a price dropping), use watch_for: you check every hour and tell them, so they never have to keep refreshing. Their goals are listed under Goals; mention one only when it helps.
+- Goals and watches: when they want to work toward something together (saving for a trip, a weekly date night, a budget for dates and gifts), use set_goal with a short action plan (two to five concrete steps, the ones you can help with first); when they say they did it, log_goal. When they want something the moment it's available (tickets going on sale, a price dropping), use watch_for: you check every hour and tell them, so they never have to keep refreshing. Their goals are listed under Goals; mention one only when it helps.
 - Research: when they ask how relationships, people or habits work, or whether something is normal, use find_research and answer from what the studies found, in plain words, in two to four sentences: the finding, how strong it is (a meta-analysis of many couples beats one small study), and what it means for them. Name a study lightly ("a 2023 review of responsiveness research", "Gottman's lab"), never pile up citations; the papers appear under your reply. Be honest about limits: correlation isn't cause, samples are often Western students. If the research is thin or mixed, say so. Never use research to diagnose either of them or to take a side. Well-known findings you're sure of (Gottman's repair attempts and the 5:1 ratio, attachment styles, Gable's capitalization, Aron's 36 questions) you may cite from knowledge, but look things up before quoting numbers.
 - You can't read their texts, emails or calls, or watch where they are; if asked, say so plainly and offer what you can do (help them write the reply, set a reminder).
 
@@ -537,6 +537,7 @@ export const TOOL_DECLARATIONS = [
       period: { type: 'STRING', description: 'week or month, for habits and budgets' },
       due_on: { type: 'STRING', description: 'YYYY-MM-DD, for saving by a date' },
       currency: { type: 'STRING', description: 'Three-letter code if they named one; otherwise their country\'s' },
+      steps: { type: 'ARRAY', items: { type: 'STRING' }, description: 'The action plan: two to five short, concrete steps you will help with, in their language ("Pick a weekend", "Book the ryokan", "Put 200 aside each payday")' },
     }, required: ['kind', 'title', 'target'] },
   },
   {
@@ -557,6 +558,11 @@ export const TOOL_DECLARATIONS = [
       max_price: { type: 'NUMBER', description: 'Their price ceiling (needed for price watches)' },
       until: { type: 'STRING', description: 'YYYY-MM-DD to stop watching, if they said' },
     }, required: ['kind', 'what'] },
+  },
+  {
+    name: 'set_proactivity',
+    description: 'Change how often you reach out on your own, when they ask: "message me less" or "only when I ask" (quiet), "back to normal" (normal), "check in more", "remind me earlier" (more). What they asked for (reminders, things you watch for) always comes.',
+    parameters: { type: 'OBJECT', properties: { level: { type: 'STRING', description: 'quiet, normal or more' } }, required: ['level'] },
   },
   {
     name: 'draft_note_to_partner',
@@ -587,7 +593,8 @@ export type ToolCall =
   | { name: 'write_entry'; text: string; shared: boolean }
   | { name: 'take_shape'; shape: Shape }
   | { name: 'set_goal' | 'watch_for'; args: Record<string, unknown> }
-  | { name: 'log_goal'; goal: string; amount: number };
+  | { name: 'log_goal'; goal: string; amount: number }
+  | { name: 'set_proactivity'; level: 'quiet' | 'normal' | 'more' };
 
 /** A shape Belluh's water body takes: back to water, an emoji's silhouette, or an SVG path in a 100x100 box. */
 export type Shape = { water: true } | { label: string; emoji: string } | { label: string; path: string };
@@ -621,6 +628,7 @@ export function validateToolCall(name: string, args: Record<string, unknown> | u
     }
     case 'set_goal': return typeof a.kind === 'string' && typeof a.title === 'string' ? { name, args: a } : null; // checked by validateGoal
     case 'watch_for': return typeof a.kind === 'string' && typeof a.what === 'string' ? { name, args: a } : null; // checked by validateWatch
+    case 'set_proactivity': return a.level === 'quiet' || a.level === 'normal' || a.level === 'more' ? { name, level: a.level } : null;
     case 'log_goal': {
       const goal = clean(a.goal, 80), amount = Number(a.amount);
       return goal.length >= 2 && Number.isFinite(amount) && amount !== 0 ? { name, goal, amount } : null;
@@ -737,6 +745,7 @@ const DID: Record<string, string> = {
   set_goal: "It's on your goals. You'll both see how it's going.",
   log_goal: 'Added. Your goals are up to date.',
   watch_for: "I'm watching for it and will tell you the moment it's there.",
+  set_proactivity: 'Done. I changed how often I reach out.',
 };
 export function naturalFallback(ran: string[]): string | null {
   for (let i = ran.length - 1; i >= 0; i--) if (DID[ran[i]]) return DID[ran[i]];

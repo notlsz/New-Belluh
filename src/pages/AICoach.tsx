@@ -347,7 +347,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
     return <UsThread partnerName={partnerName} myName={userName} header={
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-2">
-          {!inSheet && <><span className="lg:hidden text-sm font-bold font-serif text-[#9bbecb]">Bella</span><span className="lg:hidden text-belluh-200">/</span></>}{spaceSwitch}
+          {!inSheet && <><button onClick={() => setPlate('activity')} aria-label={d.app.act.activity} className="lg:hidden text-sm font-bold font-serif text-[#9bbecb] hover:text-[#3f7486]">Bella</button><span className="lg:hidden text-belluh-200">/</span></>}{spaceSwitch}
           <div className="ml-auto flex items-center gap-2">{ideasBtn}{closeBtn}</div>
           {plateSheet}{toastEl}
         </div>
@@ -362,7 +362,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-transparent">
          <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2 p-1.5 rounded-lg">
-                {!inSheet && <><span className="lg:hidden text-sm font-bold font-serif text-[#9bbecb]">Bella</span>
+                {!inSheet && <><button onClick={() => setPlate('activity')} aria-label={d.app.act.activity} className="lg:hidden text-sm font-bold font-serif text-[#9bbecb] hover:text-[#3f7486]">Bella</button>
                 <span className="lg:hidden text-belluh-200">/</span></>}
                 {mode === 'agent' && partnerName ? spaceSwitch : (
                 <span className="text-sm font-medium text-slate-500">
