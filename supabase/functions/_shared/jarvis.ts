@@ -88,6 +88,32 @@ export function playlistLinks(vibe: unknown, country: string): { label: string; 
 // plan for it, the way a local friend would. Fixed dates, or "the nth weekday of a month".
 type LoveDay = { name: string; local?: string; note: string; m: number; d?: number; nth?: [n: number, weekday: number] };
 const LOVE_DAYS: Record<string, LoveDay[]> = {
+  ES: [
+    { name: 'Día de Reyes', m: 1, d: 6, note: 'the Three Kings bring the gifts for many families; roscón de Reyes' },
+    { name: 'San Valentín', m: 2, d: 14, note: 'a dinner and a gift; tables book up, and dinner is late' },
+    { name: 'Día del Padre', m: 3, d: 19, note: 'San José: something for both fathers' },
+    { name: 'Sant Jordi', m: 4, d: 23, note: 'in Catalonia the most romantic day: a rose and a book, exchanged on the street stalls' },
+    { name: 'Día de la Madre', m: 5, nth: [1, 0], note: 'first Sunday of May; family lunch and flowers for both mothers' },
+    { name: 'la Noche de San Juan', m: 6, d: 23, note: 'bonfires on the beach and a wish; a warm night out together' },
+    { name: 'Nochevieja', m: 12, d: 31, note: 'twelve grapes at midnight, one per chime, together' },
+  ],
+  MX: [
+    { name: 'Día del Amor y la Amistad', m: 2, d: 14, note: 'for friends too; for couples flowers, chocolates and a dinner; serenatas are a classic' },
+    { name: 'Día de las Madres', m: 5, d: 10, note: 'huge in Mexico: include both mothers, restaurants book out' },
+    { name: 'Día del Padre', m: 6, nth: [3, 0], note: 'third Sunday of June' },
+    { name: 'Día de Muertos', m: 11, d: 2, note: 'honoring loved ones who died, with altars and cempasúchil; not a romantic date, but couples visit altars together' },
+    { name: 'el Día de la Virgen de Guadalupe', m: 12, d: 12, note: 'a deeply important day for many families' },
+    { name: 'Las Posadas', m: 12, d: 16, note: 'nine nights of posadas until Nochebuena; family and friends' },
+    { name: 'Nochebuena', m: 12, d: 24, note: 'the family Christmas dinner, late at night' },
+  ],
+  PT: [
+    { name: 'o Dia dos Namorados', m: 2, d: 14, note: 'in Portugal it is Feb 14 (Brazil celebrates June 12): a dinner and flowers' },
+    { name: 'o Dia do Pai', m: 3, d: 19, note: 'São José: something for both fathers' },
+    { name: 'o Dia da Mãe', m: 5, nth: [1, 0], note: 'first Sunday of May; Sunday lunch and flowers for both mothers' },
+    { name: 'o Santo António', m: 6, d: 12, note: 'Lisbon\'s matchmaker\'s night: arraiais, sardines, and a manjerico with a love verse for the one you love' },
+    { name: 'a Consoada', m: 12, d: 24, note: 'Christmas Eve dinner with the family, bacalhau' },
+    { name: 'a Passagem de Ano', m: 12, d: 31, note: 'New Year\'s Eve; twelve raisins at midnight and fireworks over the river' },
+  ],
   JP: [
     { name: "Valentine's Day", local: 'バレンタインデー', m: 2, d: 14, note: 'traditionally she gives him chocolate (honmei, often handmade); many couples now do it their own way, so ask' },
     { name: 'White Day', local: 'ホワイトデー', m: 3, d: 14, note: 'he gives back, usually something a little nicer: sweets, a small accessory, flowers' },

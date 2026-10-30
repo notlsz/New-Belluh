@@ -24,7 +24,7 @@ export const nextStep = (g: Goal): string | null => g.steps?.find(x => !x.done)?
 /** The money people there use, for saving and budgets. */
 export const CURRENCY: Record<string, string> = {
   US: 'USD', CA: 'CAD', GB: 'GBP', JP: 'JPY', CN: 'CNY', HK: 'HKD', TW: 'TWD', KR: 'KRW', SG: 'SGD', IN: 'INR', AE: 'AED',
-  FR: 'EUR', DE: 'EUR', ES: 'EUR', IT: 'EUR', MX: 'MXN', BR: 'BRL', AU: 'AUD', CH: 'CHF',
+  FR: 'EUR', DE: 'EUR', ES: 'EUR', IT: 'EUR', PT: 'EUR', MX: 'MXN', BR: 'BRL', AU: 'AUD', CH: 'CHF',
 };
 
 const pad = (n: number) => String(n).padStart(2, '0');

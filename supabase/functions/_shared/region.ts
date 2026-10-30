@@ -239,13 +239,24 @@ export const KITS: Record<string, Kit> = {
     links: {
       table: [['Find it on TheFork', site('thefork.es')], ['See it on Google Maps', gmaps]],
       buy: [['Buy it on Amazon.es', 'https://www.amazon.es/s?k={q}'], ['Find it at El Corte Inglés', site('elcorteingles.es')]],
-      food: [['Find it on Glovo', site('glovoapp.com')], ['Order on Uber Eats', uberEats]],
-      ride: [['Uber there', uber], ['Transit directions', transit]],
+      gift: [['Buy it on Amazon.es', 'https://www.amazon.es/s?k={q}'], ['Find it at El Corte Inglés', site('elcorteingles.es')]],
+      flowers: [['Send flowers with Interflora', site('interflora.es')], ['Florists near you', 'https://www.google.com/maps/search/?api=1&query=florister%C3%ADa+{q}']],
+      food: [['Find it on Glovo', site('glovoapp.com')], ['Find it on Just Eat', site('just-eat.es')], ['Order on Uber Eats', uberEats]],
+      groceries: [['Find it on Glovo', site('glovoapp.com')], ['Buy it at Carrefour', site('carrefour.es')]],
+      ride: [['Transit directions', transit], ['Uber there', uber]],
+      experience: [['Find it on Google', 'https://www.google.com/search?q={q}'], ['Experiences on Airbnb', airbnbExp]],
     },
-    apps: 'TheFork for tables, Glovo, Just Eat and Uber Eats for delivery, Cabify and Uber for rides, Amazon.es and El Corte Inglés for gifts.',
-    culture: `- San Valentín (Feb 14); in Catalonia, Sant Jordi (Apr 23): a rose and a book, the most romantic day of the year there.
-- Dinner is late (9 to 10:30). Tipping is small, rounding up or a few euros.`,
+    apps: 'TheFork (ElTenedor) for tables, Glovo, Just Eat and Uber Eats for delivery, Cabify, Uber and the Metro for getting around, Renfe for trains, Amazon.es and El Corte Inglés for gifts, WhatsApp for everything (Spain lives on WhatsApp), Bizum to pay each other back.',
+    culture: `- How love is said: openly and often. "Te quiero" is everyday and also said to family and friends; "te amo" is weightier, kept for big moments. Affection in public (a kiss, holding hands on the paseo) is normal.
+- Life is lived outside and late: terrazas, tapas and an evening paseo; dinner at 9 to 10:30, later on weekends. Plan dates around this rhythm, never a 6 pm dinner.
+- Many people live with their parents until around 30, so privacy is scarce: a weekend escapada (a casa rural, the coast, Lisbon, a parador) means a lot.
+- Family is close: Sunday lunch with the family is common; meeting the parents is a real step, and both families matter at Christmas.
+- San Valentín (Feb 14) is a dinner and a gift. In Catalonia, Sant Jordi (Apr 23) is the romantic day: a rose for her and a book for him, now often both ways.
+- Los Reyes (Jan 6) is the big gift day for many; Nochevieja means twelve grapes at midnight, one per chime, together.
+- In Spanish (Spain): warm, direct, tú, a bit of humor; never stiff, never usted with a partner. Use Spain words (móvil, coche, quedar).
+- No tipping obligation; rounding up or a few euros for a nice dinner. Pay each other back with Bizum.`,
   },
+
   IT: {
     name: 'Italy', money: '60 €', searchIn: 'Italian', maps: 'google',
     links: {
@@ -268,30 +279,67 @@ export const KITS: Record<string, Kit> = {
     links: {
       table: [['Book on OpenTable', 'https://www.opentable.com.mx/s?term={q}'], ['See it on Google Maps', gmaps]],
       buy: [['Buy it on Mercado Libre', 'https://listado.mercadolibre.com.mx/{qd}'], ['Buy it on Amazon.com.mx', 'https://www.amazon.com.mx/s?k={q}']],
-      food: [['Order on Uber Eats', uberEats], ['Find it on Rappi', site('rappi.com.mx')]],
+      gift: [['Buy it on Mercado Libre', 'https://listado.mercadolibre.com.mx/{qd}'], ['Buy it on Amazon.com.mx', 'https://www.amazon.com.mx/s?k={q}']],
+      flowers: [['Order flowers on Rappi', site('rappi.com.mx')], ['Florists near you', 'https://www.google.com/maps/search/?api=1&query=florer%C3%ADa+{q}']],
+      food: [['Find it on Rappi', site('rappi.com.mx')], ['Order on Uber Eats', uberEats]],
+      groceries: [['Find it on Rappi', site('rappi.com.mx')], ['Buy it at Walmart', site('walmart.com.mx')]],
       ride: [['Uber there', uber], ['Directions', transit]],
+      experience: [['Find it on Google', 'https://www.google.com/search?q={q}'], ['Experiences on Airbnb', airbnbExp]],
     },
-    apps: 'OpenTable for tables, Rappi, Uber Eats and DiDi Food for delivery, Uber and DiDi for rides, Mercado Libre and Amazon.com.mx for gifts, WhatsApp for messages.',
-    culture: `- Día del Amor y la Amistad (Feb 14) celebrates friends too; for couples, flowers, chocolates and a dinner. A serenade with mariachi is a classic grand gesture.
-- Marigolds (cempasúchil) belong to Día de Muertos; pick other flowers for romance. Family is central; holidays are with family.
-- Tip 10 to 15 percent.`,
+    apps: 'OpenTable for tables, Rappi, Uber Eats and DiDi Food for delivery, Uber and DiDi for rides (apps over street taxis, especially at night), Mercado Libre and Amazon.com.mx for gifts, Ticketmaster for shows, WhatsApp for everything.',
+    culture: `- How love is said: warmly and out loud. Romance is expressive: flowers, long WhatsApp voice notes, "te amo" and pet names (amor, mi vida, gordo/gorda as affection). A serenata with mariachi or a trío under the window is the classic grand gesture.
+- Family is the center: Sunday comida with the family, the partner's mother matters, and meeting the family is a real step. Plan holidays with both families in mind.
+- Día del Amor y la Amistad (Feb 14) is for friends too; for couples, flowers, chocolates, a dinner. Día de las Madres (May 10) is enormous: include both mothers.
+- Día de Muertos (Nov 1 and 2) honors loved ones who died, with altars and cempasúchil; it is not a romantic date, though couples visit altars and panteones together. Never give marigolds as a romantic gift.
+- December is family season: Las Posadas (Dec 16 to 24), Nochebuena dinner on the 24th, Guadalupe on the 12th.
+- Time is relaxed and plans flex; warmth matters more than punctuality. Diminutives soften everything (ahorita, un cafecito).
+- In Spanish (Mexico): warm, affectionate, tú, Mexican words (celular, carro, platicar); never Spain forms (vosotros, vale, móvil).
+- Tip 10 to 15 percent. Use Uber or DiDi rather than hailing a taxi at night.`,
   },
+
   BR: {
     name: 'Brazil', money: 'R$300', searchIn: 'Portuguese', maps: 'google',
     links: {
       table: [['See it on Google Maps', gmaps], ['Find it on TheFork', site('thefork.com.br')]],
       buy: [['Buy it on Mercado Livre', 'https://lista.mercadolivre.com.br/{qd}'], ['Buy it on Amazon.com.br', 'https://www.amazon.com.br/s?k={q}']],
+      gift: [['Buy it on Mercado Livre', 'https://lista.mercadolivre.com.br/{qd}'], ['Buy it on Amazon.com.br', 'https://www.amazon.com.br/s?k={q}']],
+      flowers: [['Send flowers with Giuliana Flores', site('giulianaflores.com.br')], ['Florists near you', 'https://www.google.com/maps/search/?api=1&query=floricultura+{q}']],
       food: [['Find it on iFood', site('ifood.com.br')]],
+      groceries: [['Find it on iFood', site('ifood.com.br')], ['Buy it at Pão de Açúcar', site('paodeacucar.com')]],
       ride: [['Uber there', uber], ['Directions', transit]],
+      experience: [['Find it on Google', 'https://www.google.com/search?q={q}'], ['Find it on Sympla', site('sympla.com.br')]],
     },
-    apps: 'Google Maps and TheFork for tables, iFood for delivery, Uber and 99 for rides, Mercado Livre and Amazon.com.br for gifts, WhatsApp for everything.',
-    culture: `- How love is lived: warmly, physically and out loud. Affection in public is normal; saying "te amo" and long voice notes on WhatsApp are everyday. Family and friends are part of the couple's life.
-- Time together is social: churrasco with friends, the beach, samba, football on TV. Plans are flexible; showing up a little late is fine, warmth is not optional.
-- Dia dos Namorados (June 12) is the big day, not Feb 14 (Carnaval season). Festa Junina in June is a playful couples' outing.
-- In Portuguese (Brazil): warm, affectionate, informal (você), a little playful.
-- Dia dos Namorados is June 12, not Feb 14 (Feb is Carnival season). It's the big one: dinner, flowers, a gift.
-- A 10 percent service charge is usually on the bill. Dinner runs late.`,
+    apps: 'Google Maps and TheFork for tables, iFood for delivery and the supermarket, Uber and 99 for rides, Mercado Livre and Amazon.com.br for gifts, Giuliana Flores for flowers, Sympla for events, Pix to pay each other, WhatsApp for everything.',
+    culture: `- How love is said: warmly, physically and out loud. "Te amo" is said often, affection in public is normal, and long WhatsApp voice notes are everyday. Family and friends are part of the couple's life.
+- Time together is social: churrasco with friends, the beach, a samba or a forró night, football on TV. Plans flex; arriving a little late is fine, coldness is not.
+- Dia dos Namorados (June 12) is the big day, not Feb 14 (February is Carnaval season): dinner, flowers, a gift; restaurants book out. Festa Junina in June is a playful outing.
+- Dia das Mães (second Sunday of May) is huge: a family lunch, plan for both mothers. Réveillon means white clothes and, on the coast, jumping seven waves at midnight.
+- Family is close and often nearby; Sunday lunch with the family is common, and the partner's family matters.
+- In Portuguese (Brazil): warm, affectionate, informal (você, "a gente", "pra"), a little playful; never European Portuguese forms.
+- A 10 percent service charge is usually on the bill; dinner runs late. Pay each other back with Pix. Prefer Uber or 99 at night.`,  },
+  PT: {
+    name: 'Portugal', money: '40 €', searchIn: 'Portuguese (Portugal)', maps: 'google',
+    links: {
+      table: [['Find it on TheFork', site('thefork.pt')], ['See it on Google Maps', gmaps]],
+      buy: [['Find it at Worten', site('worten.pt')], ['Find it at Fnac', site('fnac.pt')]],
+      gift: [['Find it at Fnac', site('fnac.pt')], ['Find it at El Corte Inglés', site('elcorteingles.pt')]],
+      flowers: [['Florists near you', 'https://www.google.com/maps/search/?api=1&query=florista+{q}'], ['Flower delivery', 'https://www.google.com/search?q={q}+entrega+de+flores']],
+      food: [['Find it on Glovo', site('glovoapp.com')], ['Order on Uber Eats', uberEats]],
+      groceries: [['Buy it at Continente', site('continente.pt')], ['Find it on Glovo', site('glovoapp.com')]],
+      ride: [['Transit directions', transit], ['Uber there', uber]],
+      experience: [['Find it on Ticketline', site('ticketline.sapo.pt')], ['Experiences on Airbnb', airbnbExp]],
+    },
+    apps: 'TheFork for tables, Glovo, Uber Eats and Bolt Food for delivery, Uber and Bolt for rides, the metro, trams and CP trains for getting around, Worten, Fnac and El Corte Inglés for gifts, Ticketline and BOL for shows, MB Way to pay each other back, WhatsApp for messages.',
+    culture: `- How love is said: warmly but with more reserve than in Brazil. "Amo-te" is kept for real moments; "gosto muito de ti" carries a lot. Care shows in gestures and in showing up.
+- Saudade is real: a longing that colors songs (fado), letters and long distance. Many couples have lived apart for work abroad; staying close across distance is familiar.
+- Family is close: Sunday lunch with the family, and the partner's family matters. Meeting the parents is a real step.
+- Dia dos Namorados is Feb 14 (not June, as in Brazil). In Lisbon, Santo António (June 12 to 13) is the matchmaker's night: street parties (arraiais), grilled sardines, and a manjerico (a pot of basil with a paper carnation and a love verse, a quadra) given to the one you love.
+- The lenço dos namorados, an embroidered handkerchief from the Minho, is a traditional love token; a thoughtful, handmade or local gift lands better than an expensive one.
+- Rhythm: dinner 8 to 9:30, coffee all day, long lunches. Fado in Alfama or a miradouro at sunset is a classic date; weekend escapes to Sintra, Comporta, the Douro or the Algarve.
+- In Portuguese (Portugal): warm and natural, tu with a partner, European Portuguese only (telemóvel, comboio, pequeno-almoço, "estou a fazer"); never Brazilian forms.
+- Tipping is small and optional, around 5 to 10 percent for a nice dinner. Pay each other back with MB Way.`,
   },
+
   AU: {
     name: 'Australia', money: 'A$100', searchIn: 'English', maps: 'google',
     links: {
@@ -331,7 +379,7 @@ const TZ: Record<string, string> = {
   'Asia/Tokyo': 'JP', 'Asia/Shanghai': 'CN', 'Asia/Chongqing': 'CN', 'Asia/Harbin': 'CN', 'Asia/Urumqi': 'CN', 'PRC': 'CN',
   'Asia/Hong_Kong': 'HK', 'Asia/Macau': 'HK', 'Asia/Taipei': 'TW', 'Asia/Seoul': 'KR', 'Asia/Singapore': 'SG',
   'Asia/Kolkata': 'IN', 'Asia/Calcutta': 'IN', 'Asia/Dubai': 'AE', 'Europe/London': 'GB', 'Europe/Belfast': 'GB',
-  'Europe/Paris': 'FR', 'Europe/Berlin': 'DE', 'Europe/Madrid': 'ES', 'Atlantic/Canary': 'ES', 'Europe/Rome': 'IT', 'Europe/Zurich': 'CH',
+  'Europe/Lisbon': 'PT', 'Atlantic/Madeira': 'PT', 'Atlantic/Azores': 'PT', 'Europe/Paris': 'FR', 'Europe/Berlin': 'DE', 'Europe/Madrid': 'ES', 'Atlantic/Canary': 'ES', 'Europe/Rome': 'IT', 'Europe/Zurich': 'CH',
   'America/Mexico_City': 'MX', 'America/Monterrey': 'MX', 'America/Cancun': 'MX', 'America/Tijuana': 'MX', 'America/Merida': 'MX', 'America/Chihuahua': 'MX', 'America/Mazatlan': 'MX', 'America/Hermosillo': 'MX',
   'America/Sao_Paulo': 'BR', 'America/Fortaleza': 'BR', 'America/Recife': 'BR', 'America/Bahia': 'BR', 'America/Manaus': 'BR', 'America/Belem': 'BR',
   'America/Toronto': 'CA', 'America/Vancouver': 'CA', 'America/Edmonton': 'CA', 'America/Winnipeg': 'CA', 'America/Halifax': 'CA', 'America/St_Johns': 'CA', 'America/Regina': 'CA', 'America/Montreal': 'CA',
@@ -369,7 +417,7 @@ export function partnerCountryOf(mine: { country?: string | null; timezone?: str
 const NAMES: Record<string, string> = {
   'united states': 'US', usa: 'US', america: 'US', us: 'US', canada: 'CA', 'united kingdom': 'GB', uk: 'GB', britain: 'GB', england: 'GB', scotland: 'GB', wales: 'GB',
   japan: 'JP', china: 'CN', 'mainland china': 'CN', 'hong kong': 'HK', taiwan: 'TW', korea: 'KR', 'south korea': 'KR', singapore: 'SG', india: 'IN',
-  uae: 'AE', 'united arab emirates': 'AE', dubai: 'AE', france: 'FR', germany: 'DE', spain: 'ES', italy: 'IT', mexico: 'MX', brazil: 'BR', australia: 'AU',
+  uae: 'AE', 'united arab emirates': 'AE', dubai: 'AE', france: 'FR', germany: 'DE', spain: 'ES', italy: 'IT', mexico: 'MX', brazil: 'BR', portugal: 'PT', lisbon: 'PT', lisboa: 'PT', porto: 'PT', españa: 'ES', méxico: 'MX', 'ciudad de méxico': 'MX', cdmx: 'MX', guadalajara: 'MX', monterrey: 'MX', valencia: 'ES', sevilla: 'ES', australia: 'AU',
   tokyo: 'JP', osaka: 'JP', kyoto: 'JP', shanghai: 'CN', beijing: 'CN', shenzhen: 'CN', guangzhou: 'CN', seoul: 'KR', busan: 'KR', taipei: 'TW', london: 'GB',
   paris: 'FR', berlin: 'DE', munich: 'DE', madrid: 'ES', barcelona: 'ES', rome: 'IT', milan: 'IT', 'mexico city': 'MX', 'sao paulo': 'BR', 
   sydney: 'AU', switzerland: 'CH', zurich: 'CH', geneva: 'CH', basel: 'CH', bern: 'CH', lausanne: 'CH', lugano: 'CH', 'united kingdom of great britain': 'GB', brasil: 'BR', 'rio de janeiro': 'BR', 'são paulo': 'BR', 'hong kong sar': 'HK', perth: 'AU', brisbane: 'AU', ottawa: 'CA', calgary: 'CA', 'québec': 'CA', quebec: 'CA', manchester: 'GB', edinburgh: 'GB', melbourne: 'AU', toronto: 'CA', vancouver: 'CA', montreal: 'CA', mumbai: 'IN', delhi: 'IN', bangalore: 'IN', bengaluru: 'IN',

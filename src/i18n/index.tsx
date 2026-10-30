@@ -9,7 +9,7 @@ import { detect, localeTag, dictFor, fill, TEXT_APPS, type Lang, type Country } 
 export { LANGS, detect, localeTag, dictFor, fill, localQuestion } from './core';
 export type { Lang, Country } from './core';
 
-const DICT_IDS: Lang[] = ['en', 'ja', 'fr', 'it', 'pt', 'zh', 'de'];
+const DICT_IDS: Lang[] = ['en', 'ja', 'fr', 'it', 'pt', 'zh', 'de', 'es'];
 
 interface I18n {
   lang: Lang; country: Country; tag: string; d: Dict; textApps: string;

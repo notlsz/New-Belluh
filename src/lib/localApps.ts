@@ -15,6 +15,9 @@ export const LOCAL_APPS: Record<Country, Record<AppCategory, string[]>> = {
   BR: { table: ['TheFork', 'Google Maps'], gifts: ['Mercado Livre', 'Amazon.com.br', 'Giuliana Flores'], food: ['iFood'], rides: ['Uber', '99'], tickets: ['Sympla', 'Ingresso.com'] },
   CN: { table: ['大众点评', '美团'], gifts: ['京东', '天猫', '淘宝'], food: ['美团外卖', '饿了么'], rides: ['滴滴'], tickets: ['大麦', '猫眼'] },
   CH: { table: ['TheFork'], gifts: ['Galaxus', 'Fleurop'], food: ['Uber Eats', 'Smood'], rides: ['SBB', 'Uber'], tickets: ['Ticketcorner', 'Ticketmaster'] },
+  ES: { table: ['TheFork', 'Google Maps'], gifts: ['El Corte Inglés', 'Amazon.es', 'Interflora'], food: ['Glovo', 'Just Eat', 'Uber Eats'], rides: ['Cabify', 'Uber', 'Renfe'], tickets: ['Ticketmaster', 'Entradas.com'] },
+  MX: { table: ['OpenTable', 'Google Maps'], gifts: ['Mercado Libre', 'Amazon.com.mx'], food: ['Rappi', 'Uber Eats', 'DiDi Food'], rides: ['Uber', 'DiDi'], tickets: ['Ticketmaster', 'Boletia'] },
+  PT: { table: ['TheFork', 'Google Maps'], gifts: ['Fnac', 'Worten', 'El Corte Inglés'], food: ['Glovo', 'Uber Eats', 'Bolt Food'], rides: ['Uber', 'Bolt', 'CP'], tickets: ['Ticketline', 'BOL'] },
   OTHER: { table: ['TheFork', 'OpenTable', 'Google Maps'], gifts: ['Amazon'], food: ['Uber Eats'], rides: ['Uber'], tickets: ['Ticketmaster'] },
 };
 
