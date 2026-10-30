@@ -1,5 +1,11 @@
 import { supabase, supabaseUrl } from '../lib/supabaseClient';
 import type { PlanOption } from '../../supabase/functions/_shared/plans';
+import type { Idea } from '../../supabase/functions/_shared/ideas';
+import type { Goal } from '../../supabase/functions/_shared/goals';
+
+export type { Idea };
+export type CoupleGoal = Goal & { id: string; created_by: string; partner_id: string | null; status: 'active' | 'done' | 'stopped' };
+export interface BellaWatch { id: string; kind: 'event' | 'price'; what: string; until_on: string; status: 'watching' | 'found'; found: { title: string; url: string; price: string | null } | null }
 
 export interface UsMessage { id: string; author: string | null; role: 'user' | 'belluh' | 'plan'; body: string; meta: any; created_at: string }
 
@@ -71,6 +77,20 @@ export const belluhAgent = {
   bookingDone: (bookingId: string, done: boolean) => call<{ booking: any; message: AgentMessage | null }>({ action: 'booking', booking_id: bookingId, done }),
   /** Belluh phones the restaurant and books the table; the outcome arrives as a message in the thread. */
   bookingCall: (bookingId: string) => call<{ booking: any; message: AgentMessage | null; called: boolean }>({ action: 'booking_call', booking_id: bookingId }),
+  ideas: () => call<{ ideas: Idea[] }>({ action: 'ideas' }),
+  goalLog: (goalId: string, amount: number) => call<{ goal: CoupleGoal; reached: boolean }>({ action: 'goal_log', goal_id: goalId, amount }),
+  goalStop: (goalId: string) => call<{ ok: boolean }>({ action: 'goal_stop', goal_id: goalId }),
+  watchStop: (watchId: string) => call<{ ok: boolean }>({ action: 'watch_stop', watch_id: watchId }),
+  /** Goals the two of them share (both see them), newest first. */
+  async goals(): Promise<CoupleGoal[]> {
+    const { data } = await supabase.from('couple_goals').select('*').in('status', ['active', 'done']).order('created_at', { ascending: false }).limit(20);
+    return (data ?? []) as CoupleGoal[];
+  },
+  /** What Bella is watching for you, and what she found. */
+  async watches(): Promise<BellaWatch[]> {
+    const { data } = await supabase.from('watches').select('id, kind, what, until_on, status, found').in('status', ['watching', 'found']).order('created_at', { ascending: false }).limit(20);
+    return (data ?? []) as BellaWatch[];
+  },
   offerRespond: (messageId: string, accept: boolean) => call<{ messages: AgentMessage[]; status: string }>({ action: 'offer_respond', message_id: messageId, accept }),
 
   async memories(): Promise<{ id: string; fact: string }[]> {

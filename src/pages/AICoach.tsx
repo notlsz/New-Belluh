@@ -10,7 +10,8 @@ import WeeklyCard from '../components/WeeklyCard';
 import PlanCard from '../components/PlanCard';
 import UsThread from '../components/UsThread';
 import BelluhActions from '../components/BelluhActions';
-import { Sparkles, Wand2, Activity, ArrowUp, Heart, Check, X, Brain, Trash2, ImagePlus } from 'lucide-react';
+import { Sparkles, Wand2, Activity, ArrowUp, Heart, Check, X, Brain, Trash2, ImagePlus, Lightbulb } from 'lucide-react';
+import BellaPlate, { type PlateView } from '../components/BellaPlate';
 import { uploadPrivate, resolveMedia } from '../services/media';
 import { supabase } from '../lib/supabaseClient';
 import { trackEvent } from '../services/analytics';
@@ -116,7 +117,7 @@ const NoteDraft: React.FC<{ msg: AgentMessage; onSend: (id: string, text: string
 };
 
 const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremium, userName, initialMessage, onInitialMessageSent, onCompose, initialSpace, inSheet, onClose }) => {
-  const { d: { app: { chat: ch } }, f } = useI18n();
+  const { d, f } = useI18n(); const ch = d.app.chat;
   // 'agent' = server-side Belluh with memory; 'legacy' = the original in-browser chat, used if the agent isn't deployed
   const [mode, setMode] = useState<'loading' | 'agent' | 'legacy'>('loading');
   const [partnerName, setPartnerName] = useState<string | null>(null);
@@ -126,6 +127,10 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
   const [agentMessages, setAgentMessages] = useState<AgentMessage[]>([]);
   const [memories, setMemories] = useState<{ id: string; fact: string }[] | null>(null);
   const [week, setWeek] = useState<WeekView | null>(null);
+  // Ideas, goals and apps, over the chat
+  const [plate, setPlate] = useState<PlateView | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), 3200); return () => clearTimeout(t); }, [toast]);
 
   const [reflection, setReflection] = useState<string>('');
   const [archetype, setArchetype] = useState<RelationshipArchetype | null>(null);
@@ -317,6 +322,19 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
     </div>
   );
 
+  const ideasBtn = (
+    <button onClick={() => { setPlate('ideas'); trackEvent('plate_opened'); }} aria-label={d.app.plate.open} className="flex items-center gap-1.5 h-9 px-3 rounded-full text-[13px] font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-50">
+      <Lightbulb size={14} /> <span className="hidden sm:inline">{d.app.plate.ideas}</span>
+    </button>
+  );
+  const plateSheet = plate && (
+    <BellaPlate view={plate} onView={setPlate} partnerName={partnerName} onClose={() => setPlate(null)}
+      onAsk={t => { setPlate(null); pickSpace('me'); sendNow(t); }}
+      onPrefill={t => { setPlate(null); pickSpace('me'); setChatInput(t); setTimeout(() => (document.querySelector('textarea') as HTMLTextAreaElement | null)?.focus(), 50); }}
+      onShowToast={m => setToast(m)} />
+  );
+  const toastEl = toast && <div role="status" className="fixed left-1/2 -translate-x-1/2 bottom-28 z-[95] px-4 py-2.5 rounded-full bg-slate-900 text-white text-sm font-semibold shadow-lg">{toast}</div>;
+
   const closeBtn = inSheet && onClose ? (
     <button aria-label="Close" onClick={onClose} className="ml-auto w-9 h-9 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900"><X size={16} /></button>
   ) : null;
@@ -330,7 +348,8 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-2">
           {!inSheet && <><span className="lg:hidden text-sm font-bold font-serif text-[#9bbecb]">Bella</span><span className="lg:hidden text-belluh-200">/</span></>}{spaceSwitch}
-          {closeBtn}
+          <div className="ml-auto flex items-center gap-2">{ideasBtn}{closeBtn}</div>
+          {plateSheet}{toastEl}
         </div>
       </div>
     } inSheet={inSheet} />;
@@ -354,9 +373,10 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
               {isConflictMode && (
                   <div className="px-3 py-1 bg-[#fdf0f8] text-[#b0457f] rounded-full text-xs font-semibold">Mediating</div>
               )}
+              {mode === 'agent' && ideasBtn}
               {mode === 'agent' && (
-                <button onClick={openMemories} className="flex items-center gap-1.5 h-9 px-3 rounded-full text-[13px] font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-50">
-                  <Brain size={14} /> {ch.memory}
+                <button onClick={openMemories} aria-label={ch.memory} className="flex items-center gap-1.5 h-9 px-3 rounded-full text-[13px] font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-50">
+                  <Brain size={14} /> <span className="hidden sm:inline">{ch.memory}</span>
                 </button>
               )}
               {closeBtn}
@@ -533,6 +553,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
        </div>
 
        {/* What Belluh remembers */}
+       {plateSheet}{toastEl}
        {memories && (
          <div className="fixed inset-0 z-[90] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-fade-in" onClick={() => setMemories(null)}>
            <div className="bg-white rounded-[2rem] w-full max-w-md max-h-[75vh] overflow-y-auto p-6 shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}>

@@ -33,7 +33,6 @@ function channelOrder(): Via[] {
   return ['whatsapp', 'imessage', 'telegram', 'sms', 'line'];
 }
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 interface Occasion {
   id: string;
@@ -63,8 +62,8 @@ function daysUntil(o: Occasion): number | null {
   return Math.round((next.getTime() - today.getTime()) / 86_400_000);
 }
 
-const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' | 'info') => void }> = ({ onShowToast }) => {
-  const { d: { app: { me: M } }, f: fill } = useI18n();
+const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' | 'info') => void; compact?: boolean }> = ({ onShowToast, compact }) => {
+  const { d: { app: { me: M, tx: T, plate: P } }, f: fill, date: fmtDate } = useI18n();
   const [available, setAvailable] = useState(true);
   const [phone, setPhone] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
@@ -92,7 +91,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
     return () => { clearInterval(t); clearTimeout(stop); };
   }, [code, phone, load]);
 
-  useEffect(() => { if (phone && code) { setCode(null); onShowToast('Connected. Text Bella any date.', 'success'); } }, [phone, code, onShowToast]);
+  useEffect(() => { if (phone && code) { setCode(null); onShowToast(T.okConnected, 'success'); } }, [phone, code, onShowToast]);
 
   const [readyCode, setReadyCode] = useState<string | null>(null);
   // Get a fresh code ready ahead of time, so one tap opens WhatsApp with "LINK <code>" already typed
@@ -113,20 +112,20 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
     if (readyCode) { setCode(readyCode); return; } // the link itself opens WhatsApp or Messages
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const { data, error } = await supabase.rpc('request_whatsapp_link', { p_timezone: tz });
-    if (error || !data) { onShowToast("Couldn't start setup. Try again.", 'error'); return; }
+    if (error || !data) { onShowToast(T.failSetup, 'error'); return; }
     setCode(data as string);
   };
 
   const disconnect = async () => {
     const { error } = await supabase.from('whatsapp_links').delete().not('user_id', 'is', null);
-    if (error) { onShowToast("Couldn't disconnect.", 'error'); return; }
+    if (error) { onShowToast(T.failDisconnect, 'error'); return; }
     setPhone(null);
-    onShowToast('Disconnected. Belluh will stop texting you.', 'success');
+    onShowToast(T.disconnected, 'success');
   };
 
   const remove = async (o: Occasion) => {
     const { error } = await supabase.from('occasions').delete().eq('id', o.id);
-    if (error) { onShowToast("Couldn't remove that date.", 'error'); return; }
+    if (error) { onShowToast(T.failRemove, 'error'); return; }
     setOccasions(prev => prev.filter(x => x.id !== o.id));
   };
 
@@ -138,17 +137,17 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
     .sort((a, b) => (a.days as number) - (b.days as number));
 
   const openLink = !code ? null : via === 'line' && LINE_ID ? lineHref(code) : via === 'imessage' && IMESSAGE_NUMBER ? imHref(code) : via === 'telegram' && TG_BOT ? tgHref(code) : via === 'sms' && SMS_NUMBER ? smsHref(code) : BELLUH_NUMBER ? waHref(code) : null;
-  const appName = via === 'line' ? 'LINE' : via === 'telegram' ? 'Telegram' : via === 'sms' || via === 'imessage' ? 'Messages' : 'WhatsApp';
+  const appName = via === 'line' ? 'LINE' : via === 'telegram' ? 'Telegram' : via === 'sms' || via === 'imessage' ? T.messages : 'WhatsApp';
   const btn = 'shrink-0 h-11 px-5 rounded-full font-semibold text-sm inline-flex items-center justify-center gap-2 transition-colors bg-white text-slate-900 border border-slate-200 hover:border-slate-400';
 
   return (
-    <div className="mb-12">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-serif text-xl text-slate-900 pl-1">{M.textBella}</h3>
-        {phone && <button onClick={disconnect} className="text-xs font-bold text-slate-400 hover:text-slate-700">Disconnect texting</button>}
+    <div className={compact ? '' : 'mb-12'}>
+      <div className={`flex items-center justify-between ${compact ? 'mb-3' : 'mb-4'}`}>
+        <h3 className={compact ? 'text-[13px] font-semibold text-slate-400' : 'font-serif text-xl text-slate-900 pl-1'}>{M.textBella}</h3>
+        {phone && <button onClick={disconnect} className="text-xs font-bold text-slate-400 hover:text-slate-700">{T.disconnect}</button>}
       </div>
 
-      <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6">
+      <div className={compact ? '' : 'bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6'}>
         {!phone && !code && (
           <div className="flex flex-col gap-4">
             <div>
@@ -174,18 +173,18 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
                 })}
               </div>
             ) : (
-              <span className="shrink-0 px-4 py-2 rounded-full bg-slate-50 text-slate-400 text-xs font-bold">Texting Belluh is coming soon</span>
+              <span className="shrink-0 px-4 py-2 rounded-full bg-slate-50 text-slate-400 text-xs font-bold">{T.soon}</span>
             )}
           </div>
         )}
 
         {!phone && code && (
           <div className="text-center py-2">
-            <p className="text-sm text-slate-500">{openLink && via === 'telegram' ? 'Telegram should have opened. Tap Start and you\'re connected. Or send this:' : openLink ? `${appName} should have opened with this message ready. Just tap send:` : `Send this to Belluh on ${appName}:`}</p>
+            <p className="text-sm text-slate-500">{openLink && via === 'telegram' ? T.openedTg : openLink ? fill(T.opened, { app: appName }) : fill(T.sendTo, { app: appName })}</p>
             <div className="mt-3 flex items-center justify-center gap-3">
               <span className="font-mono text-3xl font-bold tracking-[0.2em] text-slate-900">LINK {code}</span>
               <button
-                aria-label="Copy code"
+                aria-label={T.copy}
                 onClick={async () => { try { await navigator.clipboard.writeText(`LINK ${code}`); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* ignore */ } }}
                 className="w-9 h-9 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900"
               >
@@ -194,32 +193,31 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
             </div>
             {openLink && (
               <a href={openLink} target={via === 'sms' || via === 'imessage' ? undefined : '_blank'} rel="noreferrer" className={`inline-flex mt-5 px-6 py-3 ${via === 'line' ? 'bg-[#06C755]' : via === 'imessage' ? 'bg-[#0A84FF]' : via === 'sms' ? 'bg-slate-900' : via === 'telegram' ? 'bg-[#229ED9]' : 'bg-[#25D366]'} text-white rounded-full font-bold text-sm items-center gap-2 hover:brightness-105`}>
-                <MessageCircle size={16} /> Open {appName}
+                <MessageCircle size={16} /> {fill(T.openApp, { app: appName })}
               </a>
             )}
-            <p className="text-xs text-slate-400 mt-4">The code works for 30 minutes. This page updates once it's connected.</p>
+            <p className="text-xs text-slate-400 mt-4">{T.codeWorks}</p>
           </div>
         )}
 
         {phone && (
-          <p className="text-sm text-slate-500 mb-2">
-            Connected to {phone.startsWith('tg:') ? 'Telegram' : phone.startsWith('line:') ? 'LINE' : phone}. Text Bella anything: a date, a plan, "remind me to book dinner Friday". Send LIST anytime to see your dates.
+          <p className="text-sm text-slate-500 mb-2 leading-relaxed">
+            {fill(T.connectedTo, { where: phone.startsWith('tg:') ? 'Telegram' : phone.startsWith('line:') ? 'LINE' : phone })}
           </p>
         )}
 
-        {sorted.length > 0 && (
+        {!compact && sorted.length > 0 && (
           <ul className="mt-4 divide-y divide-slate-100">
             {sorted.map(({ o, days }) => (
               <li key={o.id} className="flex items-center justify-between gap-4 py-3">
                 <div className="min-w-0">
                   <p className="font-serif text-slate-900 truncate">{o.label}</p>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    {MONTHS[o.month - 1]} {o.day}{!o.repeats_yearly && o.year ? `, ${o.year}` : ''}
-                    {', '}{days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`}
-                    {'. '}{o.source_message === 'Planned together in Belluh' ? 'Planned together.' : o.source_message === 'From your About us dates' ? 'From your facts.' : `You told us ${new Date(o.mentioned_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}.`}
+                    {fill(P.withDate, { line: fmtDate(new Date(o.year && !o.repeats_yearly ? o.year : 2000, o.month - 1, o.day), { month: 'long', day: 'numeric', ...(!o.repeats_yearly && o.year ? { year: 'numeric' } : {}) }), by: days === 0 ? P.today : days === 1 ? P.tomorrow : fill(P.inDays, { n: days as number }) })}
+                    {' '}{o.source_message === 'Planned together in Belluh' ? T.planned : o.source_message === 'From your About us dates' ? T.fromFacts : fill(T.toldUs, { date: fmtDate(new Date(o.mentioned_at), { month: 'short', day: 'numeric', year: 'numeric' }) })}
                   </p>
                 </div>
-                <button aria-label={`Remove ${o.label}`} onClick={() => remove(o)} className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50">
+                <button aria-label={fill(T.remove, { label: o.label })} onClick={() => remove(o)} className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50">
                   <Trash2 size={14} />
                 </button>
               </li>

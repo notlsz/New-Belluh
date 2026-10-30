@@ -9,11 +9,14 @@
 //            { action: 'checkin', action_id: string, status: 'done' | 'not_yet' | 'skipped' }
 //            { action: 'offer_respond', message_id: string, accept: boolean }
 //            { action: 'booking', booking_id: string, done: boolean }   ("I booked it" / "Not now")
+//            { action: 'ideas' }   what Bella could take on now
+//            { action: 'goal_log', goal_id, amount } / { action: 'goal_stop', goal_id } / { action: 'watch_stop', watch_id }
 
 import { cleanReply, REACT_INSTRUCTION } from '../_shared/agent.ts';
 import { jsonAnswer } from '../_shared/gemini.ts';
 import { db, loadCtx, buildSystem, addMessage, history, weekView, type Ctx } from '../_shared/agentdb.ts';
 import { chat, underLimit, sendNote, planRespond, planCancel, checkin, ownPhoto, usHistory, usSend, offerRespond, bookingDone, placeCall, type Result } from '../_shared/agentcore.ts';
+import { ideasFor, goalLog, goalStop, watchStop } from '../_shared/goalsdb.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -73,6 +76,10 @@ Deno.serve(async (req) => {
       case 'booking_call': return out(await placeCall(ctx, String(body.booking_id ?? '')));
       case 'us_history': return out(await usHistory(ctx));
       case 'us_send': return out(await usSend(ctx, String(body.message ?? ''), body.ask_belluh !== false));
+      case 'ideas': return json(await ideasFor(ctx));
+      case 'goal_log': return out(await goalLog(ctx, String(body.goal_id ?? ''), Number(body.amount)));
+      case 'goal_stop': return out(await goalStop(ctx, String(body.goal_id ?? '')));
+      case 'watch_stop': return out(await watchStop(ctx, String(body.watch_id ?? '')));
       case 'send_note': return out(await sendNote(ctx, String(body.draft_id ?? ''), typeof body.text === 'string' ? body.text : undefined));
       case 'discard_note': {
         const { data: d } = await db.from('agent_messages').select('user_id, role, meta').eq('id', String(body.draft_id ?? '')).maybeSingle();

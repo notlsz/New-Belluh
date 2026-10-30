@@ -16,6 +16,9 @@ import { findSpots, type Spot } from './places.ts';
 import { regionLinks, osmCountry, KITS } from './region.ts';
 import { playlistLinks } from './jarvis.ts';
 import { findResearch } from './research.ts';
+import { validateGoal, logProgress, goalLine, type Goal } from './goals.ts';
+import { validateWatch, TICKETMASTER_COUNTRIES } from './watches.ts';
+import { localDateParts } from './occasions.ts';
 import { bookingFromTool, doneLabel, memoryFor, reminderFor, whenText, type BookingDraft } from './bookings.ts';
 import { instacartCart } from './instacart.ts';
 import { callsOn, findPlace, startCall, okToCallNow, whyNot, type CallOutcome } from './vapi.ts';
@@ -262,6 +265,41 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           links.push(...l);
           prepare('gift_ideas', call.args, products[before]?.url ?? l[0]?.url ?? null, products[before]?.title ?? null);
           return { ok: true, note: `The ideas are shown under your reply as links to buy${products.length ? `, with real products from independent Shopify shops, checkout ready: ${products.map(p => `${p.title} (${p.price}, ${p.seller})`).join('; ')}` : ''}. In one or two lines, say why each fits, from what their partner said. Do not paste links.` };
+        }
+        case 'set_goal': {
+          const today = localDateParts(new Date(), ctx.timezone);
+          const g = validateGoal(call.args, ctx.country, today);
+          if (!g) return { ok: false, error: 'Need save, habit or budget, a short title and a positive target (a habit is at most 7 times a week or 31 a month).' };
+          const { count } = await db.from('couple_goals').select('id', { count: 'exact', head: true }).eq('created_by', ctx.userId).eq('status', 'active');
+          if ((count ?? 0) >= 12) return { ok: false, error: 'They already have 12 goals going. Ask which one to finish or stop first.' };
+          const { error } = await db.from('couple_goals').insert({ ...g, created_by: ctx.userId, partner_id: ctx.partnerId });
+          if (error) return { ok: false, error: "Couldn't save the goal." };
+          return { ok: true, goal: goalLine(g, today), shared_with: ctx.partnerName, note: `It's under Goals in the Bella tab${ctx.partnerName ? `, and ${ctx.partnerName} sees it too` : ''}. Say so in one line, with one small first step.` };
+        }
+        case 'log_goal': {
+          const today = localDateParts(new Date(), ctx.timezone);
+          const q = call.goal.replace(/[%_\\]/g, '').trim();
+          const { data: hits } = await db.from('couple_goals').select('*').eq('status', 'active')
+            .or(`created_by.eq.${ctx.userId},partner_id.eq.${ctx.userId}`).ilike('title', `%${q}%`).limit(3);
+          if (!hits?.length) return { ok: false, error: 'No goal matches. Ask which goal, or offer to start one.' };
+          if (hits.length > 1) return { ok: false, error: 'Several goals match; ask which one.', matches: hits.map(h => h.title) };
+          const g = hits[0] as Goal & { id: string };
+          const next = logProgress(g, call.amount, today);
+          if (!next) return { ok: false, error: g.kind === 'habit' ? 'Log a habit in whole times, like 1.' : 'That amount does not work.' };
+          await db.from('couple_goals').update({ progress: next.progress, period_key: next.period_key, ...(next.done ? { status: 'done' } : {}), updated_at: new Date().toISOString() }).eq('id', g.id);
+          const line = goalLine({ ...g, ...next }, today);
+          return { ok: true, goal: line, reached: next.done, note: next.done ? 'They reached it. Celebrate in one warm line.' : 'Say where it stands in one line.' };
+        }
+        case 'watch_for': {
+          const w = validateWatch(call.args, localDateParts(new Date(), ctx.timezone));
+          if (!w) return { ok: false, error: call.args.kind === 'price' ? 'A price watch needs the product and their top price.' : 'Say what to watch for: the artist, team or show.' };
+          if (w.kind === 'event' && !TICKETMASTER_COUNTRIES.includes(ctx.country)) return { ok: false, error: `Ticket watches work where Ticketmaster sells (North America, the UK, Ireland, Australia, New Zealand and much of Europe), not in ${KITS[ctx.country]?.name ?? 'their country'}. Offer a reminder for the day tickets go on sale instead (remind_me).` };
+          if (w.kind === 'price' && ctx.country !== 'US') return { ok: false, error: 'Price watches cover US shops for now. Offer to show where to buy it instead.' };
+          const { count } = await db.from('watches').select('id', { count: 'exact', head: true }).eq('user_id', ctx.userId).eq('status', 'watching');
+          if ((count ?? 0) >= 10) return { ok: false, error: 'They already have 10 watches going. Ask which one to stop.' };
+          const { error } = await db.from('watches').insert({ ...w, user_id: ctx.userId });
+          if (error) return { ok: false, error: "Couldn't start watching." };
+          return { ok: true, watching: w.what, until: w.until_on, note: `You check every hour until ${w.until_on} and message them (and text them if they connected a phone) the moment it's there. Say so in one line. Never say you bought or booked anything.` };
         }
         case 'find_research': {
           const papers = await findResearch(call.keywords, { topic: call.topic, recent: call.recent });
