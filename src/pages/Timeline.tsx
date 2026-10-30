@@ -1,4 +1,5 @@
-import { useI18n, localQuestion } from '../i18n';
+import { useI18n, useUi, localQuestion } from '../i18n';
+import storyUi from '../i18n/ui/story';
 import BelluhActions from '../components/BelluhActions';
 import React, { useMemo, useState, useEffect } from 'react';
 import BelluhOrb from '../components/BelluhOrb';
@@ -36,7 +37,8 @@ interface TimelineProps {
 }
 
 const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName, activeCircleId, circles, onCircleChange, onLikeEntry, onCompose, onSearch: _onSearch, onDeleteEntry, onUpdateEntry, streak, onAskBelluh, onOpenBelluh }) => {
-  const { d: d0, f } = useI18n();
+  const { d: d0, f, date } = useI18n();
+  const T = useUi(storyUi);
   const a = d0.app;
   const [searchQuery, setSearchQuery] = useState('');
   const [isCircleMenuOpen, setIsCircleMenuOpen] = useState(false);
@@ -63,7 +65,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
   const today = new Date();
   const myAnswer = entries.find(e => e.userId === currentUserId && e.prompt === todaysPrompt && isSameDay(e.timestamp, today));
   const partnerAnswer = entries.find(e => e.userId !== currentUserId && !e.isPrivate && e.prompt === todaysPrompt && isSameDay(e.timestamp, today));
-  const partnerFirst = (partnerAnswer?.authorName || '').split(' ')[0] || 'Your partner';
+  const partnerFirst = (partnerAnswer?.authorName || '').split(' ')[0] || T.yourPartner;
   const hasPartnerInCircle = (circles.find(c => c.id === activeCircleId)?.members?.length ?? 0) > 1;
 
   const [isSearching, setIsSearching] = useState(false);
@@ -159,7 +161,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
         if (processedIds.has(entry.id)) return;
 
         // Group by Month Year for the divider
-        const entryMonthStr = entry.timestamp.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        const entryMonthStr = date(entry.timestamp, { month: 'long', year: 'numeric' });
         
         if (entryMonthStr !== lastMonthStr) {
             items.push({ type: 'header', title: entryMonthStr });
@@ -171,7 +173,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
     });
 
     return items;
-  }, [filteredEntries, detectedPatterns, searchQuery, isArchived, showPatterns, belluhLive]);
+  }, [filteredEntries, detectedPatterns, searchQuery, isArchived, showPatterns, belluhLive, date]);
 
   const ask = async (question: string) => {
     if (!question.trim()) return;
@@ -185,10 +187,11 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
   const handleSearchSubmit = (e: React.FormEvent) => { e.preventDefault(); ask(searchQuery); };
 
   const handleAskAboutEntry = (entry: JournalEntry) => {
-      const when = entry.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      const whose = entry.userId === currentUserId ? 'my' : `${entry.authorName.split(' ')[0]}'s`;
-      const excerpt = entry.content.replace(/\s+/g, ' ').slice(0, 220);
-      ask(`About ${whose} entry from ${when}: "${excerpt}${entry.content.length > 220 ? '…' : ''}" What do you notice?`);
+      const when = date(entry.timestamp, { month: 'short', day: 'numeric' });
+      const excerpt = entry.content.replace(/\s+/g, ' ').slice(0, 220) + (entry.content.length > 220 ? '…' : '');
+      ask(entry.userId === currentUserId
+          ? f(T.aboutMyEntry, { when, excerpt })
+          : f(T.aboutTheirEntry, { name: entry.authorName.split(' ')[0], when, excerpt }));
   };
 
   const getWeatherIcon = (type?: string) => {
@@ -226,7 +229,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                <div className="bg-white rounded-[2rem] w-full max-w-lg mx-4 md:mx-auto shadow-2xl overflow-hidden animate-scale-in relative flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
                     {/* Floating Close Button - Always visible on top right */}
                     <button 
-                        onClick={() => setSelectedPattern(null)} 
+                        onClick={() => setSelectedPattern(null)} aria-label={T.close}
                         className="absolute top-4 right-4 z-30 p-2 bg-white/50 hover:bg-white rounded-full transition-colors text-slate-500 hover:text-slate-900 shadow-sm backdrop-blur-sm"
                     >
                         <X size={20} />
@@ -259,7 +262,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                         <div className="p-6 md:p-8 bg-white flex-1">
                             {/* EVIDENCE SECTION */}
                             <div className="mb-8">
-                                <h4 className="text-[12px] font-semibold text-[#94a3b8] mb-4 ml-1">What it’s based on</h4>
+                                <h4 className="text-[12px] font-semibold text-[#94a3b8] mb-4 ml-1">{T.basedOn}</h4>
                                 <div className="space-y-3">
                                     {selectedPattern.relatedEntryIds && selectedPattern.relatedEntryIds.length > 0 ? (
                                         selectedPattern.relatedEntryIds.slice(0, 2).map(id => {
@@ -275,14 +278,14 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                                                             "{entry.content.substring(0, 100)}{entry.content.length > 100 ? '...' : ''}"
                                                         </p>
                                                         <p className="text-[13px] font-semibold text-[#94a3b8] group-hover:text-[#64748B] transition-colors">
-                                                            {entry.timestamp.toLocaleDateString()}
+                                                            {date(entry.timestamp, { year: 'numeric', month: 'short', day: 'numeric' })}
                                                         </p>
                                                     </div>
                                                 </div>
                                             )
                                         })
                                     ) : (
-                                        <p className="text-sm text-slate-400 italic ml-1">Pattern detected from aggregate behavioral data.</p>
+                                        <p className="text-sm text-slate-400 italic ml-1">{T.aggregate}</p>
                                     )}
                                 </div>
                             </div>
@@ -290,17 +293,17 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                             <div className="bg-belluh-50/50 p-5 md:p-6 rounded-2xl border border-belluh-100 flex items-start gap-4 mb-4">
                                 <Sparkles size={20} className="text-belluh-400 shrink-0 mt-0.5" />
                                 <div>
-                                    <h4 className="text-sm font-bold text-slate-900 mb-1">Belluh's Advice</h4>
+                                    <h4 className="text-sm font-bold text-slate-900 mb-1">{T.advice}</h4>
                                     <p className="text-sm text-slate-600 leading-relaxed">
                                         {selectedPattern.type === 'Spiral' 
-                                            ? "This pattern often appears when you feel disconnected. Try sharing a small, vulnerable truth with your partner today instead of withdrawing." 
-                                            : "You are building a beautiful reservoir of shared meaning. Keep reinforcing this positive loop."}
+                                            ? T.adviceSpiral
+                                            : T.adviceGrowth}
                                     </p>
                                 </div>
                             </div>
                             
                             <button onClick={() => setSelectedPattern(null)} className="w-full mt-4 bg-slate-900 text-white py-4 rounded-xl font-bold text-sm hover:bg-black transition-transform active:scale-95 shadow-lg">
-                                Acknowledged
+                                {T.acknowledged}
                             </button>
                         </div>
                     </div>
@@ -318,7 +321,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                         className="text-left group focus:outline-none"
                     >
                         <h1 className="font-serif text-3xl md:text-4xl text-slate-900 leading-tight group-hover:opacity-70 transition-opacity flex items-center gap-2">
-                            {isConstellation ? "My Constellation" : activeCircle?.name}
+                            {isConstellation ? T.myConstellation : activeCircle?.name}
                             {isArchived && <Archive size={20} className="text-slate-300" />}
                         </h1>
                         <div className="flex items-center gap-2 mt-2">
@@ -331,7 +334,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
 
                     {isCircleMenuOpen && (
                         <div className="absolute top-full left-0 mt-4 bg-belluh-25 rounded-[2rem] shadow-2xl border border-belluh-100 p-2 w-72 animate-scale-in z-50 origin-top-left ring-1 ring-black/5 max-h-[60vh] overflow-y-auto">
-                            <div className="text-[12px] font-semibold text-slate-400 px-3 py-2">Active circles</div>
+                            <div className="text-[12px] font-semibold text-slate-400 px-3 py-2">{T.activeCircles}</div>
                             {circles.filter(c => c.status === CircleStatus.Active).map(c => (
                                 <button key={c.id} className="w-full p-3 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors flex items-center gap-3 text-left group" onClick={() => { onCircleChange(c.id); setIsCircleMenuOpen(false); }}>
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${activeCircleId === c.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-white border border-slate-200'}`}>
@@ -343,7 +346,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                             ))}
                             {circles.some(c => c.status === CircleStatus.Archived) && (
                                 <>
-                                    <div className="text-[12px] font-semibold text-slate-400 px-3 py-2 mt-2 border-t border-slate-50">Past Chapters</div>
+                                    <div className="text-[12px] font-semibold text-slate-400 px-3 py-2 mt-2 border-t border-slate-50">{T.pastChapters}</div>
                                     {circles.filter(c => c.status === CircleStatus.Archived).map(c => (
                                         <button key={c.id} className="w-full p-3 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors flex items-center gap-3 text-left group grayscale opacity-80" onClick={() => { onCircleChange(c.id); setIsCircleMenuOpen(false); }}>
                                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold bg-slate-100 text-slate-400 border border-slate-200">
@@ -355,12 +358,12 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                                 </>
                             )}
                             {/* Constellation Option */}
-                            <div className="text-[12px] font-semibold text-slate-400 px-3 py-2 mt-2 border-t border-slate-50">Universal</div>
+                            <div className="text-[12px] font-semibold text-slate-400 px-3 py-2 mt-2 border-t border-slate-50">{T.universal}</div>
                             <button className="w-full p-3 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors flex items-center gap-3 text-left group" onClick={() => { onCircleChange('constellation'); setIsCircleMenuOpen(false); }}>
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${isConstellation ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-white border border-slate-200'}`}>
                                     <Star size={14} className={isConstellation ? "fill-current" : ""} />
                                 </div>
-                                <span className={`font-medium text-sm ${isConstellation ? 'text-slate-900' : 'text-slate-600'}`}>My Constellation</span>
+                                <span className={`font-medium text-sm ${isConstellation ? 'text-slate-900' : 'text-slate-600'}`}>{T.myConstellation}</span>
                             </button>
                         </div>
                     )}
@@ -370,18 +373,18 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                      <button
                         onClick={() => setShowPatterns(!showPatterns)}
                         className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors hover:bg-slate-50 ${showPatterns ? 'text-[#3f7486]' : 'text-slate-300 hover:text-slate-600'}`}
-                        title={showPatterns ? "Hide Belluh's cards" : "Show Belluh's cards"} aria-label={showPatterns ? "Hide Belluh's cards" : "Show Belluh's cards"} aria-pressed={!showPatterns}
+                        title={showPatterns ? T.hideCards : T.showCards} aria-label={showPatterns ? T.hideCards : T.showCards} aria-pressed={!showPatterns}
                      >
                         {showPatterns ? <Eye size={20} strokeWidth={1.5} /> : <EyeOff size={20} strokeWidth={1.5} />}
                      </button>
                      {!isConstellation && (
                          <button 
                             onClick={() => { setShowWeeklyReport(true); trackEvent('weekly_report_opened'); }}
-                            aria-label="Our weeks" title="Our weeks"
+                            aria-label={T.ourWeeks} title={T.ourWeeks}
                             className="h-11 min-w-[2.75rem] px-3 rounded-full flex items-center justify-center gap-2 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors group"
                          >
                             <BookOpen size={20} strokeWidth={1.5} className="group-hover:scale-110 transition-transform"/>
-                            <span className="hidden md:inline text-sm font-medium">Our weeks</span>
+                            <span className="hidden md:inline text-sm font-medium">{T.ourWeeks}</span>
                          </button>
                      )}
                 </div>
@@ -400,7 +403,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                          {cards.length > 1 && (
                              <div className="flex items-center justify-between mb-2.5 px-1">
                                  <p className="text-[13px] font-semibold text-slate-400">{f(a.bellaHas, { n: cards.length })}</p>
-                                 <button type="button" onClick={() => setStackOpen(o => !o)} className="text-xs font-bold text-[#3f7486] hover:text-slate-900 transition-colors">{stackOpen ? 'Show less' : `Show ${hidden} more`}</button>
+                                 <button type="button" onClick={() => setStackOpen(o => !o)} className="text-xs font-bold text-[#3f7486] hover:text-slate-900 transition-colors">{stackOpen ? T.showLess : f(T.showMore, { n: hidden })}</button>
                              </div>
                          )}
                          <div className="relative space-y-3">
@@ -419,7 +422,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                                                      if (added.length) onOpenBelluh?.();
                                                  }} />
                                              {!['offer', 'after_plan', 'plan_nudge'].includes(m.meta?.kind) && !(Array.isArray(m.meta?.links) && m.meta.links.length) && (
-                                                 <button type="button" onClick={() => onOpenBelluh?.()} className="mt-2.5 inline-flex items-center gap-1 text-[13px] font-bold text-[#3f7486] hover:text-slate-900 transition-colors">Reply <ArrowRight size={13} /></button>
+                                                 <button type="button" onClick={() => onOpenBelluh?.()} className="mt-2.5 inline-flex items-center gap-1 text-[13px] font-bold text-[#3f7486] hover:text-slate-900 transition-colors">{T.reply} <ArrowRight size={13} /></button>
                                              )}
                                          </div>
                                          {waiting.length > 0 && m.meta?.kind !== 'offer' && (
@@ -430,7 +433,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                              ))}
                              {/* The rest of the stack peeks out underneath */}
                              {hidden > 0 && (
-                                 <button type="button" onClick={() => setStackOpen(true)} aria-label={`Show ${hidden} more from Belluh`} className="block w-full" style={{ marginTop: -2 }}>
+                                 <button type="button" onClick={() => setStackOpen(true)} aria-label={f(T.showMoreFrom, { n: hidden })} className="block w-full" style={{ marginTop: -2 }}>
                                      <div className="mx-4 h-3 rounded-b-[1.25rem] bg-white border border-t-0 border-slate-100 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.3)]" />
                                      {hidden > 1 && <div className="mx-8 h-2.5 rounded-b-[1rem] bg-white/80 border border-t-0 border-slate-100" />}
                                  </button>
@@ -450,8 +453,8 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                          </div>
                          <div>
                              <div className="flex items-center gap-2 mb-1">
-                                 <span className="text-[12px] font-semibold text-slate-400">Bella’s forecast</span>
-                                 <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-bold">{forecast.velocity} Velocity</span>
+                                 <span className="text-[12px] font-semibold text-slate-400">{T.forecast}</span>
+                                 <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-bold">{forecast.velocity === 'Accelerating' ? T.velAccelerating : forecast.velocity === 'Decelerating' ? T.velDecelerating : T.velStable}</span>
                              </div>
                              <p className="text-sm font-serif text-slate-800 leading-snug">{forecast.forecast}</p>
                          </div>
@@ -469,7 +472,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                 }`}
              >
                 <div className="mr-3">{isSearching ? <Loader2 size={18} className="animate-spin text-belluh-400" /> : <BelluhOrb size={20} />}</div>
-                <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={isArchived ? "Search past memories..." : isConstellation ? "Search across all constellations..." : a.askBella} className="flex-1 bg-transparent text-[16px] focus:outline-none font-normal placeholder:text-slate-400" />
+                <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={isArchived ? T.searchPast : isConstellation ? T.searchAll : a.askBella} className="flex-1 bg-transparent text-[16px] focus:outline-none font-normal placeholder:text-slate-400" />
                 {searchQuery && <button type="button" onClick={() => { setSearchQuery(''); setSearchAnswer(null); }}><X size={16} className="text-slate-400" /></button>}
              </form>
 
@@ -522,16 +525,16 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                               </h3>
                               {partnerAnswer && (
                                   <div className="mb-6 rounded-2xl bg-belluh-100 p-4">
-                                      <p className="text-xs font-bold text-belluh-900 mb-2">{partnerFirst} answered</p>
+                                      <p className="text-xs font-bold text-belluh-900 mb-2">{f(T.partnerAnswered, { name: partnerFirst })}</p>
                                       <div className="space-y-2 py-1" aria-hidden="true">
                                           <div className="h-2.5 rounded-full bg-belluh-200 w-11/12" />
                                           <div className="h-2.5 rounded-full bg-belluh-200 w-8/12" />
                                       </div>
-                                      <p className="text-xs text-belluh-900 mt-2">Write yours to see it.</p>
+                                      <p className="text-xs text-belluh-900 mt-2">{T.writeToSee}</p>
                                   </div>
                               )}
                               <div className="flex items-center text-sm font-bold">
-                                  <span className="inline-flex items-center gap-2 h-10 px-5 rounded-full bg-slate-900 text-white group-hover:bg-black transition-colors">{partnerAnswer ? 'Answer to unlock' : 'Tap to answer'} <ArrowRight size={15} /></span>
+                                  <span className="inline-flex items-center gap-2 h-10 px-5 rounded-full bg-slate-900 text-white group-hover:bg-black transition-colors">{partnerAnswer ? T.answerToUnlock : T.tapToAnswer} <ArrowRight size={15} /></span>
                               </div>
                           </div>
                       </div>
@@ -544,17 +547,17 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                       <h3 className="font-serif text-xl text-slate-800 leading-tight mb-5">{localQuestion(d0, todaysPrompt)}</h3>
                       <div className="grid gap-3 sm:grid-cols-2">
                           <div className="rounded-2xl bg-slate-50 p-4">
-                              <p className="text-xs font-bold text-slate-400 mb-2">You</p>
-                              <p className="font-serif text-[15px] text-slate-700 leading-relaxed line-clamp-5">{myAnswer.content || 'Answered with a photo or voice note'}</p>
+                              <p className="text-xs font-bold text-slate-400 mb-2">{T.you}</p>
+                              <p className="font-serif text-[15px] text-slate-700 leading-relaxed line-clamp-5">{myAnswer.content || T.answeredMedia}</p>
                           </div>
                           {partnerAnswer ? (
                               <div className="rounded-2xl bg-belluh-100 p-4 animate-scale-in">
                                   <p className="text-xs font-bold text-belluh-900 mb-2">{partnerFirst}</p>
-                                  <p className="font-serif text-[15px] text-belluh-900 leading-relaxed line-clamp-5">{partnerAnswer.content || 'Answered with a photo or voice note'}</p>
+                                  <p className="font-serif text-[15px] text-belluh-900 leading-relaxed line-clamp-5">{partnerAnswer.content || T.answeredMedia}</p>
                               </div>
                           ) : (
                               <div className="rounded-2xl border border-dashed border-slate-200 p-4 flex items-center">
-                                  <p className="text-sm text-slate-400">{hasPartnerInCircle ? "Your partner hasn't answered yet. You'll see theirs here." : 'Invite your partner from the Me tab to answer together.'}</p>
+                                  <p className="text-sm text-slate-400">{hasPartnerInCircle ? T.partnerNotYet : T.invitePartner}</p>
                               </div>
                           )}
                       </div>
@@ -622,7 +625,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                                     }}
                                     className={`text-xs font-bold px-5 py-3 rounded-full transition-all flex items-center gap-2 ${isSpiral ? 'bg-white/60 text-cyan-950 hover:bg-white' : 'bg-belluh-50 text-belluh-900 hover:bg-belluh-100'}`}
                                 >
-                                    {pattern.actionLabel || 'Understand Why'}
+                                    {pattern.actionLabel || T.understandWhy}
                                     <ArrowRight size={14} />
                                 </button>
                              </div>
@@ -656,7 +659,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                                 <div className="min-w-0 rounded-2xl rounded-tl-md bg-white border border-slate-100 px-4 py-3 shadow-sm">
                                     <p className="text-[13px] font-semibold text-[#7fa7b6]">Bella</p>
                                     <p className="mt-0.5 font-serif text-[15px] leading-snug text-slate-700">{replies[entry.id].body}</p>
-                                    <button type="button" onClick={() => onOpenBelluh?.()} className="mt-1.5 text-[13px] font-bold text-[#3f7486] hover:text-slate-900">Reply</button>
+                                    <button type="button" onClick={() => onOpenBelluh?.()} className="mt-1.5 text-[13px] font-bold text-[#3f7486] hover:text-slate-900">{T.reply}</button>
                                 </div>
                             </div>
                         )}

@@ -4,9 +4,13 @@ import { ArrowUp, Sparkles, ExternalLink } from 'lucide-react';
 import { belluhAgent, type UsMessage } from '../services/belluhAgent';
 import PlanCard from './PlanCard';
 import { trackEvent } from '../services/analytics';
+import { useI18n, useUi } from '../i18n';
+import usThread from '../i18n/ui/usThread';
 
 /** "Us": the two of you and Belluh in one conversation. Belluh only knows what you both share. */
 const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: React.ReactNode; inSheet?: boolean }> = ({ partnerName, myName, header, inSheet }) => {
+  const { f } = useI18n();
+  const T = useUi(usThread);
   const [messages, setMessages] = useState<UsMessage[] | null>(null);
   const [me, setMe] = useState<string | null>(null);
   const [text, setText] = useState('');
@@ -49,13 +53,13 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
     const r = await belluhAgent.usSend(t, ask);
     setMessages(prev => {
       const rest = (prev ?? []).filter(m => m.id !== temp.id);
-      return r?.messages?.length ? [...rest, ...r.messages] : [...rest, temp, { id: `err-${Date.now()}`, author: null, role: 'belluh', body: "That didn't send. Try again in a moment.", meta: {}, created_at: new Date().toISOString() }];
+      return r?.messages?.length ? [...rest, ...r.messages] : [...rest, temp, { id: `err-${Date.now()}`, author: null, role: 'belluh', body: T.sendFailed, meta: {}, created_at: new Date().toISOString() }];
     });
     setBusy(false);
   };
 
   const who = (m: UsMessage) => (m.role !== 'user' ? 'belluh' : m.author === me ? 'me' : 'partner');
-  const myFirst = (myName || 'You').split(' ')[0];
+  const myFirst = (myName || T.you).split(' ')[0];
 
   return (
     <div className={`flex flex-col ${inSheet ? 'h-full' : 'h-screen'} bg-white text-slate-900`}>
@@ -66,10 +70,10 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
           {messages !== null && messages.length === 0 && (
             <div className="text-center py-10 px-6">
               <div className="mx-auto w-fit"><BelluhOrb size={48} /></div>
-              <p className="mt-4 font-serif text-xl text-slate-900">You, {partnerName} and Bella</p>
-              <p className="mt-2 text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">Plan together, decide together, ask Bella together. Bella here only knows what you've both shared, never anyone's private entries.</p>
+              <p className="mt-4 font-serif text-xl text-slate-900">{f(T.emptyTitle, { partner: partnerName })}</p>
+              <p className="mt-2 text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">{T.emptyBody}</p>
               <div className="mt-5 flex flex-wrap justify-center gap-2">
-                {['Plan a date night for us this week', 'What have we both been writing about?', 'Give us something small to try tonight'].map(s => (
+                {[T.starterDate, T.starterWriting, T.starterTonight].map(s => (
                   <button key={s} onClick={() => setText(s)} className="px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:border-[#9bbecb] hover:text-[#3f7486]">{s}</button>
                 ))}
               </div>
@@ -101,7 +105,7 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
           })}
           {busy && ask && (
             <div className="flex items-center gap-3 pl-1.5 text-xs font-bold text-slate-400">
-              <BelluhOrb size={20} thinking /> Bella is thinking
+              <BelluhOrb size={20} thinking /> {T.thinking}
             </div>
           )}
           <div ref={end} className="h-64" aria-hidden="true" />
@@ -109,18 +113,18 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
       </div>
       <div className={`fixed ${inSheet ? 'bottom-4' : 'bottom-24 md:bottom-28 lg:bottom-6 lg:left-[var(--sidebar-w,16rem)]'} left-0 right-0 z-20 px-4 pt-8 bg-gradient-to-t from-belluh-25 via-belluh-25 to-transparent`}>
         <div className="max-w-3xl mx-auto">
-          <p className="text-center text-[10px] text-slate-400 mb-2">{myFirst} and {partnerName} both see this. Belluh only knows what you've both shared.</p>
+          <p className="text-center text-[10px] text-slate-400 mb-2">{f(T.bothSee, { me: myFirst, partner: partnerName })}</p>
           <div className="w-full rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-200 bg-white flex items-center p-2 pr-3 min-h-[60px] focus-within:border-belluh-200">
-            <button type="button" onClick={() => setAsk(!ask)} aria-pressed={ask} title={ask ? 'Belluh will answer' : `Just to ${partnerName}`}
+            <button type="button" onClick={() => setAsk(!ask)} aria-pressed={ask} title={ask ? T.bellaAnswers : f(T.justTo, { partner: partnerName })}
               className={`shrink-0 h-9 px-3 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors ${ask ? 'bg-[#9bbecb] text-white' : 'bg-slate-100 text-slate-500'}`}>
-              <Sparkles size={13} /> {ask ? 'Bella' : 'Off'}
+              <Sparkles size={13} /> {ask ? 'Bella' : T.off}
             </button>
             <textarea value={text} onChange={e => setText(e.target.value)} rows={1}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-              placeholder={ask ? `Ask Bella, with ${partnerName}…` : `Message ${partnerName}…`}
-              aria-label={`Message ${partnerName} and Bella`}
+              placeholder={ask ? f(T.askWith, { partner: partnerName }) : f(T.messageTo, { partner: partnerName })}
+              aria-label={f(T.inputLabel, { partner: partnerName })}
               className="flex-1 bg-transparent border-none px-3 py-2 max-h-32 resize-none focus:outline-none text-[16px] text-slate-800 placeholder:text-slate-400" style={{ overflow: 'hidden' }} />
-            <button aria-label="Send to Us" onClick={send} disabled={!text.trim() || busy}
+            <button aria-label={T.send} onClick={send} disabled={!text.trim() || busy}
               className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${text.trim() ? 'bg-[#9bbecb] text-white' : 'bg-slate-100 text-slate-300'}`}>
               <ArrowUp size={19} strokeWidth={2.5} />
             </button>

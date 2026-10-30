@@ -5,6 +5,12 @@ import BelluhOrb from '../components/BelluhOrb';
 import BelluhSpeech from '../components/BelluhSpeech';
 import { belluh } from '../lib/belluhPresence';
 import { supabase } from '../lib/supabaseClient';
+import { useI18n, useUi } from '../i18n';
+import authStrings from '../i18n/ui/auth';
+
+/** A translated sentence with {slots} filled by links or styled text, so word order stays the language's own. */
+const withSlots = (s: string, slots: Record<string, React.ReactNode>) =>
+  s.split(/(\{\w+\})/).map((part, i) => { const m = /^\{(\w+)\}$/.exec(part); return m && m[1] in slots ? <React.Fragment key={i}>{slots[m[1]]}</React.Fragment> : part; });
 
 interface AuthProps {
   onLogin: () => void;
@@ -25,6 +31,8 @@ const GoogleIcon = () => (
 );
 
 const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialView = 'signup', onBack }) => {
+  const T = useUi(authStrings);
+  const { f } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -69,7 +77,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
       });
       if (error) throw error;
     } catch (error: any) {
-      onShowToast(error.message || 'Google login failed', 'error');
+      onShowToast(error.message || T.toast.googleFailed, 'error');
       setLoading(false);
     }
   };
@@ -81,7 +89,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
     if (loading || !email || !password) return;
     
     if (isSignUp && !isPasswordValid) {
-        onShowToast("Please meet all password requirements.", "error");
+        onShowToast(T.toast.requirements, "error");
         return;
     }
 
@@ -104,7 +112,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
             const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
             setIsSignUp(false);
             if (!loginError) { stayBusy = true; onLogin(); return; }
-            onShowToast("You already have an account. That password didn't match it: try again, or tap Forgot?", "info");
+            onShowToast(T.toast.exists, "info");
             return;
         }
         
@@ -136,7 +144,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
         onLogin();
       }
     } catch (error: any) {
-      onShowToast(error.message || 'Authentication failed', 'error');
+      onShowToast(error.message || T.toast.authFailed, 'error');
     } finally {
       release();
       // If the journal hasn't opened within a few seconds, let them try again
@@ -145,15 +153,15 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
   };
 
   const forgot = async () => {
-    if (!email) { onShowToast('Type your email above first, then tap Forgot.', 'info'); return; }
+    if (!email) { onShowToast(T.toast.emailFirst, 'info'); return; }
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
     if (error) onShowToast(error.message, 'error');
-    else onShowToast(`We sent a reset link to ${email}.`, 'success');
+    else onShowToast(f(T.toast.resetSent, { email }), 'success');
   };
   const resend = async () => {
     if (!sentTo) return;
     const { error } = await supabase.auth.resend({ type: 'signup', email: sentTo });
-    onShowToast(error ? error.message : 'Sent again. Check your inbox and spam folder.', error ? 'error' : 'success');
+    onShowToast(error ? error.message : T.toast.sentAgain, error ? 'error' : 'success');
   };
 
   const Requirement = ({ met, text }: { met: boolean; text: string }) => (
@@ -164,7 +172,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
   );
 
   const type = (set: (v: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => { set(e.target.value); belluh.key(); };
-  const line = sentTo ? "I'll be right here when you're back." : isSignUp ? "Write a few lines. I'll remember the rest." : 'I kept your place.';
+  const line = sentTo ? T.bella.sent : isSignUp ? T.bella.signUp : T.bella.logIn;
   const field = 'w-full bg-white/90 border border-slate-200/80 rounded-2xl px-4 py-3.5 text-[16px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#CDE9F2]/70 focus:border-[#9bbecb] transition-all';
 
   return (
@@ -172,9 +180,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
       <div className="absolute -top-40 -left-32 w-[560px] h-[560px] rounded-full bg-[#CDE9F2]/60 blur-[120px] pointer-events-none animate-float"></div>
       <div className="absolute -bottom-48 -right-24 w-[520px] h-[520px] rounded-full bg-[#f0addd]/25 blur-[120px] pointer-events-none animate-pulse-slow"></div>
       {onBack && (
-        <button onClick={onBack} aria-label="Back" className="group absolute z-20 top-4 left-3 md:top-7 md:left-7 inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-white/70 transition-colors">
+        <button onClick={onBack} aria-label={T.back} className="group absolute z-20 top-4 left-3 md:top-7 md:left-7 inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-white/70 transition-colors">
           <ArrowLeft size={18} className="transition-transform group-hover:-translate-x-0.5" />
-          Back
+          {T.back}
         </button>
       )}
       {/* Belluh's side: the living water, saying hello */}
@@ -189,7 +197,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
             <BelluhSpeech key={line} text={line} delay={400} />
           </p>
           <p className="hidden md:block mt-10 font-serif text-4xl lg:text-5xl leading-[1.1] tracking-tight">
-            <span className="text-[#9bbecb]">Your story,</span><br /><span className="text-[#f0addd] italic">kept between you.</span>
+            <span className="text-[#9bbecb]">{T.heroLine1}</span><br /><span className="text-[#f0addd] italic">{T.heroLine2}</span>
           </p>
         </div>
       </div>
@@ -199,27 +207,27 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
         {sentTo ? (
         <div className="w-full max-w-sm animate-slide-up">
           <Mail size={28} className="text-[#9bbecb]" />
-          <h1 className="mt-5 text-3xl md:text-4xl font-serif text-slate-900 tracking-tight">Check your inbox.</h1>
-          <p className="mt-3 text-slate-500 leading-relaxed">We sent a link to <span className="font-semibold text-slate-800">{sentTo}</span>. Open it to finish creating your account, then come back and log in.</p>
-          <button onClick={() => { setSentTo(null); setIsSignUp(false); setPassword(''); }} className="mt-8 w-full h-14 rounded-full bg-slate-900 text-white font-bold text-[15px] inline-flex items-center justify-center gap-2 hover:bg-black transition-colors">I've confirmed, log in <ArrowRight size={16} /></button>
-          <p className="mt-5 text-center text-sm text-slate-500">Nothing yet? <button type="button" onClick={resend} className="font-bold text-slate-900 hover:text-[#3f7486] transition-colors">Send it again</button></p>
+          <h1 className="mt-5 text-3xl md:text-4xl font-serif text-slate-900 tracking-tight">{T.check.title}</h1>
+          <p className="mt-3 text-slate-500 leading-relaxed">{withSlots(T.check.body, { email: <span className="font-semibold text-slate-800">{sentTo}</span> })}</p>
+          <button onClick={() => { setSentTo(null); setIsSignUp(false); setPassword(''); }} className="mt-8 w-full h-14 rounded-full bg-slate-900 text-white font-bold text-[15px] inline-flex items-center justify-center gap-2 hover:bg-black transition-colors">{T.check.confirmed} <ArrowRight size={16} /></button>
+          <p className="mt-5 text-center text-sm text-slate-500">{T.check.nothingYet} <button type="button" onClick={resend} className="font-bold text-slate-900 hover:text-[#3f7486] transition-colors">{T.check.sendAgain}</button></p>
         </div>
         ) : (
         <div className="w-full max-w-sm animate-slide-up">
           <h1 className="text-3xl md:text-4xl font-serif text-slate-900 mb-2 tracking-tight">
-            {isSignUp ? 'Start your story.' : 'Welcome back.'}
+            {isSignUp ? T.startStory : T.welcomeBack}
           </h1>
-          <p className="text-slate-500 mb-7">{isSignUp ? 'Free to start. Bring your partner whenever you’re ready.' : 'Pick up where the two of you left off.'}</p>
+          <p className="text-slate-500 mb-7">{isSignUp ? T.freeToStart : T.pickUp}</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label htmlFor="auth-email" className="text-xs font-bold text-slate-700 ml-1">Email</label>
+              <label htmlFor="auth-email" className="text-xs font-bold text-slate-700 ml-1">{T.email}</label>
               <input id="auth-email" type="email" autoComplete="email" value={email} onChange={type(setEmail)} placeholder="name@example.com" className={field} autoFocus required />
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label htmlFor="auth-password" className="text-xs font-bold text-slate-700 ml-1">Password</label>
-                {!isSignUp && <button type="button" onClick={forgot} className="text-xs font-semibold text-slate-400 hover:text-slate-900 transition-colors mr-1">Forgot?</button>}
+                <label htmlFor="auth-password" className="text-xs font-bold text-slate-700 ml-1">{T.password}</label>
+                {!isSignUp && <button type="button" onClick={forgot} className="text-xs font-semibold text-slate-400 hover:text-slate-900 transition-colors mr-1">{T.forgot}</button>}
               </div>
               <div className="relative">
                 <input
@@ -228,20 +236,20 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
                   autoComplete={isSignUp ? 'new-password' : 'current-password'}
                   value={password}
                   onChange={type(setPassword)}
-                  placeholder={isSignUp ? 'At least 8 characters' : 'Your password'}
+                  placeholder={isSignUp ? T.newPasswordPlaceholder : T.passwordPlaceholder}
                   className={`${field} pr-12`}
                   required
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? T.hidePassword : T.showPassword} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
               {isSignUp && (
                 <div className="pt-2.5 px-1 grid grid-cols-2 gap-x-4 gap-y-2 animate-fade-in">
-                  <Requirement met={hasMinLength} text="8+ characters" />
-                  <Requirement met={hasLower} text="Lowercase" />
-                  <Requirement met={hasUpper} text="Uppercase" />
-                  <Requirement met={hasNumber} text="A number" />
+                  <Requirement met={hasMinLength} text={T.req.length} />
+                  <Requirement met={hasLower} text={T.req.lower} />
+                  <Requirement met={hasUpper} text={T.req.upper} />
+                  <Requirement met={hasNumber} text={T.req.number} />
                 </div>
               )}
             </div>
@@ -251,11 +259,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
               disabled={loading || !email || !password || (isSignUp && !isPasswordValid)}
               className="w-full h-14 bg-slate-900 text-white rounded-full font-bold text-[15px] hover:bg-black transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)] disabled:opacity-25 disabled:shadow-none disabled:cursor-not-allowed !mt-7"
             >
-              {loading ? <span>{isSignUp ? 'Creating your account...' : 'Opening your journal...'}</span> : <><span>{isSignUp ? 'Create account' : 'Log in'}</span><ArrowRight size={16} /></>}
+              {loading ? <span>{isSignUp ? T.creating : T.opening}</span> : <><span>{isSignUp ? T.createAccount : T.logIn}</span><ArrowRight size={16} /></>}
             </button>
           </form>
 
-          <p className="my-5 text-center text-sm text-slate-400">or</p>
+          <p className="my-5 text-center text-sm text-slate-400">{T.or}</p>
 
           <button
             onClick={handleGoogleLogin}
@@ -263,26 +271,29 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
             className="w-full h-14 bg-white text-slate-800 border border-slate-200 rounded-full font-bold text-[15px] hover:border-slate-400 transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-70"
           >
             <GoogleIcon />
-            <span>Continue with Google</span>
+            <span>{T.google}</span>
           </button>
 
 
           {isSignUp && (
             <p className="text-center text-xs text-slate-400 mt-5 leading-relaxed">
-              By creating an account, you agree to our <button type="button" onClick={() => onShowLegal('tos')} className="font-bold hover:text-slate-700 underline decoration-slate-300 underline-offset-2">Terms</button> and <button type="button" onClick={() => onShowLegal('privacy')} className="font-bold hover:text-slate-700 underline decoration-slate-300 underline-offset-2">Privacy Policy</button>.
+              {withSlots(T.agree, {
+                terms: <button type="button" onClick={() => onShowLegal('tos')} className="font-bold hover:text-slate-700 underline decoration-slate-300 underline-offset-2">{T.terms}</button>,
+                privacy: <button type="button" onClick={() => onShowLegal('privacy')} className="font-bold hover:text-slate-700 underline decoration-slate-300 underline-offset-2">{T.privacy}</button>,
+              })}
             </p>
           )}
 
           <p className="mt-6 text-center text-sm text-slate-500">
-            {isSignUp ? 'Already have an account?' : 'New to Belluh?'}{' '}
+            {isSignUp ? T.haveAccount : T.newHere}{' '}
             <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="font-bold text-slate-900 hover:text-[#3f7486] transition-colors">
-              {isSignUp ? 'Log in' : 'Create an account'}
+              {isSignUp ? T.logIn : T.createAnAccount}
             </button>
           </p>
 
           <p className="mt-8 flex items-center justify-center gap-2 text-xs text-slate-400">
             <Lock size={12} />
-            Private entries stay yours. Encrypted in storage and in transit.
+            {T.encrypted}
           </p>
         </div>
         )}
