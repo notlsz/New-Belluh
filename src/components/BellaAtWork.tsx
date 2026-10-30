@@ -62,8 +62,21 @@ const STEP_MS = 1000, FIRST_MS = 900;
 const doneAt = (s: Scene) => FIRST_MS + s.steps.length * STEP_MS + 300;
 const clock = (ms: number) => `0:${String(Math.min(59, Math.floor(ms / 1000))).padStart(2, '0')}`;
 
+/** Open on the visitor's own city when it's one of these: Tokyo for Japan, Shanghai for Chinese, Paris for France. */
+function sceneForVisitor(): number {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? '';
+    const lang = (navigator.language || '').toLowerCase();
+    const at = (city: string) => SCENES.findIndex(x => x.city === city);
+    if (tz === 'Asia/Tokyo' || lang.startsWith('ja')) return at('Tokyo');
+    if (/^Asia\/(Shanghai|Chongqing|Hong_Kong|Taipei|Macau)$/.test(tz) || lang.startsWith('zh')) return at('Shanghai');
+    if (tz === 'Europe/Paris' || lang.startsWith('fr')) return at('Paris');
+  } catch { /* no locale */ }
+  return 0;
+}
+
 const BellaAtWork: React.FC = () => {
-  const [scene, setScene] = useState(0);
+  const [scene, setScene] = useState(sceneForVisitor);
   const [t, setT] = useState(0);            // ms since this scene started
   const [started, setStarted] = useState(false);
   const ref = useRef<HTMLElement>(null);
@@ -97,8 +110,8 @@ const BellaAtWork: React.FC = () => {
     <section id="at-work" ref={ref} className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         <div className="min-w-0 lg:col-span-5 lg:sticky lg:top-28">
-          <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
-            <span className="text-slate-900">It's tonight.</span><br />
+          <h2 className="font-display text-5xl md:text-6xl tracking-tight leading-[1.02]">
+            <span className="text-slate-900">It’s tonight.</span><br />
             <span className="text-slate-900">You forgot.</span>
           </h2>
           <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed max-w-md">
@@ -116,7 +129,7 @@ const BellaAtWork: React.FC = () => {
                 <button key={x.city} role="tab" aria-selected={on} onClick={() => pick(i)}
                   className="group shrink-0 text-left py-2 lg:py-3.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#9bbecb] rounded-lg">
                   <span className="flex items-baseline justify-between gap-4">
-                    <span className={`font-serif text-lg sm:text-xl lg:text-2xl transition-colors ${on ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'}`}>{x.city}</span>
+                    <span className={`font-display text-lg sm:text-xl lg:text-2xl transition-colors ${on ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'}`}>{x.city}</span>
                     <span className={`hidden lg:inline text-sm transition-colors ${on ? 'text-slate-500' : 'text-slate-400 group-hover:text-slate-500'}`}>{x.via}</span>
                   </span>
                   <span className="mt-2 lg:mt-3 block h-[2px] rounded-full bg-slate-100 overflow-hidden" aria-hidden="true">
