@@ -1,4 +1,5 @@
 
+import { useI18n } from '../i18n';
 import React, { useState, useEffect, useRef } from 'react';
 import BelluhOrb from '../components/BelluhOrb';
 import { belluh } from '../lib/belluhPresence';
@@ -115,6 +116,7 @@ const NoteDraft: React.FC<{ msg: AgentMessage; onSend: (id: string, text: string
 };
 
 const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremium, userName, initialMessage, onInitialMessageSent, onCompose, initialSpace, inSheet, onClose }) => {
+  const { d: { app: { chat: ch } }, f } = useI18n();
   // 'agent' = server-side Belluh with memory; 'legacy' = the original in-browser chat, used if the agent isn't deployed
   const [mode, setMode] = useState<'loading' | 'agent' | 'legacy'>('loading');
   const [partnerName, setPartnerName] = useState<string | null>(null);
@@ -297,9 +299,9 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
 
   // Ways in, from what Belluh knows, until the person has started talking to it
   const starters: string[] = mode !== 'agent' || agentMessages.some(m => m.role === 'user') ? [] : [
-    ...(partnerName ? [`What's been on ${partnerName}'s mind lately?`, `Help me say something to ${partnerName}`] : ['What patterns do you see in my journal?']),
+    ...(partnerName ? [f(ch.starterMind, { partner: partnerName }), f(ch.starterSay, { partner: partnerName })] : [ch.starterPatterns]),
     ...(week && !week.mine ? [`How do we make time for this week's thing?`] : []),
-    partnerName ? 'Plan something small for us this weekend' : 'What should I write about today?',
+    partnerName ? ch.starterPlan : ch.starterWrite,
   ];
   const sendNow = async (text: string) => {
     if (isTyping) return;
@@ -310,8 +312,8 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
   const me = firstName(userName);
   const spaceSwitch = (
     <div role="tablist" aria-label="Conversation" className="flex items-center bg-slate-100 rounded-full p-0.5 text-xs font-bold">
-      <button role="tab" aria-selected={space === 'me'} onClick={() => pickSpace('me')} className={`px-3 py-1.5 rounded-full whitespace-nowrap transition-colors ${space === 'me' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>Just you</button>
-      <button role="tab" aria-selected={space === 'us'} onClick={() => { pickSpace('us'); trackEvent('us_opened'); }} className={`px-3 py-1.5 rounded-full whitespace-nowrap transition-colors ${space === 'us' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>You &amp; {partnerName}</button>
+      <button role="tab" aria-selected={space === 'me'} onClick={() => pickSpace('me')} className={`px-3 py-1.5 rounded-full whitespace-nowrap transition-colors ${space === 'me' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>{ch.justYou}</button>
+      <button role="tab" aria-selected={space === 'us'} onClick={() => { pickSpace('us'); trackEvent('us_opened'); }} className={`px-3 py-1.5 rounded-full whitespace-nowrap transition-colors ${space === 'us' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>{f(ch.you, { partner: partnerName ?? '' })}</button>
     </div>
   );
 
@@ -354,7 +356,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
               )}
               {mode === 'agent' && (
                 <button onClick={openMemories} className="flex items-center gap-1.5 h-9 px-3 rounded-full text-[13px] font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-50">
-                  <Brain size={14} /> Memory
+                  <Brain size={14} /> {ch.memory}
                 </button>
               )}
               {closeBtn}
@@ -461,7 +463,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                     <div className="flex gap-4 md:gap-6 animate-fade-in pl-0">
                         <BelluhAvatar thinking />
                         <div className="flex items-center mt-2">
-                            <span className="text-sm text-slate-400 italic font-serif">{agentMessages[agentMessages.length - 1]?.meta?.photo_preview ? 'Looking at your photo' : isConflictMode ? 'Finding the words' : 'Thinking'}</span>
+                            <span className="text-sm text-slate-400 italic font-serif">{agentMessages[agentMessages.length - 1]?.meta?.photo_preview ? ch.lookingPhoto : isConflictMode ? ch.findingWords : ch.thinking}</span>
                         </div>
                     </div>
                 )}
@@ -487,7 +489,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                         aria-pressed={isConflictMode} className={`shrink-0 h-9 px-4 rounded-full transition-colors duration-300 inline-flex items-center gap-2 border text-[13px] font-semibold whitespace-nowrap ${isConflictMode ? 'bg-[#fdf0f8] text-[#b0457f] border-[#f0addd]' : 'bg-white text-slate-500 border-slate-200 hover:text-slate-800 hover:border-slate-300'}`}
                     >
                         <Wand2 size={14} />
-                        <span>{isConflictMode ? 'Mediating, tap to stop' : 'Mediate conflict'}</span>
+                        <span>{isConflictMode ? ch.mediating : ch.mediate}</span>
                     </button>
                 </div>
 
@@ -503,7 +505,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                         value={chatInput}
                         onChange={(e) => { setChatInput(e.target.value); belluh.key(); }}
                         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                        placeholder={isConflictMode ? "What happened? Be honest..." : "Message Bella..."}
+                        placeholder={isConflictMode ? ch.conflictPlaceholder : ch.placeholder}
                         className="w-full bg-transparent border-none px-6 py-3 max-h-32 resize-none focus:outline-none text-slate-800 placeholder:text-slate-400 text-[16px] leading-relaxed self-center"
                         rows={1}
                         style={{ overflow: 'hidden' }}
@@ -525,7 +527,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                 </div>
 
                 <p className="text-center text-[11px] text-slate-400 mt-3 w-full">
-                    {mode === 'agent' && partnerName ? `Bella never sees ${partnerName}’s private entries, and she can make mistakes.` : 'Bella can make mistakes.'}
+                    {mode === 'agent' && partnerName ? f(ch.disclaimerPartner, { partner: partnerName }) : ch.disclaimer}
                 </p>
             </div>
        </div>

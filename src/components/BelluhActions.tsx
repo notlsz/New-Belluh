@@ -4,6 +4,7 @@ import { belluhAgent, AgentMessage } from '../services/belluhAgent';
 import PlanCard from './PlanCard';
 import { prettyPhone } from '../lib/phone';
 import { trackEvent } from '../services/analytics';
+import { useI18n } from '../i18n';
 
 
 /**
@@ -19,6 +20,7 @@ const BelluhActions: React.FC<{
   onAsk?: (prompt: string) => void;
   onBusy?: (busy: boolean) => void;
 }> = ({ msg, partnerName, onAdded, onCompose, onAsk, onBusy }) => {
+  const { d, f } = useI18n(); const A = d.app.acts;
   const [status, setStatus] = useState<string | undefined>(msg.meta?.status);
   const [busy, setBusy] = useState(false);
   // Real products Belluh found (Shopify brands), each opening the shop's checkout with it in the cart
@@ -80,10 +82,10 @@ const BelluhActions: React.FC<{
                 <p className="mt-1 text-xs text-slate-400 truncate">{p.seller}</p>
                 {p.ready && p.deliversTo && <p className="mt-1.5 text-xs text-slate-500 line-clamp-2">To {p.deliversTo}</p>}
                 <div className="mt-2.5 flex items-center justify-between gap-2">
-                  <span className="font-serif text-base text-slate-900">{p.ready && p.total ? p.total : p.price}{p.ready && <span className="ml-1 font-sans text-[11px] text-slate-400">with tax</span>}</span>
+                  <span className="font-serif text-base text-slate-900">{p.ready && p.total ? p.total : p.price}{p.ready && <span className="ml-1 font-sans text-[11px] text-slate-400">{A.withTax}</span>}</span>
                   {p.ready
-                    ? <span className="inline-flex items-center gap-1 h-8 px-3 rounded-full bg-slate-900 text-white text-xs font-bold">Review and pay</span>
-                    : <span className="inline-flex items-center gap-1 text-xs font-bold text-[#3f7486]">Checkout <ArrowUpRight size={13} /></span>}
+                    ? <span className="inline-flex items-center gap-1 h-8 px-3 rounded-full bg-slate-900 text-white text-xs font-bold">{A.reviewPay}</span>
+                    : <span className="inline-flex items-center gap-1 text-xs font-bold text-[#3f7486]">{A.checkout} <ArrowUpRight size={13} /></span>}
                 </div>
               </div>
             </a>
@@ -101,11 +103,11 @@ const BelluhActions: React.FC<{
               <div className="mt-auto pt-4 flex items-center gap-1.5">
                 {x.bookable && onAsk && (
                   <button onClick={() => { trackEvent('belluh_spot_reserve', {}); onAsk(`Book us a table at ${x.name}${x.address ? `, ${x.address}` : ''}, for 2, at `); }}
-                    className="h-9 px-3.5 rounded-full bg-slate-900 text-white text-xs font-bold inline-flex items-center gap-1.5 hover:bg-black">Reserve</button>
+                    className="h-9 px-3.5 rounded-full bg-slate-900 text-white text-xs font-bold inline-flex items-center gap-1.5 hover:bg-black">{A.reserve}</button>
                 )}
                 <a href={x.map} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent('belluh_spot_map', {})}
-                  className="h-9 px-3 rounded-full border border-slate-200 text-xs font-bold text-slate-700 inline-flex items-center gap-1.5 hover:border-slate-400">Map <ArrowUpRight size={13} /></a>
-                {x.phone && <a href={`tel:${x.phone}`} aria-label={`Call ${x.name}`} className="h-9 px-3 rounded-full border border-slate-200 text-xs font-bold text-slate-700 inline-flex items-center gap-1.5 hover:border-slate-400"><Phone size={13} />Call</a>}
+                  className="h-9 px-3 rounded-full border border-slate-200 text-xs font-bold text-slate-700 inline-flex items-center gap-1.5 hover:border-slate-400">{A.map} <ArrowUpRight size={13} /></a>
+                {x.phone && <a href={`tel:${x.phone}`} aria-label={f(A.callPlace, { name: x.name })} className="h-9 px-3 rounded-full border border-slate-200 text-xs font-bold text-slate-700 inline-flex items-center gap-1.5 hover:border-slate-400"><Phone size={13} />Call</a>}
               </div>
             </div>
           ))}
@@ -132,32 +134,32 @@ const BelluhActions: React.FC<{
                 {c.when && <p className="mt-0.5 text-xs text-slate-500">{c.when}</p>}
                 {c.call && c.status !== 'booked' && (
                   <p className="mt-1 text-xs text-slate-500">
-                    {c.call.status === 'calling' ? `Belluh is on the phone with ${c.call.place}…`
-                      : c.call.status === 'failed' ? `Called ${c.call.place}: ${c.call.note ?? "they couldn't fit you in"}.`
+                    {c.call.status === 'calling' ? f(A.onPhone, { place: c.call.place })
+                      : c.call.status === 'failed' ? f(A.called, { place: c.call.place, note: c.call.note ?? A.noFit })
                       : <>{c.call.place} <a href={`tel:${c.call.phone}`} className="font-semibold text-[#3f7486] hover:underline">{prettyPhone(c.call.phone)}</a></>}
                   </p>
                 )}
-                {c.surprise && c.status !== 'booked' && <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-slate-400"><Lock size={11} /> A surprise. {partnerName ?? 'Your partner'} won't see this.</p>}
+                {c.surprise && c.status !== 'booked' && <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-slate-400"><Lock size={11} /> {f(A.surprise, { partner: partnerName ?? A.yourPartner })}</p>}
               </div>
             </div>
             {c.status === 'booked' ? (
-              <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#3f7486]"><Check size={14} /> Done{c.when ? '. In your calendar, with a reminder.' : '. Belluh will remember.'}</p>
+              <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#3f7486]"><Check size={14} /> {c.when ? A.doneCal : A.doneMem}</p>
             ) : c.call?.status === 'calling' ? null : (
               <div className="mt-3 flex flex-wrap items-center gap-1.5">
                 {c.call?.status === 'ready' && (
                   <button disabled={cardBusy === c.id} onClick={() => callFor(c.id)} className="h-9 px-3.5 rounded-full bg-slate-900 text-white text-xs font-bold disabled:opacity-60 inline-flex items-center gap-1.5">
-                    <Phone size={13} /> {cardBusy === c.id ? 'Calling…' : 'Call for me'}
+                    <Phone size={13} /> {cardBusy === c.id ? A.calling : A.callForMe}
                   </button>
                 )}
                 {c.call?.status !== 'calling' && (
                   <button disabled={cardBusy === c.id} onClick={() => markBooking(c.id, true)} className={c.call?.status === 'ready' ? 'h-9 px-3.5 rounded-full border border-slate-200 text-slate-700 text-xs font-bold disabled:opacity-60' : 'h-9 px-4 rounded-full bg-slate-900 text-white text-xs font-bold disabled:opacity-60'}>
-                    {cardBusy === c.id && c.call?.status !== 'ready' ? 'Saving…' : c.label}
+                    {cardBusy === c.id && c.call?.status !== 'ready' ? A.saving : c.label}
                   </button>
                 )}
                 {c.call?.status !== 'calling' && (
-                  <button disabled={cardBusy === c.id} onClick={() => markBooking(c.id, false)} className="h-9 px-1 rounded-full text-xs font-bold text-slate-400 hover:text-slate-700">Not now</button>
+                  <button disabled={cardBusy === c.id} onClick={() => markBooking(c.id, false)} className="h-9 px-1 rounded-full text-xs font-bold text-slate-400 hover:text-slate-700">{A.notNow}</button>
                 )}
-                <span className="ml-auto text-[11px] text-slate-400 hidden sm:block">Tap once it's done</span>
+                <span className="ml-auto text-[11px] text-slate-400 hidden sm:block">{A.tapDone}</span>
               </div>
             )}
           </div>
@@ -166,16 +168,16 @@ const BelluhActions: React.FC<{
       {kind === 'offer' && status === 'open' && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button disabled={busy} onClick={() => answer(true)} className="px-5 py-2.5 rounded-full bg-slate-900 text-white text-sm font-bold disabled:opacity-60">
-            {busy ? 'On it…' : 'Help me plan it'}
+            {busy ? A.onIt : A.helpPlan}
           </button>
-          <button disabled={busy} onClick={() => answer(false)} className="px-4 py-2.5 rounded-full text-sm font-bold text-slate-400 hover:text-slate-700">Not now</button>
+          <button disabled={busy} onClick={() => answer(false)} className="px-4 py-2.5 rounded-full text-sm font-bold text-slate-400 hover:text-slate-700">{A.notNow}</button>
         </div>
       )}
-      {kind === 'offer' && status === 'dismissed' && <p className="mt-2 text-xs text-slate-300">Okay, not now.</p>}
+      {kind === 'offer' && status === 'dismissed' && <p className="mt-2 text-xs text-slate-300">{A.okayNot}</p>}
       {kind === 'plan_nudge' && msg.meta?.plan_id && <div className="mt-3"><PlanCard planId={msg.meta.plan_id} partnerName={partnerName ?? null} /></div>}
       {kind === 'after_plan' && onCompose && (
-        <button onClick={() => onCompose(msg.meta?.prompt || 'How was it?')} className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 text-sm font-bold text-slate-700 hover:border-[#f0addd] shadow-sm">
-          <PenLine size={14} /> Write about it
+        <button onClick={() => onCompose(msg.meta?.prompt || A.howWasIt)} className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 text-sm font-bold text-slate-700 hover:border-[#f0addd] shadow-sm">
+          <PenLine size={14} /> {d.app.writeAboutIt}
         </button>
       )}
     </>

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Car, Check, Flower2, Gift, Loader2, Lock, MapPin, PenLine, TrainFront, UtensilsCrossed, Wallet, Ban } from 'lucide-react';
 import BelluhOrb from './BelluhOrb';
+import { useI18n, type Country } from '../i18n';
 
 /**
  * Bella at work: the night you forgot, handled while you watch. One request, then each thing Bella gets ready lands
@@ -8,79 +9,39 @@ import BelluhOrb from './BelluhOrb';
  * money without a yes). The same panic in four cities shows that Bella knows how love works where you live.
  */
 
-type Step = { icon: React.ElementType; title: string; detail: string; status: string; yours?: boolean };
-type Scene = { city: string; via: string; couple: [string, string]; ask: string; askEn?: string; steps: Step[]; reply: string };
+type SceneKey = keyof ReturnType<typeof useI18n>['d']['scenes'];
+const ICONS: Record<string, React.ElementType> = { table: UtensilsCrossed, flowers: Flower2, note: PenLine, ride: Car, train: TrainFront, gift: Gift, place: MapPin, money: Wallet, skip: Ban };
 
-const SCENES: Scene[] = [
-  {
-    city: 'New York', via: 'OpenTable, UrbanStems and Uber', couple: ['Maya', 'Dan'],
-    ask: 'Our anniversary is tonight and I completely forgot.',
-    steps: [
-      { icon: UtensilsCrossed, title: 'Table for two at 8, Lilia', detail: 'The pasta Dan still talks about, on OpenTable', status: 'Ready to book' },
-      { icon: Flower2, title: 'Peonies by 6', detail: 'His favorite, from UrbanStems, $79', status: 'Ready to pay' },
-      { icon: PenLine, title: 'A note in your words', detail: '“I lost track this week. Tonight is yours. Lilia at 8?”', status: 'Your yes sends it', yours: true },
-      { icon: Car, title: 'Uber at 7:35', detail: 'From home, about 18 minutes', status: 'Ready' },
-    ],
-    reply: 'Breathe. The peonies land by 6, the table is one tap away, and the note is yours to send.',
-  },
-  {
-    city: 'Tokyo', via: 'Tabelog, Rakuten and the trains', couple: ['Yui', 'Ren'],
-    ask: 'クリスマスイブ、何も予約してない…', askEn: "It's Christmas Eve and I haven't booked anything",
-    steps: [
-      { icon: UtensilsCrossed, title: 'Counter seats at 7 in Ebisu', detail: 'A yakitori place found on Tabelog', status: 'Ready to book' },
-      { icon: Gift, title: 'Pair mugs, gift-wrapped', detail: 'From Rakuten, wrapped the way it should be', status: 'Ready to pay' },
-      { icon: MapPin, title: 'The illuminations after', detail: 'Ebisu Garden Place, a five-minute walk', status: 'Planned' },
-      { icon: TrainFront, title: 'Home before the last train', detail: 'A reminder at 11:30', status: 'Reminder set' },
-    ],
-    reply: 'Christmas Eve is the night for two here. Counter seats keep it close, and the mugs come wrapped, the way Ren would.',
-  },
-  {
-    city: 'Shanghai', via: 'Dianping, WeChat and JD', couple: ['Lin', 'Wei'],
-    ask: '520 is tomorrow and I have nothing.',
-    steps: [
-      { icon: UtensilsCrossed, title: 'Rooftop dinner on the Bund, 7:30', detail: 'Found on Dianping, the queue opens at 5', status: 'Ready to book' },
-      { icon: Wallet, title: 'A ¥520 red packet', detail: 'Drafted for WeChat, to send at 5:20', status: 'Your yes sends it', yours: true },
-      { icon: Flower2, title: 'Eleven red roses', detail: 'One heart, one mind. From JD, by noon', status: 'Ready to pay' },
-      { icon: Ban, title: 'Skipped the clock', detail: 'The one gift never to give', status: 'Avoided' },
-    ],
-    reply: '520 is handled. Eleven roses say one heart, and the red packet goes out at 5:20 on the dot.',
-  },
-  {
-    city: 'Paris', via: 'TheFork, a florist and the Métro', couple: ['Camille', 'Hugo'],
-    ask: "C'est notre anniversaire ce soir… j'ai complètement oublié.", askEn: "It's our anniversary tonight and I completely forgot",
-    steps: [
-      { icon: UtensilsCrossed, title: 'A bistro in the Marais at 9', detail: 'Found on TheFork, the hour Parisians dine', status: 'Ready to book' },
-      { icon: Flower2, title: 'Seven red roses', detail: 'An odd number, never chrysanthemums. A florist on rue de Bretagne', status: 'Ready to pay' },
-      { icon: PenLine, title: 'A note in your words', detail: '“Pardon. Ce soir, c\u2019est toi et moi. 21h ?”', status: 'Your yes sends it', yours: true },
-      { icon: TrainFront, title: 'Home on the Métro', detail: 'A reminder before the last train, around 12:30', status: 'Reminder set' },
-    ],
-    reply: 'Dinner at 9, the way Paris does it. Seven roses, never an even dozen, and the note is yours to send.',
-  },
-];
-
-const STEP_MS = 1000, FIRST_MS = 900;
-const doneAt = (s: Scene) => FIRST_MS + s.steps.length * STEP_MS + 300;
-const clock = (ms: number) => `0:${String(Math.min(59, Math.floor(ms / 1000))).padStart(2, '0')}`;
-
-/** Open on the visitor's own city when it's one of these: Tokyo for Japan, Shanghai for Chinese, Paris for France. */
-function sceneForVisitor(): number {
-  try {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? '';
-    const lang = (navigator.language || '').toLowerCase();
-    const at = (city: string) => SCENES.findIndex(x => x.city === city);
-    if (tz === 'Asia/Tokyo' || lang.startsWith('ja')) return at('Tokyo');
-    if (/^Asia\/(Shanghai|Chongqing|Hong_Kong|Taipei|Macau)$/.test(tz) || lang.startsWith('zh')) return at('Shanghai');
-    if (tz === 'Europe/Paris' || lang.startsWith('fr')) return at('Paris');
-  } catch { /* no locale */ }
-  return 0;
+/** The four cities shown: where the reader lives first, then the places couples there would recognize. */
+export function citiesFor(country: Country, lang: string): SceneKey[] {
+  switch (country) {
+    case 'GB': return ['london', 'newyork', 'paris', 'tokyo'];
+    case 'CA': return lang === 'fr' ? ['montreal', 'paris', 'newyork', 'tokyo'] : ['toronto', 'newyork', 'paris', 'tokyo'];
+    case 'AU': return ['sydney', 'tokyo', 'london', 'newyork'];
+    case 'JP': return ['tokyo', 'paris', 'newyork', 'rome'];
+    case 'FR': return ['paris', 'rome', 'tokyo', 'newyork'];
+    case 'IT': return ['rome', 'paris', 'tokyo', 'newyork'];
+    case 'BR': return ['saopaulo', 'newyork', 'paris', 'tokyo'];
+    case 'CN': return ['shanghai', 'tokyo', 'paris', 'newyork'];
+    case 'CH': return ['zurich', 'paris', 'rome', 'tokyo'];
+    default: return ['newyork', 'tokyo', 'paris', 'rome'];
+  }
 }
 
+const STEP_MS = 1000, FIRST_MS = 900;
+const doneAt = (s: { steps: unknown[] }) => FIRST_MS + s.steps.length * STEP_MS + 300;
+const clock = (ms: number) => `0:${String(Math.min(59, Math.floor(ms / 1000))).padStart(2, '0')}`;
+
 const BellaAtWork: React.FC = () => {
-  const [scene, setScene] = useState(sceneForVisitor);
+  const { d, lang, country, f } = useI18n();
+  const t_ = d.atWork;
+  const keys = citiesFor(country, lang);
+  const scenes = keys.map(k => d.scenes[k]);
+  const [scene, setScene] = useState(0);
   const [t, setT] = useState(0);            // ms since this scene started
   const [started, setStarted] = useState(false);
   const ref = useRef<HTMLElement>(null);
-  const s = SCENES[scene];
+  const s = scenes[scene] ?? scenes[0];
   const total = doneAt(s);
 
   // Plays once when it comes into view; picking a city replays it there
@@ -111,19 +72,19 @@ const BellaAtWork: React.FC = () => {
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         <div className="min-w-0 lg:col-span-5 lg:sticky lg:top-28">
           <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
-            <span className="text-slate-900">It’s tonight.</span><br />
-            <span className="text-slate-900">You forgot.</span>
+            <span className="text-slate-900">{t_.line1}</span><br />
+            <span className="text-slate-900">{t_.line2}</span>
           </h2>
           <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed max-w-md">
-            Everyone has a night like this. Bella turns it around in seconds: the table, the flowers, the words, the way home. And it knows how love works where you live.
+            {t_.body}
           </p>
           <p className="mt-5 flex items-center gap-2 text-sm font-medium text-[#3f7486]">
             <Lock size={15} className="shrink-0" />
-            Nothing reaches your partner or costs a cent until you say yes.
+            {t_.lock}
           </p>
 
-          <div className="mt-10 flex flex-row lg:flex-col gap-4 sm:gap-6 lg:gap-0 overflow-x-auto no-scrollbar -mx-1 px-1" role="tablist" aria-label="Choose a city">
-            {SCENES.map((x, i) => {
+          <div className="mt-10 flex flex-row lg:flex-col gap-4 sm:gap-6 lg:gap-0 overflow-x-auto no-scrollbar -mx-1 px-1" role="tablist" aria-label={t_.chooseCity}>
+            {scenes.map((x, i) => {
               const on = i === scene;
               return (
                 <button key={x.city} role="tab" aria-selected={on} onClick={() => pick(i)}
@@ -141,15 +102,15 @@ const BellaAtWork: React.FC = () => {
           </div>
         </div>
 
-        <div className="min-w-0 lg:col-span-7" role="tabpanel" aria-label={`Bella in ${s.city}`}>
+        <div className="min-w-0 lg:col-span-7" role="tabpanel" aria-label={s.city}>
           <div className="rounded-[2rem] bg-white border border-slate-100 shadow-[0_30px_80px_-30px_rgba(63,116,134,0.35)] overflow-hidden">
             <div className="flex items-center gap-2.5 px-4 sm:px-6 h-16 border-b border-slate-100">
               <BelluhOrb size={24} />
               <span className="font-serif text-[17px] text-slate-900">Bella</span>
-              <span className="hidden sm:inline text-sm text-slate-400">with {s.couple[0]} in {s.city}</span>
+              <span className="hidden sm:inline text-sm text-slate-400">{f(t_.withIn, { name: s.couple[0], city: s.city })}</span>
               <span className="ml-auto flex items-center gap-1.5 text-sm text-slate-500" aria-live="polite">
                 {done ? <Check size={15} className="text-[#3f7486]" /> : <Loader2 size={15} className="animate-spin text-[#9bbecb]" />}
-                <span>{done ? 'Done in' : 'Working'}</span>
+                <span>{done ? t_.doneIn : t_.working}</span>
                 <span className="tabular-nums text-slate-400 w-9 text-right">{clock(Math.min(t, total))}</span>
               </span>
             </div>
@@ -158,23 +119,23 @@ const BellaAtWork: React.FC = () => {
               <div className="flex justify-end">
                 <div className="max-w-[85%] rounded-2xl rounded-br-md bg-slate-100 px-4 py-3">
                   <p className="text-[15px] text-slate-800">{s.ask}</p>
-                  {s.askEn && <p className="mt-1 text-xs text-slate-400">{s.askEn}</p>}
+                  {s.askLang !== lang && s.gloss && s.gloss !== s.ask && <p className="mt-1 text-xs text-slate-400">{s.gloss}</p>}
                 </div>
               </div>
 
               <ul className="mt-6 flex flex-col gap-1">
                 {s.steps.map((st, i) => {
                   const here = i < shown, next = i === shown && !done && started;
-                  const Icon = st.icon;
+                  const Icon = ICONS[st.icon] ?? PenLine;
                   return (
                     <li key={`${scene}-${i}`} className={`flex items-center gap-3 sm:gap-4 rounded-2xl px-3 py-3 transition-all duration-500 ${here ? 'opacity-100 translate-y-0' : next ? 'opacity-40 translate-y-0' : 'opacity-0 translate-y-1'}`}>
                       <Icon size={20} strokeWidth={1.75} className={`shrink-0 ${here ? 'text-[#3f7486]' : 'text-slate-300'}`} />
                       <span className="min-w-0 flex-1">
                         <span className="block text-[15px] font-semibold text-slate-900 leading-snug">{st.title}</span>
-                        <span className="block text-sm text-slate-500 leading-snug sm:truncate">{here || !next ? st.detail : 'Finding it'}</span>
-                        <span className={`sm:hidden mt-1 block text-xs font-semibold ${here ? (st.yours ? 'text-[#c4589f]' : 'text-[#3f7486]') : 'text-transparent'}`}>{st.status}</span>
+                        <span className="block text-sm text-slate-500 leading-snug sm:truncate">{here || !next ? st.detail : t_.finding}</span>
+                        <span className={`sm:hidden mt-1 block text-xs font-semibold ${here ? ('yours' in st && st.yours ? 'text-[#c4589f]' : 'text-[#3f7486]') : 'text-transparent'}`}>{st.status}</span>
                       </span>
-                      <span className={`hidden sm:block shrink-0 text-xs font-semibold whitespace-nowrap ${here ? (st.yours ? 'text-[#c4589f]' : 'text-[#3f7486]') : 'text-transparent'}`}>{st.status}</span>
+                      <span className={`hidden sm:block shrink-0 text-xs font-semibold whitespace-nowrap ${here ? ('yours' in st && st.yours ? 'text-[#c4589f]' : 'text-[#3f7486]') : 'text-transparent'}`}>{st.status}</span>
                     </li>
                   );
                 })}
@@ -186,7 +147,7 @@ const BellaAtWork: React.FC = () => {
               </div>
             </div>
           </div>
-          <p className="mt-4 text-center text-xs text-slate-400">Sample couples. Bella prepares; you tap to book, pay or send.</p>
+          <p className="mt-4 text-center text-xs text-slate-400">{t_.footnote}</p>
         </div>
       </div>
     </section>

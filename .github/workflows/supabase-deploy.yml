@@ -13,6 +13,10 @@
 #   WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN
 # Optional, for the same by plain SMS (Twilio):
 #   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM (a Twilio number or a Messaging Service SID, MG...)
+# Optional, for texting Bella on LINE (how couples in Japan message): a free LINE Official Account at manager.line.biz,
+# with the Messaging API on. From its channel in developers.line.biz:
+#   LINE_CHANNEL_SECRET        Basic settings → Channel secret
+#   LINE_CHANNEL_ACCESS_TOKEN  Messaging API → Channel access token (long-lived); the webhook is registered below
 # Optional, for texting Belluh on Telegram (the fastest: no business number or carrier registration):
 #   TELEGRAM_BOT_TOKEN     from @BotFather in Telegram (/newbot); the webhook is registered below
 # Optional, for iMessage (Linq: a real iPhone number, blue bubbles, SMS fallback for Android):
@@ -58,6 +62,8 @@ jobs:
       TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
       TWILIO_FROM: ${{ secrets.TWILIO_FROM }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      LINE_CHANNEL_SECRET: ${{ secrets.LINE_CHANNEL_SECRET }}
+      LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
       LINQ_API_KEY: ${{ secrets.LINQ_API_KEY }}
       LINQ_WEBHOOK_SECRET: ${{ secrets.LINQ_WEBHOOK_SECRET }}
       LINQ_FROM: ${{ secrets.LINQ_FROM }}
@@ -169,7 +175,7 @@ jobs:
             echo "::notice::Calls are off: add VAPI_API_KEY and VAPI_PHONE_NUMBER_ID (GOOGLE_PLACES_API_KEY is optional) to let Bella phone restaurants."
           fi
 
-      - name: Texting Belluh (WhatsApp, SMS, Telegram, iMessage) and reminders
+      - name: Texting Belluh (WhatsApp, SMS, Telegram, LINE, iMessage) and reminders
         if: steps.setup.outputs.ready == 'true'
         run: |
           on=""
@@ -206,6 +212,16 @@ jobs:
             on="yes"
           else
             echo "::notice::Telegram is off: add TELEGRAM_BOT_TOKEN (from @BotFather) to turn it on."
+          fi
+          if [ -n "$LINE_CHANNEL_SECRET" ] && [ -n "$LINE_CHANNEL_ACCESS_TOKEN" ]; then
+            echo "::add-mask::$LINE_CHANNEL_ACCESS_TOKEN"
+            supabase secrets set --project-ref "$PROJECT_REF" LINE_CHANNEL_SECRET="$LINE_CHANNEL_SECRET" LINE_CHANNEL_ACCESS_TOKEN="$LINE_CHANNEL_ACCESS_TOKEN"
+            supabase functions deploy line-webhook --project-ref "$PROJECT_REF" --no-verify-jwt
+            curl -sf -X PUT "https://api.line.me/v2/bot/channel/webhook/endpoint" -H "Authorization: Bearer ${LINE_CHANNEL_ACCESS_TOKEN}" -H 'Content-Type: application/json' \
+              -d "{\"endpoint\":\"https://${PROJECT_REF}.supabase.co/functions/v1/line-webhook\"}" > /dev/null && echo "LINE is on." || echo "::warning::LINE webhook not registered; set it in the LINE console."
+            on="yes"
+          else
+            echo "::notice::LINE is off: add LINE_CHANNEL_SECRET and LINE_CHANNEL_ACCESS_TOKEN to turn it on."
           fi
           if [ -n "$LINQ_API_KEY" ] && [ -n "$LINQ_WEBHOOK_SECRET" ]; then
             echo "::add-mask::$LINQ_API_KEY"

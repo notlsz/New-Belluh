@@ -3,27 +3,29 @@
 // LIST/FORGET dates, STOP/START. Each webhook verifies its provider's signature, then hands every message here.
 
 import {
-  parseCommand, localDateParts, listReply, HELP_TEXT, NOT_LINKED_TEXT, NOT_LINKED_SMS_TEXT, NOT_LINKED_TELEGRAM_TEXT, NOT_LINKED_IMESSAGE_TEXT, type StoredOccasion,
+  parseCommand, localDateParts, listReply, HELP_TEXT, NOT_LINKED_TEXT, NOT_LINKED_SMS_TEXT, NOT_LINKED_TELEGRAM_TEXT, NOT_LINKED_IMESSAGE_TEXT, NOT_LINKED_LINE_TEXT, type StoredOccasion,
 } from './occasions.ts';
 import { sendText } from './whatsapp.ts';
 import { sendSms } from './sms.ts';
-import { sendTelegram, telegramChat } from './telegram.ts';
+import { sendTelegram, telegramChat, quickReplies } from './telegram.ts';
+import { sendLine, lineUser } from './line.ts';
 import { sendLinq } from './linq.ts';
 import { db, loadCtx, weekAction } from './agentdb.ts';
 import { chat, sendNote, planRespond, checkin, offerRespond, bookingDone, latestPrepared, placeCall } from './agentcore.ts';
 
-export type Channel = 'whatsapp' | 'sms' | 'telegram' | 'imessage';
+export type Channel = 'whatsapp' | 'sms' | 'telegram' | 'imessage' | 'line';
 export interface Inbound { channel: Channel; id: string; phone: string; sentAt: string; text: string; kind: string }
 
 interface Link { user_id: string; timezone: string; reminders_enabled: boolean }
 
-const CONNECT_AGAIN: Record<Channel, string> = { whatsapp: 'Connect WhatsApp', sms: 'Connect by text', telegram: 'Connect Telegram', imessage: 'Connect iMessage' };
-const NOT_LINKED: Record<Channel, string> = { whatsapp: NOT_LINKED_TEXT, sms: NOT_LINKED_SMS_TEXT, telegram: NOT_LINKED_TELEGRAM_TEXT, imessage: NOT_LINKED_IMESSAGE_TEXT };
+const CONNECT_AGAIN: Record<Channel, string> = { whatsapp: 'Connect WhatsApp', sms: 'Connect by text', telegram: 'Connect Telegram', imessage: 'Connect iMessage', line: 'Connect LINE' };
+const NOT_LINKED: Record<Channel, string> = { whatsapp: NOT_LINKED_TEXT, sms: NOT_LINKED_SMS_TEXT, telegram: NOT_LINKED_TELEGRAM_TEXT, imessage: NOT_LINKED_IMESSAGE_TEXT, line: NOT_LINKED_LINE_TEXT };
 
 /** Sends on whichever app the person is using; a Telegram chat is stored as "tg:<chat id>". */
 export async function sendOn(channel: string | null, to: string, body: string): Promise<string | null> {
-  const tg = telegramChat(to);
+  const tg = telegramChat(to), ln = lineUser(to);
   if (channel === 'telegram' || tg) return tg ? sendTelegram(tg, body) : null;
+  if (channel === 'line' || ln) return ln ? sendLine(ln, body, quickReplies(body)) : null;
   if (channel === 'imessage') return sendLinq(to, body);
   return channel === 'sms' ? sendSms(to, body) : sendText(to, body);
 }

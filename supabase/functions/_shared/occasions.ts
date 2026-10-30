@@ -239,6 +239,9 @@ export const NOT_LINKED_TEXT =
 export const NOT_LINKED_TELEGRAM_TEXT =
   "Hi, I'm Bella. To connect, open Belluh, go to Me → Settings, and tap Connect Telegram. It brings you back here, already linked.";
 
+export const NOT_LINKED_LINE_TEXT =
+  "Hi, I'm Bella. To connect, open Belluh, go to Me → Settings, and tap Connect LINE. It brings you back here with a code ready to send.";
+
 export const NOT_LINKED_IMESSAGE_TEXT =
   "Hi, I'm Bella. To text me here, open Belluh, go to Me → Settings, and tap Connect iMessage. It opens Messages with the code ready to send.";
 

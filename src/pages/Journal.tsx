@@ -1,4 +1,5 @@
 
+import { useI18n, localQuestion } from '../i18n';
 import React, { useState, useRef } from 'react';
 import { EntryType, Mood } from '../types';
 import { DAILY_PROMPTS, MOOD_EMOJIS } from '../constants';
@@ -18,6 +19,8 @@ interface JournalProps {
 }
 
 const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPremium, initialPrompt }) => {
+  const { d, f, date } = useI18n();
+  const a = d.app, c = d.app.compose;
   const [content, setContent] = useState('');
   const [selectedMood, setSelectedMood] = useState<Mood | undefined>(undefined);
   // "+" opens a blank page; today's question is one tap away. Opening from the question card starts on it.
@@ -200,17 +203,17 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
         <div className="relative flex-1 flex flex-col">
             <div className={`transition-all duration-500 flex-1 flex flex-col ${step === 'write' ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
                 <div className="mb-6 mt-2">
-                    <p className="text-[13px] font-semibold text-[#9bbecb] mb-3">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                    <p className="text-[13px] font-semibold text-[#9bbecb] mb-3">{date(new Date(), { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                     {dailyPrompt ? (
                         <>
-                            <p className="text-[13px] font-semibold text-[#e58fc9] mb-2">{dailyPrompt === todaysQuestion ? "Today's question" : 'Prompt'}</p>
-                            <p className="text-[1.75rem] text-slate-900 font-serif leading-tight">{dailyPrompt}</p>
-                            <button type="button" onClick={() => setDailyPrompt(null)} className="mt-3 text-sm font-semibold text-slate-400 hover:text-slate-800 transition-colors">Write freely instead</button>
+                            <p className="text-[13px] font-semibold text-[#e58fc9] mb-2">{dailyPrompt === todaysQuestion ? a.todaysQuestion : c.prompt}</p>
+                            <p className="text-[1.75rem] text-slate-900 font-serif leading-tight">{localQuestion(d, dailyPrompt)}</p>
+                            <button type="button" onClick={() => setDailyPrompt(null)} className="mt-3 text-sm font-semibold text-slate-400 hover:text-slate-800 transition-colors">{c.writeFreely}</button>
                         </>
                     ) : (
                         <>
-                            <p className="text-[1.75rem] text-slate-900 font-serif leading-tight">What's on your mind?</p>
-                            <button type="button" onClick={() => setDailyPrompt(todaysQuestion)} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#3f7486] hover:text-slate-900 transition-colors">Answer today's question instead <ArrowRight size={14} /></button>
+                            <p className="text-[1.75rem] text-slate-900 font-serif leading-tight">{c.title}</p>
+                            <button type="button" onClick={() => setDailyPrompt(todaysQuestion)} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#3f7486] hover:text-slate-900 transition-colors">{c.answerQuestion} <ArrowRight size={14} /></button>
                         </>
                     )}
                 </div>
@@ -241,7 +244,7 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
                 <textarea
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder={isTranscribing ? "Transcribing your thoughts..." : "A line or two is enough."}
+                    placeholder={isTranscribing ? c.transcribing : c.placeholder}
                     className="w-full min-h-[10rem] bg-transparent text-slate-800 placeholder:text-slate-300 focus:outline-none resize-none font-serif text-xl leading-relaxed flex-1 transition-opacity duration-300"
                     style={{ opacity: isTranscribing ? 0.5 : 1 }}
                     autoFocus
@@ -249,8 +252,8 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
                 />
                 {/* One step: mood is optional, sharing is one tap, Save is right here */}
                 <div className="mt-auto pt-4">
-                    <p className="text-xs text-slate-400 mb-2">How did it feel? <span className="text-slate-300">Optional</span></p>
-                    <div className="grid grid-cols-9 gap-0.5 pb-4" role="group" aria-label="How does it feel? Optional">
+                    <p className="text-xs text-slate-400 mb-2">{c.howFelt} <span className="text-slate-300">{c.optional}</span></p>
+                    <div className="grid grid-cols-9 gap-0.5 pb-4" role="group" aria-label={`${c.howFelt} ${c.optional}`}>
                         {Object.values(Mood).map((m) => (
                             <button key={m} type="button" aria-label={m} aria-pressed={selectedMood === m} title={m}
                                 onClick={() => setSelectedMood(selectedMood === m ? undefined : m)}
@@ -264,19 +267,19 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
                             <button onClick={handleMicClick} disabled={isBusy} aria-label={isRecording ? 'Stop recording' : 'Record a voice note'} className={`h-11 w-11 shrink-0 rounded-full flex items-center justify-center transition-all ${isRecording ? 'bg-[#fdf0f8] text-[#e58fc9]' : 'text-slate-500 hover:bg-slate-100'}`}>
                                 {isRecording ? <div className="w-2.5 h-2.5 bg-[#e58fc9] rounded-sm animate-pulse" /> : (isTranscribing ? <Loader2 size={18} className="animate-spin" /> : <Mic size={18} />)}
                             </button>
-                            {!isRecording && !isBusy && <button onClick={handleImageClick} aria-label="Add a photo" className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all ${hasImage ? 'text-[#e58fc9]' : 'text-slate-500 hover:bg-slate-100'}`}><ImageIcon size={18} /></button>}
-                            <div role="radiogroup" aria-label="Who sees this" className="h-11 shrink-0 p-1 rounded-full bg-slate-100/80 flex items-center text-xs font-bold">
-                                <button type="button" role="radio" aria-checked={!isPrivate} onClick={() => setIsPrivate(false)} className={`h-9 px-3 rounded-full inline-flex items-center gap-1.5 transition-all ${!isPrivate ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}><Users size={13} /> {(partnerName || '').split(' ')[0] ? `With ${(partnerName || '').split(' ')[0]}` : 'Shared'}</button>
-                                <button type="button" role="radio" aria-checked={isPrivate} onClick={() => setIsPrivate(true)} className={`h-9 px-3 rounded-full inline-flex items-center gap-1.5 transition-all ${isPrivate ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}><Lock size={13} /> Just me</button>
+                            {!isRecording && !isBusy && <button onClick={handleImageClick} aria-label={c.addPhoto} className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all ${hasImage ? 'text-[#e58fc9]' : 'text-slate-500 hover:bg-slate-100'}`}><ImageIcon size={18} /></button>}
+                            <div role="radiogroup" aria-label={c.whoSees} className="h-11 shrink-0 p-1 rounded-full bg-slate-100/80 flex items-center text-xs font-bold">
+                                <button type="button" role="radio" aria-checked={!isPrivate} onClick={() => setIsPrivate(false)} className={`h-9 px-3 rounded-full inline-flex items-center gap-1.5 transition-all ${!isPrivate ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}><Users size={13} /> {(partnerName || '').split(' ')[0] ? f(c.withPartner, { partner: (partnerName || '').split(' ')[0] }) : d.common.shared}</button>
+                                <button type="button" role="radio" aria-checked={isPrivate} onClick={() => setIsPrivate(true)} className={`h-9 px-3 rounded-full inline-flex items-center gap-1.5 transition-all ${isPrivate ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}><Lock size={13} /> {c.justMe}</button>
                             </div>
                         </div>
                         {!isRecording && !isBusy && (
-                            <button onClick={handleFinalSubmit} disabled={isSaving || !(content.trim() || hasImage || audioUrl)} aria-label="Save to Story" className="h-11 w-11 sm:w-auto sm:px-5 bg-slate-900 text-white rounded-full font-bold text-sm inline-flex items-center justify-center gap-2 shrink-0 transition-opacity disabled:opacity-25">
-                                {isSaving ? <Loader2 size={16} className="animate-spin" /> : <><span className="hidden sm:inline">Save to Story</span><ArrowUp size={17} /></>}
+                            <button onClick={handleFinalSubmit} disabled={isSaving || !(content.trim() || hasImage || audioUrl)} aria-label={c.save} className="h-11 w-11 sm:w-auto sm:px-5 bg-slate-900 text-white rounded-full font-bold text-sm inline-flex items-center justify-center gap-2 shrink-0 transition-opacity disabled:opacity-25">
+                                {isSaving ? <Loader2 size={16} className="animate-spin" /> : <><span className="hidden sm:inline">{c.save}</span><ArrowUp size={17} /></>}
                             </button>
                         )}
                     </div>
-                    <p className="mt-3 text-xs text-slate-400">{isPrivate ? `Only you can see this. Belluh never shows it to ${partnerName || 'your partner'}.` : `${partnerName || 'Your partner'} will see this.`}</p>
+                    <p className="mt-3 text-xs text-slate-400">{isPrivate ? f(c.privateNote, { partner: partnerName || c.yourPartner }) : f(c.sharedNote, { partner: partnerName || c.yourPartner })}</p>
                 </div>
             </div>
         </div>

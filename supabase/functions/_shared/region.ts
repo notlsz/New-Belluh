@@ -33,7 +33,11 @@ export const KITS: Record<string, Kit> = {
   US: {
     name: 'the United States', money: '$80', searchIn: 'English', maps: 'google', links: {},
     apps: 'OpenTable and Resy for tables, DoorDash and Uber Eats for delivery, Uber and Lyft for rides, Amazon and Target for gifts.',
-    culture: `- Big days for couples: Valentine's Day (Feb 14), anniversaries, birthdays; Mother's and Father's Day if they have kids. Many couples mark the day they met and the day they got together.
+    culture: `- How love is said: out loud and often ("I love you", "I'm proud of you"), and appreciated when it is. Many couples know the five love languages; therapy and couples counseling are normal, not a crisis.
+- Life is scheduled and busy: date night works best as a standing ritual on the calendar. Partners expect to be equals and to talk things through directly.
+- Families can live states apart, so holidays mean deciding whose family and booking travel early.
+- In English: warm, casual, direct.
+- Big days for couples: Valentine's Day (Feb 14), anniversaries, birthdays; Mother's and Father's Day if they have kids. Many couples mark the day they met and the day they got together.
 - Tip 18 to 20 percent at sit-down restaurants. Popular places book up two to four weeks ahead on OpenTable or Resy; Friday and Saturday at 7:30 go first.
 - A gift lands best when it's specific and personal; a handwritten card counts for a lot. Experiences (a class, a trip, a show) often beat things.`,
   },
@@ -47,7 +51,11 @@ export const KITS: Record<string, Kit> = {
       ride: [['Uber there', uber], ['Transit directions', transit]],
     },
     apps: 'OpenTable for tables, Uber Eats, DoorDash and SkipTheDishes for delivery, Uber and Lyft for rides, Amazon.ca for gifts.',
-    culture: `- Valentine's Day, anniversaries and birthdays, much like the US. In Quebec, French first and a later dinner hour.
+    culture: `- How love is said: friendly and polite, between American directness and British reserve. Couples value balance and fairness at home.
+- Seasons rule: winter means planning cosy indoor dates and trips south; summer means cottage weekends, lakes and patios.
+- Quebec is its own culture: French first, a later dinner, a strong sense of identity; the Fête nationale (June 24) matters there.
+- In Canadian English, warm and easygoing (Canadian spelling); in Quebec French, tutoie and keep it natural, not France-formal.
+- Valentine's Day, anniversaries and birthdays, much like the US. In Quebec, French first and a later dinner hour.
 - Tip 15 to 20 percent. Prices on menus and shelves are before tax.`,
   },
   GB: {
@@ -61,7 +69,11 @@ export const KITS: Record<string, Kit> = {
       ride: [['Uber there', uber], ['Transit directions', transit]],
     },
     apps: 'OpenTable for tables, Deliveroo, Just Eat and Uber Eats for delivery, Uber, Bolt and the Tube for getting around, Moonpig for cards.',
-    culture: `- Valentine's Day is the big one; a proper card matters (many send one even with a gift). Anniversaries and birthdays as in the US.
+    culture: `- How love is said: understated. Dry humour and gentle teasing are affection; big declarations can feel American. A proper card with real words matters more than the size of the gift.
+- Pubs and Sunday roasts are the backbone of time together; weekends away to the coast or the Cotswolds, and city breaks to Europe.
+- Class and region shape taste; don't assume. Bonfire Night (Nov 5) and the Christmas run-up are cosy, social seasons.
+- In British English: warm, a little wry, never gushing; British spelling.
+- Valentine's Day is the big one; a proper card matters (many send one even with a gift). Anniversaries and birthdays as in the US.
 - A 12.5 percent service charge is often already on the bill; otherwise tip about 10 percent. Pubs: order at the bar, no tip.
 - Understatement lands better than grand gestures; a thoughtful, specific gift over an expensive one.`,
   },
@@ -77,7 +89,12 @@ export const KITS: Record<string, Kit> = {
       experience: [['Find it on Google', 'https://www.google.com/search?q={q}'], ['Experiences on Airbnb', airbnbExp]],
     },
     apps: 'Tabelog, Hot Pepper and OMAKASE for tables (popular places open bookings a month or two ahead), Uber Eats and Demae-can for delivery, trains first and GO or Uber for taxis, Amazon.co.jp and Rakuten for gifts, LINE for messages.',
-    culture: `- Valentine's Day (Feb 14): traditionally the woman gives chocolate (honmei, the real one, often handmade). White Day (Mar 14): the man gives back, usually something worth a bit more. Many younger couples do both their own way; ask, don't assume.
+    culture: `- How love is said: rarely in words. "Aishiteru" is almost never spoken; care shows in actions, small, steady and well-timed (remembering, a packed bento, waiting at the station). Help them show it, not just say it.
+- Reading the air (kuuki wo yomu): people often hint instead of asking, and expect the other to notice. Help them notice, and say needs gently and indirectly; never push a blunt confrontation.
+- Long work hours make time scarce: protect small rituals (a weekend morning, a seasonal walk). Seasons matter deeply: hanami in spring, fireworks and yukata in summer, autumn leaves, illuminations in winter.
+- Dating usually begins with a clear confession (kokuhaku); meeting parents is serious; harmony with both families matters.
+- In Japanese: gentle and warm, soft polite-casual, never stiff keigo and never rough.
+- Valentine's Day (Feb 14): traditionally the woman gives chocolate (honmei, the real one, often handmade). White Day (Mar 14): the man gives back, usually something worth a bit more. Many younger couples do both their own way; ask, don't assume.
 - Christmas Eve is a couples' night: a nice dinner booked weeks ahead, illuminations, a gift. Birthdays and anniversaries matter; some couples mark monthly anniversaries early on.
 - Wrapping and presentation count as much as the gift; a beautifully wrapped small thing beats a big one in a plastic bag. Avoid sets of four or nine (shi, ku sound like death and suffering), and white chrysanthemums (funerals).
 - Affection is usually private: little public display, so plan intimate settings (a private room, a counter seat, an onsen ryokan) rather than public gestures.
@@ -96,7 +113,11 @@ export const KITS: Record<string, Kit> = {
       experience: [['Find it on Dianping', baidu('大众点评')]],
     },
     apps: 'Dianping and Meituan to find and book places, Meituan and Ele.me for delivery, DiDi for rides, JD, Tmall and Taobao for gifts, WeChat for everything (messages, red packets, paying). Google, Uber Eats and Amazon are not used there; delivery and rides are ordered in those apps.',
-    culture: `- Days for couples: 520 (May 20, "wo ai ni") and 1314 ("forever"), Qixi (the seventh day of the seventh lunar month, Chinese Valentine's), Feb 14, Christmas Eve for younger couples. Singles' Day (Nov 11) is a shopping day, not a couples' one.
+    culture: `- How love is said: more through care than words. Making sure they've eaten, picking them up, remembering the small things, and providing for the future are love. Romantic days are celebrated with clear gestures (flowers, a red packet, a gift).
+- Family is central: parents' approval and meeting them carry weight, and so do gifts for parents. Face matters; never embarrass a partner in front of others.
+- Life runs on WeChat: messages, voice notes, red packets, paying. Work hours can be long (996 in some fields); small daily care counts.
+- In Chinese (simplified): warm and natural, never stiff.
+- Days for couples: 520 (May 20, "wo ai ni") and 1314 ("forever"), Qixi (the seventh day of the seventh lunar month, Chinese Valentine's), Feb 14, Christmas Eve for younger couples. Singles' Day (Nov 11) is a shopping day, not a couples' one.
 - A WeChat red packet of 520 or 1314 yuan is a common romantic gesture; numbers with 8 (wealth) and 6 (smooth) are lucky.
 - Never give a clock (song zhong sounds like attending a funeral), an umbrella (san, separation), pears to share (li, parting), a green hat (infidelity), or anything in fours. Avoid white or black wrapping; red and gold are good.
 - Family is close to the center: meeting the parents, holidays at home (Spring Festival), gifts for parents (good tea, health products, fruit baskets) carry weight. Face matters; never embarrass a partner in front of others.
@@ -191,7 +212,12 @@ export const KITS: Record<string, Kit> = {
       ride: [['Uber there', uber], ['Metro directions', transit]],
     },
     apps: 'TheFork (LaFourchette) for tables, Uber Eats and Deliveroo for delivery, the Metro, Uber and G7 for getting around, Amazon.fr and Fnac for gifts.',
-    culture: `- La Saint-Valentin (Feb 14) is for couples only, not friends. Dinner starts late (8 to 9), and many restaurants close Sunday, Monday and in August.
+    culture: `- How love is lived: as an art of living, long dinners, walks, good bread and wine, and conversation. Couples argue and debate openly; it's a sign of engagement, not trouble.
+- Relationships become serious without a formal "are we exclusive?" talk; PACS is a common alternative to marriage. Privacy matters: no public oversharing.
+- Time is protected: the long Sunday lunch, the August holidays, la rentrée in September when life restarts.
+- Elegance over excess: a well-chosen book, a perfume, a small producer's wine beats something flashy.
+- In French: tutoie, warm and understated, elegant, never saccharine.
+- La Saint-Valentin (Feb 14) is for couples only, not friends. Dinner starts late (8 to 9), and many restaurants close Sunday, Monday and in August.
 - Don't give chrysanthemums (funerals) or an even number of flowers in traditional settings. Quality over size: good wine, a book, something beautiful.
 - Service is included; leave a few euros for great service.`,
   },
@@ -229,7 +255,12 @@ export const KITS: Record<string, Kit> = {
       ride: [['Directions', transit], ['Taxi with Uber', uber]],
     },
     apps: 'TheFork for tables, Glovo, Deliveroo and Just Eat for delivery, trains and taxis (Uber is limited) for getting around, Amazon.it for gifts.',
-    culture: `- San Valentino (Feb 14) is for couples. Dinner from 8. Coperto (cover charge) is normal; tipping is optional.
+    culture: `- How love is lived: openly and warmly, with touch, food and family. Cooking for someone is a declaration; Sunday lunch with family is sacred, and families are close, often near each other.
+- La bella figura: presentation and care matter, in how a gift is wrapped, how a table is set and how you show up.
+- Life has rhythms: aperitivo at seven, the evening passeggiata, Ferragosto in August when cities empty for the sea.
+- Regions differ (north and south, city and village); respect where they're from.
+- In Italian: dai del tu, warm, expressive, a little playful.
+- San Valentino (Feb 14) is for couples. Dinner from 8. Coperto (cover charge) is normal; tipping is optional.
 - Avoid chrysanthemums (funerals) and give odd numbers of flowers.`,
   },
   MX: {
@@ -254,7 +285,11 @@ export const KITS: Record<string, Kit> = {
       ride: [['Uber there', uber], ['Directions', transit]],
     },
     apps: 'Google Maps and TheFork for tables, iFood for delivery, Uber and 99 for rides, Mercado Livre and Amazon.com.br for gifts, WhatsApp for everything.',
-    culture: `- Dia dos Namorados is June 12, not Feb 14 (Feb is Carnival season). It's the big one: dinner, flowers, a gift.
+    culture: `- How love is lived: warmly, physically and out loud. Affection in public is normal; saying "te amo" and long voice notes on WhatsApp are everyday. Family and friends are part of the couple's life.
+- Time together is social: churrasco with friends, the beach, samba, football on TV. Plans are flexible; showing up a little late is fine, warmth is not optional.
+- Dia dos Namorados (June 12) is the big day, not Feb 14 (Carnaval season). Festa Junina in June is a playful couples' outing.
+- In Portuguese (Brazil): warm, affectionate, informal (você), a little playful.
+- Dia dos Namorados is June 12, not Feb 14 (Feb is Carnival season). It's the big one: dinner, flowers, a gift.
 - A 10 percent service charge is usually on the bill. Dinner runs late.`,
   },
   AU: {
@@ -267,8 +302,28 @@ export const KITS: Record<string, Kit> = {
       ride: [['Uber there', uber], ['Transit directions', transit]],
     },
     apps: 'OpenTable for tables, Uber Eats, DoorDash and Menulog for delivery, Uber and DiDi for rides, Amazon.com.au for gifts.',
-    culture: `- Valentine's Day, anniversaries and birthdays. Seasons are flipped: Christmas is summer, so picnics and beach days, not fireplaces.
+    culture: `- How love is said: casual and genuine; showing off or being too earnest gets gently mocked. Mateship and humour run through relationships.
+- Life is outdoors: the beach, a barbecue, a coastal walk, a winery weekend. Seasons are flipped: Christmas is summer.
+- Long distances between cities mean planning travel; many couples have family overseas.
+- In Australian English: relaxed, warm, plain-spoken, Australian spelling.
+- Valentine's Day, anniversaries and birthdays. Seasons are flipped: Christmas is summer, so picnics and beach days, not fireplaces.
 - Tipping isn't expected; 10 percent for great service. Many restaurants are BYO wine.`,
+  },
+  CH: {
+    name: 'Switzerland', money: 'CHF 80', searchIn: 'German, French or Italian, by region', maps: 'google',
+    links: {
+      table: [['Find it on TheFork', site('thefork.ch')], ['See it on Google Maps', gmaps]],
+      buy: [['Find it on Galaxus', 'https://www.galaxus.ch/search?q={q}'], ['Compare prices', shopping]],
+      food: [['Order on Uber Eats', uberEats], ['Find it on Smood', site('smood.ch')]],
+      groceries: [['Find it at Coop', site('coop.ch')], ['Find it at Migros', site('migros.ch')]],
+      ride: [['Train and tram directions', transit], ['Uber there', uber]],
+    },
+    apps: 'TheFork and phone calls for tables, Uber Eats and Smood for delivery, the SBB app for trains (the default way to travel), Galaxus and Digitec for gifts, Twint to pay, WhatsApp for messages.',
+    culture: `- How love is lived: privately and reliably. Swiss couples tend to be reserved in public and show care through dependability: on time, plans kept, things done well. Grand public gestures can embarrass; thoughtful and well-made lands.
+- Four languages and distinct regions: German-speaking Zurich and Bern, French-speaking Geneva and Lausanne, Italian-speaking Ticino. Speak to them in theirs and respect the region's customs.
+- Punctuality is respect: book tables precisely and arrive on time. Shops close early and on Sundays, so order gifts ahead. Nature is the date: a lake swim, a hike, a mountain hut.
+- Prices are high and service is included; rounding up is enough. Valentinstag is modest; anniversaries and birthdays matter more.
+- In German: warm but understated, du with the partner; in French or Italian, tu.`,
   },
 };
 
@@ -276,7 +331,7 @@ const TZ: Record<string, string> = {
   'Asia/Tokyo': 'JP', 'Asia/Shanghai': 'CN', 'Asia/Chongqing': 'CN', 'Asia/Harbin': 'CN', 'Asia/Urumqi': 'CN', 'PRC': 'CN',
   'Asia/Hong_Kong': 'HK', 'Asia/Macau': 'HK', 'Asia/Taipei': 'TW', 'Asia/Seoul': 'KR', 'Asia/Singapore': 'SG',
   'Asia/Kolkata': 'IN', 'Asia/Calcutta': 'IN', 'Asia/Dubai': 'AE', 'Europe/London': 'GB', 'Europe/Belfast': 'GB',
-  'Europe/Paris': 'FR', 'Europe/Berlin': 'DE', 'Europe/Madrid': 'ES', 'Atlantic/Canary': 'ES', 'Europe/Rome': 'IT',
+  'Europe/Paris': 'FR', 'Europe/Berlin': 'DE', 'Europe/Madrid': 'ES', 'Atlantic/Canary': 'ES', 'Europe/Rome': 'IT', 'Europe/Zurich': 'CH',
   'America/Mexico_City': 'MX', 'America/Monterrey': 'MX', 'America/Cancun': 'MX', 'America/Tijuana': 'MX', 'America/Merida': 'MX', 'America/Chihuahua': 'MX', 'America/Mazatlan': 'MX', 'America/Hermosillo': 'MX',
   'America/Sao_Paulo': 'BR', 'America/Fortaleza': 'BR', 'America/Recife': 'BR', 'America/Bahia': 'BR', 'America/Manaus': 'BR', 'America/Belem': 'BR',
   'America/Toronto': 'CA', 'America/Vancouver': 'CA', 'America/Edmonton': 'CA', 'America/Winnipeg': 'CA', 'America/Halifax': 'CA', 'America/St_Johns': 'CA', 'America/Regina': 'CA', 'America/Montreal': 'CA',
@@ -316,8 +371,8 @@ const NAMES: Record<string, string> = {
   japan: 'JP', china: 'CN', 'mainland china': 'CN', 'hong kong': 'HK', taiwan: 'TW', korea: 'KR', 'south korea': 'KR', singapore: 'SG', india: 'IN',
   uae: 'AE', 'united arab emirates': 'AE', dubai: 'AE', france: 'FR', germany: 'DE', spain: 'ES', italy: 'IT', mexico: 'MX', brazil: 'BR', australia: 'AU',
   tokyo: 'JP', osaka: 'JP', kyoto: 'JP', shanghai: 'CN', beijing: 'CN', shenzhen: 'CN', guangzhou: 'CN', seoul: 'KR', busan: 'KR', taipei: 'TW', london: 'GB',
-  paris: 'FR', berlin: 'DE', munich: 'DE', madrid: 'ES', barcelona: 'ES', rome: 'IT', milan: 'IT', 'mexico city': 'MX', 'sao paulo': 'BR', 'são paulo': 'BR',
-  sydney: 'AU', melbourne: 'AU', toronto: 'CA', vancouver: 'CA', montreal: 'CA', mumbai: 'IN', delhi: 'IN', bangalore: 'IN', bengaluru: 'IN',
+  paris: 'FR', berlin: 'DE', munich: 'DE', madrid: 'ES', barcelona: 'ES', rome: 'IT', milan: 'IT', 'mexico city': 'MX', 'sao paulo': 'BR', 
+  sydney: 'AU', switzerland: 'CH', zurich: 'CH', geneva: 'CH', basel: 'CH', bern: 'CH', lausanne: 'CH', lugano: 'CH', 'united kingdom of great britain': 'GB', brasil: 'BR', 'rio de janeiro': 'BR', 'são paulo': 'BR', 'hong kong sar': 'HK', perth: 'AU', brisbane: 'AU', ottawa: 'CA', calgary: 'CA', 'québec': 'CA', quebec: 'CA', manchester: 'GB', edinburgh: 'GB', melbourne: 'AU', toronto: 'CA', vancouver: 'CA', montreal: 'CA', mumbai: 'IN', delhi: 'IN', bangalore: 'IN', bengaluru: 'IN',
 };
 export function countryCode(raw: unknown): string | null {
   const s = typeof raw === 'string' ? raw.trim().toLowerCase().replace(/\.$/, '') : '';

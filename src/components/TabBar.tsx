@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n';
 import DragonflyMark from './DragonflyMark';
 import React from 'react';
 import { BookHeart, Sparkles, User, Plus, Infinity, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
@@ -15,11 +16,12 @@ interface TabBarProps {
 }
 
 const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose, badges = {}, usTab = false, collapsed = false, onToggleCollapse }) => {
+  const tb = useI18n().d.app.tabs;
   const tabs = [
-    { id: 'timeline', icon: BookHeart, label: 'Story' }, // Main Home
-    { id: 'compose', icon: Plus, label: 'Capture', isAction: true },
-    usTab ? { id: 'ai-coach', icon: Infinity, label: 'Us' } : { id: 'ai-coach', icon: Sparkles, label: 'Bella' },
-    { id: 'profile', icon: User, label: 'Me' },
+    { id: 'timeline', icon: BookHeart, label: tb.story }, // Main Home
+    { id: 'compose', icon: Plus, label: tb.capture, isAction: true },
+    usTab ? { id: 'ai-coach', icon: Infinity, label: tb.us } : { id: 'ai-coach', icon: Sparkles, label: tb.bella },
+    { id: 'profile', icon: User, label: tb.me },
   ];
 
   // One nav for every screen size: a floating bar at the bottom on phones, a quiet sidebar on laptops
@@ -43,7 +45,7 @@ const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose, bad
                 className="mx-2 bg-slate-900 text-white w-14 h-14 rounded-full shadow-lg shadow-slate-900/30 flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 hover:scale-105 hover:bg-black group relative overflow-hidden lg:order-1 lg:mx-0 lg:mb-5 lg:w-full lg:h-11 lg:shadow-none lg:hover:scale-100"
               >
                 <Icon size={26} strokeWidth={2.5} className="group-hover:rotate-90 transition-transform duration-500 relative z-10 lg:w-[18px] lg:h-[18px]" />
-                {!collapsed && <span className="hidden lg:inline text-sm font-bold relative z-10">Write</span>}
+                {!collapsed && <span className="hidden lg:inline text-sm font-bold relative z-10">{tb.write}</span>}
               </button>
             );
           }
@@ -73,7 +75,7 @@ const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose, bad
         {onToggleCollapse && (
           <button onClick={onToggleCollapse} aria-label={collapsed ? 'Expand side panel' : 'Collapse side panel'} title={collapsed ? 'Expand' : 'Collapse'}
             className={`hidden lg:flex order-3 mt-auto h-10 items-center gap-3 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-belluh-100 transition-colors ${collapsed ? 'justify-center' : 'px-3'}`}>
-            {collapsed ? <PanelLeftOpen size={19} /> : <><PanelLeftClose size={19} /><span className="text-sm font-medium">Collapse</span></>}
+            {collapsed ? <PanelLeftOpen size={19} /> : <><PanelLeftClose size={19} /><span className="text-sm font-medium">{tb.collapse}</span></>}
           </button>
         )}
       </nav>

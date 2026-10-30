@@ -5,7 +5,8 @@
 import { db } from './agentdb.ts';
 import { sendText, sendTemplate } from './whatsapp.ts';
 import { sendSms } from './sms.ts';
-import { sendTelegram, telegramChat } from './telegram.ts';
+import { sendTelegram, telegramChat, quickReplies } from './telegram.ts';
+import { sendLine, lineUser } from './line.ts';
 import { sendLinq } from './linq.ts';
 import { sendPush } from './webpush.ts';
 import { vapidKeys, PUSH_SUBJECT, PUSH_EXTRA_HOSTS } from './pushkeys.ts';
@@ -44,6 +45,7 @@ export async function notify(userId: string | null, text: string, opts: { pushOn
     if (!link?.phone_e164 || !link.reminders_enabled) return pushed > 0;
     let id: string | null;
     if (link.channel === 'telegram' || telegramChat(link.phone_e164)) { const tg = telegramChat(link.phone_e164); id = tg ? await sendTelegram(tg, text) : null; }
+    else if (link.channel === 'line' || lineUser(link.phone_e164)) { const ln = lineUser(link.phone_e164); id = ln ? await sendLine(ln, text, quickReplies(text)) : null; }
     else if (link.channel === 'sms') id = await sendSms(link.phone_e164, text);
     else if (link.channel === 'imessage') id = await sendLinq(link.phone_e164, text);
     else {

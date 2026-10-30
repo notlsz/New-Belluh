@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n';
 import React, { useEffect, useState, useCallback } from 'react';
 import { MessageCircle, MessageSquare, Send, Trash2, Copy, Check } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
@@ -18,6 +19,20 @@ const tgHref = (code: string) => `https://t.me/${TG_BOT}?start=${code}`;
 const IMESSAGE_NUMBER: string = (() => { const d = ((import.meta as any).env?.VITE_BELLUH_IMESSAGE_NUMBER || '').replace(/\D/g, ''); return d ? '+' + d : ''; })();
 const imHref = (code: string) => `sms:${IMESSAGE_NUMBER}?&body=${encodeURIComponent(`LINK ${code}`)}`;
 
+// Belluh's LINE Official Account ID, e.g. @belluh. Set VITE_BELLUH_LINE_ID in Vercel. LINE is how couples in Japan message.
+const LINE_ID: string = (() => { const v = ((import.meta as any).env?.VITE_BELLUH_LINE_ID || '').trim().replace(/[^@A-Za-z0-9._-]/g, ''); return v ? (v.startsWith('@') ? v : '@' + v) : ''; })();
+const lineHref = (code: string) => `https://line.me/R/oaMessage/${encodeURIComponent(LINE_ID)}/?${encodeURIComponent(`LINK ${code}`)}`;
+
+type Via = 'whatsapp' | 'sms' | 'telegram' | 'imessage' | 'line';
+/** The apps people text on where they live come first: LINE in Japan, WhatsApp in Europe, iMessage and SMS in the US. */
+function channelOrder(): Via[] {
+  let tz = '', lang = '';
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? ''; lang = (navigator.language || '').toLowerCase(); } catch { /* defaults */ }
+  if (tz === 'Asia/Tokyo' || lang.startsWith('ja')) return ['line', 'imessage', 'whatsapp', 'sms', 'telegram'];
+  if (/^America\/(New_York|Chicago|Denver|Los_Angeles|Phoenix|Anchorage|Detroit|Boise|Indiana|Kentucky)/.test(tz) || tz === 'Pacific/Honolulu') return ['imessage', 'sms', 'whatsapp', 'telegram', 'line'];
+  return ['whatsapp', 'imessage', 'telegram', 'sms', 'line'];
+}
+
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 interface Occasion {
@@ -28,7 +43,7 @@ interface Occasion {
   day: number;
   year: number | null;
   repeats_yearly: boolean;
-  source: 'app' | 'whatsapp' | 'sms' | 'telegram' | 'imessage';
+  source: 'app' | Via;
   mentioned_at: string;
 }
 
@@ -49,12 +64,13 @@ function daysUntil(o: Occasion): number | null {
 }
 
 const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' | 'info') => void }> = ({ onShowToast }) => {
+  const { d: { app: { me: M } }, f: fill } = useI18n();
   const [available, setAvailable] = useState(true);
   const [phone, setPhone] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
   const [occasions, setOccasions] = useState<Occasion[]>([]);
   const [copied, setCopied] = useState(false);
-  const [via, setVia] = useState<'whatsapp' | 'sms' | 'telegram' | 'imessage'>('whatsapp');
+  const [via, setVia] = useState<Via>('whatsapp');
 
   const load = useCallback(async () => {
     const [{ data: link, error: linkErr }, { data: occ, error: occErr }] = await Promise.all([
@@ -92,7 +108,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
     return () => clearInterval(t);
   }, [available, phone, prepare]);
 
-  const connect = async (channel: 'whatsapp' | 'sms' | 'telegram' | 'imessage' = 'whatsapp') => {
+  const connect = async (channel: Via = 'whatsapp') => {
     setVia(channel);
     if (readyCode) { setCode(readyCode); return; } // the link itself opens WhatsApp or Messages
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -121,14 +137,14 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
     .filter(x => x.days !== null)
     .sort((a, b) => (a.days as number) - (b.days as number));
 
-  const openLink = !code ? null : via === 'imessage' && IMESSAGE_NUMBER ? imHref(code) : via === 'telegram' && TG_BOT ? tgHref(code) : via === 'sms' && SMS_NUMBER ? smsHref(code) : BELLUH_NUMBER ? waHref(code) : null;
-  const appName = via === 'telegram' ? 'Telegram' : via === 'sms' || via === 'imessage' ? 'Messages' : 'WhatsApp';
+  const openLink = !code ? null : via === 'line' && LINE_ID ? lineHref(code) : via === 'imessage' && IMESSAGE_NUMBER ? imHref(code) : via === 'telegram' && TG_BOT ? tgHref(code) : via === 'sms' && SMS_NUMBER ? smsHref(code) : BELLUH_NUMBER ? waHref(code) : null;
+  const appName = via === 'line' ? 'LINE' : via === 'telegram' ? 'Telegram' : via === 'sms' || via === 'imessage' ? 'Messages' : 'WhatsApp';
   const btn = 'shrink-0 h-11 px-5 rounded-full font-semibold text-sm inline-flex items-center justify-center gap-2 transition-colors bg-white text-slate-900 border border-slate-200 hover:border-slate-400';
 
   return (
     <div className="mb-12">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-serif text-xl text-slate-900 pl-1">Text Bella</h3>
+        <h3 className="font-serif text-xl text-slate-900 pl-1">{M.textBella}</h3>
         {phone && <button onClick={disconnect} className="text-xs font-bold text-slate-400 hover:text-slate-700">Disconnect texting</button>}
       </div>
 
@@ -136,39 +152,26 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
         {!phone && !code && (
           <div className="flex flex-col gap-4">
             <div>
-              <p className="font-serif text-lg text-slate-900">Text Bella like you'd text a friend.</p>
-              <p className="text-sm text-slate-500 mt-1">Dates, plans, "remind me to call his mom Sunday". Bella texts you first when something's coming up, and replies where you are.</p>
+              <p className="font-serif text-lg text-slate-900">{M.textTitle}</p>
+              <p className="text-sm text-slate-500 mt-1">{M.textBody}</p>
             </div>
-            {BELLUH_NUMBER || SMS_NUMBER || TG_BOT || IMESSAGE_NUMBER ? (
+            {BELLUH_NUMBER || SMS_NUMBER || TG_BOT || IMESSAGE_NUMBER || LINE_ID ? (
               <div className="flex flex-wrap gap-2">
-                {IMESSAGE_NUMBER && (readyCode ? (
-                  <a href={imHref(readyCode)} onClick={() => connect('imessage')} className={btn}>
-                    <MessageCircle size={17} className="text-[#0A84FF]" /> Connect iMessage
-                  </a>
-                ) : (
-                  <button onClick={() => connect('imessage')} className={btn}><MessageCircle size={17} className="text-[#0A84FF]" /> Connect iMessage</button>
-                ))}
-                {BELLUH_NUMBER && (readyCode ? (
-                  <a href={waHref(readyCode)} target="_blank" rel="noreferrer" onClick={() => connect('whatsapp')} className={btn}>
-                    <MessageCircle size={17} className="text-[#25D366]" /> Connect WhatsApp
-                  </a>
-                ) : (
-                  <button onClick={() => connect('whatsapp')} className={btn}><MessageCircle size={17} className="text-[#25D366]" /> Connect WhatsApp</button>
-                ))}
-                {TG_BOT && (readyCode ? (
-                  <a href={tgHref(readyCode)} target="_blank" rel="noreferrer" onClick={() => connect('telegram')} className={btn}>
-                    <Send size={16} className="text-[#229ED9]" /> Connect Telegram
-                  </a>
-                ) : (
-                  <button onClick={() => connect('telegram')} className={btn}><Send size={16} className="text-[#229ED9]" /> Connect Telegram</button>
-                ))}
-                {SMS_NUMBER && (readyCode ? (
-                  <a href={smsHref(readyCode)} onClick={() => connect('sms')} className={btn}>
-                    <MessageSquare size={16} className="text-[#3f7486]" /> Connect by text
-                  </a>
-                ) : (
-                  <button onClick={() => connect('sms')} className={btn}><MessageSquare size={16} className="text-[#3f7486]" /> Connect by text</button>
-                ))}
+                {channelOrder().map(id => {
+                  const c = {
+                    line: { on: !!LINE_ID, href: lineHref, label: fill(M.connect, { app: 'LINE' }), icon: <MessageCircle size={17} className="text-[#06C755]" />, external: true },
+                    imessage: { on: !!IMESSAGE_NUMBER, href: imHref, label: fill(M.connect, { app: 'iMessage' }), icon: <MessageCircle size={17} className="text-[#0A84FF]" />, external: false },
+                    whatsapp: { on: !!BELLUH_NUMBER, href: waHref, label: fill(M.connect, { app: 'WhatsApp' }), icon: <MessageCircle size={17} className="text-[#25D366]" />, external: true },
+                    telegram: { on: !!TG_BOT, href: tgHref, label: fill(M.connect, { app: 'Telegram' }), icon: <Send size={16} className="text-[#229ED9]" />, external: true },
+                    sms: { on: !!SMS_NUMBER, href: smsHref, label: M.connectText, icon: <MessageSquare size={16} className="text-[#3f7486]" />, external: false },
+                  }[id];
+                  if (!c.on) return null;
+                  return readyCode ? (
+                    <a key={id} href={c.href(readyCode)} target={c.external ? '_blank' : undefined} rel="noreferrer" onClick={() => connect(id)} className={btn}>{c.icon} {c.label}</a>
+                  ) : (
+                    <button key={id} onClick={() => connect(id)} className={btn}>{c.icon} {c.label}</button>
+                  );
+                })}
               </div>
             ) : (
               <span className="shrink-0 px-4 py-2 rounded-full bg-slate-50 text-slate-400 text-xs font-bold">Texting Belluh is coming soon</span>
@@ -190,7 +193,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
               </button>
             </div>
             {openLink && (
-              <a href={openLink} target={via === 'sms' || via === 'imessage' ? undefined : '_blank'} rel="noreferrer" className={`inline-flex mt-5 px-6 py-3 ${via === 'imessage' ? 'bg-[#0A84FF]' : via === 'sms' ? 'bg-slate-900' : via === 'telegram' ? 'bg-[#229ED9]' : 'bg-[#25D366]'} text-white rounded-full font-bold text-sm items-center gap-2 hover:brightness-105`}>
+              <a href={openLink} target={via === 'sms' || via === 'imessage' ? undefined : '_blank'} rel="noreferrer" className={`inline-flex mt-5 px-6 py-3 ${via === 'line' ? 'bg-[#06C755]' : via === 'imessage' ? 'bg-[#0A84FF]' : via === 'sms' ? 'bg-slate-900' : via === 'telegram' ? 'bg-[#229ED9]' : 'bg-[#25D366]'} text-white rounded-full font-bold text-sm items-center gap-2 hover:brightness-105`}>
                 <MessageCircle size={16} /> Open {appName}
               </a>
             )}
@@ -200,7 +203,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
 
         {phone && (
           <p className="text-sm text-slate-500 mb-2">
-            Connected to {phone.startsWith('tg:') ? 'Telegram' : phone}. Text Bella anything: a date, a plan, "remind me to book dinner Friday". Send LIST anytime to see your dates.
+            Connected to {phone.startsWith('tg:') ? 'Telegram' : phone.startsWith('line:') ? 'LINE' : phone}. Text Bella anything: a date, a plan, "remind me to book dinner Friday". Send LIST anytime to see your dates.
           </p>
         )}
 
