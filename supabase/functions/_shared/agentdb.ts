@@ -10,6 +10,7 @@ import { localDateParts, isoDate } from './occasions.ts';
 import { weekStart, pairOf, type CheckinStatus } from './weekly.ts';
 import { serverKey } from './keys.ts';
 import { countryOf, partnerCountryOf, regionBrief } from './region.ts';
+import { goalLine, type Goal } from './goals.ts';
 import { milestones, skyBlock, noveltyLine, loveCalendar, type DatedOccasion } from './jarvis.ts';
 
 export const db: SupabaseClient = createClient(Deno.env.get('SUPABASE_URL')!, serverKey(), {
@@ -98,7 +99,13 @@ export async function buildSystem(ctx: Ctx): Promise<string> {
   const { data: lastOut } = await db.from('bookings').select('starts_at').eq('user_id', ctx.userId).eq('status', 'booked')
     .in('kind', ['table', 'trip', 'experience', 'dinner']).lte('starts_at', new Date().toISOString()).order('starts_at', { ascending: false }).limit(1);
   const chosen = plans.map(p => p.options.find(o => o.id === p.chosen_option)?.starts_at ?? null);
-  const watch = [milestones((occ ?? []) as DatedOccasion[], today, ctx.country), loveCalendar(ctx.country, today), skyBlock(today), noveltyLine([...(lastOut ?? []).map(b => b.starts_at), ...chosen])].filter(Boolean).join('\n') || null;
+  const [{ data: goalRows }, { data: watchRows }] = await Promise.all([
+    db.from('couple_goals').select('kind, title, target, progress, currency, period, period_key, due_on').eq('status', 'active').or(`created_by.eq.${ctx.userId},partner_id.eq.${ctx.userId}`).limit(12),
+    db.from('watches').select('what, until_on').eq('user_id', ctx.userId).eq('status', 'watching').limit(10),
+  ]);
+  const goalsBlock = (goalRows ?? []).length ? `Their goals together:\n${(goalRows as Goal[]).map(g => `- ${goalLine(g, today)}`).join('\n')}` : null;
+  const watchingBlock = (watchRows ?? []).length ? `You're watching for: ${(watchRows ?? []).map(w => `${w.what} (until ${w.until_on})`).join('; ')}` : null;
+  const watch = [goalsBlock, watchingBlock, milestones((occ ?? []) as DatedOccasion[], today, ctx.country), loveCalendar(ctx.country, today), skyBlock(today), noveltyLine([...(lastOut ?? []).map(b => b.starts_at), ...chosen])].filter(Boolean).join('\n') || null;
 
   return systemPrompt({
     myName: ctx.myName,

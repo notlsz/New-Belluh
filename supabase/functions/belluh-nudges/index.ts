@@ -1,5 +1,6 @@
 // Belluh reaching out on its own. Every 5 minutes:
 //   reminders Belluh set when someone asked ("remind me to call his mom Sunday at 5"), sent when they're due;
+//   hourly, the things Bella is watching for (tickets going on sale, a price drop), told the first time they're there;
 //   and, checked hourly in the daytime (each sent once), an offer to plan a birthday or anniversary 10 to 14 days out, one nudge on a plan
 //   waiting for your answer, and "how was it?" the day after a plan you made together.
 // Everything lands in the Belluh tab and on Home, as a notification, and by text if they connected a phone or Telegram.
@@ -15,6 +16,9 @@ import { localDateParts, type StoredOccasion } from '../_shared/occasions.ts';
 import { sameSecret } from '../_shared/secret.ts';
 import { db, loadCtx, buildSystem, addMessage, type Ctx } from '../_shared/agentdb.ts';
 import { notify } from '../_shared/notify.ts';
+import { countryOf } from '../_shared/region.ts';
+import { searchShopify } from '../_shared/shopify.ts';
+import { parseTicketmaster, eventFound, priceFound, ticketmasterUrl, foundText, type Watch } from '../_shared/watches.ts';
 import { planChoices } from '../_shared/agentcore.ts';
 import {
   occasionToOffer, offerFallback, offerAsk, plansToNudge, plansJustHappened, daytime, type NudgePlan, type OfferOccasion,
@@ -43,6 +47,46 @@ async function dueReminders(onlyUser: string | null): Promise<number> {
     sent++;
   }
   return sent;
+}
+
+/**
+ * Things Bella is watching for (tickets going on sale, a price dropping), checked once an hour, oldest check first.
+ * The first time one is there, Bella tells them and stops watching it. Ticketmaster allows 5 calls a second.
+ */
+async function checkWatches(onlyUser: string | null): Promise<{ checked: number; found: number }> {
+  const today = new Date().toISOString().slice(0, 10);
+  await db.from('watches').update({ status: 'expired' }).eq('status', 'watching').lt('until_on', today);
+  let q = db.from('watches').select('id, user_id, kind, what, place, max_cents, until_on').eq('status', 'watching')
+    .order('checked_at', { ascending: true, nullsFirst: true }).limit(150);
+  if (onlyUser) q = q.eq('user_id', onlyUser);
+  const { data } = await q;
+  const key = Deno.env.get('TICKETMASTER_API_KEY');
+  let checked = 0, found = 0;
+  for (const w of (data ?? []) as (Watch & { id: string; user_id: string })[]) {
+    let hit = null;
+    try {
+      if (w.kind === 'event') {
+        if (!key) continue;
+        const { data: st } = await db.from('agent_settings').select('timezone, country').eq('user_id', w.user_id).maybeSingle();
+        const r = await fetch(ticketmasterUrl(w, countryOf(st?.country ?? null, st?.timezone ?? 'America/New_York'), key), { signal: AbortSignal.timeout(8000) });
+        if (!r.ok) { if (r.status === 429) break; continue; }
+        hit = eventFound(w, parseTicketmaster(await r.json()));
+        await new Promise(res => setTimeout(res, 220));
+      } else {
+        hit = priceFound(w, await searchShopify(w.what, w.max_cents ? w.max_cents / 100 : null, 8));
+      }
+    } catch (e) { console.error('watch', w.id, e); continue; }
+    checked++;
+    if (!hit) { await db.from('watches').update({ checked_at: new Date().toISOString() }).eq('id', w.id); continue; }
+    // Claim it, so two overlapping runs can't both send it
+    const { data: claimed } = await db.from('watches').update({ status: 'found', found: hit, checked_at: new Date().toISOString() }).eq('id', w.id).eq('status', 'watching').select('id');
+    if (!claimed?.length) continue;
+    const body = foundText(w, hit);
+    await addMessage(w.user_id, 'belluh', body.replace(/ Here it is: \S+$| here is the link: \S+$/, ''), { kind: 'watch_found', week: w.id, watch_id: w.id, links: [{ label: hit.title.slice(0, 80), url: hit.url }] });
+    await notify(w.user_id, body, { title: 'Bella found it', push: body.replace(/ https:\S+$/, ''), tag: `watch-${w.id}` });
+    found++;
+  }
+  return { checked, found };
 }
 
 async function plansFor(ctx: Ctx): Promise<NudgePlan[]> {
@@ -128,6 +172,7 @@ Deno.serve(async (req) => {
   const now = new Date();
   // The daily checks run once an hour (the job itself runs every 5 minutes for reminders)
   if (force !== 'daily' && now.getUTCMinutes() >= 5) return Response.json({ people: 0, ...results });
+  { const w = await checkWatches(onlyUser); results.watches_checked = w.checked; results.watches_found = w.found; }
   for (const p of people ?? []) {
     if (p.reminders_enabled === false) continue;
     let local;

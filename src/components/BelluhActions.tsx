@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExternalLink, PenLine, ArrowUpRight, CalendarCheck, Gift, Flower2, UtensilsCrossed, Plane, Ticket, Check, Lock, Phone, MapPin, Clock } from 'lucide-react';
+import { ExternalLink, ShoppingBag, PenLine, ArrowUpRight, CalendarCheck, Gift, Flower2, UtensilsCrossed, Plane, Ticket, Check, Lock, Phone, MapPin, Clock } from 'lucide-react';
 import { belluhAgent, AgentMessage } from '../services/belluhAgent';
 import PlanCard from './PlanCard';
 import { prettyPhone } from '../lib/phone';
@@ -23,6 +23,9 @@ const BelluhActions: React.FC<{
   const { d, f } = useI18n(); const A = d.app.acts;
   const [status, setStatus] = useState<string | undefined>(msg.meta?.status);
   const [busy, setBusy] = useState(false);
+  // Orders they said no to, remembered on this device so they stay closed
+  const [denied, setDenied] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('belluh_denied') || '[]'); } catch { return []; } });
+  const deny = (url: string) => { const next = [...denied, url].slice(-50); setDenied(next); trackEvent('belluh_order_denied'); try { localStorage.setItem('belluh_denied', JSON.stringify(next)); } catch { /* storage off */ } };
   // Real products Belluh found (Shopify brands), each opening the shop's checkout with it in the cart
   const products: { title: string; price: string; seller: string; image: string | null; url: string; total?: string; deliversTo?: string; ready?: boolean }[] = Array.isArray(msg.meta?.products) ? msg.meta.products.filter((p: any) => typeof p?.url === 'string' && p.url.startsWith('https://')) : [];
   const links: { label: string; url: string }[] = (Array.isArray(msg.meta?.links) ? msg.meta.links : []).filter((l: any) => !products.some(p => p.url === l.url));
@@ -69,9 +72,39 @@ const BelluhActions: React.FC<{
 
   return (
     <>
-      {products.length > 0 && (
+      {/* An order Bella got ready: nothing is spent until they allow it, and they pay on the shop's own page */}
+      {products.filter(p => p.ready).slice(0, 1).map(p => denied.includes(p.url)
+        ? <p key={p.url} className="mt-2 text-xs text-slate-400">{A.denied}</p>
+        : (
+        <div key={p.url} className="mt-3 max-w-md rounded-2xl bg-white border border-slate-100 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.35)] p-4">
+          <div className="flex items-start gap-3">
+            <ShoppingBag size={18} className="mt-0.5 shrink-0 text-[#9bbecb]" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-900 leading-snug">{f(A.orderAt, { seller: p.seller })}</p>
+              <p className="mt-0.5 text-xs text-slate-500 leading-relaxed">{f(A.checkTerms, { seller: p.seller })}</p>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center gap-3 rounded-xl bg-[#F8FAFB] p-2.5">
+            {p.image && <div className="w-16 h-16 shrink-0 rounded-lg bg-white overflow-hidden"><img src={p.image} alt="" loading="lazy" className="w-full h-full object-cover" /></div>}
+            <div className="min-w-0">
+              <p className="text-[13px] font-semibold text-slate-900 leading-snug line-clamp-2">{p.title}</p>
+              {p.deliversTo && <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">{f(A.deliversTo, { place: p.deliversTo })}</p>}
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline justify-between">
+            <span className="text-sm text-slate-500">{A.estTotal}</span>
+            <span className="font-serif text-lg text-slate-900">{p.total ?? p.price}</span>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button onClick={() => deny(p.url)} className="h-11 rounded-full bg-slate-100 text-sm font-bold text-slate-700 hover:bg-slate-200">{A.deny}</button>
+            <a href={p.url} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent('belluh_order_allowed', { seller: p.seller.slice(0, 40) })}
+              className="h-11 rounded-full bg-slate-900 text-white text-sm font-bold inline-flex items-center justify-center gap-1.5 hover:bg-black">{A.allow} <ArrowUpRight size={14} /></a>
+          </div>
+        </div>
+      ))}
+      {products.filter(p => !p.ready).length > 0 && (
         <div className="mt-2 -mx-2 px-2 pt-1 pb-5 -mb-3 flex gap-3 overflow-x-auto no-scrollbar">
-          {products.map(p => (
+          {products.filter(p => !p.ready).map(p => (
             <a key={p.url} href={p.url} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent('belluh_product_opened', { seller: p.seller.slice(0, 40) })}
               className="group shrink-0 w-[220px] rounded-2xl bg-white border border-slate-100 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.35)] hover:shadow-[0_16px_36px_-18px_rgba(63,116,134,0.45)] transition-shadow overflow-hidden">
               <div className="aspect-[4/3] bg-[#F8FAFB] overflow-hidden">

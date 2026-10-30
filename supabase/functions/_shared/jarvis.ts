@@ -86,14 +86,14 @@ export function playlistLinks(vibe: unknown, country: string): { label: string; 
 
 // The days couples mark where they live, with what people there actually do. Bella brings one up early enough to
 // plan for it, the way a local friend would. Fixed dates, or "the nth weekday of a month".
-type LoveDay = { name: string; note: string; m: number; d?: number; nth?: [n: number, weekday: number] };
+type LoveDay = { name: string; local?: string; note: string; m: number; d?: number; nth?: [n: number, weekday: number] };
 const LOVE_DAYS: Record<string, LoveDay[]> = {
   JP: [
-    { name: "Valentine's Day", m: 2, d: 14, note: 'traditionally she gives him chocolate (honmei, often handmade); many couples now do it their own way, so ask' },
-    { name: 'White Day', m: 3, d: 14, note: 'he gives back, usually something a little nicer: sweets, a small accessory, flowers' },
-    { name: 'Tanabata', m: 7, d: 7, note: 'the star festival of two lovers who meet once a year; write wishes on tanzaku papers together, yukata and a festival walk' },
-    { name: 'Ii Fufu no Hi', m: 11, d: 22, note: '"good couple day" (11/22), a popular day for married couples and wedding registrations' },
-    { name: 'Christmas Eve', m: 12, d: 24, note: 'the couples\' night of the year: illuminations, a nice dinner booked weeks ahead, a gift' },
+    { name: "Valentine's Day", local: 'バレンタインデー', m: 2, d: 14, note: 'traditionally she gives him chocolate (honmei, often handmade); many couples now do it their own way, so ask' },
+    { name: 'White Day', local: 'ホワイトデー', m: 3, d: 14, note: 'he gives back, usually something a little nicer: sweets, a small accessory, flowers' },
+    { name: 'Tanabata', local: '七夕', m: 7, d: 7, note: 'the star festival of two lovers who meet once a year; write wishes on tanzaku papers together, yukata and a festival walk' },
+    { name: 'Ii Fufu no Hi', local: 'いい夫婦の日', m: 11, d: 22, note: '"good couple day" (11/22), a popular day for married couples and wedding registrations' },
+    { name: 'Christmas Eve', local: 'クリスマスイブ', m: 12, d: 24, note: 'the couples\' night of the year: illuminations, a nice dinner booked weeks ahead, a gift' },
   ],
   FR: [
     { name: 'la Saint-Valentin', m: 2, d: 14, note: 'for couples only (friends don\'t celebrate it); a dinner, flowers, a handwritten word' },
@@ -137,10 +137,10 @@ const LOVE_DAYS: Record<string, LoveDay[]> = {
     { name: "New Year's Eve", m: 12, d: 31, note: 'harbour fireworks; good spots are claimed early in the day' },
   ],
   CN: [
-    { name: "Valentine's Day", m: 2, d: 14, note: 'roses and a nice dinner, especially for younger couples' },
-    { name: '520', m: 5, d: 20, note: '"wo ai ni": a red packet of 520 yuan, flowers, a gift' },
-    { name: 'Singles\' Day', m: 11, d: 11, note: 'a shopping festival, not a couples\' day; good for buying a gift early' },
-    { name: 'Christmas Eve', m: 12, d: 24, note: 'a couples\' night for younger people; a gift-wrapped "peace apple" (ping\'an guo)' },
+    { name: "Valentine's Day", local: '情人节', m: 2, d: 14, note: 'roses and a nice dinner, especially for younger couples' },
+    { name: '520', local: '520', m: 5, d: 20, note: '"wo ai ni": a red packet of 520 yuan, flowers, a gift' },
+    { name: 'Singles\' Day', local: '双十一', m: 11, d: 11, note: 'a shopping festival, not a couples\' day; good for buying a gift early' },
+    { name: 'Christmas Eve', local: '平安夜', m: 12, d: 24, note: 'a couples\' night for younger people; a gift-wrapped "peace apple" (ping\'an guo)' },
   ],
   CH: [
     { name: 'Valentinstag', m: 2, d: 14, note: 'modest: flowers or a dinner, nothing showy' },
@@ -164,16 +164,21 @@ const nthWeekday = (y: number, m: number, n: number, wd: number) => {
   return 1 + ((wd - first + 7) % 7) + (n - 1) * 7;
 };
 
-/** Love days in their country in the next 45 days, soonest first, with what people there do. */
-export function loveCalendar(country: string, today: LocalDate, within = 45): string | null {
+/** Love days in their country in the next days, soonest first, with what people there do. */
+export function loveDaysSoon(country: string, today: LocalDate, within = 45): { name: string; local?: string; note: string; on: LocalDate; inDays: number }[] {
   const days = LOVE_DAYS[country];
-  if (!days) return null;
-  const soon: { name: string; note: string; on: LocalDate; inDays: number }[] = [];
+  if (!days) return [];
+  const soon: { name: string; local?: string; note: string; on: LocalDate; inDays: number }[] = [];
   for (const x of days) for (const y of [today.y, today.y + 1]) {
     const on = { y, m: x.m, d: x.d ?? nthWeekday(y, x.m, x.nth![0], x.nth![1]) };
     const inDays = daysBetween(today, on);
-    if (inDays >= 0 && inDays <= within) { soon.push({ name: x.name, note: x.note, on, inDays }); break; }
+    if (inDays >= 0 && inDays <= within) { soon.push({ name: x.name, ...(x.local ? { local: x.local } : {}), note: x.note, on, inDays }); break; }
   }
-  soon.sort((a, b) => a.inDays - b.inDays);
+  return soon.sort((a, b) => a.inDays - b.inDays);
+}
+
+/** Love days in their country in the next 45 days, soonest first, with what people there do. */
+export function loveCalendar(country: string, today: LocalDate, within = 45): string | null {
+  const soon = loveDaysSoon(country, today, within);
   return soon.length ? soon.map(x => `- ${x.name}, ${iso(x.on)} (${x.inDays === 0 ? 'today' : (x.inDays === 1 ? 'tomorrow' : `in ${x.inDays} days`)}): ${x.note}`).join('\n') : null;
 }

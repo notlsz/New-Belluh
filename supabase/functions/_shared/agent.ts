@@ -228,6 +228,7 @@ Looking after them (like a chief of staff who knows the relationship, not a chat
 - Something new: when it's been weeks since they did anything together, suggest one fresh idea (a place they've never been, something one of them said they wanted to try). When a meteor shower is coming, a night under the sky is a lovely, free date: say when and where to look.
 - The evening itself: for a date night at home or out, offer a playlist that fits them (mood_playlist) and suggest phones on Do Not Disturb for the evening. You can't control their lights or devices; say so if asked.
 - Rest: if their own entries show ${c.myName} running on empty (late nights, skipped meals, no sleep, work swallowing everything), say it once, kindly and briefly, and point back to ${partner}: an early night, a proper dinner together. Not a lecture, never medical advice.
+- Goals and watches: when they want to work toward something together (saving for a trip, a weekly date night, a budget for dates and gifts), use set_goal; when they say they did it, log_goal. When they want something the moment it's available (tickets going on sale, a price dropping), use watch_for: you check every hour and tell them, so they never have to keep refreshing. Their goals are listed under Goals; mention one only when it helps.
 - Research: when they ask how relationships, people or habits work, or whether something is normal, use find_research and answer from what the studies found, in plain words, in two to four sentences: the finding, how strong it is (a meta-analysis of many couples beats one small study), and what it means for them. Name a study lightly ("a 2023 review of responsiveness research", "Gottman's lab"), never pile up citations; the papers appear under your reply. Be honest about limits: correlation isn't cause, samples are often Western students. If the research is thin or mixed, say so. Never use research to diagnose either of them or to take a side. Well-known findings you're sure of (Gottman's repair attempts and the 5:1 ratio, attachment styles, Gable's capitalization, Aron's 36 questions) you may cite from knowledge, but look things up before quoting numbers.
 - You can't read their texts, emails or calls, or watch where they are; if asked, say so plainly and offer what you can do (help them write the reply, set a reminder).
 
@@ -527,6 +528,37 @@ export const TOOL_DECLARATIONS = [
     parameters: { type: 'OBJECT', properties: { label: { type: 'STRING' }, emoji: { type: 'STRING', nullable: true }, path: { type: 'STRING', nullable: true }, water: { type: 'BOOLEAN', nullable: true } }, required: ['label'] },
   },
   {
+    name: 'set_goal',
+    description: 'Start a goal the two of them work toward together, when they ask: saving for something ("save 3,000 for Kyoto by April"), a habit ("a date night every week", "walk together 3 times a week"), or a budget ("keep dates under 200 a month"). Both of them see it and its progress.',
+    parameters: { type: 'OBJECT', properties: {
+      kind: { type: 'STRING', description: 'save, habit or budget' },
+      title: { type: 'STRING', description: 'Short, in their words: "Kyoto trip", "Date night", "Dates and gifts"' },
+      target: { type: 'NUMBER', description: 'The amount to save or the budget cap (in their money), or how many times per period for a habit' },
+      period: { type: 'STRING', description: 'week or month, for habits and budgets' },
+      due_on: { type: 'STRING', description: 'YYYY-MM-DD, for saving by a date' },
+      currency: { type: 'STRING', description: 'Three-letter code if they named one; otherwise their country\'s' },
+    }, required: ['kind', 'title', 'target'] },
+  },
+  {
+    name: 'log_goal',
+    description: 'Add to one of their goals when they say they did it: "we put 200 toward Kyoto", "we had our date night", "spent 80 on dinner". Negative to take some back.',
+    parameters: { type: 'OBJECT', properties: {
+      goal: { type: 'STRING', description: 'A word from the goal\'s title' },
+      amount: { type: 'NUMBER', description: 'Money saved or spent, or 1 for one more time they did the habit' },
+    }, required: ['goal', 'amount'] },
+  },
+  {
+    name: 'watch_for',
+    description: 'Keep watching for something and tell them the moment it happens: tickets for a show, concert or game going on sale ("tell me when Laufey tickets drop"), or something they want dropping to a price ("let me know if that stroller is under $100"). Checked every hour.',
+    parameters: { type: 'OBJECT', properties: {
+      kind: { type: 'STRING', description: 'event (tickets going on sale) or price (something under a price)' },
+      what: { type: 'STRING', description: 'The artist, team or show, or the product, as people search for it' },
+      place: { type: 'STRING', description: 'The city, for events' },
+      max_price: { type: 'NUMBER', description: 'Their price ceiling (needed for price watches)' },
+      until: { type: 'STRING', description: 'YYYY-MM-DD to stop watching, if they said' },
+    }, required: ['kind', 'what'] },
+  },
+  {
     name: 'draft_note_to_partner',
     description: "Draft a note to the user's partner, in the user's voice. The user approves it before it is sent.",
     parameters: { type: 'OBJECT', properties: { text: { type: 'STRING' } }, required: ['text'] },
@@ -553,7 +585,9 @@ export type ToolCall =
   | { name: 'find_research'; keywords: string[]; topic: 'relationships' | 'behavior' | 'health'; recent: boolean }
   | { name: 'order_food' | 'buy_item' | 'order_groceries' | 'book_ride' | 'find_experience'; args: Record<string, unknown> }
   | { name: 'write_entry'; text: string; shared: boolean }
-  | { name: 'take_shape'; shape: Shape };
+  | { name: 'take_shape'; shape: Shape }
+  | { name: 'set_goal' | 'watch_for'; args: Record<string, unknown> }
+  | { name: 'log_goal'; goal: string; amount: number };
 
 /** A shape Belluh's water body takes: back to water, an emoji's silhouette, or an SVG path in a 100x100 box. */
 export type Shape = { water: true } | { label: string; emoji: string } | { label: string; path: string };
@@ -584,6 +618,12 @@ export function validateToolCall(name: string, args: Record<string, unknown> | u
     case 'find_spots': {
       const what = clean(a.what, 60), where = clean(a.where, 80);
       return what.length >= 2 && where.length >= 2 ? { name, what, where } : null;
+    }
+    case 'set_goal': return typeof a.kind === 'string' && typeof a.title === 'string' ? { name, args: a } : null; // checked by validateGoal
+    case 'watch_for': return typeof a.kind === 'string' && typeof a.what === 'string' ? { name, args: a } : null; // checked by validateWatch
+    case 'log_goal': {
+      const goal = clean(a.goal, 80), amount = Number(a.amount);
+      return goal.length >= 2 && Number.isFinite(amount) && amount !== 0 ? { name, goal, amount } : null;
     }
     case 'find_research': {
       const keywords = (Array.isArray(a.keywords) ? a.keywords : []).map(x => clean(x, 40)).filter(x => x.length >= 2).slice(0, 4);
@@ -694,6 +734,9 @@ const DID: Record<string, string> = {
   set_country: "Got it, I'll use what works where you live.",
   mood_playlist: 'Your playlist is right below.',
   find_research: 'I pulled the studies on that, they are right below.',
+  set_goal: "It's on your goals. You'll both see how it's going.",
+  log_goal: 'Added. Your goals are up to date.',
+  watch_for: "I'm watching for it and will tell you the moment it's there.",
 };
 export function naturalFallback(ran: string[]): string | null {
   for (let i = ran.length - 1; i >= 0; i--) if (DID[ran[i]]) return DID[ran[i]];
