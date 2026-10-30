@@ -266,7 +266,7 @@ function GiftSection() {
     <section id="gift" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
       <div className="max-w-6xl mx-auto">
         <div className="text-center max-w-2xl mx-auto">
-          <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
+          <h2 className="font-display text-5xl md:text-6xl tracking-tight leading-[1.02]">
             <span className="text-slate-900">A gift worth</span><br /><span className="text-slate-900">remembering.</span>
           </h2>
           <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed">Every couple you love is living moments they'll forget: the first months, the proposal, the move, the years in between. Give them a year of Belluh, and none of it slips away.</p>
@@ -374,11 +374,11 @@ const FaqItem: React.FC<{ q: string; a: string; open: boolean; onToggle: () => v
 
 // Example entries for the stories strip, each with what Belluh does with it
 const MOMENTS = [
-  { when: 'Tuesday, 8:12 pm', text: "The way you look at me when I'm cooking... it felt like home.", belluh: 'saved it to what matters to you' },
-  { when: 'Saturday, 4:47 pm', text: 'I never want to forget the sound of your laugh in the rain.', belluh: 'kept it for your anniversary' },
-  { when: 'Sunday, 11:03 am', text: 'Found that old ticket stub from our first date.', belluh: 'added it to your first date' },
-  { when: 'Saturday, 9:20 am', text: 'Just a quiet morning with coffee and you. Perfect.', belluh: 'kept it for your week in review' },
-  { when: 'Friday, 1:14 am', text: 'We stayed up way too late talking about the future.', belluh: 'remembered the plans you made' },
+  { when: 'Tuesday, 8:12 pm', text: 'He remembered the oat milk. After this week, that was everything.', belluh: 'saved it to what matters to you' },
+  { when: 'Saturday, 1:06 am', text: 'We argued about nothing, then laughed about it at 1am.', belluh: 'kept it for your week in review' },
+  { when: 'Thursday, 11:48 pm', text: 'She texted “drive safe” and I believed her.', belluh: 'saved it to what matters to you' },
+  { when: 'Sunday, 10:31 am', text: 'First Sunday walk with no phones. We talked the whole way.', belluh: "made it this week's thing to try again" },
+  { when: 'Friday, 7:45 pm', text: 'Two years today. Still the same booth.', belluh: 'kept it for your anniversary' },
 ];
 const MOMENT_TONES = ['bg-white', 'bg-[#fdf0f8]', 'bg-[#eef7fa]'];
 
@@ -550,7 +550,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       <section className="relative z-10 min-h-[100svh] flex items-center pt-[68px] pb-5 md:pt-24 md:pb-12 px-6">
          <div className="w-full max-w-7xl mx-auto md:px-6 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] items-center gap-6 sm:gap-12 lg:gap-6">
              <div className="text-center lg:text-left" style={{ animation: 'slideUp 0.9s cubic-bezier(0.16,1,0.3,1) both' }}>
-                 <h1 className="font-serif tracking-tight leading-[0.98] text-[2.85rem] sm:text-7xl xl:text-[5.6rem]">
+                 <h1 className="font-display tracking-tight leading-[0.98] text-[2.85rem] sm:text-7xl xl:text-[5.6rem]">
                      <span className="text-[#9bbecb]">Life gets busy.</span><br />
                      <span className="text-[#f0addd] italic">Love drifts.</span>
                  </h1>
@@ -615,7 +615,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       {/* Real app screens */}
       <section id="inside" className="relative z-10 px-6 pb-28 scroll-mt-24">
           <div className="max-w-6xl mx-auto">
-              <h2 className="text-3xl md:text-5xl font-serif text-center leading-tight mb-4 drop-shadow-sm">
+              <h2 className="text-3xl md:text-5xl font-display text-center leading-tight mb-4 drop-shadow-sm">
                   <span className="text-slate-900">Inside Belluh.</span>
               </h2>
               <p className="text-center text-lg text-slate-500 font-light mb-12">What remembering for two looks like. Real screens, with a sample couple.</p>
@@ -667,7 +667,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       <section id="stories" className="relative z-10 py-20 md:py-28 overflow-hidden scroll-mt-20">
         <div className="max-w-6xl mx-auto px-6 mb-14 md:mb-20 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div>
-                <h2 className="font-serif text-5xl md:text-7xl tracking-tight text-slate-900 leading-[1.02]">The ordinary Tuesdays<br className="hidden md:block" /> <span className="whitespace-nowrap">slip away.</span></h2>
+                <h2 className="font-display text-5xl md:text-7xl tracking-tight text-slate-900 leading-[1.02]">The ordinary Tuesdays<br className="hidden md:block" /> <span className="whitespace-nowrap">slip away.</span></h2>
             </div>
             <p className="text-slate-500 text-lg md:text-xl font-light leading-relaxed max-w-sm md:text-right">
                 You'll remember the wedding. Belluh keeps the rest: the coffee, the late talks, the ticket stub in the drawer.
@@ -725,7 +725,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       <section id="pricing" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
           <div className="max-w-6xl mx-auto">
               <div className="max-w-2xl">
-                  <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
+                  <h2 className="font-display text-5xl md:text-6xl tracking-tight leading-[1.02]">
                       <span className="text-slate-900">One memory.</span><br /><span className="text-slate-900">Two of you.</span>
                   </h2>
                   <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed">Everything you write becomes a memory you both own, and it only grows. One price covers the couple, never each of you.</p>
@@ -759,7 +759,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       <section id="faq" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-10 lg:gap-16 items-start">
               <div className="lg:sticky lg:top-28">
-                  <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
+                  <h2 className="font-display text-5xl md:text-6xl tracking-tight leading-[1.02]">
                       <span className="text-slate-900">Questions, answered.</span>
                   </h2>
                   <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed max-w-sm">Anything else, ask Bella. She knows how it all works, and it's free to try.</p>
@@ -777,7 +777,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
               <div className="absolute -top-32 -right-24 w-[460px] h-[460px] rounded-full bg-[#CDE9F2]/60 blur-[100px] pointer-events-none" />
               <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-10 px-8 py-14 md:px-16 md:py-20">
                   <div className="text-center md:text-left">
-                      <h2 className="font-serif text-5xl md:text-7xl tracking-tight leading-[1.0]">
+                      <h2 className="font-display text-5xl md:text-7xl tracking-tight leading-[1.0]">
                           <span className="text-[#9bbecb]">Keep tonight.</span><br /><span className="text-[#f0addd] italic">Together.</span>
                       </h2>
                       <p className="mt-6 text-lg md:text-xl text-slate-500 font-light leading-relaxed max-w-lg mx-auto md:mx-0">By Sunday it will have blurred into the rest of the week. Write one line now, send your partner the link, and your first insight arrives on Sunday.</p>
