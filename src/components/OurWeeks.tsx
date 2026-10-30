@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { X, Check, Minus, Clock, CalendarCheck } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { belluhAgent, type Plan } from '../services/belluhAgent';
-import { formatOption } from '../../supabase/functions/_shared/plans';
 import { useI18n, useUi } from '../i18n';
 import storyUi from '../i18n/ui/story';
 
@@ -99,7 +98,7 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
                   return (
                     <li key={p.id} className="flex items-center gap-3 p-3 rounded-2xl bg-[#f7d8ee]/30">
                       <CalendarCheck size={16} className="text-[#831843] shrink-0" />
-                      <div className="min-w-0"><p className="text-sm font-medium text-slate-800 truncate">{p.title}</p>{o && <p className="text-xs text-slate-500">{formatOption(o, tz())}</p>}</div>
+                      <div className="min-w-0"><p className="text-sm font-medium text-slate-800 truncate">{p.title}</p>{o && <p className="text-xs text-slate-500">{date(new Date(o.starts_at), { timeZone: tz(), weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>}</div>
                     </li>
                   );
                 })}
