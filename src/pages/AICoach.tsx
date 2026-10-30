@@ -196,6 +196,23 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
     return () => { cancelled = true; belluhAgent.markBelluhSeen(); };
   }, []);
 
+  // Cards that finish loading after a reply (a photo, a plan, an order to approve) grow the thread: stay at the bottom
+  // with them, unless they've scrolled up to read something
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const box = scrollRef.current, content = contentRef.current;
+    if (!box || !content || typeof ResizeObserver === 'undefined') return;
+    let lastHeight = content.offsetHeight;
+    const ro = new ResizeObserver(() => {
+      const h = content.offsetHeight, grew = h > lastHeight;
+      const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 480 + (h - lastHeight);
+      lastHeight = h;
+      if (grew && nearBottom) messagesEndRef.current?.scrollIntoView({ block: 'end' });
+    });
+    ro.observe(content);
+    return () => ro.disconnect();
+  }, [mode]);
   const didInitialScroll = useRef(false);
   useEffect(() => {
       const behavior: ScrollBehavior = didInitialScroll.current ? 'smooth' : 'auto';
@@ -385,8 +402,8 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
        </div>
 
        {/* Chat Area */}
-       <div className="flex-1 overflow-y-auto">
-           <div className="max-w-3xl mx-auto px-4 pt-10 pb-4 space-y-8">
+       <div ref={scrollRef} className="flex-1 overflow-y-auto">
+           <div ref={contentRef} className="max-w-3xl mx-auto px-4 pt-10 pb-4 space-y-8">
 
                {mode === 'loading' && (
                  <div className="flex gap-4 md:gap-6 animate-fade-in"><BelluhAvatar /><div className="h-4 w-40 mt-3 rounded-full bg-slate-100 animate-pulse" /></div>

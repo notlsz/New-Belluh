@@ -59,7 +59,7 @@ test('watches: tickets once they are really on sale, at their price', () => {
   assert.match(f.title, /Laufey, Hollywood Bowl, 2027-02-15/);
   assert.equal(f.price, 'from 89 USD');
   assert.equal(eventFound({ ...w, max_cents: 5000 }, ev), null, 'over their price');
-  assert.match(foundText(w, f), /Tickets are on sale/);
+  assert.match(foundText(w, f), /^Tickets are on sale: Laufey.*They can go fast.$/);
   const url = ticketmasterUrl(w, 'US', 'k');
   assert.match(url, /keyword=Laufey/); assert.match(url, /city=Los\+Angeles/); assert.match(url, /countryCode=US/);
   assert.doesNotMatch(ticketmasterUrl(w, 'JP', 'k'), /countryCode/);

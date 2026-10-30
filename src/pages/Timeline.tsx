@@ -406,7 +406,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                          <div className="relative space-y-3">
                              {shown.map(m => (
                                  <div key={m.id} className="relative z-10 w-full animate-scale-in">
-                                     <div className="bg-white border border-slate-100 rounded-[1.5rem] p-5 shadow-[0_14px_40px_-22px_rgba(15,23,42,0.25)] flex items-start gap-4 hover:shadow-[0_18px_44px_-20px_rgba(63,116,134,0.35)] transition-shadow">
+                                     <div className="bg-[#f3f8fa] border border-[#dcebf0] rounded-[1.5rem] p-5 flex items-start gap-4 hover:border-[#c5dde5] transition-colors">
                                          <div className="shrink-0 pt-0.5"><BelluhOrb size={30} /></div>
                                          <div className="min-w-0 flex-1">
                                              <button type="button" onClick={() => onOpenBelluh?.()} className="w-full text-left">

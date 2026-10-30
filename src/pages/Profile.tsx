@@ -506,7 +506,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
 
                       {/* Relationship Facts Grid */}
                       {activeCircle && (
-                          <div className="mb-12 relative group/facts">
+                          <div className="mb-12 relative group/facts md:max-w-2xl">
                               <div className="flex items-center justify-between mb-6">
                                   <h3 className="font-serif text-xl text-slate-900 pl-1">{M.yourDates}</h3>
                                   <button onClick={() => isEditingFacts ? saveFacts() : setIsEditingFacts(true)} className={`h-9 px-4 rounded-full text-sm font-semibold transition-colors inline-flex items-center gap-1.5 ${isEditingFacts ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}>

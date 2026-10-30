@@ -18,6 +18,8 @@ import {
 import { sameSecret } from '../_shared/secret.ts';
 import { db, loadCtx, buildSystem, addMessage, weekAction, type Ctx, type WeekAction } from '../_shared/agentdb.ts';
 import { notify } from '../_shared/notify.ts';
+import { localized } from '../_shared/localize.ts';
+const say = (userId: string, text: string) => localized(db, userId, text);
 
 const ACTIVE_DAYS = 14; // only people who've written recently get a weekly insight
 
@@ -74,10 +76,11 @@ async function weekly(ctx: Ctx, ws: string) {
     if (!action) return 'failed';
     insight = "Here's one small thing to try together this week.";
   }
+  insight = await say(ctx.userId, insight);
   const msg = await addMessage(ctx.userId, 'belluh', insight, {
     kind: 'weekly', week: ws, ...(action ? { action_id: action.id, action: action.action, why: action.why } : {}),
   });
-  if (msg) await notify(ctx.userId, action ? `${insight}\n\nThis week, together: "${action.action}"\nReply DID IT once you have.` : insight, { title: 'Your week, from Belluh', push: insight, tag: 'weekly' });
+  if (msg) await notify(ctx.userId, action ? `${insight}\n\n${await say(ctx.userId, `This week, together: ${action.action}\nReply DID IT once you have.`)}` : insight, { title: 'Your week, from Belluh', push: insight, tag: 'weekly' });
   return msg ? 'sent' : 'already';
 }
 
@@ -86,10 +89,11 @@ async function checkin(ctx: Ctx, ws: string) {
   if (!action) return 'no_action';
   if (checkins.some(c => c.user_id === ctx.userId && c.status !== 'not_yet')) return 'answered';
   if (await alreadyPosted(ctx.userId, 'checkin', ws)) return 'already';
-  const msg = await addMessage(ctx.userId, 'belluh', checkinMessage(action.action, ctx.partnerName), {
+  const said = await say(ctx.userId, checkinMessage(action.action, ctx.partnerName));
+  const msg = await addMessage(ctx.userId, 'belluh', said, {
     kind: 'checkin', week: ws, action_id: action.id, action: action.action,
   });
-  if (msg) await notify(ctx.userId, `${checkinMessage(action.action, ctx.partnerName)}\nReply DID IT, NOT YET or SKIP.`, { push: checkinMessage(action.action, ctx.partnerName), tag: 'checkin' });
+  if (msg) await notify(ctx.userId, `${said}\n${await say(ctx.userId, 'Reply DID IT, NOT YET or SKIP.')}`, { push: said, tag: 'checkin' });
   return msg ? 'sent' : 'already';
 }
 
@@ -108,9 +112,9 @@ async function reminders(ctx: Ctx, local: ReturnType<typeof localDateParts>): Pr
     const key = `${o.id}:${isoDate(next)}:${stage}`;
     if (await alreadyPosted(ctx.userId, 'reminder', key)) continue;
     const [label, when, date, told] = reminderParams(o, stage, ctx.timezone);
-    const body = stage === 'day_of'
+    const body = await say(ctx.userId, stage === 'day_of'
       ? `${label} is today. You first told me about it on ${told}. Want a hand with something small for it?`
-      : `${label} is ${when}, ${date}. You first told me about it on ${told}. Want a few ideas?`;
+      : `${label} is ${when}, ${date}. You first told me about it on ${told}. Want a few ideas?`);
     if (await addMessage(ctx.userId, 'belluh', body, { kind: 'reminder', week: key, occasion_id: o.id })) { sent++; await notify(ctx.userId, body, { pushOnly: true, tag: 'reminder' }); }
   }
   return sent;

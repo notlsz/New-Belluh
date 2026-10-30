@@ -83,9 +83,9 @@ export function ticketmasterUrl(w: Watch, country: string, key: string): string 
   return `https://app.ticketmaster.com/discovery/v2/events.json?${p}`;
 }
 
-/** What Bella says when it turns up. */
+/** What Bella says when it turns up (the link goes with it, separately). */
 export function foundText(w: Watch, f: Found): string {
   return w.kind === 'event'
-    ? `Tickets are on sale: ${f.title}${f.price ? `, ${f.price}` : ''}. They can go fast, so here is the link: ${f.url}`
-    : `${f.title} is ${f.price}, under the price you wanted. Here it is: ${f.url}`;
+    ? `Tickets are on sale: ${f.title}${f.price ? `, ${f.price}` : ''}. They can go fast.`
+    : `${f.title} is ${f.price}, under the price you wanted.`;
 }
