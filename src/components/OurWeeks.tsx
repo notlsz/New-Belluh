@@ -50,7 +50,7 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
       <div className="bg-white w-full md:max-w-lg rounded-t-[2rem] md:rounded-[2rem] max-h-[88vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="sticky top-0 bg-white/95 backdrop-blur px-6 pt-6 pb-4 flex items-start justify-between border-b border-slate-50">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-belluh-500">Bella</p>
+            <p className="text-[12px] font-semibold text-belluh-500">Bella</p>
             <h2 className="font-serif text-2xl text-slate-900 mt-1">Our weeks</h2>
             {weeks && weeks.length > 0 && <p className="text-sm text-slate-500 mt-1">Of {weeks.length} {weeks.length === 1 ? 'suggestion' : 'suggestions'}, you did {did(true)} and {other} did {did(false)}.</p>}
           </div>
@@ -66,7 +66,7 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
           {weeks && weeks.length > 1 && (
             <section aria-label="Last weeks at a glance">
               <div className="flex items-end justify-between mb-3">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">At a glance</h3>
+                <h3 className="text-[13px] font-semibold text-slate-400">At a glance</h3>
                 {streak > 1 && <p className="text-xs font-bold text-[#831843]">{streak} weeks in a row, together</p>}
               </div>
               <div className="flex gap-1.5">
@@ -87,7 +87,7 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
 
           {plans.length > 0 && (
             <section>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Plans you made</h3>
+              <h3 className="text-[13px] font-semibold text-slate-400 mb-3">Plans you made</h3>
               <ul className="space-y-2">
                 {plans.map(p => {
                   const o = p.options.find(x => x.id === p.chosen_option);
@@ -104,7 +104,7 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
 
           {weeks && weeks.length > 0 && (
             <section>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Week by week</h3>
+              <h3 className="text-[13px] font-semibold text-slate-400 mb-3">Week by week</h3>
               <ol className="space-y-3">
                 {weeks.map(w => {
                   const mine = checkins.find(c => c.action_id === w.id && c.user_id === me)?.status;

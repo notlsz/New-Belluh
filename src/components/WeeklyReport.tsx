@@ -143,10 +143,10 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
            </button>
            
            <div className="flex items-center gap-2 mb-2">
-              <span className="px-3 py-1 bg-belluh-50 text-belluh-600 rounded-full text-[10px] font-bold uppercase tracking-widest animate-pulse">
+              <span className="px-3 py-1 bg-belluh-50 text-belluh-600 rounded-full text-[12px] font-semibold animate-pulse">
                 Real-Time Analysis
               </span>
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em]">{stats.recentCount} New Signals</span>
+              <span className="text-[13px] font-semibold text-slate-400">{stats.recentCount} new signals</span>
            </div>
            <h2 className="text-3xl font-serif text-slate-900 leading-tight">Our Report</h2>
            <p className="text-slate-500 text-sm mt-2">Synced with your latest journal entries.</p>
@@ -195,14 +195,14 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
                              <div className={`text-3xl font-bold mb-1 ${stats.gratitudeChange < 0 ? 'text-cyan-700 opacity-60' : 'text-cyan-950'}`}>
                                 {stats.gratitudeChange > 0 ? '+' : ''}{stats.gratitudeChange}%
                              </div>
-                             <div className="text-[10px] text-cyan-700 uppercase tracking-widest">Gratitude</div>
+                             <div className="text-[12px] text-cyan-700">Gratitude</div>
                          </div>
                          <div className="h-px bg-cyan-800/20 flex-1 mx-4"></div>
                          <div className="text-center">
                              <div className={`text-3xl font-bold mb-1 drop-shadow-sm ${stats.intimacyChange < 0 ? 'text-cyan-700 opacity-60' : 'text-[#f0addd]'}`} style={{ textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
                                 {stats.intimacyChange > 0 ? '+' : ''}{stats.intimacyChange}%
                              </div>
-                             <div className="text-[10px] text-cyan-700 uppercase tracking-widest">Intimacy</div>
+                             <div className="text-[12px] text-cyan-700">Intimacy</div>
                          </div>
                     </div>
 
@@ -211,7 +211,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
                     </p>
                     <button 
                         onClick={() => onTryRitual("Write down 3 specific things you are grateful for about your partner right now.")}
-                        className="mt-4 w-full py-3 bg-white/40 hover:bg-white/60 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 text-cyan-900"
+                        className="mt-4 w-full py-3 bg-white/40 hover:bg-white/60 rounded-xl text-[13px] font-semibold transition-colors flex items-center justify-center gap-2 text-cyan-900"
                     >
                         Try this ritual <ArrowRight size={12} />
                     </button>
@@ -240,7 +240,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
                 </div>
                 <button 
                     onClick={() => onTryRitual("What is one thing I could do this week that would make you feel most loved?")}
-                    className="mt-4 text-xs font-bold text-rose-600 uppercase tracking-wider hover:underline"
+                    className="mt-4 text-[13px] font-semibold text-rose-600 hover:underline"
                 >
                     Recalibrate?
                 </button>

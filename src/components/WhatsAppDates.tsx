@@ -128,7 +128,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
   return (
     <div className="mb-12">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] pl-1">Text Bella</h3>
+        <h3 className="font-serif text-xl text-slate-900 pl-1">Text Bella</h3>
         {phone && <button onClick={disconnect} className="text-xs font-bold text-slate-400 hover:text-slate-700">Disconnect texting</button>}
       </div>
 

@@ -399,7 +399,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                          <img src={msg.meta.photo_preview || photoLinks.get(msg.meta.photo)} alt="Your photo" className="mb-2 max-h-64 w-auto rounded-2xl object-cover" />
                        )}
                        {!(msg.meta?.photo || msg.meta?.photo_preview) || msg.body !== '(sent a photo)' ? <p className="font-medium whitespace-pre-wrap">{msg.body}</p> : null}
-                       {(msg.meta as any)?.channel && <p className="mt-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">via {(msg.meta as any).channel === 'sms' ? 'text' : (msg.meta as any).channel === 'telegram' ? 'Telegram' : 'WhatsApp'}</p>}
+                       {(msg.meta as any)?.channel && <p className="mt-1.5 text-[12px] font-semibold text-slate-400">via {(msg.meta as any).channel === 'sms' ? 'text' : (msg.meta as any).channel === 'telegram' ? 'Telegram' : 'WhatsApp'}</p>}
                      </div>
                    </div>
                  );
@@ -407,10 +407,10 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                    <div key={msg.id} className="group animate-slide-up flex gap-4 md:gap-6">
                      <BelluhAvatar />
                      <div className="max-w-[85%] md:max-w-[80%]">
-                       {msg.meta?.entry_id && <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6] mb-1.5">About your latest entry</p>}
-                       {msg.meta?.kind === 'weekly' && <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6] mb-1.5">Your week, from Belluh</p>}
-                       {msg.meta?.kind === 'offer' && <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6] mb-1.5">Bella noticed</p>}
-                       {msg.meta?.kind === 'remind' && <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6] mb-1.5">Reminder you asked for</p>}
+                       {msg.meta?.entry_id && <p className="text-[13px] font-semibold text-[#7fa7b6] mb-1.5">About your latest entry</p>}
+                       {msg.meta?.kind === 'weekly' && <p className="text-[13px] font-semibold text-[#7fa7b6] mb-1.5">Your week, from Belluh</p>}
+                       {msg.meta?.kind === 'offer' && <p className="text-[13px] font-semibold text-[#7fa7b6] mb-1.5">Bella noticed</p>}
+                       {msg.meta?.kind === 'remind' && <p className="text-[13px] font-semibold text-[#7fa7b6] mb-1.5">Reminder you asked for</p>}
                        <p className="font-serif text-lg leading-relaxed text-slate-900 whitespace-pre-wrap">{revealIds.has(msg.id) ? <Reveal text={msg.body} onTick={() => messagesEndRef.current?.scrollIntoView({ block: 'end' })} /> : msg.body}</p>
                        {Array.isArray(msg.meta?.saved) && msg.meta.saved.length > 0 && (
                          <button onClick={openMemories} className="mt-2 flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-700 text-left">
@@ -432,7 +432,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                    <div className="mb-12 animate-fade-in bg-belluh-50/50 p-6 rounded-3xl border border-belluh-100">
                         <div className="flex items-center gap-2 mb-3 text-belluh-400">
                             <Activity size={14} />
-                            <span className="text-xs font-bold uppercase tracking-widest">Current Context</span>
+                            <span className="text-[13px] font-semibold">Current Context</span>
                         </div>
                         <h2 className="text-xl md:text-2xl font-serif text-belluh-900 leading-relaxed italic opacity-90">
                             "{reflection.replace(/[*#]/g, '').trim()}"
@@ -471,7 +471,9 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
        </div>
 
        {/* Input Area */}
-       <div className={`fixed bottom-0 left-0 right-0 p-4 ${inSheet ? 'pb-6' : 'pb-28 lg:pb-8 lg:left-[var(--sidebar-w,16rem)]'} bg-gradient-to-t from-belluh-25 via-belluh-25 to-transparent pt-12 z-40`}>
+       <div className={`fixed bottom-0 left-0 right-0 p-4 ${inSheet ? 'pb-6' : 'pb-28 lg:pb-8 lg:left-[var(--sidebar-w,16rem)]'} bg-belluh-25 pt-3 z-40`}>
+            {/* A short fade above a solid bar: the conversation never shows through behind the chips */}
+            <div aria-hidden="true" className="pointer-events-none absolute -top-10 inset-x-0 h-10 bg-gradient-to-t from-belluh-25 to-transparent" />
             <div className="max-w-2xl mx-auto relative flex flex-col">
                 <div className="flex items-center gap-2 mb-3 -mx-4 px-4 overflow-x-auto no-scrollbar">
                     {starters.map(t => (
@@ -523,7 +525,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                 </div>
 
                 <p className="text-center text-[11px] text-slate-400 mt-3 w-full">
-                    {mode === 'agent' && partnerName ? `Belluh never sees ${partnerName}'s private entries, and it can make mistakes.` : 'Belluh can make mistakes.'}
+                    {mode === 'agent' && partnerName ? `Bella never sees ${partnerName}’s private entries, and she can make mistakes.` : 'Bella can make mistakes.'}
                 </p>
             </div>
        </div>

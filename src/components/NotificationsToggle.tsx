@@ -33,7 +33,7 @@ const NotificationsToggle: React.FC<{ onShowToast: (m: string, t: 'success' | 'e
 
   return (
     <div className="mb-12">
-      <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] pl-1 mb-4">Notifications</h3>
+      <h3 className="font-serif text-xl text-slate-900 pl-1 mb-4">Notifications</h3>
       <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 flex items-start gap-4">
         <div className={`w-6 pt-0.5 flex justify-center shrink-0 ${state === 'on' ? 'text-[#e58fc9]' : 'text-slate-400'}`}>
           {state === 'on' ? <Bell size={18} /> : <BellOff size={18} />}

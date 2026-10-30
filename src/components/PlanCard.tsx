@@ -30,6 +30,7 @@ const PlanCard: React.FC<{ planId: string; partnerName?: string | null; onChange
   const [me, setMe] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState('');
+  const [calOpen, setCalOpen] = useState(false);
   const [noneOpen, setNoneOpen] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -60,10 +61,10 @@ const PlanCard: React.FC<{ planId: string; partnerName?: string | null; onChange
   };
 
   return (
-    <div className="w-full rounded-[1.75rem] border border-[#f0addd]/60 bg-gradient-to-br from-white to-[#f7d8ee]/30 p-5 shadow-sm">
+    <div className="w-full rounded-[1.75rem] border border-slate-100 bg-white p-5 shadow-[0_8px_30px_-18px_rgba(15,23,42,0.25)]">
       <div className="flex items-center gap-2">
-        <span className="bg-[#f7d8ee] text-[#831843] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-          {plan.status === 'confirmed' ? "It's a plan" : mine ? `Plan for you & ${other}` : `${other} wants to plan`}
+        <span className="text-[13px] font-semibold text-[#c4589f]">
+          {plan.status === 'confirmed' ? 'It’s a plan' : mine ? `Plan for you & ${other}` : `${other} wants to plan`}
         </span>
       </div>
       <h3 className="font-serif text-xl text-slate-800 leading-snug mt-3 text-balance">{plan.title}</h3>
@@ -105,13 +106,21 @@ const PlanCard: React.FC<{ planId: string; partnerName?: string | null; onChange
 
       {plan.status === 'confirmed' && chosen && (
         <>
-          <p className="mt-3 text-[15px] font-medium text-slate-800 flex items-center gap-2"><Check size={16} className="text-[#831843]" />{formatOption(chosen, tz())}</p>
+          <p className="mt-3 text-[15px] font-medium text-slate-800 flex items-center gap-2"><Check size={16} className="text-[#3f7486]" />{formatOption(chosen, tz())}</p>
           {plan.partner_note && <p className="text-sm text-slate-500 mt-1">“{plan.partner_note}”</p>}
-          <div className="mt-4 flex flex-wrap gap-2">
-            <a href={googleCalendarUrl({ uid: plan.id, title: plan.title, starts_at: chosen.starts_at, minutes: chosen.minutes, details: plan.details })} target="_blank" rel="noreferrer"
-              className="px-4 py-2 rounded-full bg-white border border-slate-200 text-sm font-bold text-slate-700 hover:border-slate-400 flex items-center gap-1.5"><CalendarPlus size={14} /> Google Calendar</a>
-            <button onClick={() => downloadIcs(plan, chosen.starts_at, chosen.minutes)}
-              className="px-4 py-2 rounded-full bg-white border border-slate-200 text-sm font-bold text-slate-700 hover:border-slate-400 flex items-center gap-1.5"><CalendarPlus size={14} /> Apple or Outlook</button>
+          {/* One button; the calendars appear when they ask for them */}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {!calOpen ? (
+              <button onClick={() => setCalOpen(true)} aria-expanded={false}
+                className="h-10 px-4 rounded-full bg-white border border-slate-200 text-sm font-semibold text-slate-700 hover:border-slate-400 inline-flex items-center gap-1.5"><CalendarPlus size={15} /> Add to calendar</button>
+            ) : (
+              <>
+                <a href={googleCalendarUrl({ uid: plan.id, title: plan.title, starts_at: chosen.starts_at, minutes: chosen.minutes, details: plan.details })} target="_blank" rel="noreferrer"
+                  className="h-10 px-4 rounded-full bg-slate-900 text-white text-sm font-semibold hover:bg-black inline-flex items-center">Google</a>
+                <button onClick={() => downloadIcs(plan, chosen.starts_at, chosen.minutes)}
+                  className="h-10 px-4 rounded-full bg-slate-900 text-white text-sm font-semibold hover:bg-black inline-flex items-center">Apple or Outlook</button>
+              </>
+            )}
           </div>
         </>
       )}

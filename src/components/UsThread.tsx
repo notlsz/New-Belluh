@@ -84,7 +84,7 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
                   <div className="w-8 shrink-0 pb-3 flex justify-center"><BelluhOrb size={22} /></div>
                 )}
                 <div className={`max-w-[80%] rounded-3xl px-4 py-3 ${w === 'me' ? 'bg-slate-100 rounded-br-lg' : w === 'partner' ? 'bg-[#eef8fb] rounded-bl-lg' : 'bg-white border border-slate-100 rounded-bl-lg'}`}>
-                  {w === 'partner' && <p className="text-[10px] font-bold uppercase tracking-widest text-[#3f7486] mb-1">{partnerName}</p>}
+                  {w === 'partner' && <p className="text-[12px] font-semibold text-[#3f7486] mb-1">{partnerName}</p>}
                   <p className={`whitespace-pre-wrap ${w === 'belluh' ? 'font-serif text-[16px] leading-relaxed text-slate-900' : 'text-[15px] text-slate-800'}`}>{m.body}</p>
                   {w === 'belluh' && Array.isArray(m.meta?.links) && m.meta.links.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">

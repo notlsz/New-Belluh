@@ -66,7 +66,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
     <div className="mb-8 w-full animate-fade-in relative group">
       {/* Date Marker (Side) */}
       <div className="absolute -left-20 top-6 w-12 flex flex-col items-end opacity-40 group-hover:opacity-100 transition-opacity pr-2">
-        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">{dateStr.split(' ')[0]}</span>
+        <span className="text-[12px] font-semibold text-slate-400 leading-none">{dateStr.split(' ')[0]}</span>
         <span className="text-sm font-serif font-bold text-slate-800 leading-none mt-1">{dateStr.split(' ')[1]}</span>
       </div>
 
@@ -96,7 +96,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
                     <span className="text-xs text-slate-400">{timeStr}</span>
                     {showContext && circleName && (
                         <>
-                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                            <span className="text-[12px] font-semibold text-slate-500 flex items-center gap-1">
                                 {circleName}
                             </span>
                         </>
@@ -107,7 +107,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
               {entry.isPrivate && (
                 <div className="ml-2 flex items-center gap-1 text-slate-300 pointer-events-none select-none bg-slate-100/50 px-2 py-0.5 rounded-md" title="Private to you">
                     <Lock size={10} />
-                    <span className="text-[9px] font-bold uppercase tracking-widest hidden sm:inline">Vault</span>
+                    <span className="text-[12px] font-semibold hidden sm:inline">Vault</span>
                 </div>
               )}
            </div>
@@ -121,7 +121,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
         {/* Prompt */}
         {entry.prompt && (
           <div className="mb-4 relative z-10 pl-1 border-l-2 border-belluh-100 py-1">
-            <p className="text-[9px] font-bold text-belluh-400 uppercase tracking-[0.1em] mb-1 opacity-80">Prompt</p>
+            <p className="text-[12px] font-semibold text-belluh-400 mb-1 opacity-80">Prompt</p>
             <p className="text-sm font-medium text-slate-500 leading-snug">{entry.prompt}</p>
           </div>
         )}
@@ -177,7 +177,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
                {entry.location ? (
                    <div className="flex items-center gap-1.5 text-slate-400 hover:text-slate-600 transition-colors cursor-default bg-slate-50 px-2 py-1 rounded-md">
                        <MapPin size={10} />
-                       <span className="text-[9px] uppercase tracking-widest font-bold">{entry.location}</span>
+                       <span className="text-[12px] font-semibold">{entry.location}</span>
                    </div>
                ) : <div></div>}
            </div>

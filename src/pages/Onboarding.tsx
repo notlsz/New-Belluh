@@ -298,7 +298,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         {step === 3 && (
           <div className="w-full max-w-md ob-in text-center">
             <div className="bg-white/85 backdrop-blur-xl p-7 md:p-8 rounded-[2.5rem] shadow-[0_30px_80px_-30px_rgba(63,116,134,0.4)] border border-white relative overflow-hidden">
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-4">Page one of your story</p>
+              <p className="text-[13px] font-semibold text-[#9bbecb] mb-4">Page one of your story</p>
               <p className="font-serif text-xl md:text-2xl leading-relaxed text-slate-800">"{entry.trim()}"</p>
               <p className="mt-6 text-sm text-slate-500 leading-relaxed">
                 Every Sunday Belluh reads what you both write and brings you one small thing to try together.
