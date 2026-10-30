@@ -196,6 +196,8 @@ Actions (use the tools; don't just describe them)
 - find_experience: when they want something to do together (a concert, a cooking class, a wine tasting, a show). Give where as "City, ST" ("Austin, TX") and the day; it finds tickets and experiences; they book.
 - write_entry: when they want something kept in their journal ("journal this", "add that to my journal", or answering your "how was it?" about a plan). Save their own words, lightly cleaned up, never your summary. Private to them unless they say to share it with ${partner}.
 - take_shape: when they ask you to become, turn into or look like something (an animal, an object, a letter, anything). Your body is living light-blue water and it takes that shape while you reply. Give one emoji in the tool that clearly shows it (never in your words); if none fits, a simple filled silhouette as SVG path data in a 0 0 100 100 box. Never a brand logo or a copyrighted character; take the closest generic thing and say so lightly. water: true when they want you back to normal.
+- find_spots: when they want ideas for where to go (dinner, drinks, brunch, a museum, a walk) or "somewhere good near us". Use their neighborhood and city from what you know; if you don't know where they are, ask once. Pick the two or three that fit them best from what comes back and say why in a line each, from what they've said they like. Each spot has a Reserve button that books it (you call the place when calls are on), so never say a table is booked.
+- shop_style: when they want to furnish or style something (a first apartment together, a nursery, a cozy reading corner) or shop a look ("mid-century", "coastal") rather than one specific item. Break it into one to four pieces that fit their space and budget, keep the room small if they said it is, and give budget_each when they gave a budget (split it across the pieces). Then compare in a few lines: which pick for each piece and why, and the rough total.
 - gift_ideas: when a birthday, anniversary or thank-you is coming up, or they ask what to get ${partner}. One to three specific ideas drawn from things ${partner} has said they love or wished for, as short shopping phrases ("Le Creuset dutch oven", "film camera"). Never invent a wish ${partner} didn't express; if you know nothing, ask one question instead. Never suggest something they've already bought or sent (it's in what you remember).
 
 How you work (like a great chief of staff for the relationship, never a chatbot)
@@ -453,6 +455,23 @@ export const TOOL_DECLARATIONS = [
     parameters: { type: 'OBJECT', properties: { ideas: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['ideas'] },
   },
   {
+    name: 'shop_style',
+    description: 'Shop a look across independent Shopify brands: real products with photos, prices and checkout for each piece, in a style, under a budget.',
+    parameters: { type: 'OBJECT', properties: {
+      pieces: { type: 'ARRAY', items: { type: 'STRING' }, description: '1-4 specific pieces, e.g. ["low-profile sofa", "lounge chair", "walnut coffee table"]' },
+      style: { type: 'STRING', nullable: true, description: 'The look, e.g. "mid-century modern", "coastal", "minimalist"' },
+      budget_each: { type: 'NUMBER', nullable: true, description: 'Most to spend on each piece, in dollars' },
+    }, required: ['pieces'] },
+  },
+  {
+    name: 'find_spots',
+    description: 'Find real places near them for a date or a plan: restaurants by cuisine, bars, cafes, museums, parks. Each comes with its address, phone, hours and a way to book or get there.',
+    parameters: { type: 'OBJECT', properties: {
+      what: { type: 'STRING', description: 'A cuisine or kind of place, e.g. "ramen", "wine bar", "italian restaurant", "museum"' },
+      where: { type: 'STRING', description: 'Neighborhood and city, e.g. "Mission District, San Francisco" or "Brooklyn"' },
+    }, required: ['what', 'where'] },
+  },
+  {
     name: 'take_shape',
     description: 'Change your water body into a shape the user asked for: one emoji that shows it, or an SVG path silhouette in a 0 0 100 100 box, or water: true to go back to normal.',
     parameters: { type: 'OBJECT', properties: { label: { type: 'STRING' }, emoji: { type: 'STRING', nullable: true }, path: { type: 'STRING', nullable: true }, water: { type: 'BOOLEAN', nullable: true } }, required: ['label'] },
@@ -477,6 +496,8 @@ export type ToolCall =
   | { name: 'plan_trip'; args: Record<string, unknown> }
   | { name: 'send_flowers'; args: Record<string, unknown> }
   | { name: 'gift_ideas'; args: Record<string, unknown> }
+  | { name: 'shop_style'; pieces: string[]; style: string | null; budgetEach: number | null }
+  | { name: 'find_spots'; what: string; where: string }
   | { name: 'order_food' | 'buy_item' | 'order_groceries' | 'book_ride' | 'find_experience'; args: Record<string, unknown> }
   | { name: 'write_entry'; text: string; shared: boolean }
   | { name: 'take_shape'; shape: Shape };
@@ -502,6 +523,15 @@ export function validateToolCall(name: string, args: Record<string, unknown> | u
     case 'send_flowers': return { name, args: a }; // turned into links by flowerLinks
     case 'order_food': case 'buy_item': case 'order_groceries': case 'book_ride': case 'find_experience': return { name, args: a }; // turned into links in actions.ts
     case 'gift_ideas': return Array.isArray(a.ideas) && a.ideas.length ? { name, args: a } : null;
+    case 'shop_style': {
+      const pieces = (Array.isArray(a.pieces) ? a.pieces : []).map(x => clean(x, 80)).filter(x => x.length >= 2).slice(0, 4);
+      const budget = Number(a.budget_each);
+      return pieces.length ? { name, pieces, style: clean(a.style, 40) || null, budgetEach: budget > 0 && budget < 100000 ? budget : null } : null;
+    }
+    case 'find_spots': {
+      const what = clean(a.what, 60), where = clean(a.where, 80);
+      return what.length >= 2 && where.length >= 2 ? { name, what, where } : null;
+    }
     case 'write_entry': {
       const text = typeof a.text === 'string' ? a.text.trim().slice(0, 4000) : '';
       return text.length >= 2 ? { name, text, shared: a.shared === true } : null;
@@ -581,6 +611,8 @@ const DID: Record<string, string> = {
   plan_trip: 'I pulled up flights, hotels and Airbnbs for the trip, all below and ready when you are.',
   send_flowers: 'The flowers are ready to order below. Want me to write the card?',
   gift_ideas: 'I found a few gifts that fit, they are right below.',
+  shop_style: 'I pulled real pieces for the look, compared right below.',
+  find_spots: 'A few good spots near you are right below, each one tap from booked.',
   buy_item: 'Found it. The best options are below, each one tap from checkout.',
   order_food: 'Dinner is ready to order below, you just check out.',
   order_groceries: 'Your groceries are each one tap from the cart, right below.',

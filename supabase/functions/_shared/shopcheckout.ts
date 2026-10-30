@@ -16,7 +16,7 @@ export interface Recipient {
   address_locality: string; address_region: string; postal_code: string; address_country: string;
 }
 
-export interface Offer { title: string; variantId: string; shop: string; seller: string; priceCents: number; image: string | null }
+export interface Offer { title: string; variantId: string; shop: string; seller: string; priceCents: number; image: string | null; url: string | null }
 
 export interface ReadyOrder extends ShopProduct { total: string; totalCents: number; deliversTo: string; ready: true }
 
@@ -67,7 +67,7 @@ export function parseOffers(json: unknown, maxCents?: number | null, exclude?: R
     if (maxCents && price > maxCents) continue;
     if (exclude && exclude.test(`${p.title} ${v.title ?? ''} ${v.seller?.name ?? ''}`)) continue;
     const img = [...(Array.isArray(v.media) ? v.media : []), ...(Array.isArray(p.media) ? p.media : [])].find((m: any) => typeof m?.url === 'string' && m.url.startsWith('https://'))?.url ?? null;
-    out.push({ title: p.title.replace(/\s+/g, ' ').trim().slice(0, 90), variantId: v.id, shop, seller: String(v.seller?.name || shop).slice(0, 40), priceCents: price, image: img });
+    out.push({ title: p.title.replace(/\s+/g, ' ').trim().slice(0, 90), variantId: v.id, shop, seller: String(v.seller?.name || shop).slice(0, 40), priceCents: price, image: img, url: [v.checkout_url, v.url].find((x: unknown) => typeof x === 'string' && x.startsWith('https://')) ?? null });
   }
   return out;
 }
@@ -137,4 +137,26 @@ export async function readyOrder(query: string, to: Recipient, opts: { maxCents?
     };
   }
   return null;
+}
+
+/**
+ * Shop a look: each piece of it ("low-profile mid-century sofa", "walnut coffee table") searched across Shopify brands
+ * in the style asked for, under the budget for that piece, two real options each with photo, price and checkout.
+ * Pieces are searched together; the cards come back in the order they were asked for.
+ */
+export async function shopStyle(pieces: string[], opts: { style?: string; maxCentsEach?: number | null; perPiece?: number } = {}, fetchImpl: typeof fetch = fetch): Promise<(ShopProduct & { piece: string })[]> {
+  const list = pieces.map(p => p.replace(/\s+/g, ' ').trim().slice(0, 80)).filter(p => p.length >= 2).slice(0, 4);
+  const style = (opts.style ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
+  const results = await Promise.all(list.map(piece => searchOffers(style && !piece.toLowerCase().includes(style.toLowerCase()) ? `${style} ${piece}` : piece, { maxCents: opts.maxCentsEach, intent: style ? `${style} style` : undefined }, fetchImpl)));
+  const out: (ShopProduct & { piece: string })[] = [];
+  const seen = new Set<string>();
+  results.forEach((offers, i) => {
+    let n = 0;
+    for (const o of offers) {
+      if (n >= (opts.perPiece ?? 2) || !o.url || seen.has(o.url)) continue;
+      seen.add(o.url); n++;
+      out.push({ title: o.title, price: money(o.priceCents), seller: o.seller, image: o.image, url: o.url, piece: list[i] });
+    }
+  });
+  return out;
 }
