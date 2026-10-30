@@ -1,3 +1,4 @@
+import { useI18n, localQuestion } from '../i18n';
 import BelluhActions from '../components/BelluhActions';
 import React, { useMemo, useState, useEffect } from 'react';
 import BelluhOrb from '../components/BelluhOrb';
@@ -35,6 +36,8 @@ interface TimelineProps {
 }
 
 const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName, activeCircleId, circles, onCircleChange, onLikeEntry, onCompose, onSearch: _onSearch, onDeleteEntry, onUpdateEntry, streak, onAskBelluh, onOpenBelluh }) => {
+  const { d: d0, f } = useI18n();
+  const a = d0.app;
   const [searchQuery, setSearchQuery] = useState('');
   const [isCircleMenuOpen, setIsCircleMenuOpen] = useState(false);
   // Same question for both of you today
@@ -320,7 +323,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                         </h1>
                         <div className="flex items-center gap-2 mt-2">
                              <span className="text-[13px] font-semibold text-[#9bbecb]">
-                                {isConstellation ? "All memories" : "Shared journal"}
+                                {isConstellation ? a.allMemories : a.sharedJournal}
                              </span>
                              <ChevronDown size={12} className={`text-slate-300 transition-transform duration-300 ${isCircleMenuOpen ? 'rotate-180' : ''}`} />
                         </div>
@@ -388,7 +391,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
              {belluhLive && !isConstellation && !isArchived && showPatterns && (() => {
                  const cards = waiting.length ? waiting : (latest && !(latest.meta?.kind === 'weekly' && week) ? [latest] : []);
                  if (!cards.length) return null;
-                 const LABEL: Record<string, string> = { weekly: 'Your week from Bella', checkin: 'Check-in from Bella', reminder: 'Reminder from Bella', remind: 'Reminder you asked for', offer: 'Bella noticed', plan_nudge: 'Waiting on you', after_plan: 'From Bella' };
+                 const LABEL: Record<string, string> = a.cardLabels;
                  const update = (id: string, next: AgentMessage | null) => setWaiting(prev => next ? prev.map(m => (m.id === id ? next : m)) : prev.filter(m => m.id !== id));
                  const shown = stackOpen ? cards : cards.slice(0, 1);
                  const hidden = cards.length - shown.length;
@@ -396,7 +399,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                      <div className="mb-6">
                          {cards.length > 1 && (
                              <div className="flex items-center justify-between mb-2.5 px-1">
-                                 <p className="text-[13px] font-semibold text-slate-400">Bella has {cards.length} things for you</p>
+                                 <p className="text-[13px] font-semibold text-slate-400">{f(a.bellaHas, { n: cards.length })}</p>
                                  <button type="button" onClick={() => setStackOpen(o => !o)} className="text-xs font-bold text-[#3f7486] hover:text-slate-900 transition-colors">{stackOpen ? 'Show less' : `Show ${hidden} more`}</button>
                              </div>
                          )}
@@ -420,7 +423,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                                              )}
                                          </div>
                                          {waiting.length > 0 && m.meta?.kind !== 'offer' && (
-                                             <button type="button" aria-label="Dismiss" onClick={() => { belluhAgent.dismiss(m.id); update(m.id, null); }} className="shrink-0 -mr-1 -mt-1 w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-slate-600 hover:bg-slate-50"><X size={15} /></button>
+                                             <button type="button" aria-label={d0.app.acts.dismiss} onClick={() => { belluhAgent.dismiss(m.id); update(m.id, null); }} className="shrink-0 -mr-1 -mt-1 w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:text-slate-600 hover:bg-slate-50"><X size={15} /></button>
                                          )}
                                      </div>
                                  </div>
@@ -466,7 +469,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                 }`}
              >
                 <div className="mr-3">{isSearching ? <Loader2 size={18} className="animate-spin text-belluh-400" /> : <BelluhOrb size={20} />}</div>
-                <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={isArchived ? "Search past memories..." : isConstellation ? "Search across all constellations..." : "Ask Bella..."} className="flex-1 bg-transparent text-[16px] focus:outline-none font-normal placeholder:text-slate-400" />
+                <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={isArchived ? "Search past memories..." : isConstellation ? "Search across all constellations..." : a.askBella} className="flex-1 bg-transparent text-[16px] focus:outline-none font-normal placeholder:text-slate-400" />
                 {searchQuery && <button type="button" onClick={() => { setSearchQuery(''); setSearchAnswer(null); }}><X size={16} className="text-slate-400" /></button>}
              </form>
 
@@ -482,7 +485,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
           {/* Today: what needs you now, before the story */}
           {!isArchived && !isConstellation && (
               <div className="relative pl-20 md:pl-24 pr-6 mb-5 flex items-center gap-3">
-                  <span className="text-[13px] font-semibold text-belluh-500">Today</span>
+                  <span className="text-[13px] font-semibold text-belluh-500">{a.today}</span>
               </div>
           )}
 
@@ -512,10 +515,10 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                       <div className="bg-white border border-slate-100 shadow-sm hover:shadow-lg rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden group-hover:-translate-y-0.5">
                           <div className="relative z-10">
                               <div className="flex items-center gap-2 mb-4">
-                                  <span className="text-[13px] font-semibold text-belluh-500">Today's question</span>
+                                  <span className="text-[13px] font-semibold text-belluh-500">{a.todaysQuestion}</span>
                               </div>
                               <h3 className="font-serif text-2xl md:text-[1.7rem] text-slate-900 leading-tight mb-6">
-                                  {todaysPrompt}
+                                  {localQuestion(d0, todaysPrompt)}
                               </h3>
                               {partnerAnswer && (
                                   <div className="mb-6 rounded-2xl bg-belluh-100 p-4">
@@ -536,9 +539,9 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                   ) : (
                   <div className="w-full bg-white border border-slate-100 shadow-sm rounded-[2rem] p-8">
                       <div className="flex items-center gap-2 mb-4">
-                          <span className="text-[13px] font-semibold text-belluh-500">Today's question</span>
+                          <span className="text-[13px] font-semibold text-belluh-500">{a.todaysQuestion}</span>
                       </div>
-                      <h3 className="font-serif text-xl text-slate-800 leading-tight mb-5">{todaysPrompt}</h3>
+                      <h3 className="font-serif text-xl text-slate-800 leading-tight mb-5">{localQuestion(d0, todaysPrompt)}</h3>
                       <div className="grid gap-3 sm:grid-cols-2">
                           <div className="rounded-2xl bg-slate-50 p-4">
                               <p className="text-xs font-bold text-slate-400 mb-2">You</p>

@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n';
 import React, { useEffect, useState } from 'react';
 import DragonflyMark from './DragonflyMark';
 
@@ -9,6 +10,7 @@ const SiteNav: React.FC<{
   onGetStarted: () => void;
   onMenu: () => void;
 }> = ({ links, onHome, onLogin, onGetStarted, onMenu }) => {
+  const { d } = useI18n();
   const [inView, setInView] = useState<string | null>(null);
   // On the landing page, the link for the section you're looking at is the one that's lit
   const sections = links.map(l => l.section).filter(Boolean).join(',');
@@ -43,8 +45,8 @@ const SiteNav: React.FC<{
           })}
         </nav>
         <div className="ml-auto flex items-center gap-1">
-          <button onClick={onLogin} className="hidden md:inline-flex h-8 items-center px-3 rounded-full text-[14px] whitespace-nowrap text-slate-800 hover:bg-black/[0.05] transition-colors">Log in</button>
-          <button onClick={onGetStarted} className="h-8 px-3.5 inline-flex items-center whitespace-nowrap rounded-full bg-black text-white text-[14px] hover:bg-slate-800 transition-colors">Start free</button>
+          <button onClick={onLogin} className="hidden md:inline-flex h-8 items-center px-3 rounded-full text-[14px] whitespace-nowrap text-slate-800 hover:bg-black/[0.05] transition-colors">{d.common.logIn}</button>
+          <button onClick={onGetStarted} className="h-8 px-3.5 inline-flex items-center whitespace-nowrap rounded-full bg-black text-white text-[14px] hover:bg-slate-800 transition-colors">{d.common.startFree}</button>
           <button onClick={onMenu} aria-label="Open menu" className="md:hidden ml-1 -mr-1 h-9 w-9 inline-flex items-center justify-center text-slate-900">
             <svg width="22" height="12" viewBox="0 0 22 12" fill="none" aria-hidden="true"><path d="M1 1h20M1 11h20" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
           </button>

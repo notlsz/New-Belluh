@@ -12,21 +12,8 @@ import SiteFooter from '../components/SiteFooter';
 import SiteNav from '../components/SiteNav';
 import DragonflyMark from '../components/DragonflyMark';
 import { belluh } from '../lib/belluhPresence';
+import { useI18n } from '../i18n';
 
-const FAQ = [
-  { q: 'Can my partner read my private entries?', a: 'No. Every entry is shared or private, your call. Your partner never sees your private entries, and neither does their Belluh.' },
-  { q: "We're already busy. Isn't this one more thing to keep up with?", a: "It's the opposite. Write one line a day, or none at all. Belluh does the remembering, the planning and the reminding, so neither of you has to keep track." },
-  { q: 'What does Belluh actually do?', a: 'It remembers what matters to you both, plans dates your partner can accept with one tap, and gets things ready to finish in a tap: the date-night table, dinner delivered, the gift, the groceries, a ride, tickets, the honeymoon and the flowers. It reminds you before birthdays and anniversaries, sends the reminders you ask for, helps you find the words for a note, and every Sunday gives you one insight and one small thing to try together.' },
-  { q: 'Do we both need to sign up?', a: "Belluh is made for two, so it's best together. You can start on your own and send your partner the link whenever you're ready." },
-  { q: 'Who is Bella?', a: "Bella is the AI inside Belluh. She remembers what matters to you both, plans dates you can both say yes to, and gets the table, the flowers and the gift ready to pay for in one tap. She never buys anything without you." },
-  { q: 'Is Belluh an AI girlfriend or boyfriend?', a: "No. Belluh doesn't flirt or play a partner. It works for the two of you and points you back to each other." },
-  { q: 'Can I use it from WhatsApp or text?', a: "Yes. Connect WhatsApp, SMS or Telegram in Settings with one tap and text Bella like you'd talk to her in the app. Same Bella, same memory." },
-  { q: 'Why is Bella made of water?', a: "So you can see what she's doing. She ripples when you type, swirls while she thinks, and moves with every word she says. Ask her to become something, a cat, a lighthouse, the first letter of your name, and she takes that shape." },
-  { q: 'What happens to my data?', a: "Your entries are encrypted in storage and in transit, and never sold. Belluh's replies are written by Google's Gemini models, which process your entries to write them." },
-  { q: 'Is it free?', a: "Yes. Writing together, your shared memory and a few chats with Belluh a week are free for good. Duo is $7.77 a month or $88.88 a year, one price for the two of you." },
-  { q: 'Can I give Belluh to a couple?', a: "Yes. Give a year of Duo for $88.88 to a new couple, for an engagement, a wedding, an anniversary or a new home. Pick the day it arrives, add a card in the mail if you like, and we send it with your note." },
-  { q: 'What happens to our shared memory if we stop paying?', a: "Nothing is lost. Every entry and everything Belluh remembers stays yours, and the free plan keeps all of it." },
-];
 
 // Priced from what a couple costs to run, not from what the market will bear: AI for both partners, texting, the odd
 // restaurant call and hosting come to roughly $1.80 a month for an active couple and $3.60 for a heavy one. $7.77
@@ -36,22 +23,21 @@ const FAQ = [
  * out of it and filling in as you type. Giving slides the card in, closes the flap and addresses the front. Set
  * VITE_GIFT_CHECKOUT_URL to a checkout and the button pays; until then the gift comes to us by email.
  */
-const OCCASIONS = [
-  { label: 'New couple', note: 'To the start of something. Write it down from day one.', ink: '#4a7aa3', stripe: '#5b8cb5' },
-  { label: 'Engagement', note: 'Before the wedding plans take over, keep the story of how you got here.', ink: '#a8693f', stripe: '#bb7b50' },
-  { label: 'Wedding', note: 'For every chapter after the vows. Write it all down, together.', ink: '#b4547f', stripe: '#c96894' },
-  { label: 'Anniversary', note: "Here's to another year worth remembering.", ink: '#3f7486', stripe: '#4f8aa0' },
-  { label: 'New home', note: 'New keys, new rooms, new memories. Keep every one.', ink: '#5f7d66', stripe: '#6f9077' },
-  { label: 'Just because', note: 'You two are my favorite love story.', ink: '#6b4a82', stripe: '#7d5a96' },
+const OCCASION_INK = [
+  { ink: '#4a7aa3', stripe: '#5b8cb5' }, { ink: '#a8693f', stripe: '#bb7b50' }, { ink: '#b4547f', stripe: '#c96894' },
+  { ink: '#3f7486', stripe: '#4f8aa0' }, { ink: '#5f7d66', stripe: '#6f9077' }, { ink: '#6b4a82', stripe: '#7d5a96' },
 ];
+type Occasion = { label: string; note: string; ink: string; stripe: string };
 const GIFT_CHECKOUT = (import.meta as any).env?.VITE_GIFT_CHECKOUT_URL as string | undefined;
 const PAPER = '#fbf8f3';
 
-function GiftEnvelope({ tone, names, note, from, opens, given, mailed = false }: { tone: typeof OCCASIONS[number]; names: string; note: string; from: string; opens: string | null; given: boolean; mailed?: boolean }) {
+function GiftEnvelope({ tone, names, note, from, opens, given, mailed = false }: { tone: Occasion; names: string; note: string; from: string; opens: string | null; given: boolean; mailed?: boolean }) {
+  const { d, f } = useI18n();
+  const g = d.gift;
   const liner = `repeating-linear-gradient(135deg, ${tone.ink} 0 10px, ${tone.stripe} 10px 20px)`;
   const ease = 'cubic-bezier(.65,0,.35,1)';
   return (
-    <div className="relative mx-auto w-full max-w-[460px] aspect-[460/610] sm:aspect-[460/540]" aria-label="Preview of the gift">
+    <div className="relative mx-auto w-full max-w-[460px] aspect-[460/610] sm:aspect-[460/540]" aria-label={g.preview}>
       {/* Flap: open and lined behind the card, then it folds down over the front once the card is in */}
       <div className="absolute inset-x-0 origin-bottom" style={{ top: '22%', height: '26.2%', zIndex: 5, clipPath: 'polygon(0 100%, 50% 0, 100% 100%)', background: liner, transform: given ? 'scaleY(0)' : 'scaleY(1)', transition: `transform 380ms ease-in ${given ? '800ms' : '0ms'}, background 700ms` }} />
       <div className="absolute inset-x-0 origin-top" style={{ top: '47.8%', height: '26%', zIndex: 30, filter: 'drop-shadow(0 6px 8px rgba(15,23,42,0.10))', transform: given ? 'scaleY(1)' : 'scaleY(0)', transition: `transform 420ms ease-out ${given ? '1180ms' : '0ms'}` }}>
@@ -62,10 +48,10 @@ function GiftEnvelope({ tone, names, note, from, opens, given, mailed = false }:
       {/* The card */}
       <div className="absolute rounded-md bg-[#fffdf9] px-7 pt-7 text-center" style={{ left: '7%', right: '7%', top: '4%', height: '50%', zIndex: 10, boxShadow: '0 1px 0 rgba(0,0,0,0.03), 0 18px 40px -24px rgba(15,23,42,0.35), inset 0 0 0 1px #eee7dc', transform: given ? 'translateY(88%)' : 'translateY(0)', transition: `transform 900ms ${ease}` }}>
         <div className="flex justify-center"><DragonflyMark size={24} rippleOnMount={false} /></div>
-        <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.3em] transition-colors duration-700" style={{ color: tone.ink }}>A year of Belluh for</p>
-        <p className={`mt-2 font-serif text-[1.7rem] md:text-[2.1rem] leading-[1.1] tracking-tight break-words ${names ? 'text-slate-900' : 'text-slate-300'}`}>{names || 'Maya & Dan'}</p>
+        <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.3em] transition-colors duration-700" style={{ color: tone.ink }}>{g.yearFor}</p>
+        <p className={`mt-2 font-serif text-[1.7rem] md:text-[2.1rem] leading-[1.1] tracking-tight break-words ${names ? 'text-slate-900' : 'text-slate-300'}`}>{names || `${d.common.me} & ${d.common.partner}`}</p>
         <p className="mt-3 font-serif italic text-[15px] md:text-base leading-relaxed text-slate-500 line-clamp-2">{note}</p>
-        <p className="mt-2 font-serif text-sm text-slate-400">— {from || 'you'}</p>
+        <p className="mt-2 font-serif text-sm text-slate-400">— {from || g.you}</p>
       </div>
       {/* A postage stamp, top right of the front, when it's going by mail */}
       <div aria-hidden="true" className="absolute w-[12%] aspect-[4/5] bg-white p-[4px] transition-all duration-500" style={{ right: '6%', top: '52%', zIndex: 35, opacity: mailed ? 1 : 0, transform: mailed ? 'rotate(4deg) scale(1)' : 'rotate(14deg) scale(0.6)', boxShadow: '0 2px 6px rgba(15,23,42,0.14), inset 0 0 0 1px rgba(15,23,42,0.06)', outline: '2px dotted #fff', outlineOffset: '-1px' }}>
@@ -78,7 +64,7 @@ function GiftEnvelope({ tone, names, note, from, opens, given, mailed = false }:
         <div className="absolute inset-0" style={{ clipPath: 'polygon(100% 0, 50% 46%, 100% 100%)', background: 'linear-gradient(270deg, rgba(15,23,42,0.035), transparent)' }} />
         <div className="absolute inset-x-0 bottom-[14%] text-center px-8 transition-opacity duration-700" style={{ opacity: given ? 1 : 0, transitionDelay: given ? '1600ms' : '0ms' }}>
           <p className="font-serif italic text-2xl md:text-[1.75rem] text-slate-800 break-words">{names}</p>
-          <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.3em]" style={{ color: tone.ink }}>{opens ? `To be opened ${opens}` : 'With love'}</p>
+          <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.3em]" style={{ color: tone.ink }}>{opens ? f(g.toBeOpened, { day: opens }) : g.withLove}</p>
         </div>
       </div>
     </div>
@@ -88,23 +74,27 @@ function GiftEnvelope({ tone, names, note, from, opens, given, mailed = false }:
 type Delivery = 'email' | 'them' | 'me';
 const MAIL_DAYS = 7; // a card in the mail needs about a week
 const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-const prettyDay = (k: string) => new Date(`${k}T12:00:00`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
 
 /** A small month calendar: days before `min` are out, the chosen day takes the occasion's colour. */
 function GiftCalendar({ min, value, ink, onPick }: { min: Date; value: string; ink: string; onPick: (k: string) => void }) {
+  const { d, date, tag } = useI18n();
+  // Weeks start on the day they do there: Sunday in the US, Japan and Brazil, Monday in most of Europe
+  const weekStart = (() => { try { const w = (new (Intl as any).Locale(tag) as any).weekInfo ?? (new (Intl as any).Locale(tag) as any).getWeekInfo?.(); if (w?.firstDay) return w.firstDay % 7; } catch { /* older browsers */ } return /-(US|CA|JP|BR|IL)$/.test(tag) ? 0 : 1; })();
+  const letters = Array.from({ length: 7 }, (_, i) => date(new Date(2024, 0, 7 + weekStart + i), { weekday: 'narrow' }));
   const [view, setView] = React.useState(() => { const d = value ? new Date(`${value}T12:00:00`) : min; return new Date(d.getFullYear(), d.getMonth(), 1); });
-  const first = (view.getDay() + 6) % 7; // weeks start on Monday
+  const first = (view.getDay() - weekStart + 7) % 7;
   const days = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
   const minKey = dayKey(min);
   const canBack = view > new Date(min.getFullYear(), min.getMonth(), 1);
   return (
     <div className="mt-3 w-full max-w-[300px] rounded-3xl bg-white border border-slate-100 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.35)] p-4">
       <div className="flex items-center justify-between mb-3">
-        <button onClick={() => canBack && setView(new Date(view.getFullYear(), view.getMonth() - 1, 1))} disabled={!canBack} aria-label="Previous month" className="h-8 w-8 inline-flex items-center justify-center text-slate-500 disabled:opacity-20 hover:text-slate-900"><ChevronLeft size={18} /></button>
-        <p className="text-sm font-semibold text-slate-900">{view.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
-        <button onClick={() => setView(new Date(view.getFullYear(), view.getMonth() + 1, 1))} aria-label="Next month" className="h-8 w-8 inline-flex items-center justify-center text-slate-500 hover:text-slate-900"><ChevronRight size={18} /></button>
+        <button onClick={() => canBack && setView(new Date(view.getFullYear(), view.getMonth() - 1, 1))} disabled={!canBack} aria-label={d.gift.prevMonth} className="h-8 w-8 inline-flex items-center justify-center text-slate-500 disabled:opacity-20 hover:text-slate-900"><ChevronLeft size={18} /></button>
+        <p className="text-sm font-semibold text-slate-900">{date(view, { month: 'long', year: 'numeric' })}</p>
+        <button onClick={() => setView(new Date(view.getFullYear(), view.getMonth() + 1, 1))} aria-label={d.gift.nextMonth} className="h-8 w-8 inline-flex items-center justify-center text-slate-500 hover:text-slate-900"><ChevronRight size={18} /></button>
       </div>
-      <div className="grid grid-cols-7 text-center text-[11px] font-semibold text-slate-400 mb-1">{['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <span key={i} className="h-7 leading-7">{d}</span>)}</div>
+      <div className="grid grid-cols-7 text-center text-[11px] font-semibold text-slate-400 mb-1">{letters.map((l, i) => <span key={i} className="h-7 leading-7">{l}</span>)}</div>
       <div className="grid grid-cols-7 gap-1">
         {Array.from({ length: first }, (_, i) => <span key={`b${i}`} />)}
         {Array.from({ length: days }, (_, i) => {
@@ -125,6 +115,7 @@ const GIFTS_GIVEN = 17945;
 
 /** Counts up to the number of gifts given when it scrolls into view. */
 function GiftCount() {
+  const { num } = useI18n();
   const ref = React.useRef<HTMLSpanElement>(null);
   const [n, setN] = React.useState(GIFTS_GIVEN);
   React.useEffect(() => {
@@ -143,10 +134,14 @@ function GiftCount() {
     io.observe(el);
     return () => { io.disconnect(); cancelAnimationFrame(raf); };
   }, []);
-  return <span ref={ref} className="tabular-nums">{n.toLocaleString('en-US')}</span>;
+  return <span ref={ref} className="tabular-nums">{num(n)}</span>;
 }
 
 function GiftSection() {
+  const { d, f, date } = useI18n();
+  const g = d.gift;
+  const OCCASIONS: Occasion[] = g.occasions.map((o, i) => ({ ...o, ...OCCASION_INK[i % OCCASION_INK.length] }));
+  const prettyDay = (k: string) => date(new Date(`${k}T12:00:00`), { weekday: 'long', month: 'long', day: 'numeric' });
   const [step, setStep] = React.useState(0);
   const [one, setOne] = React.useState('');
   const [two, setTwo] = React.useState('');
@@ -192,16 +187,16 @@ function GiftSection() {
       if (GIFT_CHECKOUT) window.open(`${GIFT_CHECKOUT}${GIFT_CHECKOUT.includes('?') ? '&' : '?'}client_reference_id=${j.id}&prefilled_email=${encodeURIComponent(myEmail.trim())}`, '_blank', 'noopener');
       setGiven(true);
     } catch (e: any) {
-      setFailed(e?.message && e.message !== 'failed' ? e.message : "That didn't go through. Try once more.");
+      setFailed(e?.message && e.message !== 'failed' ? e.message : g.failed);
     } finally { setSending(false); }
   };
 
-  const deliveryLabel = delivery === 'email' ? 'Just the email' : delivery === 'them' ? 'Mail a card to them' : "Mail it to me, I'll hand it over";
+  const deliveryLabel = delivery === 'email' ? g.email : delivery === 'them' ? g.mailThem : g.mailMeLong;
   const turns: { b: string; you?: string; at: number }[] = [
-    { b: "Who's the lucky couple?", you: step > 0 ? names : undefined, at: 0 },
-    { b: `Lovely. What are we celebrating?`, you: step > 1 ? tone.label : undefined, at: 1 },
-    { b: `I wrote them a note, it's on the card. How should it arrive? A card in the mail is on us.`, you: step > 2 ? (mail ? `${deliveryLabel}: ${address}` : deliveryLabel) : undefined, at: 2 },
-    { b: `Last bit, so it reaches ${one.trim() || 'them'} and ${two.trim() || 'their person'}, and so I can reach you.`, at: 3 },
+    { b: g.who, you: step > 0 ? names : undefined, at: 0 },
+    { b: g.what, you: step > 1 ? tone.label : undefined, at: 1 },
+    { b: g.how, you: step > 2 ? (mail ? `${deliveryLabel}: ${address}` : deliveryLabel) : undefined, at: 2 },
+    { b: f(g.last, { one: one.trim() || g.them, two: two.trim() || g.theirPerson }), at: 3 },
   ].filter(t => t.at <= step);
 
   const composer = 'h-12 flex-1 min-w-0 rounded-full bg-slate-50 border border-slate-200 px-4 md:px-5 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white transition-colors';
@@ -210,13 +205,13 @@ function GiftSection() {
   const plainChip = `${chip} bg-white border-slate-200 text-slate-700 hover:border-slate-900`;
 
   const reply = (() => {
-    if (given) return <button onClick={reset} className="h-12 px-5 rounded-full border border-slate-200 text-sm font-bold text-slate-800 hover:border-slate-400 transition-colors">Give another</button>;
+    if (given) return <button onClick={reset} className="h-12 px-5 rounded-full border border-slate-200 text-sm font-bold text-slate-800 hover:border-slate-400 transition-colors">{g.another}</button>;
     if (step === 0) return (
       <form onSubmit={e => { e.preventDefault(); if (one.trim() && two.trim()) go(1); }} className="flex items-center gap-2">
-        <input value={one} onChange={e => setOne(e.target.value.slice(0, 40))} placeholder="Maya" aria-label="First partner's name" className={composer} />
+        <input value={one} onChange={e => setOne(e.target.value.slice(0, 40))} placeholder={d.common.me} aria-label={d.common.me} className={composer} />
         <span className="font-serif italic text-xl text-[#f0addd]">&amp;</span>
-        <input value={two} onChange={e => setTwo(e.target.value.slice(0, 40))} placeholder="Dan" aria-label="Second partner's name" className={composer} />
-        <button disabled={!(one.trim() && two.trim())} className={next}>Next</button>
+        <input value={two} onChange={e => setTwo(e.target.value.slice(0, 40))} placeholder={d.common.partner} aria-label={d.common.partner} className={composer} />
+        <button disabled={!(one.trim() && two.trim())} className={next}>{d.common.next}</button>
       </form>);
     if (step === 1) return (
       <div className="flex flex-wrap gap-2">{OCCASIONS.map((o, i) => (
@@ -225,38 +220,38 @@ function GiftSection() {
     if (step === 2) return (
       <div className="space-y-3">
         <div className="flex flex-wrap gap-2">
-          {(['email', 'them', 'me'] as Delivery[]).map(d => (
-            <button key={d} onClick={() => { setDelivery(d); setWhen(''); if (d === 'email') go(3); }}
-              className={delivery === d ? `${chip} text-white border-transparent` : plainChip} style={delivery === d ? { background: tone.ink } : undefined}>
-              {d === 'email' ? 'Just the email' : d === 'them' ? 'Mail a card to them' : 'Mail it to me'}
+          {(['email', 'them', 'me'] as Delivery[]).map(x => (
+            <button key={x} onClick={() => { setDelivery(x); setWhen(''); if (x === 'email') go(3); }}
+              className={delivery === x ? `${chip} text-white border-transparent` : plainChip} style={delivery === x ? { background: tone.ink } : undefined}>
+              {x === 'email' ? g.email : x === 'them' ? g.mailThem : g.mailMe}
             </button>
           ))}
         </div>
         {mail && (
           <form onSubmit={e => { e.preventDefault(); if (address.trim().length >= 8) go(3); }} className="flex items-center gap-2 animate-[fadeUp_.3s_ease-out]">
-            <input autoFocus value={address} onChange={e => setAddress(e.target.value.slice(0, 200))} placeholder={delivery === 'them' ? 'Their address' : 'Your address'} autoComplete={delivery === 'me' ? 'street-address' : 'off'} aria-label="Mailing address" className={composer} />
-            <button disabled={address.trim().length < 8} className={next}>Next</button>
+            <input autoFocus value={address} onChange={e => setAddress(e.target.value.slice(0, 200))} placeholder={delivery === 'them' ? g.theirAddress : g.yourAddress} autoComplete={delivery === 'me' ? 'street-address' : 'off'} aria-label={delivery === 'them' ? g.theirAddress : g.yourAddress} className={composer} />
+            <button disabled={address.trim().length < 8} className={next}>{d.common.next}</button>
           </form>
         )}
       </div>);
     return (
       <div className="space-y-2.5">
-        <input type="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={`${one.trim() || 'Their'}'s or ${two.trim() || 'partner'}'s email`} aria-label="Their email" className={`${composer} w-full`} />
+        <input type="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={f(g.theirEmail, { one: one.trim() || g.their, two: two.trim() || g.partnerWord })} aria-label={f(g.theirEmail, { one: one.trim() || g.their, two: two.trim() || g.partnerWord })} className={`${composer} w-full`} />
         <div className="flex gap-2">
-          <input value={from} onChange={e => setFrom(e.target.value.slice(0, 40))} placeholder="Your name" autoComplete="given-name" aria-label="Your name" className={composer} />
-          <input type="email" inputMode="email" value={myEmail} onChange={e => setMyEmail(e.target.value)} placeholder="Your email" autoComplete="email" aria-label="Your email" className={composer} />
+          <input value={from} onChange={e => setFrom(e.target.value.slice(0, 40))} placeholder={g.yourName} autoComplete="given-name" aria-label={g.yourName} className={composer} />
+          <input type="email" inputMode="email" value={myEmail} onChange={e => setMyEmail(e.target.value)} placeholder={g.yourEmail} autoComplete="email" aria-label={g.yourEmail} className={composer} />
         </div>
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <span className="text-sm text-slate-400 mr-1">Arrives</span>
-          <button onClick={() => { setWhen(''); setPicking(false); }} className={!when && !picking ? `${chip} text-white border-transparent` : plainChip} style={!when && !picking ? { background: tone.ink } : undefined}>{mail ? 'As soon as it can' : 'Right away'}</button>
+          <span className="text-sm text-slate-400 mr-1">{g.arrives}</span>
+          <button onClick={() => { setWhen(''); setPicking(false); }} className={!when && !picking ? `${chip} text-white border-transparent` : plainChip} style={!when && !picking ? { background: tone.ink } : undefined}>{mail ? g.asap : g.rightAway}</button>
           <button onClick={() => setPicking(p => !p)} className={when || picking ? `${chip} text-white border-transparent` : plainChip} style={when || picking ? { background: tone.ink } : undefined}>
-            <span className="inline-flex items-center gap-2"><CalendarCheck size={15} />{opens ? new Date(`${when}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Pick a day'}</span>
+            <span className="inline-flex items-center gap-2"><CalendarCheck size={15} />{opens ? date(new Date(`${when}T12:00:00`), { month: 'short', day: 'numeric' }) : g.pickDay}</span>
           </button>
         </div>
         {picking && <GiftCalendar min={minDay} value={when} ink={tone.ink} onPick={k => { setWhen(k); setPicking(false); }} />}
         <button onClick={give} disabled={!detailsReady || sending}
           className="group mt-2 h-14 w-full rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 hover:bg-black disabled:opacity-25 transition-colors">
-          {sending ? 'Sealing it' : <>Give it, $88.88 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" /></>}
+          {sending ? g.sealing : <>{f(g.give, { price: g.price })} <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" /></>}
         </button>
         {failed && <p className="text-sm text-[#b4547f] text-center" role="alert">{failed}</p>}
       </div>);
@@ -267,22 +262,22 @@ function GiftSection() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center max-w-2xl mx-auto">
           <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
-            <span className="text-slate-900">A gift worth</span><br /><span className="text-slate-900">remembering.</span>
+            <span className="text-slate-900">{g.title1}</span><br /><span className="text-slate-900">{g.title2}</span>
           </h2>
-          <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed">Every couple you love is living moments they'll forget: the first months, the proposal, the move, the years in between. Give them a year of Belluh, and none of it slips away.</p>
-          <p className="mt-7 inline-flex items-baseline gap-2 text-slate-500"><span className="font-serif text-2xl text-slate-900"><GiftCount /></span><span className="text-[15px]">gifts given, and counting</span></p>
+          <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed">{g.sub}</p>
+          <p className="mt-7 inline-flex items-baseline gap-2 text-slate-500"><span className="font-serif text-2xl text-slate-900"><GiftCount /></span><span className="text-[15px]">{g.given}</span></p>
         </div>
 
         <div className="mt-14 md:mt-16 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
           <div className="relative rounded-[2rem] bg-white border border-white shadow-[0_40px_100px_-40px_rgba(15,23,42,0.35)] overflow-hidden">
             <div className="flex items-center justify-between px-6 md:px-7 pt-5 pb-4 border-b border-slate-100">
               <span className="inline-flex items-center gap-2.5"><BelluhOrb size={22} /><span className="font-serif text-[17px] text-slate-900">Bella</span></span>
-              <span className="text-sm text-slate-500"><span className="font-semibold text-slate-900">$88.88</span> for both, one year</span>
+              <span className="text-sm text-slate-500"><span className="font-semibold text-slate-900">{g.price}</span> {g.priceLine}</span>
             </div>
             <div ref={scroller} className="h-[300px] md:h-[360px] overflow-y-auto overscroll-contain px-5 md:px-7 py-6 flex flex-col gap-4">
               <div className="flex gap-3 items-start">
                 <div className="shrink-0 pt-0.5"><BelluhOrb size={24} /></div>
-                <p className="font-serif text-[15px] md:text-base leading-relaxed text-slate-800">Hi, I'm Bella. Give a couple a year of Belluh: one journal they share, dates planned for them, and every anniversary remembered. Four quick questions.</p>
+                <p className="font-serif text-[15px] md:text-base leading-relaxed text-slate-800">{g.hello}</p>
               </div>
               {turns.map((t, i) => (
                 <React.Fragment key={t.at}>
@@ -291,7 +286,7 @@ function GiftSection() {
                     <p className="font-serif text-[15px] md:text-base leading-relaxed text-slate-800">{i === turns.length - 1 && t.at > 0 && !given ? <BelluhSpeech text={t.b} pace={1.8} /> : t.b}</p>
                   </div>
                   {t.you && (
-                    <button onClick={() => !given && go(t.at)} title={given ? undefined : 'Change this'} className="self-end max-w-[85%] rounded-3xl rounded-br-lg bg-slate-100 px-4 py-2.5 text-left text-[15px] text-slate-800 hover:bg-slate-200/70 transition-colors animate-[fadeUp_.35s_ease-out] break-words">{t.you}</button>
+                    <button onClick={() => !given && go(t.at)} title={given ? undefined : g.changeThis} className="self-end max-w-[85%] rounded-3xl rounded-br-lg bg-slate-100 px-4 py-2.5 text-left text-[15px] text-slate-800 hover:bg-slate-200/70 transition-colors animate-[fadeUp_.35s_ease-out] break-words">{t.you}</button>
                   )}
                 </React.Fragment>
               ))}
@@ -299,8 +294,8 @@ function GiftSection() {
                 <div className="flex gap-3 items-start animate-[fadeUp_.45s_ease-out]" role="status">
                   <div className="shrink-0 pt-0.5"><BelluhOrb size={24} /></div>
                   <div>
-                    <p className="font-serif text-[15px] md:text-base leading-relaxed text-slate-800"><BelluhSpeech text={`Beautifully done, ${from.trim()}. Years from now, ${names} will still know who gave them this.`} pace={1.8} /></p>
-                    <p className="mt-2 text-sm text-slate-400">{GIFT_CHECKOUT ? 'Finish paying in the tab that opened, and it goes out on time.' : `It's sealed. We'll email you at ${myEmail.trim()} to pay, and it goes out ${opens ? `on ${opens}` : 'right after'}.`}</p>
+                    <p className="font-serif text-[15px] md:text-base leading-relaxed text-slate-800"><BelluhSpeech text={f(g.thanks, { from: from.trim(), names })} pace={1.8} /></p>
+                    <p className="mt-2 text-sm text-slate-400">{GIFT_CHECKOUT ? g.payTab : f(g.payEmail, { email: myEmail.trim(), when: opens ? f(g.onDay, { day: opens }) : g.rightAfter })}</p>
                   </div>
                 </div>
               )}
@@ -313,11 +308,11 @@ function GiftSection() {
             <div className="mt-6 text-center">
               {editingNote && !given ? (
                 <form onSubmit={e => { e.preventDefault(); setEditingNote(false); }} className="flex items-center gap-2 max-w-md mx-auto">
-                  <input autoFocus value={note ?? tone.note} onChange={e => setNote(e.target.value.slice(0, 140))} aria-label="Your note" className={`${composer} font-serif italic`} />
-                  <button className={next}>Done</button>
+                  <input autoFocus value={note ?? tone.note} onChange={e => setNote(e.target.value.slice(0, 140))} aria-label={g.yourNote} className={`${composer} font-serif italic`} />
+                  <button className={next}>{d.common.done}</button>
                 </form>
               ) : !given ? (
-                <button onClick={() => setEditingNote(true)} className="text-sm font-semibold text-[#3f7486] hover:text-slate-900 transition-colors">Write your own note</button>
+                <button onClick={() => setEditingNote(true)} className="text-sm font-semibold text-[#3f7486] hover:text-slate-900 transition-colors">{g.writeNote}</button>
               ) : null}
             </div>
           </div>
@@ -327,28 +322,11 @@ function GiftSection() {
   );
 }
 
-const PLANS = [
-  { name: 'Free', price: '$0', per: 'for good', blurb: 'Start your shared memory today.', cta: 'Start free',
-    items: ['Unlimited entries, private or shared', 'Your shared memory, kept for both of you', 'Bella a few times a week', 'Weekly thing to try together'] },
-  { name: 'Duo', price: '$7.77', per: 'a month for both of you, not each', alt: 'or $88.88 a year for both', blurb: 'Belluh, all in, for both of you.', cta: 'Start free', featured: true,
-    items: ['Bella whenever you want her', 'Text her on iMessage, WhatsApp or SMS', 'Tables, gifts and flowers ready in a tap', 'Reminders, calendar, how-was-it follow ups'] },
-  { name: 'For teams', price: 'Talk to us', per: 'employers, therapists, platforms', blurb: 'Belluh for the people you care for.', cta: 'Get in touch', team: true,
-    items: ['A relationship benefit for your people', 'Between-sessions support for couples therapy', 'Belluh as a layer inside your platform', 'Private by design: you never see entries'] },
-];
 
-const STEPS = [
-  { n: '1', title: 'Write a few lines', text: 'A minute a day each. Keep it private, or share it with your partner.' },
-  { n: '2', title: 'Belluh connects the dots', text: 'Every Sunday, one small thing to try, drawn from what you both wrote.' },
-  { n: '3', title: 'Plan it together', text: 'Ask in your shared thread. Belluh suggests times, and your partner picks one.' },
-];
 
 // A real app screen in a phone frame; sizes scale with the phone's width
 // The three screens in Inside Belluh, left to right
-const INSIDE_SCREENS = [
-  { src: '/screens/write.webp', alt: 'Maya writing a few lines about her day', caption: 'Write a few lines' },
-  { src: '/screens/us.webp', alt: 'Belluh planning a ramen night for Maya and Dan in their shared thread', caption: 'Plan it together' },
-  { src: '/screens/home.webp', alt: 'Home, where Belluh offers to plan an anniversary, asks how a date went, and shows a reminder', caption: 'Belluh comes to you' },
-];
+const INSIDE_SCREENS = ['/screens/write.webp', '/screens/us.webp', '/screens/home.webp'];
 
 const PhoneFrame: React.FC<{ src: string; alt: string; className?: string }> = ({ src, alt, className = '' }) => (
   <div className={`[container-type:inline-size] ${className}`}>
@@ -373,13 +351,6 @@ const FaqItem: React.FC<{ q: string; a: string; open: boolean; onToggle: () => v
 );
 
 // Example entries for the stories strip, each with what Belluh does with it
-const MOMENTS = [
-  { when: 'Tuesday, 8:12 pm', text: 'He remembered the oat milk. After this week, that was everything.', belluh: 'saved it to what matters to you' },
-  { when: 'Saturday, 1:06 am', text: 'We argued about nothing, then laughed about it at 1am.', belluh: 'kept it for your week in review' },
-  { when: 'Thursday, 11:48 pm', text: 'She texted “drive safe” and I believed her.', belluh: 'saved it to what matters to you' },
-  { when: 'Sunday, 10:31 am', text: 'First Sunday walk with no phones. We talked the whole way.', belluh: "made it this week's thing to try again" },
-  { when: 'Friday, 7:45 pm', text: 'Two years today. Still the same booth.', belluh: 'kept it for your anniversary' },
-];
 const MOMENT_TONES = ['bg-white', 'bg-[#fdf0f8]', 'bg-[#eef7fa]'];
 
 // Edges that fade out, for the scrolling stories strip
@@ -394,23 +365,26 @@ interface LandingPageProps {
 }
 
 // Tap Belluh and it becomes something else, then back to water
-const FUN_SHAPES: { emoji: string; label: string }[] = [
-  { emoji: '🦒', label: 'giraffe' }, { emoji: '🐈', label: 'cat' }, { emoji: '🐬', label: 'dolphin' }, { emoji: '🦋', label: 'butterfly' },
-  { emoji: '🦖', label: 'dinosaur' }, { emoji: '🌻', label: 'sunflower' }, { emoji: '🚀', label: 'rocket' }, { emoji: '❤️', label: 'heart' },
-];
+const FUN_SHAPES = ['🦒', '🐈', '🐬', '🦋', '🦖', '🌻', '🚀', '❤️'];
 function useShapeTap() {
+  const { d } = useI18n();
   const [n, setN] = useState(-1);
   const cur = useRef(-1);
   const tap = () => {
     const next = cur.current + 1 >= FUN_SHAPES.length ? -1 : cur.current + 1;
     if (next < 0) belluh.become('water', 'water', false);
-    else belluh.become({ emoji: FUN_SHAPES[next].emoji }, FUN_SHAPES[next].label, false);
+    else belluh.become({ emoji: FUN_SHAPES[next] }, d.common.shapes[next] ?? '', false);
     cur.current = next; setN(next);
   };
-  return { tap, label: n < 0 ? null : FUN_SHAPES[n].label };
+  return { tap, label: n < 0 ? null : d.common.shapes[n] ?? '' };
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShowLegal, onGoToAbout, onGoToCareers }) => {
+  const { d, f, country, textApps } = useI18n();
+  const c = d.common, n_ = d.nav;
+  const FAQ = d.faq.items.map(x => ({ q: x.q, a: f(x.a, { apps: textApps }) }));
+  const PLANS = d.pricing.plans.map((p, i) => ({ ...p, featured: i === 1, team: i === 2, items: p.items.map(it => f(it, { apps: textApps })) }));
+  const MOMENTS = d.stories.moments;
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pastHero, setPastHero] = useState(false);
@@ -466,14 +440,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const menuItems = [
-      { label: 'Meet Bella', action: () => scrollToSection('at-work') },
-      { label: 'Inside', action: () => scrollToSection('inside') },
-      { label: 'Stories', action: () => scrollToSection('stories') },
-      { label: 'Pricing', action: () => scrollToSection('pricing') },
-      { label: 'FAQ', action: () => scrollToSection('faq') },
-      { label: 'Privacy', action: () => { toggleMenu(); onShowLegal('privacy'); } },
-      { label: 'Our Why', action: () => { toggleMenu(); onGoToAbout(); } },
-      { label: 'Careers', action: () => { toggleMenu(); onGoToCareers(); } }
+      { label: n_.meet, action: () => scrollToSection('at-work') },
+      { label: n_.inside, action: () => scrollToSection('inside') },
+      { label: n_.stories, action: () => scrollToSection('stories') },
+      { label: n_.pricing, action: () => scrollToSection('pricing') },
+      { label: n_.faq, action: () => scrollToSection('faq') },
+      { label: n_.privacy, action: () => { toggleMenu(); onShowLegal('privacy'); } },
+      { label: n_.why, action: () => { toggleMenu(); onGoToAbout(); } },
+      { label: n_.careers, action: () => { toggleMenu(); onGoToCareers(); } }
   ];
 
   return (
@@ -489,11 +463,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       {/* Top bar */}
       <SiteNav
           links={[
-              { label: 'Meet Bella', onClick: () => scrollToSection('at-work'), section: 'at-work' },
-              { label: 'Inside', onClick: () => scrollToSection('inside'), section: 'inside' },
-              { label: 'Stories', onClick: () => scrollToSection('stories'), section: 'stories' },
-              { label: 'Pricing', onClick: () => scrollToSection('pricing'), section: 'pricing' },
-              { label: 'FAQ', onClick: () => scrollToSection('faq'), section: 'faq' },
+              { label: n_.meet, onClick: () => scrollToSection('at-work'), section: 'at-work' },
+              { label: n_.inside, onClick: () => scrollToSection('inside'), section: 'inside' },
+              { label: n_.stories, onClick: () => scrollToSection('stories'), section: 'stories' },
+              { label: n_.pricing, onClick: () => scrollToSection('pricing'), section: 'pricing' },
+              { label: n_.faq, onClick: () => scrollToSection('faq'), section: 'faq' },
           ]}
           onHome={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           onLogin={onLogin}
@@ -534,13 +508,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                        onClick={() => { toggleMenu(); onLogin(); }}
                        className="w-full py-3.5 md:py-4 rounded-full bg-slate-50 font-bold text-slate-900 hover:bg-slate-100 transition-colors text-lg border border-slate-100"
                    >
-                       Sign In
+                       {c.signIn}
                    </button>
                    <button 
                        onClick={() => { toggleMenu(); rememberCta('menu'); onGetStarted(); }}
                        className="w-full py-3.5 md:py-4 rounded-full bg-[#9bbecb] text-white font-bold hover:bg-[#8aaab7] transition-colors shadow-xl text-lg flex items-center justify-center gap-2"
                    >
-                       Start free <ArrowRight size={18} />
+                       {c.startFree} <ArrowRight size={18} />
                    </button>
                </div>
           </div>
@@ -551,24 +525,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
          <div className="w-full max-w-7xl mx-auto md:px-6 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] items-center gap-6 sm:gap-12 lg:gap-6">
              <div className="text-center lg:text-left" style={{ animation: 'slideUp 0.9s cubic-bezier(0.16,1,0.3,1) both' }}>
                  <h1 className="font-serif tracking-tight leading-[0.98] text-[2.85rem] sm:text-7xl xl:text-[5.6rem]">
-                     <span className="text-[#9bbecb]">Life gets busy.</span><br />
-                     <span className="text-[#f0addd] italic">Love drifts.</span>
+                     <span className="text-[#9bbecb]">{d.hero.line1}</span><br />
+                     <span className="text-[#f0addd] italic">{d.hero.line2}</span>
                  </h1>
                  <p className="mt-5 sm:mt-7 text-[17px] md:text-[1.35rem] text-slate-500 font-light leading-relaxed max-w-xl mx-auto lg:mx-0 min-h-[5.4rem] md:min-h-[4.4rem] [text-wrap:pretty]">
-                     <BelluhSpeech text="The plans you never made. The moments you forgot. Belluh, the AI journal for couples, keeps them for you both." delay={500} />
+                     <BelluhSpeech key={d.hero.sub} text={d.hero.sub} delay={500} />
                  </p>
                  <div className="mt-7 sm:mt-9 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-1.5 sm:gap-3">
                      <button onClick={() => { rememberCta('hero'); onGetStarted(); }} className="group w-full sm:w-auto h-14 px-8 rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 hover:bg-black transition-colors shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)]">
-                         Start free <ArrowRight size={17} className="transition-transform group-hover:translate-x-0.5" />
+                         {c.startFree} <ArrowRight size={17} className="transition-transform group-hover:translate-x-0.5" />
                      </button>
                      <button onClick={onLogin} className="w-full sm:w-auto h-11 sm:h-14 px-7 rounded-full text-[15px] font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/80 transition-colors">
-                         I have an account
+                         {c.haveAccount}
                      </button>
                  </div>
                  <div className="mt-5 sm:mt-9 flex flex-wrap justify-center lg:justify-start gap-x-5 sm:gap-x-7 gap-y-2 text-[13px] sm:text-sm text-slate-500">
-                     <span className="inline-flex items-center gap-2"><Heart size={15} className="text-[#f0addd]" /> Free to start</span>
-                     <span className="inline-flex items-center gap-2"><Lock size={15} className="text-[#9bbecb]" /> Private by default</span>
-                     <span className="inline-flex items-center gap-2"><MessageCircle size={15} className="text-[#9bbecb]" /> Works over text</span>
+                     <span className="inline-flex items-center gap-2"><Heart size={15} className="text-[#f0addd]" /> {d.hero.chipFree}</span>
+                     <span className="inline-flex items-center gap-2"><Lock size={15} className="text-[#9bbecb]" /> {d.hero.chipPrivate}</span>
+                     <span className="inline-flex items-center gap-2"><MessageCircle size={15} className="text-[#9bbecb]" /> {d.hero.chipText}</span>
                  </div>
              </div>
 
@@ -577,29 +551,29 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                  <div className="relative h-[150px] sm:h-auto sm:aspect-square">
                      <div className="absolute inset-[8%] rounded-full bg-[radial-gradient(circle,rgba(205,233,242,0.95)_0%,rgba(240,173,221,0.18)_45%,rgba(255,255,255,0)_70%)] blur-2xl animate-breathing pointer-events-none" />
                      <div className="absolute inset-0 flex flex-col items-center justify-center sm:pb-[6%]">
-                         <BelluhOrb size={heroOrb} onTap={heroTap.tap} label="Belluh. Tap to change its shape." />
-                         <p className="mt-2 sm:mt-3 h-5 text-xs font-semibold tracking-wide text-slate-400" aria-live="polite">{heroTap.label ? `A ${heroTap.label}. Tap again.` : 'Tap Bella'}</p>
+                         <BelluhOrb size={heroOrb} onTap={heroTap.tap} label={c.bellaTapLabel} />
+                         <p className="mt-2 sm:mt-3 h-5 text-xs font-semibold tracking-wide text-slate-400" aria-live="polite">{heroTap.label ? f(c.tapAgain, { shape: heroTap.label }) : c.tapBella}</p>
                      </div>
 
                      <div className="hidden sm:block absolute left-0 top-[6%] w-[60%] max-w-[300px]" style={{ animation: 'slideUp 0.8s 0.9s cubic-bezier(0.16,1,0.3,1) both' }}>
                          <div className="animate-float rounded-3xl bg-white/90 backdrop-blur-xl border border-white shadow-[0_24px_60px_-24px_rgba(15,23,42,0.35)] p-4">
-                             <div className="flex items-center gap-2"><BelluhOrb size={22} /><span className="text-[13px] font-bold text-slate-900">Bella</span><span className="ml-auto text-[11px] text-slate-400">now</span></div>
-                             <p className="mt-2 font-serif text-[14px] sm:text-[15px] leading-snug text-slate-800">Dan's birthday is in 12 days. He wrote that he misses shooting film. Want me to plan it?</p>
-                             <div className="mt-3 flex items-center gap-2"><span className="h-8 px-3.5 inline-flex items-center rounded-full bg-slate-900 text-white text-xs font-bold">Plan it</span><span className="h-8 px-3 inline-flex items-center text-xs font-semibold text-slate-400">Not now</span></div>
+                             <div className="flex items-center gap-2"><BelluhOrb size={22} /><span className="text-[13px] font-bold text-slate-900">Bella</span><span className="ml-auto text-[11px] text-slate-400">{c.now}</span></div>
+                             <p className="mt-2 font-serif text-[14px] sm:text-[15px] leading-snug text-slate-800">{f(d.hero.cardBella, { partner: c.partner })}</p>
+                             <div className="mt-3 flex items-center gap-2"><span className="h-8 px-3.5 inline-flex items-center rounded-full bg-slate-900 text-white text-xs font-bold">{d.hero.planIt}</span><span className="h-8 px-3 inline-flex items-center text-xs font-semibold text-slate-400">{d.hero.notNow}</span></div>
                          </div>
                      </div>
 
                      <div className="hidden sm:block absolute right-0 -bottom-[2%] w-[56%] max-w-[290px]" style={{ animation: 'slideUp 0.8s 1.5s cubic-bezier(0.16,1,0.3,1) both' }}>
                          <div className="animate-float rounded-3xl bg-white/90 backdrop-blur-xl border border-white shadow-[0_24px_60px_-24px_rgba(15,23,42,0.35)] p-4" style={{ animationDelay: '-3s' }}>
-                             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#e58fc9]">Plan for you &amp; Dan</p>
-                             <p className="mt-1.5 font-serif text-[15px] sm:text-base text-slate-900">Ramen, then the night market</p>
-                             <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[#3f7486]"><CalendarCheck size={14} /> Friday 7:00 PM, in both calendars</p>
+                             <p className="text-[13px] font-semibold text-[#e58fc9]">{f(d.hero.cardPlanLabel, { partner: c.partner })}</p>
+                             <p className="mt-1.5 font-serif text-[15px] sm:text-base text-slate-900">{d.hero.cardPlanTitle}</p>
+                             <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[#3f7486]"><CalendarCheck size={14} /> {d.hero.cardPlanWhen}</p>
                          </div>
                      </div>
 
                      <div className="hidden sm:block absolute right-[2%] top-[14%]" style={{ animation: 'slideUp 0.8s 2.1s cubic-bezier(0.16,1,0.3,1) both' }}>
                          <div className="animate-float inline-flex items-center gap-2 h-10 px-4 rounded-full bg-white/90 backdrop-blur-xl border border-white shadow-[0_18px_40px_-20px_rgba(15,23,42,0.35)] text-[13px] font-semibold text-slate-700" style={{ animationDelay: '-1.5s' }}>
-                             <Lock size={14} className="text-[#e58fc9]" /> Just me, never shared
+                             <Lock size={14} className="text-[#e58fc9]" /> {d.hero.cardPrivate}
                          </div>
                      </div>
                  </div>
@@ -616,9 +590,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       <section id="inside" className="relative z-10 px-6 pb-28 scroll-mt-24">
           <div className="max-w-6xl mx-auto">
               <h2 className="text-3xl md:text-5xl font-serif text-center leading-tight mb-4 drop-shadow-sm">
-                  <span className="text-slate-900">Inside Belluh.</span>
+                  <span className="text-slate-900">{d.inside.title}</span>
               </h2>
-              <p className="text-center text-lg text-slate-500 font-light mb-12">What remembering for two looks like. Real screens, with a sample couple.</p>
+              <p className="text-center text-lg text-slate-500 font-light mb-12">{d.inside.sub}</p>
 
               <div className="group relative md:h-[760px] rounded-[2.5rem] md:rounded-[3rem] overflow-hidden border border-white bg-gradient-to-b from-white/70 to-[#fdf2f9]/60 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.06)]">
                   <div className="absolute -top-40 -left-32 w-[560px] h-[560px] rounded-full bg-[#CDE9F2]/70 blur-[110px] pointer-events-none"></div>
@@ -626,10 +600,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
 
                   {/* Three real screens side by side, each fully in view; on phones they swipe */}
                   <div className="relative flex md:justify-center items-start gap-5 md:gap-12 overflow-x-auto md:overflow-visible snap-x snap-mandatory no-scrollbar px-[calc(50%-125px)] md:px-10 pt-10 md:pt-16 pb-8 md:pb-0">
-                      {INSIDE_SCREENS.map((sc, i) => (
-                          <figure key={sc.src} className={`snap-center shrink-0 w-[250px] ${i === 1 ? 'md:w-[316px] relative z-10' : 'md:w-[280px] md:mt-20'} transition-transform duration-700 ${i === 0 ? 'md:-rotate-[4deg] md:group-hover:-rotate-[5deg] md:group-hover:-translate-x-1' : i === 2 ? 'md:rotate-[4deg] md:group-hover:rotate-[5deg] md:group-hover:translate-x-1' : 'md:group-hover:-translate-y-2'}`}>
-                              <PhoneFrame src={sc.src} alt={sc.alt} />
-                              <figcaption className="md:hidden mt-4 text-center text-sm font-semibold text-slate-600">{sc.caption}</figcaption>
+                      {INSIDE_SCREENS.map((src, i) => (
+                          <figure key={src} className={`snap-center shrink-0 w-[250px] ${i === 1 ? 'md:w-[316px] relative z-10' : 'md:w-[280px] md:mt-20'} transition-transform duration-700 ${i === 0 ? 'md:-rotate-[4deg] md:group-hover:-rotate-[5deg] md:group-hover:-translate-x-1' : i === 2 ? 'md:rotate-[4deg] md:group-hover:rotate-[5deg] md:group-hover:translate-x-1' : 'md:group-hover:-translate-y-2'}`}>
+                              <PhoneFrame src={src} alt={d.inside.captions[i]} />
+                              <figcaption className="md:hidden mt-4 text-center text-sm font-semibold text-slate-600">{d.inside.captions[i]}</figcaption>
                           </figure>
                       ))}
                   </div>
@@ -639,20 +613,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                   <div className="w-full max-w-[340px] rounded-3xl bg-white border border-slate-100 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.25)] p-3.5 flex gap-3">
                       <div className="shrink-0 pt-0.5"><BelluhOrb size={32} /></div>
                       <div className="min-w-0">
-                          <div className="flex items-center justify-between gap-3"><span className="text-sm font-bold text-slate-900">Bella</span><span className="text-xs text-slate-400">now</span></div>
-                          <p className="text-[13px] md:text-sm text-slate-600 leading-snug mt-0.5">Dan picked Friday at 7:00 PM for "Ramen, then the night market".</p>
+                          <div className="flex items-center justify-between gap-3"><span className="text-sm font-bold text-slate-900">Bella</span><span className="text-xs text-slate-400">{c.now}</span></div>
+                          <p className="text-[13px] md:text-sm text-slate-600 leading-snug mt-0.5">{f(d.inside.picked, { partner: c.partner })}</p>
                       </div>
                   </div>
                   <div className="inline-flex items-center gap-2.5 rounded-full bg-white border border-slate-100 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.25)] px-5 py-3.5">
                       <Lock size={16} className="text-[#3f7486]" />
-                      <span className="text-sm font-bold text-slate-700">Private entries stay private</span>
+                      <span className="text-sm font-bold text-slate-700">{d.inside.private}</span>
                   </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mt-14 px-2">
-                  {STEPS.map(s => (
-                      <div key={s.n}>
-                          <p className="text-xs font-bold tracking-widest text-[#f0addd]">{s.n}</p>
+                  {d.inside.steps.map((s, i) => (
+                      <div key={i}>
+                          <p className="text-xs font-bold tracking-widest text-[#f0addd]">{i + 1}</p>
                           <p className="mt-2 font-serif text-2xl text-slate-900">{s.title}</p>
                           <p className="mt-2 text-slate-500 font-light leading-relaxed">{s.text}</p>
                       </div>
@@ -667,10 +641,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       <section id="stories" className="relative z-10 py-20 md:py-28 overflow-hidden scroll-mt-20">
         <div className="max-w-6xl mx-auto px-6 mb-14 md:mb-20 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div>
-                <h2 className="font-serif text-5xl md:text-7xl tracking-tight text-slate-900 leading-[1.02]">The ordinary Tuesdays<br className="hidden md:block" /> <span className="whitespace-nowrap">slip away.</span></h2>
+                <h2 className="font-serif text-5xl md:text-7xl tracking-tight text-slate-900 leading-[1.02]">{d.stories.title1}<br className="hidden md:block" /> <span className="whitespace-nowrap">{d.stories.title2}</span></h2>
             </div>
             <p className="text-slate-500 text-lg md:text-xl font-light leading-relaxed max-w-sm md:text-right">
-                You'll remember the wedding. Belluh keeps the rest: the coffee, the late talks, the ticket stub in the drawer.
+                {d.stories.sub}
             </p>
         </div>
 
@@ -682,12 +656,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                             <article key={i} aria-hidden={i >= row.length ? true : undefined} className={`shrink-0 mx-3 md:mx-4 w-[300px] md:w-[380px] min-h-[300px] rounded-[1.75rem] p-7 md:p-8 flex flex-col shadow-[0_18px_40px_-24px_rgba(15,23,42,0.25)] transition-transform duration-500 hover:-translate-y-1.5 hover:rotate-0 ${MOMENT_TONES[i % 3]} ${i % 2 ? 'rotate-[0.8deg]' : '-rotate-[0.8deg]'}`}>
                                 <div className="flex items-center justify-between gap-3">
                                     <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">{m.when}</p>
-                                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400">{i % 5 === 3 ? <><Lock size={11} /> Just me</> : 'Shared'}</span>
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400">{i % 5 === 3 ? <><Lock size={11} /> {c.justMe}</> : c.shared}</span>
                                 </div>
                                 <p className="mt-5 flex-1 font-serif text-xl md:text-[1.45rem] leading-snug text-slate-800 whitespace-normal">{m.text}</p>
                                 <div className="mt-7 flex items-start gap-2.5 rounded-2xl bg-white/70 px-3.5 py-3 whitespace-normal">
                                     <BelluhOrb size={18} className="mt-0.5" />
-                                    <p className="text-[13px] leading-snug text-slate-600"><span className="font-serif font-bold text-[#7fa7b6]">Bella</span> {m.belluh}</p>
+                                    <p className="text-[13px] leading-snug text-slate-600"><span className="font-serif font-bold text-[#7fa7b6]">Bella</span> {m.bella}</p>
                                 </div>
                             </article>
                         ))}
@@ -703,19 +677,19 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
               <div>
                   <span className="block font-serif text-8xl leading-[0.5] text-[#f0addd] select-none" aria-hidden="true">&ldquo;</span>
                   <blockquote className="mt-2 font-serif text-[2.1rem] md:text-[3.4rem] leading-[1.1] tracking-tight text-slate-900">
-                      We've built a world of perfect documentation and zero remembrance.
+                      {d.why.quote}
                   </blockquote>
                   <p className="mt-8 text-lg md:text-xl text-slate-500 font-light leading-relaxed max-w-xl">
-                      Love isn't always built in the big moments. It's built in the supermarket. It's built in how someone listens when you talk about shrimp.
+                      {d.why.body}
                   </p>
                   <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
-                      <p className="font-serif text-2xl italic text-[#9bbecb]">— Jimmy</p>
+                      <p className="font-serif text-2xl italic text-[#9bbecb]">{d.why.by}</p>
                       <button onClick={onGoToAbout} className="group inline-flex items-center gap-2 h-11 px-5 rounded-full bg-white border border-slate-200 text-sm font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900 transition-colors">
-                          Read the whole story <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+                          {d.why.read} <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
                       </button>
                   </div>
               </div>
-              <button onClick={onGoToAbout} aria-label="Read the story behind Belluh" className="block w-full max-w-[340px] mx-auto lg:mr-0">
+              <button onClick={onGoToAbout} aria-label={d.why.readLabel} className="block w-full max-w-[340px] mx-auto lg:mr-0">
                   <Receipt />
               </button>
           </div>
@@ -726,14 +700,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
           <div className="max-w-6xl mx-auto">
               <div className="max-w-2xl">
                   <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
-                      <span className="text-slate-900">One memory.</span><br /><span className="text-slate-900">Two of you.</span>
+                      <span className="text-slate-900">{d.pricing.title1}</span><br /><span className="text-slate-900">{d.pricing.title2}</span>
                   </h2>
-                  <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed">Everything you write becomes a memory you both own, and it only grows. One price covers the couple, never each of you.</p>
+                  <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed">{d.pricing.sub}</p>
               </div>
               <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-5">
                   {PLANS.map(plan => (
                       <div key={plan.name} className={`relative rounded-[2rem] p-8 flex flex-col ${plan.featured ? 'bg-white border-2 border-slate-900 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.45)]' : 'bg-white/70 border border-slate-100'}`}>
-                          {plan.featured && <span className="absolute -top-3 left-8 h-6 px-3 rounded-full bg-slate-900 text-white text-[11px] font-bold tracking-wide inline-flex items-center">Most couples</span>}
+                          {plan.featured && <span className="absolute -top-3 left-8 h-6 px-3 rounded-full bg-slate-900 text-white text-[11px] font-bold tracking-wide inline-flex items-center">{d.pricing.mostCouples}</span>}
                           <p className="font-serif text-2xl text-slate-900">{plan.name}</p>
                           <p className="mt-1 text-sm text-slate-500">{plan.blurb}</p>
                           <p className="mt-7 flex items-baseline gap-2 flex-wrap"><span className={`font-serif ${plan.team ? 'text-3xl' : 'text-5xl'} text-slate-900 tracking-tight`}>{plan.price}</span><span className="text-sm text-slate-400">{plan.per}</span></p>
@@ -744,12 +718,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                           {plan.team ? (
                               <a href="mailto:hello@belluh.com?subject=Belluh%20for%20teams" className="mt-8 h-12 rounded-full border border-slate-200 text-slate-800 text-sm font-bold inline-flex items-center justify-center gap-2 hover:border-slate-400 transition-colors">{plan.cta} <ArrowRight size={15} /></a>
                           ) : (
-                              <button onClick={() => { rememberCta(`pricing-${plan.name.toLowerCase()}`); onGetStarted(); }} className={`mt-8 h-12 rounded-full text-sm font-bold inline-flex items-center justify-center gap-2 transition-colors ${plan.featured ? 'bg-slate-900 text-white hover:bg-black' : 'bg-white border border-slate-200 text-slate-800 hover:border-slate-400'}`}>{plan.cta} <ArrowRight size={15} /></button>
+                              <button onClick={() => { rememberCta(`pricing-${['free', 'duo', 'teams'][PLANS.indexOf(plan)] ?? 'plan'}`); onGetStarted(); }} className={`mt-8 h-12 rounded-full text-sm font-bold inline-flex items-center justify-center gap-2 transition-colors ${plan.featured ? 'bg-slate-900 text-white hover:bg-black' : 'bg-white border border-slate-200 text-slate-800 hover:border-slate-400'}`}>{plan.cta} <ArrowRight size={15} /></button>
                           )}
                       </div>
                   ))}
               </div>
-              <p className="mt-8 text-sm text-slate-400">No card to start. Your entries are never sold.</p>
+              <p className="mt-8 text-sm text-slate-400">{d.pricing.note}{country !== 'US' ? ` ${d.pricing.billedUsd}` : ''}</p>
           </div>
       </section>
 
@@ -760,10 +734,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-10 lg:gap-16 items-start">
               <div className="lg:sticky lg:top-28">
                   <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
-                      <span className="text-slate-900">Questions, answered.</span>
+                      <span className="text-slate-900">{d.faq.title}</span>
                   </h2>
-                  <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed max-w-sm">Anything else, ask Bella. She knows how it all works, and it's free to try.</p>
-                  <button onClick={() => { rememberCta('faq'); onGetStarted(); }} className="mt-7 group inline-flex items-center gap-2 h-11 px-5 rounded-full bg-slate-900 text-white text-sm font-bold hover:bg-black transition-colors">Start free <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" /></button>
+                  <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed max-w-sm">{d.faq.sub}</p>
+                  <button onClick={() => { rememberCta('faq'); onGetStarted(); }} className="mt-7 group inline-flex items-center gap-2 h-11 px-5 rounded-full bg-slate-900 text-white text-sm font-bold hover:bg-black transition-colors">{c.startFree} <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" /></button>
               </div>
               <div className="space-y-1.5 -mx-5 md:mx-0">
                   {FAQ.map((f, i) => <FaqItem key={f.q} q={f.q} a={f.a} open={openFaq === i} onToggle={() => setOpenFaq(openFaq === i ? null : i)} />)}
@@ -778,17 +752,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
               <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-10 px-8 py-14 md:px-16 md:py-20">
                   <div className="text-center md:text-left">
                       <h2 className="font-serif text-5xl md:text-7xl tracking-tight leading-[1.0]">
-                          <span className="text-[#9bbecb]">Keep tonight.</span><br /><span className="text-[#f0addd] italic">Together.</span>
+                          <span className="text-[#9bbecb]">{d.cta.line1}</span><br /><span className="text-[#f0addd] italic">{d.cta.line2}</span>
                       </h2>
-                      <p className="mt-6 text-lg md:text-xl text-slate-500 font-light leading-relaxed max-w-lg mx-auto md:mx-0">By Sunday it will have blurred into the rest of the week. Write one line now, send your partner the link, and your first insight arrives on Sunday.</p>
+                      <p className="mt-6 text-lg md:text-xl text-slate-500 font-light leading-relaxed max-w-lg mx-auto md:mx-0">{d.cta.sub}</p>
                       <div className="mt-9 flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3">
-                          <button onClick={() => { rememberCta('final'); onGetStarted(); }} className="group w-full sm:w-auto h-14 px-8 rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 hover:bg-black transition-colors">Start free <ArrowRight size={17} className="transition-transform group-hover:translate-x-0.5" /></button>
-                          <button onClick={onLogin} className="w-full sm:w-auto h-14 px-7 rounded-full text-[15px] font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-colors">I have an account</button>
+                          <button onClick={() => { rememberCta('final'); onGetStarted(); }} className="group w-full sm:w-auto h-14 px-8 rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 hover:bg-black transition-colors">{c.startFree} <ArrowRight size={17} className="transition-transform group-hover:translate-x-0.5" /></button>
+                          <button onClick={onLogin} className="w-full sm:w-auto h-14 px-7 rounded-full text-[15px] font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition-colors">{c.haveAccount}</button>
                       </div>
                   </div>
                   <div className="flex flex-col items-center">
-                      <BelluhOrb size={isDesktop ? 220 : 150} onTap={ctaTap.tap} label="Belluh. Tap to change its shape." />
-                      <p className="mt-3 h-5 text-xs font-semibold text-slate-400" aria-live="polite">{ctaTap.label ? `A ${ctaTap.label}. Tap again.` : 'Tap Bella'}</p>
+                      <BelluhOrb size={isDesktop ? 220 : 150} onTap={ctaTap.tap} label={c.bellaTapLabel} />
+                      <p className="mt-3 h-5 text-xs font-semibold text-slate-400" aria-live="polite">{ctaTap.label ? f(c.tapAgain, { shape: ctaTap.label }) : c.tapBella}</p>
                   </div>
               </div>
           </div>

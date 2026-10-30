@@ -15,13 +15,14 @@ import { readyOrder, parseUsAddress, NOT_FRESH_FLOWERS, shopStyle } from './shop
 import { findSpots, type Spot } from './places.ts';
 import { regionLinks, osmCountry, KITS } from './region.ts';
 import { playlistLinks } from './jarvis.ts';
+import { findResearch } from './research.ts';
 import { bookingFromTool, doneLabel, memoryFor, reminderFor, whenText, type BookingDraft } from './bookings.ts';
 import { instacartCart } from './instacart.ts';
 import { callsOn, findPlace, startCall, okToCallNow, whyNot, type CallOutcome } from './vapi.ts';
 import { zonedToUtc } from './plans.ts';
 import { validateReminder, tableLinks, giftLinks, tripLinks, flowerLinks, foodLinks, buyLinks, groceryLinks, rideLinks, experienceLinks, type ActionLink } from './actions.ts';
 
-export type Channel = 'app' | 'whatsapp' | 'sms' | 'telegram' | 'imessage'; // also the source recorded on dates saved this way
+export type Channel = 'app' | 'whatsapp' | 'sms' | 'telegram' | 'imessage' | 'line'; // also the source recorded on dates saved this way
 export interface Result { status: number; body: any }
 const res = (body: any, status = 200): Result => ({ status, body });
 
@@ -261,6 +262,13 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           links.push(...l);
           prepare('gift_ideas', call.args, products[before]?.url ?? l[0]?.url ?? null, products[before]?.title ?? null);
           return { ok: true, note: `The ideas are shown under your reply as links to buy${products.length ? `, with real products from independent Shopify shops, checkout ready: ${products.map(p => `${p.title} (${p.price}, ${p.seller})`).join('; ')}` : ''}. In one or two lines, say why each fits, from what their partner said. Do not paste links.` };
+        }
+        case 'find_research': {
+          const papers = await findResearch(call.keywords, { topic: call.topic, recent: call.recent });
+          if (!papers.length) return { ok: false, error: 'No good studies came back for those words. Try two broader keywords, or answer from well-established findings and say the evidence you found was thin.' };
+          for (const p of papers) links.push({ label: `${p.authors}${p.year ? `, ${p.year}` : ''}: ${p.title}`.slice(0, 160), url: p.url });
+          return { ok: true, papers: papers.map(p => ({ title: p.title, year: p.year, authors: p.authors, journal: p.venue, kind: p.kind, citations: p.citations, found: p.summary })),
+            note: 'The papers are shown under your reply. Answer in two to four plain sentences from what they found (prefer meta-analyses and reviews), with how strong the evidence is and what it means for these two. Do not list the papers or paste links.' };
         }
         case 'mood_playlist': {
           const l = playlistLinks(call.vibe, ctx.country);

@@ -10,7 +10,7 @@ import { localDateParts, isoDate } from './occasions.ts';
 import { weekStart, pairOf, type CheckinStatus } from './weekly.ts';
 import { serverKey } from './keys.ts';
 import { countryOf, partnerCountryOf, regionBrief } from './region.ts';
-import { milestones, skyBlock, noveltyLine, type DatedOccasion } from './jarvis.ts';
+import { milestones, skyBlock, noveltyLine, loveCalendar, type DatedOccasion } from './jarvis.ts';
 
 export const db: SupabaseClient = createClient(Deno.env.get('SUPABASE_URL')!, serverKey(), {
   auth: { persistSession: false },
@@ -98,7 +98,7 @@ export async function buildSystem(ctx: Ctx): Promise<string> {
   const { data: lastOut } = await db.from('bookings').select('starts_at').eq('user_id', ctx.userId).eq('status', 'booked')
     .in('kind', ['table', 'trip', 'experience', 'dinner']).lte('starts_at', new Date().toISOString()).order('starts_at', { ascending: false }).limit(1);
   const chosen = plans.map(p => p.options.find(o => o.id === p.chosen_option)?.starts_at ?? null);
-  const watch = [milestones((occ ?? []) as DatedOccasion[], today, ctx.country), skyBlock(today), noveltyLine([...(lastOut ?? []).map(b => b.starts_at), ...chosen])].filter(Boolean).join('\n') || null;
+  const watch = [milestones((occ ?? []) as DatedOccasion[], today, ctx.country), loveCalendar(ctx.country, today), skyBlock(today), noveltyLine([...(lastOut ?? []).map(b => b.starts_at), ...chosen])].filter(Boolean).join('\n') || null;
 
   return systemPrompt({
     myName: ctx.myName,

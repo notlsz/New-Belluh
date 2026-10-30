@@ -10,6 +10,8 @@ import {
 import { sendTemplate } from '../_shared/whatsapp.ts';
 import { sendSms, smsReminder } from '../_shared/sms.ts';
 import { sendTelegram, telegramChat } from '../_shared/telegram.ts';
+import { sendLine, lineUser } from '../_shared/line.ts';
+import { sendLinq } from '../_shared/linq.ts';
 import { sameSecret } from '../_shared/secret.ts';
 import { serverKey } from '../_shared/keys.ts';
 
@@ -55,8 +57,11 @@ Deno.serve(async (req) => {
 
       // Reminders go wherever they last texted Belluh from
       const params = reminderParams(o, stage, link.timezone);
-      const tg = telegramChat(link.phone_e164);
-      const id = tg ? await sendTelegram(tg, smsReminder(params).replace(' Reply STOP to pause reminders.', ' Send STOP to pause reminders.'))
+      const tg = telegramChat(link.phone_e164), ln = lineUser(link.phone_e164);
+      const chatText = smsReminder(params).replace(' Reply STOP to pause reminders.', ' Send STOP to pause reminders.');
+      const id = tg ? await sendTelegram(tg, chatText)
+        : ln ? await sendLine(ln, chatText, null)
+        : link.channel === 'imessage' ? await sendLinq(link.phone_e164, smsReminder(params))
         : link.channel === 'sms' ? await sendSms(link.phone_e164, smsReminder(params)) : await sendTemplate(link.phone_e164, TEMPLATE, params, TEMPLATE_LANG);
       if (id) {
         sent++;

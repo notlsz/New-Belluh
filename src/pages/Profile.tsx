@@ -1,4 +1,5 @@
 
+import { useI18n } from '../i18n';
 import { calmAvatar, avatarFor } from '../lib/avatar';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { User, LoveNote, Goal, Circle, CircleStatus, JournalEntry, Mood, RelationshipReceipt, ColorTheme } from '../types';
@@ -185,6 +186,21 @@ const StatCard = ({ id, label, value, subtext, icon: Icon, theme, config, onTogg
 };
 
 const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLogout, onCircleChange, onCreateCircle, onArchiveCircle, onRenameCircle, onUpdateUser, onShowLegal, onViewArtifact, onShowToast, pendingInvites = [], onAcceptInvite, onDeclineInvite, onTriggerPremium }) => {
+  const { d: L, f: fill, date: fmtDate, num, tag } = useI18n();
+  const M = L.app.me;
+  /** "4 years ago", "in 12 days", "2年前", "dans 12 jours": past dates count back, birthdays count to the next one. */
+  const relative = (when: Date, mode: 'past' | 'future') => {
+    const target = mode === 'future' ? nextYearly(when) : when;
+    const a = new Date(target); a.setHours(0, 0, 0, 0);
+    const b = new Date(); b.setHours(0, 0, 0, 0);
+    const days = Math.round((a.getTime() - b.getTime()) / 86400000);
+    try {
+      const rtf = new Intl.RelativeTimeFormat(tag, { numeric: 'auto' });
+      if (Math.abs(days) >= 365 && mode === 'past') return rtf.format(-Math.floor(-days / 365.25), 'year');
+      if (Math.abs(days) >= 60 && mode === 'past') return rtf.format(-Math.floor(-days / 30.44), 'month');
+      return rtf.format(days, 'day');
+    } catch { return getRelativeDisplay(when, mode); }
+  };
   const [activeTab, setActiveTab] = useState<'us' | 'me'>('us');
   const [activeCircleId, setActiveCircleId] = useState(user.activeCircleId);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -362,7 +378,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
         else await supabase.from('journal_entries').insert({ user_id: currentUser.id, content: factsText, type: 'Milestone', tags: ['system_facts', `circle:${activeCircleId}`], is_shared: true, date: new Date().toISOString() });
         onUpdateUser({ relationshipFacts: factsText });
         await syncFactDates(currentUser.id);
-        onShowToast("Saved. Bella will remind you before the big ones.", "success");
+        onShowToast(M.saved, "success");
     } catch (e) { console.error("Error saving facts:", e); onShowToast("Failed to save facts", "error"); }
   };
 
@@ -404,8 +420,8 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
     <div className="pb-32 pt-10 px-0 max-w-4xl mx-auto min-h-screen bg-paper">
       <div className="px-6 mb-10 flex items-center justify-between">
           <div role="tablist" aria-label="Whose page" className="p-1 rounded-full bg-slate-100/80 flex text-sm font-semibold">
-              <button role="tab" aria-selected={activeTab === 'us'} onClick={() => setActiveTab('us')} className={`h-9 px-5 rounded-full transition-all ${activeTab === 'us' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Us</button>
-              <button role="tab" aria-selected={activeTab === 'me'} onClick={() => setActiveTab('me')} className={`h-9 px-5 rounded-full transition-all ${activeTab === 'me' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Me</button>
+              <button role="tab" aria-selected={activeTab === 'us'} onClick={() => setActiveTab('us')} className={`h-9 px-5 rounded-full transition-all ${activeTab === 'us' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>{M.us}</button>
+              <button role="tab" aria-selected={activeTab === 'me'} onClick={() => setActiveTab('me')} className={`h-9 px-5 rounded-full transition-all ${activeTab === 'me' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>{M.me}</button>
           </div>
           <button onClick={() => setShowSettingsModal(true)} aria-label="Settings" className="w-11 h-11 -mr-2 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"><Settings size={21} /></button>
       </div>
@@ -474,9 +490,9 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                           </h2>
                           <div className="mt-6 flex flex-wrap justify-center gap-x-8 gap-y-3 text-center">
                                 {[
-                                    { n: streak, label: streak === 1 ? 'day in a row' : 'days in a row' },
-                                    { n: sharedThisMonth, label: 'shared this month' },
-                                    { n: totalMemoriesUs, label: totalMemoriesUs === 1 ? 'memory' : 'memories' },
+                                    { n: streak, label: streak === 1 ? M.dayInRow : M.daysInRow },
+                                    { n: sharedThisMonth, label: M.sharedMonth },
+                                    { n: totalMemoriesUs, label: totalMemoriesUs === 1 ? M.memory : M.memories },
                                 ].map(x => (
                                     <div key={x.label}>
                                         <p className="font-serif text-2xl text-slate-900 leading-none">{x.n}</p>
@@ -492,19 +508,19 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                       {activeCircle && (
                           <div className="mb-12 relative group/facts">
                               <div className="flex items-center justify-between mb-6">
-                                  <h3 className="font-serif text-xl text-slate-900 pl-1">Your dates</h3>
+                                  <h3 className="font-serif text-xl text-slate-900 pl-1">{M.yourDates}</h3>
                                   <button onClick={() => isEditingFacts ? saveFacts() : setIsEditingFacts(true)} className={`h-9 px-4 rounded-full text-sm font-semibold transition-colors inline-flex items-center gap-1.5 ${isEditingFacts ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}>
-                                      {isEditingFacts ? <><Check size={15} /> Done</> : <><Edit3 size={15} /> Edit</>}
+                                      {isEditingFacts ? <><Check size={15} /> {L.common.done}</> : <><Edit3 size={15} /> {L.common.edit}</>}
                                   </button>
                               </div>
                               {(() => {
                                   const partnerFirst = (user.partnerName || activeMembers.find(m => m.id !== user.id)?.name || '').split(' ')[0];
                                   const rows = [
-                                      { key: 'anniversary', label: 'Together since', icon: Sparkles, mode: 'past' as const },
-                                      { key: 'firstMet', label: 'First met', icon: Users, mode: 'past' as const },
-                                      { key: 'firstDate', label: 'First date', icon: Calendar, mode: 'past' as const },
-                                      { key: 'firstKiss', label: 'First kiss', icon: Heart, mode: 'past' as const },
-                                      { key: 'partnerBday', label: partnerFirst ? `${partnerFirst}'s birthday` : "Partner's birthday", icon: Gift, mode: 'future' as const },
+                                      { key: 'anniversary', label: M.together, icon: Sparkles, mode: 'past' as const },
+                                      { key: 'firstMet', label: M.firstMet, icon: Users, mode: 'past' as const },
+                                      { key: 'firstDate', label: M.firstDate, icon: Calendar, mode: 'past' as const },
+                                      { key: 'firstKiss', label: M.firstKiss, icon: Heart, mode: 'past' as const },
+                                      { key: 'partnerBday', label: partnerFirst ? fill(M.birthday, { partner: partnerFirst }) : M.partnerBirthday, icon: Gift, mode: 'future' as const },
                                   ];
                                   const f = facts as Record<string, Date>;
                                   const from = isSet(facts.anniversary) ? facts.anniversary : facts.firstMet;
@@ -514,24 +530,24 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                                   if (!anySet && !isEditingFacts) return (
                                       <div className="rounded-[2rem] bg-white border border-slate-100 p-7 text-center">
                                           <Heart size={22} className="mx-auto text-[#f0addd]" />
-                                          <p className="mt-4 font-serif text-2xl text-slate-900">When did you two begin?</p>
-                                          <p className="mt-2 text-[15px] text-slate-500 leading-relaxed max-w-sm mx-auto">Add the day you met or got together, and Bella counts the days with you: day 100, day 1,000, every anniversary.</p>
-                                          <button onClick={() => setIsEditingFacts(true)} className="mt-6 h-11 px-6 rounded-full bg-slate-900 text-white text-sm font-semibold hover:bg-black">Add your dates</button>
+                                          <p className="mt-4 font-serif text-2xl text-slate-900">{M.inviteTitle}</p>
+                                          <p className="mt-2 text-[15px] text-slate-500 leading-relaxed max-w-sm mx-auto">{M.inviteBody}</p>
+                                          <button onClick={() => setIsEditingFacts(true)} className="mt-6 h-11 px-6 rounded-full bg-slate-900 text-white text-sm font-semibold hover:bg-black">{M.inviteButton}</button>
                                       </div>
                                   );
                                   return (
                                       <div className="rounded-[2rem] bg-white border border-slate-100 px-6 py-6">
                                           {days !== null && !isEditingFacts && (
                                               <div className="pb-5 mb-2">
-                                                  <p className="font-serif text-4xl text-slate-900 tracking-tight">{days.toLocaleString('en-US')} <span className="text-slate-400 text-2xl">{days === 1 ? 'day' : 'days'} together</span></p>
+                                                  <p className="font-serif text-4xl text-slate-900 tracking-tight">{num(days)} <span className="text-slate-400 text-2xl">{days === 1 ? M.dayTogether : M.daysTogether}</span></p>
                                                   {(() => {
                                                       // The next moment worth marking: a 100-day milestone (day 100, day 1,000) or the anniversary, whichever comes first
                                                       const mark = days < 1000 ? Math.ceil((days + 1) / 100) * 100 : Math.ceil((days + 1) / 1000) * 1000;
                                                       const toMark = mark - days;
                                                       const annivIn = nextAnniv === 'Today' ? 0 : nextAnniv === 'Tomorrow' ? 1 : nextAnniv ? parseInt(nextAnniv, 10) : NaN;
                                                       const line = !isNaN(annivIn) && annivIn <= toMark
-                                                          ? (annivIn === 0 ? 'Your anniversary is today' : `Your anniversary is in ${annivIn} ${annivIn === 1 ? 'day' : 'days'}`)
-                                                          : `Day ${mark.toLocaleString('en-US')} is in ${toMark} ${toMark === 1 ? 'day' : 'days'}`;
+                                                          ? (annivIn === 0 ? M.anniversaryToday : fill(M.anniversaryIn, { d: annivIn, days: annivIn === 1 ? M.day : M.days }))
+                                                          : fill(M.dayIn, { n: num(mark), d: toMark, days: toMark === 1 ? M.day : M.days });
                                                       return <p className="mt-2 text-sm text-[#3f7486]">{line}</p>;
                                                   })()}
                                               </div>
@@ -547,11 +563,11 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                                                           <input type="date" aria-label={r.label} value={toInput(d)} onChange={e => setFacts({ ...facts, [r.key]: fromInput(e.target.value) })} className="h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#9bbecb]" />
                                                       ) : isSet(d) ? (
                                                           <span className="text-right">
-                                                              <span className="block text-[15px] font-medium text-slate-900">{d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: r.mode === 'past' ? 'numeric' : undefined })}</span>
-                                                              <span className="block text-xs text-slate-400">{getRelativeDisplay(d, r.mode).replace(' Days Away', ' days away').replace(' Days Ago', ' days ago').replace('Tomorrow', 'tomorrow').replace('Today', 'today')}</span>
+                                                              <span className="block text-[15px] font-medium text-slate-900">{fmtDate(d, { month: 'short', day: 'numeric', year: r.mode === 'past' ? 'numeric' : undefined })}</span>
+                                                              <span className="block text-xs text-slate-400">{relative(d, r.mode)}</span>
                                                           </span>
                                                       ) : (
-                                                          <button onClick={() => setIsEditingFacts(true)} className="text-sm font-semibold text-[#3f7486] hover:text-slate-900">Add</button>
+                                                          <button onClick={() => setIsEditingFacts(true)} className="text-sm font-semibold text-[#3f7486] hover:text-slate-900">{L.common.add}</button>
                                                       )}
                                                   </div>
                                               );
@@ -606,7 +622,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
               <div className="flex flex-col items-center mb-12">
                   <div className="w-28 h-28 rounded-full ring-[5px] ring-[#fcfcfc] shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] overflow-hidden mb-6 bg-[#eef7fa]"><img src={user.avatar} alt={user.name} className="w-full h-full object-cover" /></div>
                   <h2 className="text-4xl font-serif text-slate-900 tracking-tight">{user.name}</h2>
-                  <p className="text-sm text-slate-400 mt-2">{totalMemoriesMe} {totalMemoriesMe === 1 ? 'memory' : 'memories'} written</p>
+                  <p className="text-sm text-slate-400 mt-2">{totalMemoriesMe} {totalMemoriesMe === 1 ? M.memory : M.memories}</p>
                   <button onClick={() => setIsEditingProfile(true)} className="mt-4 h-9 px-4 rounded-full inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"><Edit3 size={15} /> Edit profile</button>
               </div>
 

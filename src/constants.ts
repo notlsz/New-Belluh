@@ -459,15 +459,8 @@ export const MOCK_INSIGHTS: Insight[] = [
   }
 ];
 
-export const DAILY_PROMPTS = [
-  "What's one tiny moment from today you want to remember?",
-  "How did your partner make you smile today?",
-  "What is one thing you are grateful for right now?",
-  "Reflect on a challenge you overcame together recently.",
-  "What is your favorite memory of us from last year?",
-  "Describe your partner in three words today.",
-  "What's a new adventure you want to take together?"
-];
+// The daily questions; translations are in src/i18n (app.daily), in this order
+export { DAILY_QUESTIONS as DAILY_PROMPTS } from './i18n/questions';
 
 export const MOOD_EMOJIS: Record<string, string> = {
   [Mood.Amazing]: '🤩',

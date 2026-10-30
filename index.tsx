@@ -2,6 +2,7 @@ import { trackEvent } from './src/services/analytics';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './src/App';
+import { I18nProvider } from './src/i18n';
 
 // Anything that crashes in someone's browser is recorded (message and where, never journal text)
 window.addEventListener('error', e => { trackEvent('client_error', { message: String(e.message).slice(0, 300), where: `${e.filename}:${e.lineno}:${e.colno}`, stack: String((e as any).error?.stack ?? '').slice(0, 1200) }); });
@@ -37,7 +38,9 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <Boundary>
-      <App />
+      <I18nProvider>
+        <App />
+      </I18nProvider>
     </Boundary>
   </React.StrictMode>
 );

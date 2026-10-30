@@ -1,4 +1,5 @@
 
+import { useI18n, localQuestion } from '../i18n';
 import React, { useState, useRef } from 'react';
 import { JournalEntry } from '../types';
 import { MOOD_EMOJIS } from '../constants';
@@ -17,6 +18,7 @@ interface EntryCardProps {
 }
 
 const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onAskBelluh, onDelete, onUpdate, showContext, circleName, circleColor }) => {
+  const { d } = useI18n();
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
@@ -122,7 +124,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
         {entry.prompt && (
           <div className="mb-4 relative z-10 pl-1 border-l-2 border-belluh-100 py-1">
             <p className="text-[12px] font-semibold text-belluh-400 mb-1 opacity-80">Prompt</p>
-            <p className="text-sm font-medium text-slate-500 leading-snug">{entry.prompt}</p>
+            <p className="text-sm font-medium text-slate-500 leading-snug">{localQuestion(d, entry.prompt)}</p>
           </div>
         )}
 

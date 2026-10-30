@@ -228,6 +228,7 @@ Looking after them (like a chief of staff who knows the relationship, not a chat
 - Something new: when it's been weeks since they did anything together, suggest one fresh idea (a place they've never been, something one of them said they wanted to try). When a meteor shower is coming, a night under the sky is a lovely, free date: say when and where to look.
 - The evening itself: for a date night at home or out, offer a playlist that fits them (mood_playlist) and suggest phones on Do Not Disturb for the evening. You can't control their lights or devices; say so if asked.
 - Rest: if their own entries show ${c.myName} running on empty (late nights, skipped meals, no sleep, work swallowing everything), say it once, kindly and briefly, and point back to ${partner}: an early night, a proper dinner together. Not a lecture, never medical advice.
+- Research: when they ask how relationships, people or habits work, or whether something is normal, use find_research and answer from what the studies found, in plain words, in two to four sentences: the finding, how strong it is (a meta-analysis of many couples beats one small study), and what it means for them. Name a study lightly ("a 2023 review of responsiveness research", "Gottman's lab"), never pile up citations; the papers appear under your reply. Be honest about limits: correlation isn't cause, samples are often Western students. If the research is thin or mixed, say so. Never use research to diagnose either of them or to take a side. Well-known findings you're sure of (Gottman's repair attempts and the 5:1 ratio, attachment styles, Gable's capitalization, Aron's 36 questions) you may cite from knowledge, but look things up before quoting numbers.
 - You can't read their texts, emails or calls, or watch where they are; if asked, say so plainly and offer what you can do (help them write the reply, set a reminder).
 
 Where they live
@@ -499,6 +500,15 @@ export const TOOL_DECLARATIONS = [
     parameters: { type: 'OBJECT', properties: { vibe: { type: 'STRING', description: 'A short playlist search, like "candlelit jazz" or "Japanese city pop"' } }, required: ['vibe'] },
   },
   {
+    name: 'find_research',
+    description: 'Look up what research has found, when they ask how relationships, people, habits, feelings or behavior work ("is it normal to fight this much?", "does long distance work?", "how do we stop the same argument?"), or when a claim deserves evidence.',
+    parameters: { type: 'OBJECT', properties: {
+      keywords: { type: 'ARRAY', items: { type: 'STRING' }, description: 'Two to four English research keywords, specific, e.g. ["conflict", "repair attempts"] or ["long-distance", "satisfaction"]' },
+      topic: { type: 'STRING', description: 'relationships (default), behavior, or health' },
+      recent: { type: 'BOOLEAN', description: 'true when they ask for the latest research' },
+    }, required: ['keywords'] },
+  },
+  {
     name: 'set_country',
     description: 'Save which country they live in, when they say so ("we live in Tokyo", "I moved to Seoul"). Changes the stores, booking sites, money and customs Bella uses.',
     parameters: { type: 'OBJECT', properties: { country: { type: 'STRING', description: 'The country, as a two-letter code (JP, CN, KR, GB, US) or its name' } }, required: ['country'] },
@@ -540,6 +550,7 @@ export type ToolCall =
   | { name: 'find_spots'; what: string; where: string }
   | { name: 'set_country'; country: string }
   | { name: 'mood_playlist'; vibe: string }
+  | { name: 'find_research'; keywords: string[]; topic: 'relationships' | 'behavior' | 'health'; recent: boolean }
   | { name: 'order_food' | 'buy_item' | 'order_groceries' | 'book_ride' | 'find_experience'; args: Record<string, unknown> }
   | { name: 'write_entry'; text: string; shared: boolean }
   | { name: 'take_shape'; shape: Shape };
@@ -573,6 +584,11 @@ export function validateToolCall(name: string, args: Record<string, unknown> | u
     case 'find_spots': {
       const what = clean(a.what, 60), where = clean(a.where, 80);
       return what.length >= 2 && where.length >= 2 ? { name, what, where } : null;
+    }
+    case 'find_research': {
+      const keywords = (Array.isArray(a.keywords) ? a.keywords : []).map(x => clean(x, 40)).filter(x => x.length >= 2).slice(0, 4);
+      const topic = a.topic === 'behavior' || a.topic === 'health' ? a.topic : 'relationships';
+      return keywords.length ? { name, keywords, topic, recent: a.recent === true } : null;
     }
     case 'mood_playlist': {
       const vibe = clean(a.vibe, 60);
@@ -677,6 +693,7 @@ const DID: Record<string, string> = {
   take_shape: 'How do I look?',
   set_country: "Got it, I'll use what works where you live.",
   mood_playlist: 'Your playlist is right below.',
+  find_research: 'I pulled the studies on that, they are right below.',
 };
 export function naturalFallback(ran: string[]): string | null {
   for (let i = ran.length - 1; i >= 0; i--) if (DID[ran[i]]) return DID[ran[i]];
