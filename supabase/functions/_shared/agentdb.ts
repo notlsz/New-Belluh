@@ -100,7 +100,7 @@ export async function buildSystem(ctx: Ctx): Promise<string> {
     .in('kind', ['table', 'trip', 'experience', 'dinner']).lte('starts_at', new Date().toISOString()).order('starts_at', { ascending: false }).limit(1);
   const chosen = plans.map(p => p.options.find(o => o.id === p.chosen_option)?.starts_at ?? null);
   const [{ data: goalRows }, { data: watchRows }] = await Promise.all([
-    db.from('couple_goals').select('kind, title, target, progress, currency, period, period_key, due_on').eq('status', 'active').or(`created_by.eq.${ctx.userId},partner_id.eq.${ctx.userId}`).limit(12),
+    db.from('couple_goals').select('kind, title, target, progress, currency, period, period_key, due_on, steps').eq('status', 'active').or(`created_by.eq.${ctx.userId},partner_id.eq.${ctx.userId}`).limit(12),
     db.from('watches').select('what, until_on').eq('user_id', ctx.userId).eq('status', 'watching').limit(10),
   ]);
   const goalsBlock = (goalRows ?? []).length ? `Their goals together:\n${(goalRows as Goal[]).map(g => `- ${goalLine(g, today)}`).join('\n')}` : null;

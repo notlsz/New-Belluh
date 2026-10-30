@@ -5,6 +5,9 @@ import type { Goal } from '../../supabase/functions/_shared/goals';
 
 export type { Idea };
 export type CoupleGoal = Goal & { id: string; created_by: string; partner_id: string | null; status: 'active' | 'done' | 'stopped' };
+export interface BellaActivity { id: string; action: string; detail: string | null; ok: boolean; channel: string | null; created_at: string }
+export interface BellaPlanned { kind: 'reminder' | 'watch' | 'plan'; id: string; detail: string; at: string | null }
+export type Proactivity = 'quiet' | 'normal' | 'more';
 export interface BellaWatch { id: string; kind: 'event' | 'price'; what: string; until_on: string; status: 'watching' | 'found'; found: { title: string; url: string; price: string | null } | null }
 
 export interface UsMessage { id: string; author: string | null; role: 'user' | 'belluh' | 'plan'; body: string; meta: any; created_at: string }
@@ -79,6 +82,15 @@ export const belluhAgent = {
   bookingCall: (bookingId: string) => call<{ booking: any; message: AgentMessage | null; called: boolean }>({ action: 'booking_call', booking_id: bookingId }),
   ideas: () => call<{ ideas: Idea[] }>({ action: 'ideas' }),
   goalLog: (goalId: string, amount: number) => call<{ goal: CoupleGoal; reached: boolean }>({ action: 'goal_log', goal_id: goalId, amount }),
+  goalStep: (goalId: string, index: number, done: boolean) => call<{ goal: CoupleGoal }>({ action: 'goal_step', goal_id: goalId, index, done }),
+  activity: () => call<{ done: BellaActivity[]; planned: BellaPlanned[]; proactivity: Proactivity }>({ action: 'activity' }),
+  /** How often Bella reaches out on her own. Quiet also keeps her proactive messages off; reminders you asked for still come. */
+  async setProactivity(level: Proactivity): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+    const { error } = await supabase.from('agent_settings').upsert({ user_id: user.id, proactivity: level, ...(level !== 'quiet' ? { reminders_enabled: true } : {}), updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    return !error;
+  },
   goalStop: (goalId: string) => call<{ ok: boolean }>({ action: 'goal_stop', goal_id: goalId }),
   watchStop: (watchId: string) => call<{ ok: boolean }>({ action: 'watch_stop', watch_id: watchId }),
   /** Goals the two of them share (both see them), newest first. */

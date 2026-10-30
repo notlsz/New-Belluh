@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { X, Gift, Heart, Sparkles, Star, CalendarClock, Target, Eye, Compass, Plus, ArrowUpRight, PiggyBank, Wallet, PhoneOff, Ticket, UtensilsCrossed, Flower2, ShoppingBasket, Car, BookOpen, CalendarPlus, Check } from 'lucide-react';
-import { belluhAgent, type Idea, type CoupleGoal, type BellaWatch } from '../services/belluhAgent';
+import { Square, CheckSquare, Bell, Lock, Send, CreditCard, CalendarCheck, Phone, Brain as BrainIcon, Clock, X, Gift, Heart, Sparkles, Star, CalendarClock, Target, Eye, Compass, Plus, ArrowUpRight, PiggyBank, Wallet, PhoneOff, Ticket, UtensilsCrossed, Flower2, ShoppingBasket, Car, BookOpen, CalendarPlus, Check } from 'lucide-react';
+import { belluhAgent, type Idea, type CoupleGoal, type BellaWatch, type BellaActivity, type BellaPlanned, type Proactivity } from '../services/belluhAgent';
 import { current } from '../../supabase/functions/_shared/goals';
 import { useI18n } from '../i18n';
 import { LOCAL_APPS, RESEARCH_SOURCES, type AppCategory } from '../lib/localApps';
 import WhatsAppDates from './WhatsAppDates';
 import { trackEvent } from '../services/analytics';
 
-export type PlateView = 'ideas' | 'goals' | 'apps';
+export type PlateView = 'ideas' | 'goals' | 'activity' | 'apps';
 
 const IDEA_ICON: Record<Idea['kind'], React.ElementType> = {
   occasion: Gift, love_day: Heart, milestone: Sparkles, wish: Star, plan_waiting: CalendarClock, goal: Target, watching: Eye, novelty: Compass,
@@ -36,6 +36,33 @@ const BellaPlate: React.FC<{
   const [amount, setAmount] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [feed, setFeed] = useState<{ google: string; webcal: string } | null>(null);
+  const [acts, setActs] = useState<{ done: BellaActivity[]; planned: BellaPlanned[] } | null>(null);
+  const [level, setLevel] = useState<Proactivity>('normal');
+  useEffect(() => { if (view === 'activity' && !acts) belluhAgent.activity().then(r => { setActs({ done: r?.done ?? [], planned: r?.planned ?? [] }); if (r) setLevel(r.proactivity); }); }, [view, acts]);
+  const A = d.app.act, DID = d.app.did as Record<string, string>;
+  const ago = (iso: string) => {
+    const s = (Date.now() - Date.parse(iso)) / 1000;
+    if (s < 60) return A.justNow;
+    const rtf = new Intl.RelativeTimeFormat(tag, { numeric: 'auto' });
+    if (s < 3600) return rtf.format(-Math.round(s / 60), 'minute');
+    if (s < 86400) return rtf.format(-Math.round(s / 3600), 'hour');
+    if (s < 7 * 86400) return rtf.format(-Math.round(s / 86400), 'day');
+    return date(new Date(iso), { month: 'short', day: 'numeric' });
+  };
+  // The same thing done again and again in a row reads as one line with a count
+  const collapse = (xs: BellaActivity[]) => xs.reduce<{ x: BellaActivity; n: number }[]>((out, x) => {
+    const last = out[out.length - 1];
+    if (last && last.x.action === x.action && last.x.detail === x.detail && last.x.ok === x.ok) last.n++; else out.push({ x, n: 1 });
+    return out;
+  }, []);
+  const at = (iso: string) => date(new Date(iso), { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const pickLevel = async (l: Proactivity) => { const prev = level; setLevel(l); trackEvent('proactivity_set', { level: l }); if (!(await belluhAgent.setProactivity(l))) setLevel(prev); };
+  const tick = async (g: CoupleGoal, i: number) => {
+    const steps = [...(g.steps ?? [])]; const next = !steps[i].done; steps[i] = { ...steps[i], done: next };
+    setGoals(gs => (gs ?? []).map(x => (x.id === g.id ? { ...x, steps } : x)));
+    const r = await belluhAgent.goalStep(g.id, i, next);
+    if (!r) setGoals(gs => (gs ?? []).map(x => (x.id === g.id ? g : x)));
+  };
 
   useEffect(() => { belluhAgent.ideas().then(r => setIdeas(r?.ideas ?? [])); }, []);
   useEffect(() => { if (view === 'goals' && goals === null) { belluhAgent.goals().then(setGoals); belluhAgent.watches().then(setWatches); } }, [view, goals]);
@@ -52,6 +79,9 @@ const BellaPlate: React.FC<{
   const when = (n: number) => (n === 0 ? P.today : n === 1 ? P.tomorrow : f(P.inDays, { n }));
   const day = (iso: string) => date(new Date(`${iso}T12:00:00`), { month: 'short', day: 'numeric' });
 
+  const CATEGORY: Record<Idea['kind'], string> = {
+    occasion: A.catOccasions, love_day: A.catOccasions, milestone: A.catOccasions, wish: A.catSurprises, plan_waiting: A.catPlans, goal: A.catGoals, watching: A.catWatching, novelty: A.catDates,
+  };
   const ideaText = (i: Idea): { title: string; body: string; ask: string | null } => {
     switch (i.kind) {
       case 'occasion': return { title: f(P.occasionTitle, { label: i.label }), body: f(P.occasionBody, { when: when(i.inDays) }), ask: f(P.occasionAsk, { label: i.label }) };
@@ -107,7 +137,7 @@ const BellaPlate: React.FC<{
         className="w-full sm:max-w-lg h-[92vh] sm:h-[84vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
         <div className="shrink-0 px-5 pt-5 pb-3 flex items-center gap-3">
           <div role="tablist" aria-label={P.open} className="flex items-center bg-slate-100 rounded-full p-0.5">
-            {tabBtn('ideas', P.ideas)}{tabBtn('goals', P.goals)}{tabBtn('apps', P.apps)}
+            {tabBtn('ideas', P.ideas)}{tabBtn('goals', P.goals)}{tabBtn('activity', A.activity)}{tabBtn('apps', P.apps)}
           </div>
           <button onClick={onClose} aria-label={d.app.acts.dismiss} className="ml-auto w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-900"><X size={18} /></button>
         </div>
@@ -128,6 +158,7 @@ const BellaPlate: React.FC<{
                       <span className="min-w-0">
                         <span className="block text-[15px] font-semibold text-slate-900 leading-snug">{t.title}</span>
                         <span className="mt-1 block text-sm text-slate-500 leading-relaxed">{t.body}</span>
+                        <span className="mt-1 block text-xs text-slate-400">{CATEGORY[i.kind]}</span>
                       </span>
                     </button>
                   );
@@ -154,6 +185,22 @@ const BellaPlate: React.FC<{
                       <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
                         <div className={`h-full rounded-full ${over ? 'bg-[#e58bbf]' : 'bg-[#9bbecb]'}`} style={{ width: `${Math.max(pct, 2)}%` }} />
                       </div>
+                      {(g.steps?.length ?? 0) > 0 && (
+                        <div className="mt-3">
+                          <p className="text-xs font-semibold text-slate-400">{A.plan}</p>
+                          <ul className="mt-1">
+                            {g.steps!.map((st, i) => (
+                              <li key={i}>
+                                <button disabled={g.status !== 'active'} onClick={() => tick(g, i)} aria-pressed={st.done}
+                                  className="w-full flex items-center gap-2.5 py-1.5 text-left disabled:cursor-default">
+                                  {st.done ? <CheckSquare size={17} className="shrink-0 text-[#3f7486]" /> : <Square size={17} className="shrink-0 text-slate-300" />}
+                                  <span className={`text-sm leading-snug ${st.done ? 'text-slate-400 line-through' : 'text-slate-700'}`}>{st.text}</span>
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                       {g.status === 'active' && (adding === g.id ? (
                         <form className="mt-3 flex items-center gap-2" onSubmit={e => { e.preventDefault(); log(g, Number(amount.replace(',', '.'))); }}>
                           <input autoFocus inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder={P.howMuch} aria-label={P.howMuch}
@@ -207,6 +254,77 @@ const BellaPlate: React.FC<{
                     </button>
                   ))}
                 </div>
+              </div>
+            </>
+          )}
+
+          {view === 'activity' && (
+            <>
+              <div className="mt-2">
+                {sectionTitle(A.dial)}
+                <div role="radiogroup" aria-label={A.dial} className="grid grid-cols-3 bg-slate-100 rounded-full p-0.5">
+                  {(['quiet', 'normal', 'more'] as Proactivity[]).map(l => (
+                    <button key={l} role="radio" aria-checked={level === l} onClick={() => pickLevel(l)}
+                      className={`h-9 rounded-full text-xs font-bold transition-colors ${level === l ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-800'}`}>{A[l]}</button>
+                  ))}
+                </div>
+                <p className="mt-2.5 text-sm text-slate-500 leading-relaxed">{A[`${level}Body` as const]}</p>
+              </div>
+
+              <div className="mt-8">
+                {sectionTitle(A.asks)}
+                <div className="space-y-1">
+                  {([[Send, f(A.askSend, { partner })], [CreditCard, A.askPay], [CalendarCheck, A.askBook], [Phone, A.askCall], [BrainIcon, A.askMemory]] as [React.ElementType, string][]).map(([Icon, label]) => (
+                    <div key={label} className="flex items-center gap-3.5 py-2">
+                      <Icon size={17} className="shrink-0 text-[#9bbecb]" />
+                      <span className="flex-1 text-[15px] text-slate-800">{label}</span>
+                      <Lock size={14} className="shrink-0 text-slate-300" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-8">
+                {sectionTitle(A.lined)}
+                {acts === null ? <div className="h-12 rounded-2xl bg-slate-50 animate-pulse" /> : acts.planned.length === 0 ? <p className="text-sm text-slate-500">{A.nothingLined}</p> : (
+                  <div className="space-y-1">
+                    {acts.planned.map(x => {
+                      const Icon = x.kind === 'reminder' ? Bell : x.kind === 'watch' ? Eye : CalendarClock;
+                      const sub = x.kind === 'reminder' && x.at ? at(x.at) : x.kind === 'watch' && x.at ? f(A.watchUntil, { date: day(x.at.slice(0, 10)) }) : f(A.planWaiting, { partner });
+                      return (
+                        <div key={`${x.kind}${x.id}`} className="flex items-center gap-3.5 py-2.5">
+                          <Icon size={17} className="shrink-0 text-[#9bbecb]" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[15px] font-semibold text-slate-900 truncate">{x.detail}</p>
+                            <p className="text-xs text-slate-500">{sub}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-8">
+                {sectionTitle(A.did)}
+                {acts === null ? <div className="h-12 rounded-2xl bg-slate-50 animate-pulse" /> : acts.done.length === 0 ? <p className="text-sm text-slate-500">{A.nothingDone}</p> : (
+                  <div className="space-y-1">
+                    {collapse(acts.done).map(({ x, n }) => {
+                      const detail = x.action === 'set_proactivity' && (x.detail === 'quiet' || x.detail === 'normal' || x.detail === 'more') ? A[x.detail] : x.action === 'set_reminders' ? null : x.detail;
+                      const sub = [x.ok ? null : A.failed, detail].filter(Boolean).join(lang === 'ja' || lang === 'zh' ? '、' : ', ');
+                      return (
+                        <div key={x.id} className="flex items-center gap-3.5 py-2.5">
+                          <Clock size={17} className="shrink-0 text-slate-300" />
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-[15px] font-semibold truncate ${x.ok ? 'text-slate-900' : 'text-slate-400'}`}>{f(DID[x.action] ?? x.action, { partner })}{n > 1 ? ` ×${n}` : ''}</p>
+                            {sub && <p className="text-xs text-slate-500 truncate">{sub}</p>}
+                          </div>
+                          <span className="shrink-0 text-xs text-slate-400">{ago(x.created_at)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </>
           )}

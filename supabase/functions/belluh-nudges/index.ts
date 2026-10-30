@@ -19,7 +19,8 @@ import { notify } from '../_shared/notify.ts';
 import { countryOf } from '../_shared/region.ts';
 import { searchShopify } from '../_shared/shopify.ts';
 import { parseTicketmaster, eventFound, priceFound, ticketmasterUrl, foundText, type Watch } from '../_shared/watches.ts';
-import { planChoices } from '../_shared/agentcore.ts';
+import { planChoices, logActivity } from '../_shared/agentcore.ts';
+import { proactivityOf, offerWindow, type Proactivity } from '../_shared/activity.ts';
 import {
   occasionToOffer, offerFallback, offerAsk, plansToNudge, plansJustHappened, daytime, type NudgePlan, type OfferOccasion,
 } from '../_shared/nudges.ts';
@@ -44,6 +45,7 @@ async function dueReminders(onlyUser: string | null): Promise<number> {
     await addMessage(r.user_id, 'belluh', body, { kind: 'remind', week: r.id, reminder_id: r.id });
     await notify(r.user_id, body, { title: 'Belluh reminder', push: r.body, tag: `remind-${r.id}` });
     await db.from('personal_reminders').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', r.id);
+    await logActivity(r.user_id, 'sent_reminder', r.body);
     sent++;
   }
   return sent;
@@ -83,6 +85,7 @@ async function checkWatches(onlyUser: string | null): Promise<{ checked: number;
     if (!claimed?.length) continue;
     const body = foundText(w, hit);
     await addMessage(w.user_id, 'belluh', body.replace(/ Here it is: \S+$| here is the link: \S+$/, ''), { kind: 'watch_found', week: w.id, watch_id: w.id, links: [{ label: hit.title.slice(0, 80), url: hit.url }] });
+    await logActivity(w.user_id, 'watch_found', hit.title);
     await notify(w.user_id, body, { title: 'Bella found it', push: body.replace(/ https:\S+$/, ''), tag: `watch-${w.id}` });
     found++;
   }
@@ -96,9 +99,9 @@ async function plansFor(ctx: Ctx): Promise<NudgePlan[]> {
 }
 
 /** Offer to plan a birthday or anniversary, in one specific line drawn from their journal when Belluh has one. */
-async function offer(ctx: Ctx, plans: NudgePlan[], today: ReturnType<typeof localDateParts>): Promise<boolean> {
+async function offer(ctx: Ctx, plans: NudgePlan[], today: ReturnType<typeof localDateParts>, level: Proactivity): Promise<boolean> {
   const { data: occ } = await db.from('occasions').select('id, label, kind, month, day, year, repeats_yearly, mentioned_at').eq('user_id', ctx.userId);
-  const pick = occasionToOffer((occ ?? []) as OfferOccasion[], plans, today, ctx.timezone);
+  const pick = occasionToOffer((occ ?? []) as OfferOccasion[], plans, today, ctx.timezone, offerWindow(level));
   if (!pick || await posted(ctx.userId, 'offer', pick.key)) return false;
   const fallback = offerFallback(pick.occasion.label, pick.days, pick.date);
   const out = await jsonAnswer(await buildSystem(ctx),
@@ -110,7 +113,7 @@ async function offer(ctx: Ctx, plans: NudgePlan[], today: ReturnType<typeof loca
     kind: 'offer', week: pick.key, status: 'open', occasion_id: pick.occasion.id, ask: offerAsk(pick.occasion.label, pick.date),
     actions: ['Help me plan it', 'Not now'],
   });
-  if (msg) await notify(ctx.userId, `${body}\n\nReply PLAN IT or NOT NOW.`, { push: body, tag: 'offer' });
+  if (msg) { await notify(ctx.userId, `${body}\n\nReply PLAN IT or NOT NOW.`, { push: body, tag: 'offer' }); await logActivity(ctx.userId, 'offered_plan', pick.occasion.label); }
   return !!msg;
 }
 
@@ -124,6 +127,7 @@ async function nudgePlans(ctx: Ctx, plans: NudgePlan[]): Promise<number> {
     const msg = await addMessage(ctx.userId, 'belluh', body, { kind: 'plan_nudge', week: p.id, plan_id: p.id });
     if (msg) {
       n++;
+      await logActivity(ctx.userId, 'nudged_plan', p.title);
       await notify(ctx.userId, `${body} Pick one:\n${planChoices(p.options, ctx.timezone)}\n\nReply ${p.options.map((_, i) => i + 1).join(', ')}, or NONE.`, { push: `${body} Tap to pick.`, tag: 'plan' });
     }
   }
@@ -141,7 +145,7 @@ async function afterBookings(ctx: Ctx): Promise<number> {
     if (await posted(ctx.userId, 'after_plan', b.id)) continue;
     const body = followUpText(b, b.user_id === ctx.userId ? ctx.partnerName : null);
     const msg = await addMessage(ctx.userId, 'belluh', body, { kind: 'after_plan', week: b.id, booking_id: b.id, prompt: `How was ${b.title}?` });
-    if (msg) { n++; await notify(ctx.userId, body, { push: body, tag: 'after-plan' }); }
+    if (msg) { n++; await logActivity(ctx.userId, 'asked_how_it_went', b.title); await notify(ctx.userId, body, { push: body, tag: 'after-plan' }); }
   }
   return n;
 }
@@ -152,7 +156,7 @@ async function afterPlans(ctx: Ctx, plans: NudgePlan[]): Promise<number> {
     if (await posted(ctx.userId, 'after_plan', p.id)) continue;
     const body = `How was "${p.title}"? Tell me a line or two while it's fresh and I'll keep it in your journal.`;
     const msg = await addMessage(ctx.userId, 'belluh', body, { kind: 'after_plan', week: p.id, plan_id: p.id, prompt: `How was ${p.title}?` });
-    if (msg) { n++; await notify(ctx.userId, body, { push: body, tag: 'after-plan' }); }
+    if (msg) { n++; await logActivity(ctx.userId, 'asked_how_it_went', p.title); await notify(ctx.userId, body, { push: body, tag: 'after-plan' }); }
   }
   return n;
 }
@@ -165,7 +169,7 @@ Deno.serve(async (req) => {
 
   const results: Record<string, number> = { reminders_sent: await dueReminders(onlyUser) };
 
-  let q = db.from('agent_settings').select('user_id, timezone, reminders_enabled');
+  let q = db.from('agent_settings').select('user_id, timezone, reminders_enabled, proactivity');
   if (onlyUser) q = q.eq('user_id', onlyUser);
   const { data: people, error } = await q;
   if (error) return new Response(error.message, { status: 500 });
@@ -174,14 +178,16 @@ Deno.serve(async (req) => {
   if (force !== 'daily' && now.getUTCMinutes() >= 5) return Response.json({ people: 0, ...results });
   { const w = await checkWatches(onlyUser); results.watches_checked = w.checked; results.watches_found = w.found; }
   for (const p of people ?? []) {
-    if (p.reminders_enabled === false) continue;
+    // Quiet: only what they asked for (reminders and watches, above); nothing Bella thinks of herself
+    const level = proactivityOf((p as any).proactivity);
+    if (p.reminders_enabled === false || level === 'quiet') continue;
     let local;
     try { local = localDateParts(now, p.timezone); } catch { local = localDateParts(now, 'America/New_York'); }
     if (force !== 'daily' && !daytime(local.hour)) continue;
     try {
       const ctx = await loadCtx(p.user_id, p.timezone);
       const plans = await plansFor(ctx);
-      if (await offer(ctx, plans, local)) results.offers = (results.offers ?? 0) + 1;
+      if (await offer(ctx, plans, local, level)) results.offers = (results.offers ?? 0) + 1;
       results.plan_nudges = (results.plan_nudges ?? 0) + await nudgePlans(ctx, plans);
       results.after_plans = (results.after_plans ?? 0) + await afterPlans(ctx, plans);
       results.after_bookings = (results.after_bookings ?? 0) + await afterBookings(ctx);

@@ -16,7 +16,7 @@ const PLAN_AHEAD = { from: 10, to: 14 };
 const BIG_DAYS = new Set(['birthday', 'anniversary']);
 
 /** The soonest birthday or anniversary 10 to 14 days away that has no plan within two days of it. */
-export function occasionToOffer(occasions: OfferOccasion[], plans: NudgePlan[], today: LocalDate, timeZone: string):
+export function occasionToOffer(occasions: OfferOccasion[], plans: NudgePlan[], today: LocalDate, timeZone: string, ahead: [number, number] = [PLAN_AHEAD.from, PLAN_AHEAD.to]):
   { key: string; occasion: OfferOccasion; date: LocalDate; days: number } | null {
   const planned = plans.filter(p => p.status === 'confirmed').map(p => {
     const o = p.options.find(x => x.id === p.chosen_option);
@@ -27,7 +27,7 @@ export function occasionToOffer(occasions: OfferOccasion[], plans: NudgePlan[], 
     .map(o => ({ occasion: o, date: nextOccurrence(o, today) }))
     .filter((x): x is { occasion: OfferOccasion; date: LocalDate } => !!x.date)
     .map(x => ({ ...x, days: daysBetween(today, x.date) }))
-    .filter(x => x.days >= PLAN_AHEAD.from && x.days <= PLAN_AHEAD.to)
+    .filter(x => x.days >= ahead[0] && x.days <= ahead[1])
     .filter(x => !planned.some(d => Math.abs(daysBetween(d, x.date)) <= 2))
     .sort((a, b) => a.days - b.days);
   const c = candidates[0];

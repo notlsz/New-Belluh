@@ -114,3 +114,33 @@ test('Bella can set goals, log them and watch for things', () => {
   assert.deepEqual(validateToolCall('watch_for', { kind: 'event', what: 'Laufey' }), { name: 'watch_for', args: { kind: 'event', what: 'Laufey' } });
   assert.equal(validateToolCall('watch_for', 'nope' as any), null);
 });
+
+import { activityDetail, mayReachOut, offerWindow, proactivityOf } from '../supabase/functions/_shared/activity.ts';
+import { cleanSteps, nextStep } from '../supabase/functions/_shared/goals.ts';
+
+test('activity: says what each action was about, never the words of a note or entry', () => {
+  assert.equal(activityDetail('find_table', { what: 'omakase', where: 'Ebisu', when: '2026-12-24T19:00', people: 2 }), 'omakase, Ebisu, 2026-12-24T19:00, 2 people');
+  assert.equal(activityDetail('gift_ideas', { ideas: ['film camera', 'poetry', 'scarf', 'more'] }), 'film camera, poetry, scarf');
+  assert.equal(activityDetail('draft_note_to_partner', { text: 'I miss you so much' }), null);
+  assert.equal(activityDetail('write_entry', { text: 'private thoughts' }), null);
+  assert.equal(activityDetail('remember_fact', { fact: 'x'.repeat(300) })!.length, 200);
+});
+
+test('proactivity: quiet means only what they asked for; more means earlier', () => {
+  assert.equal(proactivityOf('loud'), 'normal');
+  assert.equal(mayReachOut('quiet', 'offer'), false);
+  assert.equal(mayReachOut('quiet', 'reminder'), true);
+  assert.equal(mayReachOut('quiet', 'watch'), true);
+  assert.deepEqual(offerWindow('more'), [10, 21]);
+  assert.deepEqual(offerWindow('normal'), [10, 14]);
+  assert.deepEqual(validateToolCall('set_proactivity', { level: 'quiet' }), { name: 'set_proactivity', level: 'quiet' });
+  assert.equal(validateToolCall('set_proactivity', { level: 'never' }), null);
+});
+
+test('goals come with an action plan: a few short steps, the next one first', () => {
+  const g = validateGoal({ kind: 'save', title: 'Kyoto trip', target: 3000, steps: ['Pick a weekend in April', 'Book the ryokan', '  ', 'x', 'Put 200 aside each payday'] }, 'US', today)!;
+  assert.deepEqual(g.steps!.map(s => s.text), ['Pick a weekend in April', 'Book the ryokan', 'Put 200 aside each payday']);
+  assert.equal(nextStep({ ...g, steps: [{ text: 'Pick a weekend in April', done: true }, ...g.steps!.slice(1)] }), 'Book the ryokan');
+  assert.equal(cleanSteps(Array(9).fill('A real step')).length, 6);
+  assert.match(goalLine(g, today), /next step: Pick a weekend in April$/);
+});

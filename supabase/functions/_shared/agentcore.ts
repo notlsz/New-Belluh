@@ -16,6 +16,7 @@ import { findSpots, type Spot } from './places.ts';
 import { regionLinks, osmCountry, KITS } from './region.ts';
 import { playlistLinks } from './jarvis.ts';
 import { findResearch } from './research.ts';
+import { activityDetail } from './activity.ts';
 import { validateGoal, logProgress, goalLine, type Goal } from './goals.ts';
 import { validateWatch, TICKETMASTER_COUNTRIES } from './watches.ts';
 import { localDateParts } from './occasions.ts';
@@ -39,6 +40,11 @@ export const planChoices = (opts: PlanOption[], tz: string) => opts.map((o, i) =
   // "Saturday evening" only repeats "Sat, Oct 17 at 7:00 PM"; "After work" adds something
   return `${i + 1}) ${when}${l && l.slice(0, 3).toLowerCase() !== when.slice(0, 3).toLowerCase() ? ` (${l})` : ''}`;
 }).join('\n');
+
+/** One line in what Bella did, for the person's activity log. Never fails the action it records. */
+export async function logActivity(userId: string, action: string, detail: string | null, ok = true, channel: string | null = null) {
+  try { await db.from('agent_activity').insert({ user_id: userId, action: action.slice(0, 40), detail: detail?.slice(0, 200) ?? null, ok, channel }); } catch { /* best effort */ }
+}
 
 async function tzOf(userId: string, fallback: string): Promise<string> {
   const { data } = await db.from('agent_settings').select('timezone').eq('user_id', userId).maybeSingle();
@@ -91,6 +97,12 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   const reply = await chatWithTools({
     system, contents, tools: TOOL_DECLARATIONS, ran,
     runTool: async (name, args) => {
+      const out: any = await runOne(name, args ?? {});
+      await logActivity(ctx.userId, name, activityDetail(name, args), out?.ok !== false, channel);
+      return out;
+    },
+  });
+  async function runOne(name: string, args: Record<string, unknown>): Promise<any> {
       const call = validateToolCall(name, args);
       if (!call) return { ok: false, error: 'invalid arguments' };
       switch (call.name) {
@@ -334,9 +346,12 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
             ? 'Draft shown to the user with Send / Edit / Discard. Tell them briefly that it is ready for them to review.'
             : 'The draft is shown right below your reply, with how to send it. Just say briefly that you drafted it; do not repeat the note.' };
         }
+        case 'set_proactivity': {
+          await db.from('agent_settings').upsert({ user_id: ctx.userId, timezone: ctx.timezone, proactivity: call.level, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+          return { ok: true, level: call.level, note: call.level === 'quiet' ? "Say in one line that you'll only message them about what they ask for (reminders, things you're watching) from now on." : call.level === 'more' ? "Say in one line that you'll check in more, and earlier, from now on." : "Say in one line that you're back to your usual." };
+        }
       }
-    },
-  });
+  }
 
   const final = cleanReply(reply ?? '') || naturalFallback(ran) || "I'm having trouble thinking right now. Try me again in a moment.";
   const bookings = await saveBookings(ctx, prepared);
@@ -409,6 +424,7 @@ export async function sendNote(ctx: Ctx, draftId: string, edited?: string) {
   await addMessage(to, 'partner_note', body, { from_user: ctx.userId, from_name: ctx.myName });
   await notify(to, `From ${ctx.myName}, via Belluh:\n"${body}"`, { title: `From ${ctx.myName}`, push: body, tag: 'note' });
   await db.from('agent_messages').update({ body, meta: { ...(draft.meta as object), status: 'sent', sent_at: new Date().toISOString() } }).eq('id', draftId);
+  await logActivity(ctx.userId, 'sent_note', null);
   return res({ ok: true });
 }
 
@@ -557,6 +573,7 @@ export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Pro
       }).select('id').single();
       if (error || !row) return { ok: false, error: "Couldn't save the plan." };
       created.push(await usAdd(ctx, null, 'plan', plan.title, { plan_id: row.id, from_name: ctx.myName, for_user: ctx.partnerId }));
+      await logActivity(ctx.userId, 'plan_with_partner', plan.title, true, 'us');
       await notify(ctx.partnerId, `${ctx.myName} wants to plan "${plan.title}". Pick a time in Belluh.`, { push: `${ctx.myName} wants to plan "${plan.title}". Tap to pick a time.`, tag: 'plan' });
       return { ok: true, note: `The plan card is in the chat. ${ctx.partnerName} picks a time right there. Say so in one short line.` };
     },
@@ -626,6 +643,7 @@ export async function placeCall(ctx: Ctx, bookingId: string): Promise<Result> {
     return say("I couldn't get a line out just now. Try Call for me again in a minute, or use the links.");
   }
   await db.from('bookings').update({ call_id: callId }).eq('id', bookingId);
+  await logActivity(ctx.userId, 'called_place', claimed[0].place ?? claimed[0].title);
   await patchCard(b.message_id, bookingId, c => ({ ...c, call: c.call ? { ...c.call, status: 'calling' } : c.call }));
   const message = await addMessage(ctx.userId, 'belluh', `Calling ${b.place} now for ${b.people} at ${time} on ${day}. I'll tell you as soon as they answer.`, { kind: 'booking_call', booking_id: bookingId });
   return res({ booking: { ...claimed[0], call_id: callId }, message, called: true });
@@ -679,6 +697,7 @@ export async function bookingDone(ctx: Ctx, bookingId: string, done: boolean, le
 
   // The card under Belluh's reply shows the new state wherever it's opened
   await patchCard(b.message_id, bookingId, c => ({ ...c, status }));
+  await logActivity(ctx.userId, done ? 'marked_booked' : 'dismissed_booking', claimed[0].title);
   if (!done) return res({ booking: claimed[0], message: null });
 
   b.starts_at = claimed[0].starts_at;   // a call may have moved the time

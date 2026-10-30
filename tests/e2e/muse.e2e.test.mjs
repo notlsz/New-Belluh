@@ -79,3 +79,38 @@ test('the hourly check runs watches and expires old ones', async () => {
   const { data } = await service.from('watches').select('status').eq('id', old.id).single();
   assert.equal(data.status, 'expired');
 });
+
+test('activity: everything Bella did is logged for its owner only, and what she has lined up', async () => {
+  // The API suite above ran many tools for Maya; a reminder is lined up too
+  await service.from('personal_reminders').insert({ user_id: MAYA, body: 'Call his mom', due_at: new Date(Date.now() + 86400000).toISOString() });
+  const r = await agent(maya, { action: 'activity' });
+  assert.equal(r.error, null);
+  assert.ok(r.data.done.length > 0, 'Maya sees what Bella did');
+  assert.ok(r.data.done.every(x => typeof x.action === 'string'));
+  assert.ok(r.data.planned.some(p => p.kind === 'reminder' && p.detail === 'Call his mom'));
+  assert.ok(!r.data.done.some(x => x.action === 'draft_note_to_partner' && x.detail), 'a note never shows its words');
+  assert.equal((await dan.from('agent_activity').select('id').eq('user_id', MAYA)).data.length, 0, "Dan can't read Maya's log");
+  const direct = await maya.from('agent_activity').insert({ user_id: MAYA, action: 'fake' });
+  assert.ok(direct.error, 'nobody writes to the log directly');
+});
+
+test('proactivity: the person sets it, and quiet keeps Bella from reaching out on her own', async () => {
+  const up = await maya.from('agent_settings').upsert({ user_id: MAYA, proactivity: 'quiet', updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+  assert.equal(up.error, null);
+  assert.equal((await agent(maya, { action: 'activity' })).data.proactivity, 'quiet');
+  const bad = await maya.from('agent_settings').upsert({ user_id: MAYA, proactivity: 'loud' }, { onConflict: 'user_id' });
+  assert.ok(bad.error);
+  const before = (await service.from('agent_messages').select('id', { count: 'exact', head: true }).eq('user_id', MAYA).in('meta->>kind', ['offer', 'plan_nudge', 'after_plan'])).count;
+  await fetch(`${URL_}/functions/v1/belluh-nudges?force=daily&user=${MAYA}`, { method: 'POST', headers: { 'x-cron-secret': 'cron-test' } });
+  const after = (await service.from('agent_messages').select('id', { count: 'exact', head: true }).eq('user_id', MAYA).in('meta->>kind', ['offer', 'plan_nudge', 'after_plan'])).count;
+  assert.equal(after, before, 'nothing Bella thought of herself while quiet');
+  await maya.from('agent_settings').upsert({ user_id: MAYA, proactivity: 'normal' }, { onConflict: 'user_id' });
+});
+
+test('a goal with an action plan: either partner ticks a step', async () => {
+  const { data: g } = await service.from('couple_goals').insert({ created_by: MAYA, partner_id: DAN, kind: 'save', title: 'Lisbon', target: 2000, currency: 'USD', steps: [{ text: 'Pick a week', done: false }, { text: 'Book flights', done: false }] }).select('id').single();
+  const r = await agent(dan, { action: 'goal_step', goal_id: g.id, index: 0, done: true });
+  assert.deepEqual(r.data.goal.steps.map(s => s.done), [true, false]);
+  assert.ok((await agent(dan, { action: 'goal_step', goal_id: g.id, index: 7, done: true })).error);
+  assert.ok((await agent(eve, { action: 'goal_step', goal_id: g.id, index: 1, done: true })).error);
+});
