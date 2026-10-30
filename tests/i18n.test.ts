@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { detect, localeTag, dictFor, fill, localQuestion } from '../src/i18n/core.ts';
 import en from '../src/i18n/en.ts';
 
-const LANGS = ['ja', 'fr', 'it', 'pt', 'zh', 'de'] as const;
+const LANGS = ['ja', 'fr', 'it', 'pt', 'zh', 'de', 'es'] as const;
 
 test('Detects the reader: language first, then where they are', () => {
   assert.deepEqual(detect(['ja-JP', 'en'], 'Asia/Tokyo'), { lang: 'ja', country: 'JP' });
@@ -18,8 +18,9 @@ test('Detects the reader: language first, then where they are', () => {
   assert.deepEqual(detect(['en-AU'], 'Australia/Sydney'), { lang: 'en', country: 'AU' });
   assert.deepEqual(detect(['en-US'], 'America/Chicago'), { lang: 'en', country: 'US' });
   assert.equal(detect(['zh-TW', 'en'], 'Asia/Taipei').lang, 'en', 'traditional Chinese readers are not shown simplified');
-  assert.equal(detect(['es-ES'], 'Asia/Tokyo').lang, 'ja', 'a language Belluh lacks falls to the country');
-  assert.equal(detect(['es-ES'], 'Europe/Madrid').lang, 'en');
+  assert.equal(detect(['ko-KR'], 'Asia/Tokyo').lang, 'ja', 'a language Belluh lacks falls to the country');
+  assert.equal(detect(['ko-KR'], 'Asia/Seoul').lang, 'en', 'nowhere we speak: English');
+  assert.deepEqual(detect(['es-419'], 'America/Bogota'), { lang: 'es', country: 'OTHER' }, 'Spanish anywhere reads Spanish');
 });
 
 test('Local formats: dates and numbers the way they are written there', () => {
@@ -43,8 +44,9 @@ const holes = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort()
 
 test('Every translation keeps the placeholders, and never uses em dashes or bullet dots', () => {
   const base = Object.fromEntries(walk(en));
-  for (const l of LANGS) {
-    const d = dictFor(l, 'OTHER');
+  // Every language, plus the countries that write it their own way (Mexico's Spanish, Portugal's Portuguese)
+  for (const [l, c] of [...LANGS.map(x => [x, 'OTHER']), ['es', 'MX'], ['pt', 'PT']] as [any, any][]) {
+    const d = dictFor(l, c);
     for (const [path, s] of walk(d)) {
       assert.ok(!/[—•·]/.test(s), `${l} ${path}: ${s}`);
       if (path in base && !/\.ask$|\.couple|\.askLang/.test(path)) assert.equal(holes(s), holes(base[path]), `${l} ${path}`);

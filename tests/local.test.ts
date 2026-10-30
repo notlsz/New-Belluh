@@ -66,3 +66,28 @@ test('Switzerland: its own stores, trains first, Swiss customs', () => {
   assert.match(regionBrief('CH', null, null), /Punctuality is respect/);
   for (const c of ['US', 'JP', 'FR', 'IT', 'GB', 'BR', 'CA', 'AU', 'CN', 'CH']) assert.match(KITS[c].culture, /How love is (said|lived)/, c);
 });
+
+import { detect as detectLang, dictFor as dictOf, localeTag as tagOf } from '../src/i18n/core.ts';
+
+test('Spain, Mexico, Portugal and Brazil each get their own language, formats and kit', () => {
+  assert.deepEqual(detectLang(['es-ES'], 'Europe/Madrid'), { lang: 'es', country: 'ES' });
+  assert.deepEqual(detectLang(['es-MX', 'en-US'], 'America/Mexico_City'), { lang: 'es', country: 'MX' });
+  assert.deepEqual(detectLang(['pt-PT'], 'Europe/Lisbon'), { lang: 'pt', country: 'PT' });
+  assert.deepEqual(detectLang(['pt-BR'], 'America/Sao_Paulo'), { lang: 'pt', country: 'BR' });
+  assert.deepEqual(detectLang(['en-US'], 'Atlantic/Madeira'), { lang: 'en', country: 'PT' });
+  assert.equal(tagOf('es', 'MX'), 'es-MX'); assert.equal(tagOf('pt', 'PT'), 'pt-PT');
+  // Portugal's Portuguese and Mexico's Spanish are their own, not Brazil's or Spain's
+  assert.notEqual(dictOf('pt', 'PT').hero.sub, dictOf('pt', 'BR').hero.sub);
+  assert.notEqual(dictOf('es', 'MX').common.me, dictOf('es', 'ES').common.me);
+  assert.ok(!/\bpra\b|celular/.test(JSON.stringify(dictOf('pt', 'PT'))), 'no Brazilian forms in Portugal');
+  assert.ok(!/vosotros|¡vale|\bvale[,.!]|móvil|ordenador|\bcoche/i.test(JSON.stringify(dictOf('es', 'MX'))), 'no Spain forms in Mexico');
+  for (const c of ['ES', 'MX', 'PT', 'BR']) {
+    assert.ok(KITS[c].culture.includes('How love is said'), c);
+    for (const k of ['table', 'gift', 'flowers', 'food', 'groceries', 'ride', 'experience']) assert.ok((KITS[c].links as any)[k]?.length, `${c} ${k}`);
+  }
+  assert.equal(countryCode('Portugal'), 'PT'); assert.equal(countryCode('CDMX'), 'MX'); assert.equal(countryOf(null, 'Europe/Lisbon'), 'PT');
+  assert.match(regionLinks('table', { what: 'fado', where: 'Alfama' }, 'PT')![0].url, /thefork\.pt/);
+  assert.match(loveCalendar('PT', { y: 2026, m: 6, d: 1 })!, /Santo António, 2026-06-12/);
+  assert.match(loveCalendar('ES', { y: 2026, m: 4, d: 1 })!, /Sant Jordi, 2026-04-23/);
+  assert.match(loveCalendar('MX', { y: 2026, m: 5, d: 1 })!, /Día de las Madres, 2026-05-10/);
+});

@@ -6,17 +6,24 @@ import it from './it.ts';
 import pt from './pt.ts';
 import zh from './zh.ts';
 import de from './de.ts';
+import es from './es.ts';
+import esMX from './esMX.ts';
+import ptPT from './ptPT.ts';
 
-export type Lang = 'en' | 'ja' | 'fr' | 'it' | 'pt' | 'zh' | 'de';
-export type Country = 'US' | 'GB' | 'CA' | 'AU' | 'JP' | 'FR' | 'IT' | 'BR' | 'CN' | 'CH' | 'OTHER';
+export type Lang = 'en' | 'ja' | 'fr' | 'it' | 'pt' | 'zh' | 'de' | 'es';
+export type Country = 'US' | 'GB' | 'CA' | 'AU' | 'JP' | 'FR' | 'IT' | 'BR' | 'CN' | 'CH' | 'ES' | 'MX' | 'PT' | 'OTHER';
 
-const DICTS: Record<Lang, Dict> = { en, ja, fr, it, pt, zh, de };
+const DICTS: Record<Lang, Dict> = { en, ja, fr, it, pt, zh, de, es };
+// The same language, written the way another country writes it: Mexico's Spanish, Portugal's Portuguese
+const VARIANTS: Record<string, Dict> = { 'es-MX': esMX, 'pt-PT': ptPT };
 export const LANGS: { id: Lang; name: string }[] = [
   { id: 'en', name: 'English' }, { id: 'ja', name: '日本語' }, { id: 'fr', name: 'Français' }, { id: 'it', name: 'Italiano' },
-  { id: 'pt', name: 'Português' }, { id: 'zh', name: '简体中文' }, { id: 'de', name: 'Deutsch' },
+  { id: 'pt', name: 'Português' }, { id: 'es', name: 'Español' }, { id: 'zh', name: '简体中文' }, { id: 'de', name: 'Deutsch' },
 ];
 
 const TZ_COUNTRY: [RegExp, Country][] = [
+  [/^Europe\/Madrid$|^Atlantic\/Canary$|^Africa\/Ceuta$/, 'ES'], [/^Europe\/Lisbon$|^Atlantic\/(Madeira|Azores)$/, 'PT'],
+  [/^America\/(Mexico_City|Monterrey|Cancun|Tijuana|Merida|Chihuahua|Mazatlan|Hermosillo|Matamoros|Ojinaga|Bahia_Banderas)$/, 'MX'],
   [/^Asia\/Tokyo$/, 'JP'], [/^Europe\/Paris$/, 'FR'], [/^Europe\/Rome$/, 'IT'], [/^Europe\/Zurich$/, 'CH'], [/^Europe\/(London|Belfast)$/, 'GB'],
   [/^America\/(Sao_Paulo|Fortaleza|Recife|Bahia|Manaus|Belem)$/, 'BR'], [/^Asia\/(Shanghai|Chongqing|Harbin|Urumqi)$/, 'CN'],
   [/^America\/(Toronto|Vancouver|Edmonton|Winnipeg|Halifax|St_Johns|Regina|Montreal)$/, 'CA'], [/^Australia\//, 'AU'],
@@ -28,21 +35,21 @@ export function detect(languages: readonly string[], timeZone: string): { lang: 
   const tzCountry = TZ_COUNTRY.find(([re]) => re.test(timeZone))?.[1];
   const first = (languages[0] || 'en').toLowerCase();
   const region = (first.split('-')[1] || '').toUpperCase();
-  const country: Country = tzCountry ?? (['US', 'GB', 'CA', 'AU', 'JP', 'FR', 'IT', 'BR', 'CN', 'CH'].includes(region) ? region as Country : 'OTHER');
+  const country: Country = tzCountry ?? (['US', 'GB', 'CA', 'AU', 'JP', 'FR', 'IT', 'BR', 'CN', 'CH', 'ES', 'MX', 'PT'].includes(region) ? region as Country : 'OTHER');
   // The first browser language Belluh speaks wins; Chinese only when it's simplified (mainland)
   for (const l of languages.map(x => x.toLowerCase())) {
     const base = l.split('-')[0];
     if (base === 'zh') { if (!/-(tw|hk|mo|hant)/.test(l)) return { lang: 'zh', country }; continue; }
-    if (base === 'en' || base === 'ja' || base === 'fr' || base === 'it' || base === 'pt' || base === 'de') return { lang: base as Lang, country };
+    if (base === 'en' || base === 'ja' || base === 'fr' || base === 'it' || base === 'pt' || base === 'de' || base === 'es') return { lang: base as Lang, country };
   }
-  const byCountry: Partial<Record<Country, Lang>> = { JP: 'ja', FR: 'fr', IT: 'it', BR: 'pt', CN: 'zh', CH: 'de' };
+  const byCountry: Partial<Record<Country, Lang>> = { JP: 'ja', FR: 'fr', IT: 'it', BR: 'pt', CN: 'zh', CH: 'de', ES: 'es', MX: 'es', PT: 'pt' };
   return { lang: byCountry[country] ?? 'en', country };
 }
 
 /** BCP 47 tag for dates and numbers: en-GB writes 30 October, de-CH writes 30.10., ja-JP writes 10月30日. */
 export function localeTag(lang: Lang, country: Country): string {
   const c = country === 'OTHER' ? '' : country;
-  const fallback: Record<Lang, string> = { en: 'en-US', ja: 'ja-JP', fr: 'fr-FR', it: 'it-IT', pt: 'pt-BR', zh: 'zh-CN', de: 'de-CH' };
+  const fallback: Record<Lang, string> = { en: 'en-US', ja: 'ja-JP', fr: 'fr-FR', it: 'it-IT', pt: 'pt-BR', zh: 'zh-CN', de: 'de-CH', es: 'es-ES' };
   if (!c) return fallback[lang];
   const tag = `${lang}-${c}`;
   try { return Intl.DateTimeFormat.supportedLocalesOf([tag]).length ? tag : fallback[lang]; } catch { return fallback[lang]; }
@@ -54,6 +61,7 @@ const COMMONWEALTH: [RegExp, string][] = [[/\bfavorite/g, 'favourite'], [/\bFavo
 export const TEXT_APPS: Partial<Record<Country, string>> = {
   GB: 'WhatsApp, iMessage or SMS', CA: 'iMessage, WhatsApp or SMS', AU: 'iMessage, WhatsApp or SMS', JP: 'LINE, iMessage or WhatsApp', FR: 'WhatsApp, iMessage or SMS',
   IT: 'WhatsApp, iMessage or SMS', BR: 'WhatsApp, iMessage or SMS', CN: 'iMessage or SMS', CH: 'WhatsApp, iMessage or SMS',
+  ES: 'WhatsApp, iMessage or SMS', MX: 'WhatsApp, iMessage or SMS', PT: 'WhatsApp, iMessage or SMS',
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -72,6 +80,8 @@ function respell(v: any): any {
 
 export function dictFor(lang: Lang, country: Country): Dict {
   let d: Dict = lang === 'en' ? en : merged(en, DICTS[lang]);
+  const variant = VARIANTS[`${lang}-${country}`];
+  if (variant) d = merged(d, variant);
   if (lang === 'en' && (country === 'GB' || country === 'AU' || country === 'CA')) d = respell(d);
   return d;
 }
