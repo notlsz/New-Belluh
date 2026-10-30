@@ -55,7 +55,7 @@ const WeeklyCard: React.FC<{
 
   return (
     <div className={`w-full rounded-[2rem] border border-[#CDE9F2] bg-gradient-to-br from-white to-[#CDE9F2]/30 ${compact ? 'p-5' : 'p-5 md:p-7'} shadow-sm`}>
-      <span className="bg-[#CDE9F2]/70 text-[#3d6b7b] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+      <span className="bg-[#CDE9F2]/70 text-[#3d6b7b] px-3 py-1 rounded-full text-[12px] font-semibold">
         {week.partner_name ? 'This week, together' : 'This week'}
       </span>
       <h3 className={`font-serif text-slate-800 leading-snug mt-4 ${compact ? 'text-lg' : 'text-xl md:text-2xl'}`}>{week.action}</h3>

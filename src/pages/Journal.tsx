@@ -200,10 +200,10 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
         <div className="relative flex-1 flex flex-col">
             <div className={`transition-all duration-500 flex-1 flex flex-col ${step === 'write' ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-95 pointer-events-none absolute inset-0'}`}>
                 <div className="mb-6 mt-2">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#9bbecb] mb-3">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                    <p className="text-[13px] font-semibold text-[#9bbecb] mb-3">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
                     {dailyPrompt ? (
                         <>
-                            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#e58fc9] mb-2">{dailyPrompt === todaysQuestion ? "Today's question" : 'Prompt'}</p>
+                            <p className="text-[13px] font-semibold text-[#e58fc9] mb-2">{dailyPrompt === todaysQuestion ? "Today's question" : 'Prompt'}</p>
                             <p className="text-[1.75rem] text-slate-900 font-serif leading-tight">{dailyPrompt}</p>
                             <button type="button" onClick={() => setDailyPrompt(null)} className="mt-3 text-sm font-semibold text-slate-400 hover:text-slate-800 transition-colors">Write freely instead</button>
                         </>

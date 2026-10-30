@@ -161,7 +161,7 @@ const ArtifactModal: React.FC<ArtifactModalProps> = ({ type, onClose, entries, c
                         <div className="absolute bottom-0 left-0 right-0 p-8 pb-12 z-20">
                             <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 bg-white/80 backdrop-blur-md rounded-full border border-white shadow-sm">
                                 <Sparkles size={10} className="text-[#f0addd]" />
-                                <span className="text-[10px] font-bold text-slate-900 uppercase tracking-widest">Memory Highlight</span>
+                                <span className="text-[12px] font-semibold text-slate-900">Memory highlight</span>
                             </div>
                             <h2 className="text-2xl font-serif text-slate-900 leading-relaxed drop-shadow-sm">
                                 "{currentEntry.content}"
@@ -209,7 +209,7 @@ const ArtifactModal: React.FC<ArtifactModalProps> = ({ type, onClose, entries, c
                              <div className="mb-12 text-center md:text-left">
                                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-100 rounded-full mb-8">
                                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Unlocks: {displayDate}</span>
+                                    <span className="text-[12px] font-semibold text-slate-500">Unlocks: {displayDate}</span>
                                  </div>
                                  <h1 className="text-3xl md:text-5xl font-serif font-bold text-slate-900 tracking-tight leading-[1.2] mb-6">
                                      A Letter from <br/> <span className="text-slate-400 italic">{userName} & {partnerName}</span>
@@ -226,7 +226,7 @@ const ArtifactModal: React.FC<ArtifactModalProps> = ({ type, onClose, entries, c
                              <div className="mt-20 pt-10 border-t border-slate-100 flex items-center justify-between opacity-60">
                                  <div className="flex items-center gap-2">
                                      <Sparkles size={14} className="text-[#f0addd]" />
-                                     <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Belluh Prediction Engine</span>
+                                     <span className="text-[13px] font-semibold text-slate-400">Bella’s prediction</span>
                                  </div>
                              </div>
                          </div>

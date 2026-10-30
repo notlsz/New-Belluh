@@ -256,7 +256,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                         <div className="p-6 md:p-8 bg-white flex-1">
                             {/* EVIDENCE SECTION */}
                             <div className="mb-8">
-                                <h4 className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-widest mb-4 ml-1">The Evidence</h4>
+                                <h4 className="text-[12px] font-semibold text-[#94a3b8] mb-4 ml-1">What it’s based on</h4>
                                 <div className="space-y-3">
                                     {selectedPattern.relatedEntryIds && selectedPattern.relatedEntryIds.length > 0 ? (
                                         selectedPattern.relatedEntryIds.slice(0, 2).map(id => {
@@ -271,7 +271,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                                                         <p className="text-[15px] font-serif text-slate-600 italic leading-relaxed mb-2.5">
                                                             "{entry.content.substring(0, 100)}{entry.content.length > 100 ? '...' : ''}"
                                                         </p>
-                                                        <p className="text-[11px] font-bold text-[#94a3b8] group-hover:text-[#64748B] transition-colors uppercase tracking-wide">
+                                                        <p className="text-[13px] font-semibold text-[#94a3b8] group-hover:text-[#64748B] transition-colors">
                                                             {entry.timestamp.toLocaleDateString()}
                                                         </p>
                                                     </div>
@@ -319,8 +319,8 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                             {isArchived && <Archive size={20} className="text-slate-300" />}
                         </h1>
                         <div className="flex items-center gap-2 mt-2">
-                             <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#9bbecb]">
-                                {isConstellation ? "All Memories" : "Shared Journal"}
+                             <span className="text-[13px] font-semibold text-[#9bbecb]">
+                                {isConstellation ? "All memories" : "Shared journal"}
                              </span>
                              <ChevronDown size={12} className={`text-slate-300 transition-transform duration-300 ${isCircleMenuOpen ? 'rotate-180' : ''}`} />
                         </div>
@@ -328,7 +328,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
 
                     {isCircleMenuOpen && (
                         <div className="absolute top-full left-0 mt-4 bg-belluh-25 rounded-[2rem] shadow-2xl border border-belluh-100 p-2 w-72 animate-scale-in z-50 origin-top-left ring-1 ring-black/5 max-h-[60vh] overflow-y-auto">
-                            <div className="text-[10px] font-bold text-slate-400 px-3 py-2 uppercase tracking-widest">Active Circles</div>
+                            <div className="text-[12px] font-semibold text-slate-400 px-3 py-2">Active circles</div>
                             {circles.filter(c => c.status === CircleStatus.Active).map(c => (
                                 <button key={c.id} className="w-full p-3 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors flex items-center gap-3 text-left group" onClick={() => { onCircleChange(c.id); setIsCircleMenuOpen(false); }}>
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${activeCircleId === c.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-white border border-slate-200'}`}>
@@ -340,7 +340,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                             ))}
                             {circles.some(c => c.status === CircleStatus.Archived) && (
                                 <>
-                                    <div className="text-[10px] font-bold text-slate-400 px-3 py-2 mt-2 uppercase tracking-widest border-t border-slate-50">Past Chapters</div>
+                                    <div className="text-[12px] font-semibold text-slate-400 px-3 py-2 mt-2 border-t border-slate-50">Past Chapters</div>
                                     {circles.filter(c => c.status === CircleStatus.Archived).map(c => (
                                         <button key={c.id} className="w-full p-3 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors flex items-center gap-3 text-left group grayscale opacity-80" onClick={() => { onCircleChange(c.id); setIsCircleMenuOpen(false); }}>
                                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold bg-slate-100 text-slate-400 border border-slate-200">
@@ -352,7 +352,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                                 </>
                             )}
                             {/* Constellation Option */}
-                            <div className="text-[10px] font-bold text-slate-400 px-3 py-2 mt-2 uppercase tracking-widest border-t border-slate-50">Universal</div>
+                            <div className="text-[12px] font-semibold text-slate-400 px-3 py-2 mt-2 border-t border-slate-50">Universal</div>
                             <button className="w-full p-3 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors flex items-center gap-3 text-left group" onClick={() => { onCircleChange('constellation'); setIsCircleMenuOpen(false); }}>
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${isConstellation ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-white border border-slate-200'}`}>
                                     <Star size={14} className={isConstellation ? "fill-current" : ""} />
@@ -388,7 +388,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
              {belluhLive && !isConstellation && !isArchived && showPatterns && (() => {
                  const cards = waiting.length ? waiting : (latest && !(latest.meta?.kind === 'weekly' && week) ? [latest] : []);
                  if (!cards.length) return null;
-                 const LABEL: Record<string, string> = { weekly: 'Your week from Bella', checkin: 'Check-in from Bella', reminder: 'Reminder from Bella', remind: 'Reminder you asked for', offer: 'Bella noticed', plan_nudge: 'Waiting on you', after_plan: 'From Belluh' };
+                 const LABEL: Record<string, string> = { weekly: 'Your week from Bella', checkin: 'Check-in from Bella', reminder: 'Reminder from Bella', remind: 'Reminder you asked for', offer: 'Bella noticed', plan_nudge: 'Waiting on you', after_plan: 'From Bella' };
                  const update = (id: string, next: AgentMessage | null) => setWaiting(prev => next ? prev.map(m => (m.id === id ? next : m)) : prev.filter(m => m.id !== id));
                  const shown = stackOpen ? cards : cards.slice(0, 1);
                  const hidden = cards.length - shown.length;
@@ -396,7 +396,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                      <div className="mb-6">
                          {cards.length > 1 && (
                              <div className="flex items-center justify-between mb-2.5 px-1">
-                                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Bella has {cards.length} things for you</p>
+                                 <p className="text-[13px] font-semibold text-slate-400">Bella has {cards.length} things for you</p>
                                  <button type="button" onClick={() => setStackOpen(o => !o)} className="text-xs font-bold text-[#3f7486] hover:text-slate-900 transition-colors">{stackOpen ? 'Show less' : `Show ${hidden} more`}</button>
                              </div>
                          )}
@@ -407,7 +407,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                                          <div className="shrink-0 pt-0.5"><BelluhOrb size={30} /></div>
                                          <div className="min-w-0 flex-1">
                                              <button type="button" onClick={() => onOpenBelluh?.()} className="w-full text-left">
-                                                 <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6]">{LABEL[m.meta?.kind] ?? 'Bella'}</span>
+                                                 <span className="text-[13px] font-semibold text-[#7fa7b6]">{LABEL[m.meta?.kind] ?? 'Bella'}</span>
                                                  <p className="mt-1 text-[16px] font-serif text-slate-800 leading-snug line-clamp-3">{m.meta?.kind === 'remind' ? m.body.replace(/^Reminder:\s*/, '') : m.body}</p>
                                              </button>
                                              <BelluhActions key={m.id + (m.meta?.status ?? '')} msg={m} partnerName={partnerName} onCompose={(p) => onCompose(p)}
@@ -447,7 +447,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                          </div>
                          <div>
                              <div className="flex items-center gap-2 mb-1">
-                                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Belluh Forecast</span>
+                                 <span className="text-[12px] font-semibold text-slate-400">Bella’s forecast</span>
                                  <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-bold">{forecast.velocity} Velocity</span>
                              </div>
                              <p className="text-sm font-serif text-slate-800 leading-snug">{forecast.forecast}</p>
@@ -477,12 +477,12 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
 
        <div className="relative min-h-[400px]">
           {/* Timeline Stem */}
-          <div className="absolute left-14 md:left-20 top-0 bottom-0 w-px bg-belluh-200"></div>
+          <div className="absolute left-14 md:left-20 top-0 bottom-0 w-px bg-slate-200/70"></div>
 
           {/* Today: what needs you now, before the story */}
           {!isArchived && !isConstellation && (
               <div className="relative pl-20 md:pl-24 pr-6 mb-5 flex items-center gap-3">
-                  <span className="text-[11px] font-bold text-belluh-500 uppercase tracking-[0.18em]">Today</span>
+                  <span className="text-[13px] font-semibold text-belluh-500">Today</span>
               </div>
           )}
 
@@ -512,7 +512,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                       <div className="bg-white border border-slate-100 shadow-sm hover:shadow-lg rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden group-hover:-translate-y-0.5">
                           <div className="relative z-10">
                               <div className="flex items-center gap-2 mb-4">
-                                  <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-belluh-500">Today's question</span>
+                                  <span className="text-[13px] font-semibold text-belluh-500">Today's question</span>
                               </div>
                               <h3 className="font-serif text-2xl md:text-[1.7rem] text-slate-900 leading-tight mb-6">
                                   {todaysPrompt}
@@ -536,7 +536,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                   ) : (
                   <div className="w-full bg-white border border-slate-100 shadow-sm rounded-[2rem] p-8">
                       <div className="flex items-center gap-2 mb-4">
-                          <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-belluh-500">Today's question</span>
+                          <span className="text-[13px] font-semibold text-belluh-500">Today's question</span>
                       </div>
                       <h3 className="font-serif text-xl text-slate-800 leading-tight mb-5">{todaysPrompt}</h3>
                       <div className="grid gap-3 sm:grid-cols-2">
@@ -651,7 +651,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                             <div className="mt-3 ml-3 flex items-start gap-3 animate-slide-up">
                                 <div className="shrink-0 mt-3"><BelluhOrb size={20} /></div>
                                 <div className="min-w-0 rounded-2xl rounded-tl-md bg-white border border-slate-100 px-4 py-3 shadow-sm">
-                                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#7fa7b6]">Bella</p>
+                                    <p className="text-[13px] font-semibold text-[#7fa7b6]">Bella</p>
                                     <p className="mt-0.5 font-serif text-[15px] leading-snug text-slate-700">{replies[entry.id].body}</p>
                                     <button type="button" onClick={() => onOpenBelluh?.()} className="mt-1.5 text-[13px] font-bold text-[#3f7486] hover:text-slate-900">Reply</button>
                                 </div>

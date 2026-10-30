@@ -65,7 +65,7 @@ const IntroGuide: React.FC<IntroGuideProps> = ({ onClose }) => {
           {steps[step].desc}
         </p>
         
-        <p className="text-xs font-bold uppercase tracking-widest text-[#f0addd] mb-10 mt-auto">
+        <p className="text-[13px] font-semibold text-[#f0addd] mb-10 mt-auto">
             {steps[step].highlight}
         </p>
 

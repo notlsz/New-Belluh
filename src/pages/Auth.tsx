@@ -1,3 +1,4 @@
+import { avatarFor } from '../lib/avatar';
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, ArrowLeft, Lock, Eye, EyeOff, Check, Mail } from 'lucide-react';
 import BelluhOrb from '../components/BelluhOrb';
@@ -117,7 +118,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onShowLegal, onShowToast, initialV
                   id: data.user.id, 
                   email: data.user.email, 
                   full_name: email.split('@')[0], 
-                  avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.email}`,
+                  avatar_url: avatarFor(data.user.email ?? data.user.id),
                   journal_streak: 0
                 }
             ]);

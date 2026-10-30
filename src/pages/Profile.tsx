@@ -1,4 +1,5 @@
 
+import { calmAvatar, avatarFor } from '../lib/avatar';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { User, LoveNote, Goal, Circle, CircleStatus, JournalEntry, Mood, RelationshipReceipt, ColorTheme } from '../types';
 import { Settings, Heart, Plus, X, Trash2, Shield, ChevronRight, Users, Check, Send, Trophy, Activity, Lock, Flame, Download, CheckCircle2, Mail, Archive, Star, FileText, Film, Edit3, Camera, UserPlus, LogOut, Infinity, ArrowRight, Play, Receipt, Share2, Instagram, Facebook, Copy, MessageCircle, Twitter, Camera as CameraIcon, Link as LinkIcon, Upload, Calendar, Clock, Gift, MoreHorizontal, PenLine, Sparkles, Maximize2, Eye, EyeOff, MoveDiagonal, RefreshCw, Palette } from 'lucide-react';
@@ -58,7 +59,7 @@ const CircleCard: React.FC<CircleCardProps> = ({ circle, isActive, onClick, onEd
             <div className="relative z-10">
                 <h4 className={`font-bold text-lg leading-tight mb-1 truncate ${isActive ? 'text-slate-900' : 'text-slate-700'}`}>{circle.name}</h4>
                 <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{(circle.type as any)}</span>
+                    <span className="text-[12px] font-semibold text-slate-400">{(circle.type as any)}</span>
                     {(circle.members.length > 2) && <span className="text-[10px] font-bold bg-slate-100 px-1.5 rounded text-slate-500">+{circle.members.length-1}</span>}
                 </div>
             </div>
@@ -124,7 +125,7 @@ const FactCard = ({ id, label, date, setDate, isEditing, icon: Icon, theme, conf
             <div className="absolute -right-6 -top-6 w-32 h-32 bg-white/20 rounded-full blur-2xl transition-all group-hover:scale-150"></div>
             <Icon className="absolute -bottom-6 -right-6 w-32 h-32 opacity-[0.08] group-hover:opacity-[0.15] transition-all duration-500 rotate-12" />
             <div className="relative z-10 flex justify-between items-start">
-                <span className="text-[10px] font-bold uppercase tracking-widest opacity-70 flex items-center gap-2">{label} {isEditing && <div className="w-1.5 h-1.5 bg-current rounded-full animate-pulse"></div>}</span>
+                <span className="text-[12px] font-semibold opacity-70 flex items-center gap-2">{label} {isEditing && <div className="w-1.5 h-1.5 bg-current rounded-full animate-pulse"></div>}</span>
                 {isEditing && (
                     <div className="flex gap-1">
                         <button onClick={() => onCycleSize(id)} className="p-1.5 bg-black/10 hover:bg-black/20 rounded-full text-current transition-colors"><MoveDiagonal size={12} /></button>
@@ -361,7 +362,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
         else await supabase.from('journal_entries').insert({ user_id: currentUser.id, content: factsText, type: 'Milestone', tags: ['system_facts', `circle:${activeCircleId}`], is_shared: true, date: new Date().toISOString() });
         onUpdateUser({ relationshipFacts: factsText });
         await syncFactDates(currentUser.id);
-        onShowToast("Saved. Belluh will remind you before the big ones.", "success");
+        onShowToast("Saved. Bella will remind you before the big ones.", "success");
     } catch (e) { console.error("Error saving facts:", e); onShowToast("Failed to save facts", "error"); }
   };
 
@@ -393,7 +394,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
       if (!activeCircle || !activeCircle.memberProfiles || activeCircle.memberProfiles.length === 0) {
           return [
               { id: user.id, name: user.name, avatar: user.avatar },
-              { id: 'p1', name: user.partnerName || 'Partner', avatar: user.partnerAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.partnerName}` }
+              { id: 'p1', name: user.partnerName || 'Partner', avatar: calmAvatar(user.partnerAvatar) || avatarFor(user.partnerName || 'partner') }
           ];
       }
       return activeCircle.memberProfiles;
@@ -414,7 +415,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
               <div className="bg-belluh-50 border border-belluh-200 rounded-2xl p-4">
                   <div className="flex items-center gap-2 mb-3">
                       <Mail size={16} className="text-belluh-600" />
-                      <h3 className="text-xs font-bold text-belluh-800 uppercase tracking-widest">Pending Invite</h3>
+                      <h3 className="text-[13px] font-semibold text-belluh-800">Pending invite</h3>
                   </div>
                   {pendingInvites.map(invite => (
                       <div key={invite.id} className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between">
@@ -491,30 +492,73 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                       {activeCircle && (
                           <div className="mb-12 relative group/facts">
                               <div className="flex items-center justify-between mb-6">
-                                  <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] pl-1">Your dates</h3>
+                                  <h3 className="font-serif text-xl text-slate-900 pl-1">Your dates</h3>
                                   <button onClick={() => isEditingFacts ? saveFacts() : setIsEditingFacts(true)} className={`h-9 px-4 rounded-full text-sm font-semibold transition-colors inline-flex items-center gap-1.5 ${isEditingFacts ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}>
                                       {isEditingFacts ? <><Check size={15} /> Done</> : <><Edit3 size={15} /> Edit</>}
                                   </button>
                               </div>
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-auto">
-                                  <StatCard id="timeTogether" label="Time Together" value={(() => { const from = isSet(facts.firstMet) ? facts.firstMet : facts.anniversary; return isSet(from) ? `${Math.floor((Date.now() - from.getTime()) / 86400000).toLocaleString('en-US')}d` : '--'; })()} subtext="And counting" icon={Clock} theme="slate" config={factConfigs.timeTogether} onToggleHidden={toggleHidden} onCycleSize={cycleSize} isEditing={isEditingFacts} />
-                                  <StatCard id="nextAnniversary" label="Next Anniversary" value={(() => { if (isNaN(facts.anniversary.getTime())) return '--'; const now = new Date(); const next = new Date(facts.anniversary); next.setFullYear(now.getFullYear()); if (next < now) next.setFullYear(now.getFullYear() + 1); return `${Math.ceil((next.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))}`; })()} subtext="Days Away" icon={Infinity} theme="white" config={factConfigs.nextAnniversary} onToggleHidden={toggleHidden} onCycleSize={cycleSize} isEditing={isEditingFacts} />
-                                  <FactCard id="firstMet" onAdd={() => setIsEditingFacts(true)} label="First Met" date={facts.firstMet} setDate={(d: Date) => setFacts({...facts, firstMet: d})} isEditing={isEditingFacts} icon={Users} theme="blue" config={factConfigs.firstMet} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
-                                  <FactCard id="firstKiss" onAdd={() => setIsEditingFacts(true)} label="First Kiss" date={facts.firstKiss} setDate={(d: Date) => setFacts({...facts, firstKiss: d})} isEditing={isEditingFacts} icon={Heart} theme="rose" config={factConfigs.firstKiss} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
-                                  <FactCard id="firstDate" onAdd={() => setIsEditingFacts(true)} label="First Date" date={facts.firstDate} setDate={(d: Date) => setFacts({...facts, firstDate: d})} isEditing={isEditingFacts} icon={Calendar} theme="purple" config={factConfigs.firstDate} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
-                                  <FactCard id="anniversary" onAdd={() => setIsEditingFacts(true)} label="Together since" date={facts.anniversary} setDate={(d: Date) => setFacts({...facts, anniversary: d})} isEditing={isEditingFacts} icon={Sparkles} theme="amber" config={factConfigs.anniversary} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="past" />
-                                  <FactCard id="partnerBday" onAdd={() => setIsEditingFacts(true)} label={(() => { const n = (user.partnerName || activeMembers.find(m => m.id !== user.id)?.name || '').split(' ')[0]; return n ? `${n}'s birthday` : "Partner's birthday"; })()} date={facts.partnerBday} setDate={(d: Date) => setFacts({...facts, partnerBday: d})} isEditing={isEditingFacts} icon={Gift} theme="orange" config={factConfigs.partnerBday} onToggleHidden={toggleHidden} onCycleSize={cycleSize} mode="future" />
-                              </div>
-                              {isEditingFacts && Object.values(factConfigs).some((c: any) => c.hidden) && (
-                                  <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Hidden Items</p>
-                                      <div className="flex gap-2 flex-wrap">
-                                          {Object.entries(factConfigs).filter(([_, c]: [string, any]) => c.hidden).map(([key, _]) => (
-                                              <button key={key} onClick={() => toggleHidden(key)} className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-900 flex items-center gap-2"><Eye size={12} /> Restore {key}</button>
-                                          ))}
+                              {(() => {
+                                  const partnerFirst = (user.partnerName || activeMembers.find(m => m.id !== user.id)?.name || '').split(' ')[0];
+                                  const rows = [
+                                      { key: 'anniversary', label: 'Together since', icon: Sparkles, mode: 'past' as const },
+                                      { key: 'firstMet', label: 'First met', icon: Users, mode: 'past' as const },
+                                      { key: 'firstDate', label: 'First date', icon: Calendar, mode: 'past' as const },
+                                      { key: 'firstKiss', label: 'First kiss', icon: Heart, mode: 'past' as const },
+                                      { key: 'partnerBday', label: partnerFirst ? `${partnerFirst}'s birthday` : "Partner's birthday", icon: Gift, mode: 'future' as const },
+                                  ];
+                                  const f = facts as Record<string, Date>;
+                                  const from = isSet(facts.anniversary) ? facts.anniversary : facts.firstMet;
+                                  const days = isSet(from) ? Math.floor((Date.now() - from.getTime()) / 86400000) + 1 : null;
+                                  const nextAnniv = isSet(facts.anniversary) ? getRelativeDisplay(facts.anniversary, 'future') : null;
+                                  const anySet = rows.some(r => isSet(f[r.key]));
+                                  if (!anySet && !isEditingFacts) return (
+                                      <div className="rounded-[2rem] bg-white border border-slate-100 p-7 text-center">
+                                          <Heart size={22} className="mx-auto text-[#f0addd]" />
+                                          <p className="mt-4 font-serif text-2xl text-slate-900">When did you two begin?</p>
+                                          <p className="mt-2 text-[15px] text-slate-500 leading-relaxed max-w-sm mx-auto">Add the day you met or got together, and Bella counts the days with you: day 100, day 1,000, every anniversary.</p>
+                                          <button onClick={() => setIsEditingFacts(true)} className="mt-6 h-11 px-6 rounded-full bg-slate-900 text-white text-sm font-semibold hover:bg-black">Add your dates</button>
                                       </div>
-                                  </div>
-                              )}
+                                  );
+                                  return (
+                                      <div className="rounded-[2rem] bg-white border border-slate-100 px-6 py-6">
+                                          {days !== null && !isEditingFacts && (
+                                              <div className="pb-5 mb-2">
+                                                  <p className="font-serif text-4xl text-slate-900 tracking-tight">{days.toLocaleString('en-US')} <span className="text-slate-400 text-2xl">{days === 1 ? 'day' : 'days'} together</span></p>
+                                                  {(() => {
+                                                      // The next moment worth marking: a 100-day milestone (day 100, day 1,000) or the anniversary, whichever comes first
+                                                      const mark = days < 1000 ? Math.ceil((days + 1) / 100) * 100 : Math.ceil((days + 1) / 1000) * 1000;
+                                                      const toMark = mark - days;
+                                                      const annivIn = nextAnniv === 'Today' ? 0 : nextAnniv === 'Tomorrow' ? 1 : nextAnniv ? parseInt(nextAnniv, 10) : NaN;
+                                                      const line = !isNaN(annivIn) && annivIn <= toMark
+                                                          ? (annivIn === 0 ? 'Your anniversary is today' : `Your anniversary is in ${annivIn} ${annivIn === 1 ? 'day' : 'days'}`)
+                                                          : `Day ${mark.toLocaleString('en-US')} is in ${toMark} ${toMark === 1 ? 'day' : 'days'}`;
+                                                      return <p className="mt-2 text-sm text-[#3f7486]">{line}</p>;
+                                                  })()}
+                                              </div>
+                                          )}
+                                          {rows.map(r => {
+                                              const d = f[r.key];
+                                              const Icon = r.icon;
+                                              return (
+                                                  <div key={r.key} className="flex items-center gap-4 py-3">
+                                                      <Icon size={18} strokeWidth={1.75} className="shrink-0 text-slate-400" />
+                                                      <span className="flex-1 min-w-0 text-[15px] text-slate-700">{r.label}</span>
+                                                      {isEditingFacts ? (
+                                                          <input type="date" aria-label={r.label} value={toInput(d)} onChange={e => setFacts({ ...facts, [r.key]: fromInput(e.target.value) })} className="h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#9bbecb]" />
+                                                      ) : isSet(d) ? (
+                                                          <span className="text-right">
+                                                              <span className="block text-[15px] font-medium text-slate-900">{d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: r.mode === 'past' ? 'numeric' : undefined })}</span>
+                                                              <span className="block text-xs text-slate-400">{getRelativeDisplay(d, r.mode).replace(' Days Away', ' days away').replace(' Days Ago', ' days ago').replace('Tomorrow', 'tomorrow').replace('Today', 'today')}</span>
+                                                          </span>
+                                                      ) : (
+                                                          <button onClick={() => setIsEditingFacts(true)} className="text-sm font-semibold text-[#3f7486] hover:text-slate-900">Add</button>
+                                                      )}
+                                                  </div>
+                                              );
+                                          })}
+                                      </div>
+                                  );
+                              })()}
                           </div>
                       )}
 
@@ -527,20 +571,20 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                       </button>}
                       
                       {/* Keepsakes */}
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 mb-4">Keepsakes</h3>
+                      <h3 className="font-serif text-xl text-slate-900 pl-1 mb-4">Keepsakes</h3>
                       <div className="grid grid-cols-2 gap-4">
                           <div onClick={() => onViewArtifact('letter')} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col aspect-square justify-between cursor-pointer hover:shadow-md transition-shadow">
                               <Mail size={24} className="text-[#f0addd]" />
                               <div>
                                   <h4 className="font-serif text-lg text-slate-900 font-bold">Future Letter</h4>
-                                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Unlock 2030</p>
+                                  <p className="text-[12px] text-slate-400 font-semibold mt-1">Opens in 2030</p>
                               </div>
                           </div>
                           <div onClick={() => onViewArtifact('reel')} className="bg-gradient-to-br from-[#3f7486] to-[#9bbecb] p-6 rounded-[2rem] shadow-lg shadow-[#9bbecb]/30 flex flex-col aspect-square justify-between cursor-pointer hover:scale-[1.02] transition-transform">
                               <Film size={24} className="text-white" />
                               <div>
                                   <h4 className="font-serif text-lg text-white font-bold">Chapter Reel</h4>
-                                  <p className="text-[10px] text-white/75 font-bold uppercase tracking-widest mt-1">Highlights</p>
+                                  <p className="text-[12px] text-white/75 font-semibold mt-1">Highlights</p>
                               </div>
                           </div>
                           <div onClick={handleGenerateReceipt} className="col-span-2 bg-[#fdf0f8] border border-[#f7d8ee] p-6 rounded-[2rem] flex items-center justify-between cursor-pointer hover:shadow-lg hover:shadow-[#f7d8ee]/60 transition-shadow relative overflow-hidden group">
@@ -567,7 +611,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
               </div>
 
               {/* Circles: the people you keep a journal with */}
-              <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] pl-1 mb-4">Your circles</h3>
+              <h3 className="font-serif text-xl text-slate-900 pl-1 mb-4">Your circles</h3>
               <div className="rounded-[2rem] bg-white border border-slate-100 shadow-sm px-6 py-1 mb-10">
                   {activeCircles.map(circle => (
                       <div key={circle.id} className="flex items-center gap-4 py-4">
@@ -591,7 +635,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
 
               {archivedCircles.length > 0 && (
                   <>
-                      <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] pl-1 mb-4">Past chapters</h3>
+                      <h3 className="font-serif text-xl text-slate-900 pl-1 mb-4">Past chapters</h3>
                       <div className="rounded-[2rem] bg-white border border-slate-100 shadow-sm px-6 py-1 mb-10">
                           {archivedCircles.map(circle => (
                               <div key={circle.id} className="flex items-center gap-4 py-4">
@@ -606,7 +650,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                   </>
               )}
 
-              <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] pl-1 mb-4">Your story</h3>
+              <h3 className="font-serif text-xl text-slate-900 pl-1 mb-4">Your story</h3>
               <button onClick={() => handleCircleSwitch('constellation')} className="w-full rounded-[2rem] bg-white border border-slate-100 shadow-sm px-6 py-5 flex items-center gap-4 text-left group">
                   <Star size={20} className="shrink-0 text-[#9bbecb]" />
                   <span className="flex-1 min-w-0">
@@ -628,7 +672,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                   </div>
                   <div className="space-y-6">
                       <div>
-                          <label className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] mb-2 block">Name</label>
+                          <label className="text-[13px] font-semibold text-slate-400 mb-2 block">Name</label>
                           <div className="flex gap-2">
                               <input type="text" value={editCircleName} onChange={(e) => setEditCircleName(e.target.value)} className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-belluh-200" />
                               <button onClick={handleRenameSubmit} disabled={!editCircleName.trim() || editCircleName === editingCircle.name} className="bg-slate-900 text-white p-3 rounded-xl disabled:opacity-50 hover:bg-black transition-colors"><Check size={18} /></button>
@@ -663,7 +707,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                   
                   {/* Theme Selector */}
                   <div className="mb-8">
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] mb-4 flex items-center gap-2">
+                      <p className="text-[13px] font-semibold text-slate-400 mb-4 flex items-center gap-2">
                           <Palette size={14} /> Appearance
                       </p>
                       <p className="text-sm text-slate-500 mb-4">A color for the page, the side panel and the menus.</p>
@@ -688,7 +732,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                       </div>
                   </div>
 
-                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.16em] mb-2">Account</p>
+                  <p className="text-[13px] font-semibold text-slate-400 mb-2">Account</p>
                   <div className="space-y-1">
                     <button onClick={() => onShowLegal('tos')} className="w-full py-3 flex items-center justify-between text-slate-500 hover:bg-slate-50 rounded-xl px-2"><span className="text-sm font-bold">Terms of Service</span><ChevronRight size={16} /></button>
                     <button onClick={() => onShowLegal('privacy')} className="w-full py-3 flex items-center justify-between text-slate-500 hover:bg-slate-50 rounded-xl px-2"><span className="text-sm font-bold">Privacy Policy</span><ChevronRight size={16} /></button>
@@ -706,7 +750,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                {generatingReceipt || !receiptData ? (
                    <div className="flex flex-col items-center gap-6 text-white animate-pulse">
                        <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-md"><Receipt size={40} className="text-white/80" /></div>
-                       <p className="font-bold tracking-[0.2em] uppercase text-xs text-white/60">Calculations in progress...</p>
+                       <p className="font-semibold text-[13px] text-white/60">Working it out</p>
                    </div>
                ) : (
                    <div className="flex flex-col items-center gap-6 animate-slide-up w-full max-w-[360px]" onClick={e => e.stopPropagation()}>
@@ -723,15 +767,15 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                                     <div className="space-y-4 font-mono text-xs mb-8">
                                         {receiptData.items.map((item, idx) => (
                                             <div key={idx} className="flex justify-between items-start gap-4">
-                                                <div className="flex gap-2"><span className="opacity-50">{item.qty}</span><span className="uppercase font-bold tracking-tight">{item.desc}</span></div>
+                                                <div className="flex gap-2"><span className="opacity-50">{item.qty}</span><span className="font-semibold tracking-tight">{item.desc}</span></div>
                                                 <span className="font-bold whitespace-nowrap">{item.price}</span>
                                             </div>
                                         ))}
                                     </div>
                                     <div className="border-b border-dashed border-current opacity-30 mb-6"></div>
                                     <div className="space-y-2 font-mono text-xs mb-8">
-                                        <div className="flex justify-between"><span className="opacity-60 uppercase">Subtotal</span><span>{receiptData.subtotal}</span></div>
-                                        <div className="flex justify-between"><span className="opacity-60 uppercase">Emotional Tax</span><span>{receiptData.tax}</span></div>
+                                        <div className="flex justify-between"><span className="opacity-60">Subtotal</span><span>{receiptData.subtotal}</span></div>
+                                        <div className="flex justify-between"><span className="opacity-60">Emotional Tax</span><span>{receiptData.tax}</span></div>
                                         <div className="flex justify-between text-xl font-bold mt-4 pt-4 border-t border-dashed border-current border-opacity-30"><span>TOTAL</span><span>{receiptData.total}</span></div>
                                     </div>
                                     <div className="text-center">
@@ -810,8 +854,8 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                               {isUploading && <div className="absolute inset-0 flex items-center justify-center"><Loader2 size={20} className="animate-spin text-slate-900" /></div>}
                           </div>
                           <div className="flex items-center gap-4 mt-4">
-                              <button onClick={() => fileInputRef.current?.click()} className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-slate-900 bg-slate-100 px-3 py-1.5 rounded-full">Upload Photo</button>
-                              <button onClick={() => setEditAvatar(`https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`)} className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-slate-900 bg-slate-100 px-3 py-1.5 rounded-full">Shuffle Art</button>
+                              <button onClick={() => fileInputRef.current?.click()} className="text-[12px] font-semibold text-slate-500 hover:text-slate-900 bg-slate-100 px-3 py-1.5 rounded-full">Upload Photo</button>
+                              <button onClick={() => setEditAvatar(avatarFor(String(Date.now())))} className="text-[12px] font-semibold text-slate-500 hover:text-slate-900 bg-slate-100 px-3 py-1.5 rounded-full">Shuffle Art</button>
                           </div>
                       </div>
                       <div className="space-y-1.5">

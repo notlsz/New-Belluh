@@ -1,3 +1,4 @@
+import { calmAvatar, avatarFor } from './lib/avatar';
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import BelluhOrb from './components/BelluhOrb';
 import DragonflyMark from './components/DragonflyMark';
@@ -196,7 +197,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User>({
       id: '',
       name: '',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=guest',
+      avatar: avatarFor('guest'),
       partnerName: undefined,
       circles: [],
       isPremium: false,
@@ -274,7 +275,7 @@ const App: React.FC = () => {
       setUser({
           id: '',
           name: '',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=guest',
+          avatar: avatarFor('guest'),
           partnerName: undefined,
           circles: [],
           isPremium: false,
@@ -454,7 +455,7 @@ const App: React.FC = () => {
                     return {
                         id: mid,
                         name: prof?.full_name || 'Unknown',
-                        avatar: prof?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${mid}`
+                        avatar: calmAvatar(prof?.avatar_url) || avatarFor(mid)
                     };
                 });
 
@@ -466,7 +467,7 @@ const App: React.FC = () => {
                     members: allMembers,
                     memberProfiles: profiles,
                     themeColor: '#f0addd',
-                    avatar: pProfile.avatar_url,
+                    avatar: calmAvatar(pProfile.avatar_url) ?? pProfile.avatar_url,
                     startDate: new Date()
                 });
             });
@@ -480,7 +481,7 @@ const App: React.FC = () => {
                 return {
                     id: mid,
                     name: prof?.full_name || 'Unknown',
-                    avatar: prof?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${mid}`
+                    avatar: calmAvatar(prof?.avatar_url) || avatarFor(mid)
                 };
             });
 
@@ -506,7 +507,7 @@ const App: React.FC = () => {
                     return {
                         id: mid,
                         name: prof?.full_name || 'Unknown',
-                        avatar: prof?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${mid}`
+                        avatar: calmAvatar(prof?.avatar_url) || avatarFor(mid)
                     };
                 });
                 const isArchived = e.tags && e.tags.includes('status:archived');
@@ -540,7 +541,7 @@ const App: React.FC = () => {
                     inviter: {
                         id: inviter?.id || r.user_id,
                         name: inviter?.full_name || 'Unknown User',
-                        avatar: inviter?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.user_id}`
+                        avatar: calmAvatar(inviter?.avatar_url) || avatarFor(r.user_id)
                     }
                 };
             });
@@ -578,10 +579,10 @@ const App: React.FC = () => {
             const authorProfile = allProfiles?.find((p: any) => p.id === e.user_id);
             if (authorProfile) {
                 authorName = isMine ? (myProfile?.full_name || 'Me') : authorProfile.full_name;
-                authorAvatar = authorProfile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${e.user_id}`;
+                authorAvatar = calmAvatar(authorProfile.avatar_url) || avatarFor(e.user_id);
             } else {
                 authorName = isMine ? 'Me' : 'Friend';
-                authorAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${e.user_id}`;
+                authorAvatar = avatarFor(e.user_id);
             }
 
             // Which chapter it belongs to. A partner's entry belongs to your chapter with them, whatever they tagged
@@ -655,9 +656,9 @@ const App: React.FC = () => {
             ...prev, 
             id: sessionUser.id, 
             name: myProfile?.full_name || sessionUser.email?.split('@')[0] || 'User',
-            avatar: myProfile?.avatar_url || prev.avatar,
+            avatar: calmAvatar(myProfile?.avatar_url) || prev.avatar,
             partnerName: displayPartnerName,
-            partnerAvatar: primaryPartner?.avatar_url || undefined,
+            partnerAvatar: calmAvatar(primaryPartner?.avatar_url) || undefined,
             circles: newCircles as any,
             // Stay in the circle you were in, if it still exists
             activeCircleId: newCircles.some((c: any) => c.id === prev.activeCircleId) ? prev.activeCircleId : 'c1',
