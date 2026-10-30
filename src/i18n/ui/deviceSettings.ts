@@ -30,6 +30,36 @@ const en = {
   },
 };
 
+// Spain's Spanish; Mexico's below starts from it and changes what people say differently there
+const es: typeof en = {
+  push: {
+    title: "Notificaciones",
+    rowTitle: "Notificaciones en este dispositivo",
+    on: "Activadas en este dispositivo. Te avisamos cuando tu pareja te manda un plan o una nota, el domingo y el miércoles, y antes de vuestras citas.",
+    off: "Recibe un aviso cuando tu pareja te mande un plan o una nota, el domingo y el miércoles, y antes de vuestras citas.",
+    blocked: "Las notificaciones de Belluh están bloqueadas en este navegador. Permítelas en los ajustes del sitio y vuelve a intentarlo.",
+    needsInstall: "En iPhone, primero añade Belluh a tu pantalla de inicio (Compartir y luego Añadir a pantalla de inicio) y activa las notificaciones desde ahí.",
+    unsupported: "Este navegador no puede mostrar notificaciones. Conecta WhatsApp o los SMS de arriba.",
+    turnedOn: "Notificaciones activadas",
+    blockedToast: "Las notificaciones están bloqueadas en este navegador",
+    failed: "No se han podido activar las notificaciones. Inténtalo de nuevo.",
+  },
+  calendar: {
+    title: "Tu calendario",
+    failed: "No se ha podido crear el enlace del calendario. Inténtalo de nuevo.",
+    reset: "Nuevo enlace de calendario creado. El anterior ya no funciona.",
+    lead: "Lleva vuestros planes y fechas a tu calendario.",
+    body: "Suscríbete una vez en Google Calendar, Calendario de Apple u Outlook. Los planes y fechas nuevos aparecen solos.",
+    add: "Añadir a mi calendario",
+    google: "Google Calendar",
+    apple: "Calendario de Apple",
+    copyOutlook: "Copiar enlace para Outlook",
+    privateBefore: "Este enlace es solo tuyo.",
+    makeNew: "Crea uno nuevo",
+    privateAfter: "si lo has compartido sin querer.",
+  },
+};
+
 const deviceSettings: UiTable<typeof en> = {
   en,
   ja: {
@@ -200,36 +230,10 @@ const deviceSettings: UiTable<typeof en> = {
       privateAfter: "falls du ihn aus Versehen geteilt hast.",
     },
   },
-  es: {
-    push: {
-      title: "Notificaciones",
-      rowTitle: "Notificaciones en este dispositivo",
-      on: "Activadas en este dispositivo. Te avisamos cuando tu pareja te manda un plan o una nota, el domingo y el miércoles, y antes de vuestras citas.",
-      off: "Recibe un aviso cuando tu pareja te mande un plan o una nota, el domingo y el miércoles, y antes de vuestras citas.",
-      blocked: "Las notificaciones de Belluh están bloqueadas en este navegador. Permítelas en los ajustes del sitio y vuelve a intentarlo.",
-      needsInstall: "En iPhone, primero añade Belluh a tu pantalla de inicio (Compartir y luego Añadir a pantalla de inicio) y activa las notificaciones desde ahí.",
-      unsupported: "Este navegador no puede mostrar notificaciones. Conecta WhatsApp o los SMS de arriba.",
-      turnedOn: "Notificaciones activadas",
-      blockedToast: "Las notificaciones están bloqueadas en este navegador",
-      failed: "No se han podido activar las notificaciones. Inténtalo de nuevo.",
-    },
-    calendar: {
-      title: "Tu calendario",
-      failed: "No se ha podido crear el enlace del calendario. Inténtalo de nuevo.",
-      reset: "Nuevo enlace de calendario creado. El anterior ya no funciona.",
-      lead: "Lleva vuestros planes y fechas a tu calendario.",
-      body: "Suscríbete una vez en Google Calendar, Calendario de Apple u Outlook. Los planes y fechas nuevos aparecen solos.",
-      add: "Añadir a mi calendario",
-      google: "Google Calendar",
-      apple: "Calendario de Apple",
-      copyOutlook: "Copiar enlace para Outlook",
-      privateBefore: "Este enlace es solo tuyo.",
-      makeNew: "Crea uno nuevo",
-      privateAfter: "si lo has compartido sin querer.",
-    },
-  },
+  es,
   'es-MX': {
     push: {
+      ...es.push,
       on: "Activadas en este dispositivo. Te avisamos cuando tu pareja te mande un plan o una nota, el domingo y el miércoles, y antes de sus citas.",
       off: "Recibe un aviso cuando tu pareja te mande un plan o una nota, el domingo y el miércoles, y antes de sus citas.",
       blocked: "Las notificaciones de Belluh están bloqueadas en este navegador. Permítelas en la configuración del sitio y vuelve a intentarlo.",
@@ -237,6 +241,7 @@ const deviceSettings: UiTable<typeof en> = {
       failed: "No se pudieron activar las notificaciones. Inténtalo de nuevo.",
     },
     calendar: {
+      ...es.calendar,
       failed: "No se pudo crear el link del calendario. Inténtalo de nuevo.",
       reset: "Nuevo link de calendario creado. El anterior ya no funciona.",
       lead: "Lleva sus planes y fechas a tu calendario.",
