@@ -16,6 +16,9 @@ import { localDateParts, type StoredOccasion } from '../_shared/occasions.ts';
 import { sameSecret } from '../_shared/secret.ts';
 import { db, loadCtx, buildSystem, addMessage, type Ctx } from '../_shared/agentdb.ts';
 import { notify } from '../_shared/notify.ts';
+import { localized } from '../_shared/localize.ts';
+// In the reader's own language: what Bella writes here is English until it's rewritten for them
+const say = (userId: string, text: string) => localized(db, userId, text);
 import { countryOf } from '../_shared/region.ts';
 import { searchShopify } from '../_shared/shopify.ts';
 import { parseTicketmaster, eventFound, priceFound, ticketmasterUrl, foundText, type Watch } from '../_shared/watches.ts';
@@ -41,7 +44,7 @@ async function dueReminders(onlyUser: string | null): Promise<number> {
   for (const r of data ?? []) {
     const { data: claimed } = await db.from('personal_reminders').update({ status: 'sending' }).eq('id', r.id).eq('status', 'scheduled').select('id');
     if (!claimed?.length) continue;
-    const body = `Reminder: ${r.body}`;
+    const body = await say(r.user_id, `Reminder: ${r.body}`);
     await addMessage(r.user_id, 'belluh', body, { kind: 'remind', week: r.id, reminder_id: r.id });
     await notify(r.user_id, body, { title: 'Belluh reminder', push: r.body, tag: `remind-${r.id}` });
     await db.from('personal_reminders').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', r.id);
@@ -83,10 +86,10 @@ async function checkWatches(onlyUser: string | null): Promise<{ checked: number;
     // Claim it, so two overlapping runs can't both send it
     const { data: claimed } = await db.from('watches').update({ status: 'found', found: hit, checked_at: new Date().toISOString() }).eq('id', w.id).eq('status', 'watching').select('id');
     if (!claimed?.length) continue;
-    const body = foundText(w, hit);
-    await addMessage(w.user_id, 'belluh', body.replace(/ Here it is: \S+$| here is the link: \S+$/, ''), { kind: 'watch_found', week: w.id, watch_id: w.id, links: [{ label: hit.title.slice(0, 80), url: hit.url }] });
+    const body = await say(w.user_id, foundText(w, hit));
+    await addMessage(w.user_id, 'belluh', body, { kind: 'watch_found', week: w.id, watch_id: w.id, links: [{ label: hit.title.slice(0, 80), url: hit.url }] });
     await logActivity(w.user_id, 'watch_found', hit.title);
-    await notify(w.user_id, body, { title: 'Bella found it', push: body.replace(/ https:\S+$/, ''), tag: `watch-${w.id}` });
+    await notify(w.user_id, `${body}\n${hit.url}`, { title: 'Bella', push: body, tag: `watch-${w.id}` });
     found++;
   }
   return { checked, found };
@@ -108,12 +111,12 @@ async function offer(ctx: Ctx, plans: NudgePlan[], today: ReturnType<typeof loca
     `${pick.occasion.label} is in ${pick.days} days. In one or two short sentences, offer to help plan it. Mention one specific thing from their journal or what you remember that would make it personal (a place, something ${ctx.partnerName ?? 'their partner'} said they love). If you know nothing specific, return an empty string. No questions about logistics. Return JSON: {"line": string}.`,
     { type: 'OBJECT', properties: { line: { type: 'STRING' } }, required: ['line'] }).catch(() => null) as { line?: string } | null;
   const line = cleanReply(out?.line ?? '');
-  const body = line.length >= 20 ? line : fallback;
+  const body = await say(ctx.userId, line.length >= 20 ? line : fallback);
   const msg = await addMessage(ctx.userId, 'belluh', body, {
     kind: 'offer', week: pick.key, status: 'open', occasion_id: pick.occasion.id, ask: offerAsk(pick.occasion.label, pick.date),
     actions: ['Help me plan it', 'Not now'],
   });
-  if (msg) { await notify(ctx.userId, `${body}\n\nReply PLAN IT or NOT NOW.`, { push: body, tag: 'offer' }); await logActivity(ctx.userId, 'offered_plan', pick.occasion.label); }
+  if (msg) { await notify(ctx.userId, `${body}\n\n${await say(ctx.userId, 'Reply PLAN IT or NOT NOW.')}`, { push: body, tag: 'offer' }); await logActivity(ctx.userId, 'offered_plan', pick.occasion.label); }
   return !!msg;
 }
 
@@ -123,12 +126,13 @@ async function nudgePlans(ctx: Ctx, plans: NudgePlan[]): Promise<number> {
     if (await posted(ctx.userId, 'plan_nudge', p.id)) continue;
     const { data: from } = await db.from('profiles').select('full_name').eq('id', p.created_by).maybeSingle();
     const name = (from?.full_name ?? '').trim().split(/\s+/)[0] || ctx.partnerName || 'Your partner';
-    const body = `${name} is still waiting on a time for "${p.title}".`;
+    const raw = `${name} is still waiting on a time for "${p.title}".`;
+    const body = await say(ctx.userId, raw);
     const msg = await addMessage(ctx.userId, 'belluh', body, { kind: 'plan_nudge', week: p.id, plan_id: p.id });
     if (msg) {
       n++;
       await logActivity(ctx.userId, 'nudged_plan', p.title);
-      await notify(ctx.userId, `${body} Pick one:\n${planChoices(p.options, ctx.timezone)}\n\nReply ${p.options.map((_, i) => i + 1).join(', ')}, or NONE.`, { push: `${body} Tap to pick.`, tag: 'plan' });
+      await notify(ctx.userId, await say(ctx.userId, `${raw} Pick one:\n${planChoices(p.options, ctx.timezone)}\n\nReply ${p.options.map((_, i) => i + 1).join(', ')}, or NONE.`), { push: body, tag: 'plan' });
     }
   }
   return n;
@@ -143,7 +147,7 @@ async function afterBookings(ctx: Ctx): Promise<number> {
   for (const b of data ?? []) {
     if (!readyForFollowUp(b)) continue;
     if (await posted(ctx.userId, 'after_plan', b.id)) continue;
-    const body = followUpText(b, b.user_id === ctx.userId ? ctx.partnerName : null);
+    const body = await say(ctx.userId, followUpText(b, b.user_id === ctx.userId ? ctx.partnerName : null));
     const msg = await addMessage(ctx.userId, 'belluh', body, { kind: 'after_plan', week: b.id, booking_id: b.id, prompt: `How was ${b.title}?` });
     if (msg) { n++; await logActivity(ctx.userId, 'asked_how_it_went', b.title); await notify(ctx.userId, body, { push: body, tag: 'after-plan' }); }
   }
@@ -154,7 +158,7 @@ async function afterPlans(ctx: Ctx, plans: NudgePlan[]): Promise<number> {
   let n = 0;
   for (const p of plansJustHappened(plans, ctx.userId)) {
     if (await posted(ctx.userId, 'after_plan', p.id)) continue;
-    const body = `How was "${p.title}"? Tell me a line or two while it's fresh and I'll keep it in your journal.`;
+    const body = await say(ctx.userId, `How was "${p.title}"? Tell me a line or two while it's fresh and I'll keep it in your journal.`);
     const msg = await addMessage(ctx.userId, 'belluh', body, { kind: 'after_plan', week: p.id, plan_id: p.id, prompt: `How was ${p.title}?` });
     if (msg) { n++; await logActivity(ctx.userId, 'asked_how_it_went', p.title); await notify(ctx.userId, body, { push: body, tag: 'after-plan' }); }
   }

@@ -91,3 +91,19 @@ test('Spain, Mexico, Portugal and Brazil each get their own language, formats an
   assert.match(loveCalendar('ES', { y: 2026, m: 4, d: 1 })!, /Sant Jordi, 2026-04-23/);
   assert.match(loveCalendar('MX', { y: 2026, m: 5, d: 1 })!, /Día de las Madres, 2026-05-10/);
 });
+
+import { languageFor, keptWhatMatters, REWRITE_PROMPT } from '../supabase/functions/_shared/localize.ts';
+
+test("Bella's own messages go out in the reader's language and their country's way of writing it", () => {
+  assert.equal(languageFor('en-US'), null); assert.equal(languageFor('en-GB'), null); assert.equal(languageFor(null), null);
+  assert.match(languageFor('pt-PT')!, /Portugal/); assert.match(languageFor('pt-BR')!, /Brazilian/); assert.match(languageFor('pt')!, /Brazilian/);
+  assert.match(languageFor('es-MX')!, /Mexican/); assert.match(languageFor('es-ES')!, /Spain/);
+  assert.match(languageFor('de-CH')!, /Swiss/); assert.match(languageFor('ja-JP')!, /Japanese/); assert.equal(languageFor('ko-KR'), null);
+  // A rewrite must keep the reply words, the numbered choices and the links, or English goes out instead
+  const en = 'Dan is still waiting. Pick one:\n1) Fri 7 PM\n2) Sat 8 PM\n\nReply 1, 2, or NONE. https://belluh.com/p';
+  assert.ok(keptWhatMatters(en, 'Dan sigue esperando. Elige una:\n1) vie 19:00\n2) sáb 20:00\n\nResponde 1, 2 o NONE. https://belluh.com/p'));
+  assert.ok(!keptWhatMatters(en, 'Dan sigue esperando. Responde 1, 2 o NINGUNO. https://belluh.com/p'), 'lost NONE and the choices');
+  assert.ok(!keptWhatMatters(en, ''));
+  assert.ok(!keptWhatMatters('Hi', 'x'.repeat(500)));
+  assert.match(REWRITE_PROMPT('Japanese', 'Reply PLAN IT'), /ALL CAPS/);
+});

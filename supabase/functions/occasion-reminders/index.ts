@@ -14,6 +14,7 @@ import { sendLine, lineUser } from '../_shared/line.ts';
 import { sendLinq } from '../_shared/linq.ts';
 import { sameSecret } from '../_shared/secret.ts';
 import { serverKey } from '../_shared/keys.ts';
+import { localized } from '../_shared/localize.ts';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, serverKey(), {
   auth: { persistSession: false },
@@ -58,11 +59,13 @@ Deno.serve(async (req) => {
       // Reminders go wherever they last texted Belluh from
       const params = reminderParams(o, stage, link.timezone);
       const tg = telegramChat(link.phone_e164), ln = lineUser(link.phone_e164);
-      const chatText = smsReminder(params).replace(' Reply STOP to pause reminders.', ' Send STOP to pause reminders.');
+      // In their language everywhere but WhatsApp, whose reminder is a template Meta approved in English
+      const chatText = await localized(db, link.user_id, smsReminder(params).replace(' Reply STOP to pause reminders.', ' Send STOP to pause reminders.'));
+      const smsText = await localized(db, link.user_id, smsReminder(params));
       const id = tg ? await sendTelegram(tg, chatText)
         : ln ? await sendLine(ln, chatText, null)
-        : link.channel === 'imessage' ? await sendLinq(link.phone_e164, smsReminder(params))
-        : link.channel === 'sms' ? await sendSms(link.phone_e164, smsReminder(params)) : await sendTemplate(link.phone_e164, TEMPLATE, params, TEMPLATE_LANG);
+        : link.channel === 'imessage' ? await sendLinq(link.phone_e164, smsText)
+        : link.channel === 'sms' ? await sendSms(link.phone_e164, smsText) : await sendTemplate(link.phone_e164, TEMPLATE, params, TEMPLATE_LANG);
       if (id) {
         sent++;
         await db.from('reminders_sent').update({ wa_message_id: id })

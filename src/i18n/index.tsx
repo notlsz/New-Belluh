@@ -43,7 +43,11 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLang: (l) => { try { localStorage.setItem(STORE, l); } catch { /* storage off */ } setState(s => ({ ...s, lang: l })); },
     };
   }, [lang, country]);
-  useEffect(() => { try { document.documentElement.lang = value.tag; } catch { /* no document */ } }, [value.tag]);
+  useEffect(() => {
+    try { document.documentElement.lang = value.tag; } catch { /* no document */ }
+    // Tell Bella, so the reminders and nudges she sends on her own come in this language too
+    import('../services/belluhAgent').then(m => m.belluhAgent.saveLanguage()).catch(() => {});
+  }, [value.tag]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 };
 

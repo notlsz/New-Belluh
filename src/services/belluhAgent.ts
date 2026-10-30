@@ -203,13 +203,21 @@ export const belluhAgent = {
     return !error && (count ?? 0) > 0;
   },
   /** Saves your time zone so Belluh's Sunday and Wednesday arrive at the right local time. Silent, no setup. */
+  /** When they switch language, Bella's own messages switch with it (signed in only). */
+  async saveLanguage(): Promise<void> {
+    try { const { data: { user } } = await supabase.auth.getUser(); if (user) await this.saveTimeZone(user.id); } catch { /* signed out */ }
+  },
+  /** Saves their time zone and the language they read Belluh in, so what Bella sends on her own arrives in it. */
   async saveTimeZone(userId: string): Promise<void> {
     const timezone = tz();
+    let lang: string | null = null;
+    try { const t = document.documentElement.lang; if (/^[a-z]{2}(-[A-Z]{2})?$/.test(t)) lang = t; } catch { /* no document */ }
+    const key = `${userId}:${timezone}:${lang ?? ''}`;
     try {
-      if (localStorage.getItem('belluh_tz') === `${userId}:${timezone}`) return;
+      if (localStorage.getItem('belluh_tz') === key) return;
     } catch { /* ignore */ }
-    const { error } = await supabase.from('agent_settings').upsert({ user_id: userId, timezone, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
-    if (!error) { try { localStorage.setItem('belluh_tz', `${userId}:${timezone}`); } catch { /* ignore */ } }
+    const { error } = await supabase.from('agent_settings').upsert({ user_id: userId, timezone, ...(lang ? { lang } : {}), updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    if (!error) { try { localStorage.setItem('belluh_tz', key); } catch { /* ignore */ } }
   },
   markBelluhSeen() {
     try { localStorage.setItem(SEEN_KEY, new Date().toISOString()); } catch { /* ignore */ }
