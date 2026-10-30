@@ -13,6 +13,7 @@ import { notify } from './notify.ts';
 import { searchShopify, type ShopProduct } from './shopify.ts';
 import { readyOrder, parseUsAddress, NOT_FRESH_FLOWERS, shopStyle } from './shopcheckout.ts';
 import { findSpots, type Spot } from './places.ts';
+import { regionLinks, osmCountry, KITS } from './region.ts';
 import { bookingFromTool, doneLabel, memoryFor, reminderFor, whenText, type BookingDraft } from './bookings.ts';
 import { instacartCart } from './instacart.ts';
 import { callsOn, findPlace, startCall, okToCallNow, whyNot, type CallOutcome } from './vapi.ts';
@@ -161,13 +162,13 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           return { ok: true, saved: call.shared ? `shared with ${ctx.partnerName ?? 'their partner'}` : 'private, only them', note: 'Say in a few words that it is in their journal and who can see it.' };
         }
         case 'find_table': {
-          const l = tableLinks(call.args, ctx.timezone);
+          const l = regionLinks('table', call.args, ctx.country) ?? tableLinks(call.args, ctx.timezone);
           links.push(...l);
           prepare('find_table', call.args, l[0]?.url ?? null);
           // With calls on, Belluh can phone the place itself once they say so: find its number now
           const people = Number(call.args.people);
           const table = prepared.find(b => b.kind === 'table' && !b.phone);
-          if (table && callsOn() && table.starts_at && people >= 1 && people <= 20 && new Date(table.starts_at).getTime() > Date.now() + 3600_000) {
+          if (table && ctx.country === 'US' && callsOn() && table.starts_at && people >= 1 && people <= 20 && new Date(table.starts_at).getTime() > Date.now() + 3600_000) {
             const found = await findPlace([call.args.what, call.args.where].filter(x => typeof x === 'string').join(' '));
             if (found) Object.assign(table, { phone: found.phone, people, call_status: 'ready', place: found.name });
             if (found) restaurant = found;
@@ -183,10 +184,12 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           return { ok: true, note: 'Flight, hotel and Airbnb searches are shown under your reply with the dates filled in. In one or two lines say what you set up and one idea that makes it theirs; they book. Never say it is booked. Do not paste links.' };
         }
         case 'send_flowers': {
-          const fl = flowerLinks(call.args);
+          // Flowers go to where the partner is: long distance means their country's florists
+          const sendIn = ctx.partnerCountry ?? ctx.country;
+          const fl = regionLinks('flowers', call.args, sendIn) ?? flowerLinks(call.args);
           const when = typeof call.args.deliver_on === 'string' ? call.args.deliver_on : null;
           const what = typeof call.args.what === 'string' && call.args.what.trim() ? call.args.what.trim().slice(0, 60) : 'flowers';
-          const to = parseUsAddress(call.args.address, typeof call.args.recipient === 'string' ? call.args.recipient : ctx.partnerName);
+          const to = sendIn !== 'US' ? null : parseUsAddress(call.args.address, typeof call.args.recipient === 'string' ? call.args.recipient : ctx.partnerName);
           const budget = Number(call.args.max_price) > 0 ? Math.round(Number(call.args.max_price) * 100) : null;
           // A real order at a florist that delivers there, ready to pay, when there's an address
           const order = to ? await readyOrder(`${what} fresh flowers bouquet delivery`, to, { maxCents: budget, exclude: NOT_FRESH_FLOWERS, intent: 'fresh flowers to send as a gift', tries: 4 }) : null;
@@ -200,6 +203,7 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           prepare('send_flowers', call.args, fl[0]?.url ?? null);
           return { ok: true, note: to
             ? `No florist on Shop could deliver ${what} to ${to.address_locality}${budget ? ' within that budget' : ''} right now, so florists and a nationwide delivery are shown under your reply instead. Say so in a few words, what you'd send and why. Do not paste links.`
+            : sendIn !== 'US' ? `Florists that deliver in ${KITS[sendIn]?.name ?? 'their country'} are shown under your reply. Say what you'd send and why it fits${when ? `, arriving ${when}` : ''}, with what flowers mean there if it matters, and offer a two-line card message. Do not paste links.`
             : `Florists are shown under your reply. Say what you'd send and why it fits${when ? `, arriving ${when}` : ''}, and ask for the street address with ZIP it should go to: with it you get a real order ready they can pay for in one tap. Do not paste links.` };
         }
         case 'order_food': case 'buy_item': case 'order_groceries': case 'book_ride': case 'find_experience': {
@@ -208,46 +212,60 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
             if (!to || /restaurant|dinner|table|there|the place/.test(to) || to.includes(restaurant.name.toLowerCase())) call.args = { ...call.args, to: `${restaurant.name}, ${restaurant.address}` };
           }
           let shipped: Awaited<ReturnType<typeof readyOrder>> = null;
-          if (call.name === 'buy_item' && typeof call.args.item === 'string') {
+          if (call.name === 'buy_item' && typeof call.args.item === 'string' && ctx.country === 'US') {
             const to = parseUsAddress(call.args.ship_to, typeof call.args.recipient === 'string' ? call.args.recipient : null);
             shipped = to ? await readyOrder(call.args.item, to, { maxCents: Number(call.args.max_price) > 0 ? Math.round(Number(call.args.max_price) * 100) : null }) : null;
             if (shipped) products.unshift(shipped);
             addProducts(await searchShopify(call.args.item, Number(call.args.max_price) || null, 3));
           }
-          let l = call.name === 'order_food' ? foodLinks(call.args) : call.name === 'buy_item' ? buyLinks(call.args) : call.name === 'order_groceries' ? groceryLinks(call.args) : call.name === 'book_ride' ? rideLinks(call.args) : experienceLinks(call.args);
+          const kind = ({ order_food: 'food', buy_item: 'buy', order_groceries: 'groceries', book_ride: 'ride', find_experience: 'experience' } as const)[call.name];
+          let l = regionLinks(kind, call.args, ctx.country) ?? (call.name === 'order_food' ? foodLinks(call.args) : call.name === 'buy_item' ? buyLinks(call.args) : call.name === 'order_groceries' ? groceryLinks(call.args) : call.name === 'book_ride' ? rideLinks(call.args) : experienceLinks(call.args));
           // Groceries as one cart when Instacart is connected: every item on one page, one checkout
-          const cart = call.name === 'order_groceries' && l.length ? await instacartCart(`Groceries from Belluh`, l.map(x => x.label.replace(/^Add /, ''))) : null;
+          const cart = call.name === 'order_groceries' && ctx.country === 'US' && l.length ? await instacartCart(`Groceries from Belluh`, l.map(x => x.label.replace(/^Add /, ''))) : null;
           if (cart) l = [{ label: 'Your cart on Instacart', url: cart }];
           if (!l.length) return { ok: false, error: call.name === 'order_groceries' ? 'List the groceries.' : call.name === 'book_ride' ? 'Say where they are going.' : 'Say what it is.' };
           links.push(...l);
           if (call.name === 'buy_item') prepare('buy_item', call.args, products[0]?.url ?? l[0]?.url ?? null, products[0]?.title ?? null);
           else if (call.name === 'order_food' || call.name === 'find_experience') prepare(call.name, call.args, l[0]?.url ?? null);
-          const what = { order_food: 'The order is ready on DoorDash and Uber Eats', buy_item: 'It is ready to buy on Amazon and Target, with a price comparison', order_groceries: cart ? 'Every item is in one Instacart cart, ready to check out' : 'Each item is one tap from their Instacart cart', book_ride: 'Uber and Lyft are ready with the destination filled in', find_experience: 'Tickets and experiences are shown' }[call.name];
+          const what = ctx.country !== 'US' ? `It is ready in the stores and apps people use in ${KITS[ctx.country]?.name ?? 'their country'} (${l.map(x => x.label).join(', ')})` : { order_food: 'The order is ready on DoorDash and Uber Eats', buy_item: 'It is ready to buy on Amazon and Target, with a price comparison', order_groceries: cart ? 'Every item is in one Instacart cart, ready to check out' : 'Each item is one tap from their Instacart cart', book_ride: 'Uber and Lyft are ready with the destination filled in', find_experience: 'Tickets and experiences are shown' }[call.name];
           const ready = shipped ? ` A real order is ready first under your reply: ${shipped.title} from ${shipped.seller}, ${shipped.total} including tax, shipping to ${shipped.deliversTo}; they tap "Review and pay".` : '';
           const found = call.name === 'buy_item' && products.length ? ` Also ${products.length} real products from independent Shopify shops, each with its checkout ready: ${products.map(p => `${p.title} (${p.price}, ${p.seller})`).join('; ')}. You may name the one you'd pick and why.` : '';
           return { ok: true, note: `${what}, under your reply.${ready}${found} In one or two lines say what you chose and why it fits them; they finish it with a tap. Never say it is ordered, bought or booked. Do not paste links.` };
         }
         case 'shop_style': {
+          if (ctx.country !== 'US') {
+            // Shopify's catalog ships from the US; elsewhere, each piece ready to buy in their own stores
+            for (const piece of call.pieces) links.push(...(regionLinks('buy', { item: [call.style, piece].filter(Boolean).join(' ') }, ctx.country) ?? []).slice(0, 1).map(x => ({ ...x, label: `${piece.charAt(0).toUpperCase() + piece.slice(1)}: ${x.label.replace(/^Buy it /, '')}` })));
+            return { ok: true, note: `Each piece is ready to shop in their own stores (${KITS[ctx.country]?.name}), under your reply. In a few lines: what to look for in each piece for that style and their space, a rough budget for each in their money, and the total. Do not paste links.` };
+          }
           const found = await shopStyle(call.pieces, { style: call.style ?? undefined, maxCentsEach: call.budgetEach ? Math.round(call.budgetEach * 100) : null });
           if (!found.length) return { ok: false, error: 'Nothing came back for those pieces right now. Try simpler names for each piece, or no budget.' };
           for (const p of found) if (products.length < 8 && !products.some(x => x.url === p.url)) products.push({ title: p.title, price: p.price, seller: p.seller, image: p.image, url: p.url });
           return { ok: true, note: `Real options are shown under your reply as cards with photos, each opening its checkout: ${found.map(p => `${p.piece}: ${p.title} (${p.price}, ${p.seller})`).join('; ')}. Compare in a few lines: your pick for each piece and why it fits them and their space, and the rough total of your picks. Do not paste links or list every card.` };
         }
         case 'find_spots': {
-          const found = await findSpots(call.what, call.where);
+          const found = await findSpots(call.what, call.where, fetch, 6, osmCountry(ctx.country));
           if (!found.length) return { ok: false, error: `Couldn't find ${call.what} in ${call.where}. Try the city alone, or a broader kind of place.` };
           spots = found;
           return { ok: true, note: `${found.length} real places are shown under your reply as cards with the address, hours and a ${found.some(s => s.bookable) ? 'Reserve button (it books the table; you call the place when it has a phone and calls are on)' : 'map'}: ${found.map(s => `${s.name} (${s.kind}${s.address ? `, ${s.address}` : ''})`).join('; ')}. Recommend the two or three that fit them best, a line each on why. Never say anything is booked. Do not paste links.` };
         }
         case 'gift_ideas': {
-          const l = giftLinks(call.args);
+          // A gift for the partner comes from stores where they are
+          const giftIn = ctx.partnerCountry ?? ctx.country;
+          const l = regionLinks('gift', call.args, giftIn) ?? giftLinks(call.args);
           if (!l.length) return { ok: false, error: 'Give one to three short gift ideas.' };
           // The real thing from a Shopify brand first, checkout ready; Amazon after
           const before = products.length;
-          for (const ps of await Promise.all(l.map(x => searchShopify(x.label, null, 1)))) addProducts(ps);
+          if (giftIn === 'US') for (const ps of await Promise.all(l.map(x => searchShopify(x.label, null, 1)))) addProducts(ps);
           links.push(...l);
           prepare('gift_ideas', call.args, products[before]?.url ?? l[0]?.url ?? null, products[before]?.title ?? null);
           return { ok: true, note: `The ideas are shown under your reply as links to buy${products.length ? `, with real products from independent Shopify shops, checkout ready: ${products.map(p => `${p.title} (${p.price}, ${p.seller})`).join('; ')}` : ''}. In one or two lines, say why each fits, from what their partner said. Do not paste links.` };
+        }
+        case 'set_country': {
+          const { error } = await db.from('agent_settings').upsert({ user_id: ctx.userId, timezone: ctx.timezone, country: call.country, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+          if (error) return { ok: false, error: "Couldn't save it." };
+          ctx.country = call.country;
+          return { ok: true, country: KITS[call.country]?.name ?? call.country, note: 'Say in a few words that you will use the stores, booking sites and customs there from now on.' };
         }
         case 'take_shape': {
           shape = call.shape;
@@ -469,11 +487,11 @@ export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Pro
         return { ok: true, note: 'Flight, hotel and Airbnb searches are shown under your reply with the dates filled in. Say what you set up in one line; either of them books. Never say it is booked.' };
       }
       if (call?.name === 'find_table') {
-        usLinks.push(...tableLinks(call.args, ctx.timezone));
+        usLinks.push(...(regionLinks('table', call.args, ctx.country) ?? tableLinks(call.args, ctx.timezone)));
         return { ok: true, note: 'Booking links are shown under your reply. Say in one line what you set up; either of them finishes the booking with one tap. Never say it is booked.' };
       }
       if (call?.name === 'order_food' || call?.name === 'find_experience') {
-        const l = call.name === 'order_food' ? foodLinks(call.args) : experienceLinks(call.args);
+        const l = regionLinks(call.name === 'order_food' ? 'food' : 'experience', call.args, ctx.country) ?? (call.name === 'order_food' ? foodLinks(call.args) : experienceLinks(call.args));
         if (!l.length) return { ok: false, error: 'Say what it is.' };
         usLinks.push(...l);
         return { ok: true, note: `${call.name === 'order_food' ? 'The order is ready on DoorDash and Uber Eats' : 'Tickets and experiences are shown'} under your reply. Say in one line what you chose for the two of them; either of them finishes it with a tap. Never say it is ordered or booked.` };

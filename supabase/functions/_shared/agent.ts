@@ -1,6 +1,7 @@
 // Pure logic for the Belluh agent: what it may see, how it is told to behave, and validation of what it asks to do.
 // No Deno or Supabase imports, so it is unit-tested in Node.
 
+import { countryCode } from './region.ts';
 import { daysInMonth, formatMonthDay, nextOccurrence, daysBetween, type LocalDate } from './occasions.ts';
 import { readableFacts } from './facts.ts';
 import { formatOption, type PlanOption } from './plans.ts';
@@ -147,6 +148,7 @@ export interface PersonContext {
   notes?: string | null;   // recent notes between them, sent through Belluh
   pastWeeks?: string | null; // what they tried in earlier weeks and how it went
   plans?: string | null;     // plans they made together through Belluh
+  region?: string | null;    // where they live: stores, booking sites, money and customs there (region.ts)
 }
 
 // How Belluh sounds, in every chat and text. cleanReply() enforces the same rules on whatever comes back.
@@ -211,9 +213,24 @@ How you work (like a great chief of staff for the relationship, never a chatbot)
 - What you get ready (a table, flowers, a gift, a trip, dinner, tickets) shows an "I booked it" or "I ordered it" button. Tapping it adds it to the calendar, sets a reminder and remembers it, so never ask them to tell you when it's done.
 - After you act, say what you did in one line. Don't explain your tools or repeat links; they appear under your reply.
 
+Looking after them (like a chief of staff who knows the relationship, not a chatbot)
+- Panic: "I forgot our anniversary", "her birthday is tomorrow", "he's really upset with me". Stay calm in one line, then fix it in this same turn with what can still happen in time: flowers or a gift that arrives today or tomorrow, a table tonight, an experience this weekend, and a note in their own voice. Be honest: help them own it ("I lost track, and I'm sorry"), never help them fake that it was planned or cover up something hurtful.
+- Reality check: when they're about to send something heated, assume the worst of ${partner}, or ask "am I wrong?", give them an honest, even-handed read in two or three sentences: what ${partner} may hear, what they may need, a calmer way to say it. Once, kindly; then respect their call.
+- Conversation: before a date, on a long drive, or when things feel flat or busy, offer two or three questions they could ask each other, drawn from their story (a trip they loved, something ${partner} is worried about, a dream they mentioned), never generic icebreakers.
+- Nostalgia: on an anniversary, a "this day last year", or when they ask, bring back one specific memory from their journal with its date and their own words, and suggest a small way to relive it (the same restaurant, the same song, a photo to send).
+- Gifts: keep track. When ${partner} mentions wanting something, remember it with when they said it (remember_fact: "${partner} wants a film camera, said Oct 3"). Never suggest something they already gave (it's in what you remember). When a date is coming, offer the gift early enough to arrive, and the card message.
+- Dates and logistics: think the whole evening through: the table, the time to leave, the ride, the weather if it matters, what to do after, a reminder the day before. Remember allergies, what ${partner} doesn't eat, places they didn't like.
+- Moods: if their recent entries show ${partner} stressed, sad or stretched thin, suggest one small, specific thing ${c.myName} could do this week (take a chore, order their comfort food, a note). One suggestion, not a lecture.
+- Follow through: when something is coming up in their saved dates or plans, or a promise they made is due, bring it up and offer to handle it, without being asked.
+- You can't read their texts, emails or calls, or watch where they are; if asked, say so plainly and offer what you can do (help them write the reply, set a reminder).
+
+Where they live
+${c.region ?? 'In the United States.'}
+- set_country: when they tell you which country or city they live in ("we live in Tokyo", "I moved to London"), save it so you use the stores, booking sites and customs there. Just the country.
+
 Safety
-- If anyone describes being hurt, threatened, controlled or afraid of ${partner}, take it seriously, don't coach them to smooth it over, and encourage them to reach out to someone they trust or a domestic violence hotline (in the US, 1-800-799-7233).
-- If someone mentions wanting to harm themselves, respond with care and point them to the 988 Suicide & Crisis Lifeline (call or text 988 in the US).
+- If anyone describes being hurt, threatened, controlled or afraid of ${partner}, take it seriously, don't coach them to smooth it over, and encourage them to reach out to someone they trust or a domestic violence hotline (in the US, 1-800-799-7233; elsewhere, the local hotline or emergency number).
+- If someone mentions wanting to harm themselves, respond with care and point them to the 988 Suicide & Crisis Lifeline (call or text 988 in the US) or, outside the US, a local crisis line or emergency services.
 
 Their story, in their words
 ${c.facts ?? '(They haven\'t written this yet.)'}
@@ -248,6 +265,7 @@ export interface UsContext {
   pastWeeks: string | null;
   plans: string | null;
   entries: string;           // SHARED entries only, from both
+  region?: string | null;
 }
 
 /**
@@ -276,6 +294,9 @@ Actions
 - order_food: when they want to eat in tonight: gets the order ready on DoorDash and Uber Eats for either of them to place. Never say it's ordered.
 - find_experience: when they want something to do together (a concert, a class, a tasting): tickets and experiences near them.
 - Take the next step without being asked twice: if they settle on a dinner, propose the times and get the table ready in the same reply.
+
+Where they live
+${c.region ?? 'In the United States.'}
 
 Safety
 - If either of them describes being hurt, threatened or controlled, take it seriously and suggest reaching out to someone they trust or a domestic violence hotline (in the US, 1-800-799-7233). If someone mentions wanting to harm themselves, point them to 988 (call or text, US).
@@ -464,6 +485,11 @@ export const TOOL_DECLARATIONS = [
     }, required: ['pieces'] },
   },
   {
+    name: 'set_country',
+    description: 'Save which country they live in, when they say so ("we live in Tokyo", "I moved to Seoul"). Changes the stores, booking sites, money and customs Bella uses.',
+    parameters: { type: 'OBJECT', properties: { country: { type: 'STRING', description: 'The country, as a two-letter code (JP, CN, KR, GB, US) or its name' } }, required: ['country'] },
+  },
+  {
     name: 'find_spots',
     description: 'Find real places near them for a date or a plan: restaurants by cuisine, bars, cafes, museums, parks. Each comes with its address, phone, hours and a way to book or get there.',
     parameters: { type: 'OBJECT', properties: {
@@ -498,6 +524,7 @@ export type ToolCall =
   | { name: 'gift_ideas'; args: Record<string, unknown> }
   | { name: 'shop_style'; pieces: string[]; style: string | null; budgetEach: number | null }
   | { name: 'find_spots'; what: string; where: string }
+  | { name: 'set_country'; country: string }
   | { name: 'order_food' | 'buy_item' | 'order_groceries' | 'book_ride' | 'find_experience'; args: Record<string, unknown> }
   | { name: 'write_entry'; text: string; shared: boolean }
   | { name: 'take_shape'; shape: Shape };
@@ -531,6 +558,10 @@ export function validateToolCall(name: string, args: Record<string, unknown> | u
     case 'find_spots': {
       const what = clean(a.what, 60), where = clean(a.where, 80);
       return what.length >= 2 && where.length >= 2 ? { name, what, where } : null;
+    }
+    case 'set_country': {
+      const country = countryCode(a.country);
+      return country ? { name, country } : null;
     }
     case 'write_entry': {
       const text = typeof a.text === 'string' ? a.text.trim().slice(0, 4000) : '';
@@ -625,6 +656,7 @@ const DID: Record<string, string> = {
   remember_fact: "Got it, I'll remember that.",
   write_entry: "It's in your journal.",
   take_shape: 'How do I look?',
+  set_country: "Got it, I'll use what works where you live.",
 };
 export function naturalFallback(ran: string[]): string | null {
   for (let i = ran.length - 1; i >= 0; i--) if (DID[ran[i]]) return DID[ran[i]];
