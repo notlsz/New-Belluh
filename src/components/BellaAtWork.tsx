@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Car, CakeSlice, Check, Flower2, Gem, Gift, Loader2, Lock, MapPin, PenLine, TrainFront, UtensilsCrossed, Wallet, Ban } from 'lucide-react';
+import { Car, Check, Flower2, Gift, Loader2, Lock, MapPin, PenLine, TrainFront, UtensilsCrossed, Wallet, Ban } from 'lucide-react';
 import BelluhOrb from './BelluhOrb';
 
 /**
@@ -46,15 +46,15 @@ const SCENES: Scene[] = [
     reply: '520 is handled. Eleven roses say one heart, and the red packet goes out at 5:20 on the dot.',
   },
   {
-    city: 'Seoul', via: 'Naver Map, Coupang and KakaoTalk', couple: ['Jiwoo', 'Minjun'],
-    ask: 'Day 100 is Saturday!',
+    city: 'Paris', via: 'TheFork, a florist and the Métro', couple: ['Camille', 'Hugo'],
+    ask: "C'est notre anniversaire ce soir… j'ai complètement oublié.", askEn: "It's our anniversary tonight and I completely forgot",
     steps: [
-      { icon: Gem, title: 'Couple rings', detail: 'Three picks from Coupang under ₩200,000', status: 'Ready to pay' },
-      { icon: UtensilsCrossed, title: 'Pasta in Seongsu at 7', detail: 'On Naver Map, Catch Table opens at 10', status: 'Reminder set' },
-      { icon: CakeSlice, title: 'A cake for the morning', detail: 'A KakaoTalk gift, delivered at 9', status: 'Your yes sends it', yours: true },
-      { icon: PenLine, title: 'A day 100 note', detail: '“A hundred days, and I would do every one again.”', status: 'Your yes sends it', yours: true },
+      { icon: UtensilsCrossed, title: 'A bistro in the Marais at 9', detail: 'Found on TheFork, the hour Parisians dine', status: 'Ready to book' },
+      { icon: Flower2, title: 'Seven red roses', detail: 'An odd number, never chrysanthemums. A florist on rue de Bretagne', status: 'Ready to pay' },
+      { icon: PenLine, title: 'A note in your words', detail: '“Pardon. Ce soir, c\u2019est toi et moi. 21h ?”', status: 'Your yes sends it', yours: true },
+      { icon: TrainFront, title: 'Home on the Métro', detail: 'A reminder before the last train, around 12:30', status: 'Reminder set' },
     ],
-    reply: 'Day 100 is a big one here. Order the rings first, they take two days.',
+    reply: 'Dinner at 9, the way Paris does it. Seven roses, never an even dozen, and the note is yours to send.',
   },
 ];
 
@@ -94,12 +94,12 @@ const BellaAtWork: React.FC = () => {
   const done = t >= total;
 
   return (
-    <section id="at-work" ref={ref} className="relative z-10 px-6 py-24 md:py-36 scroll-mt-24">
+    <section id="at-work" ref={ref} className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         <div className="min-w-0 lg:col-span-5 lg:sticky lg:top-28">
           <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
             <span className="text-slate-900">It's tonight.</span><br />
-            <span className="text-[#f0addd] italic">You forgot.</span>
+            <span className="text-slate-900">You forgot.</span>
           </h2>
           <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed max-w-md">
             Everyone has a night like this. Bella turns it around in seconds: the table, the flowers, the words, the way home. And it knows how love works where you live.

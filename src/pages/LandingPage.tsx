@@ -8,12 +8,10 @@ import { supabaseUrl } from '../lib/supabaseClient';
 import BelluhOrb from '../components/BelluhOrb';
 import BellaAtWork from '../components/BellaAtWork';
 import BelluhSpeech from '../components/BelluhSpeech';
-import LandingDemos from '../components/LandingDemos';
 import SiteFooter from '../components/SiteFooter';
 import SiteNav from '../components/SiteNav';
 import DragonflyMark from '../components/DragonflyMark';
-import { belluh, type BelluhState } from '../lib/belluhPresence';
-import { ORGANIZATIONS } from '../constants';
+import { belluh } from '../lib/belluhPresence';
 
 const FAQ = [
   { q: 'Can my partner read my private entries?', a: 'No. Every entry is shared or private, your call. Your partner never sees your private entries, and neither does their Belluh.' },
@@ -265,12 +263,11 @@ function GiftSection() {
   })();
 
   return (
-    <section id="gift" className="relative z-10 px-6 py-24 md:py-36 scroll-mt-24">
+    <section id="gift" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
       <div className="max-w-6xl mx-auto">
         <div className="text-center max-w-2xl mx-auto">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-5">Give Belluh</p>
           <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
-            <span className="text-slate-900">A gift worth</span><br /><span className="text-[#f0addd] italic">remembering.</span>
+            <span className="text-slate-900">A gift worth</span><br /><span className="text-slate-900">remembering.</span>
           </h2>
           <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed">Every couple you love is living moments they'll forget: the first months, the proposal, the move, the years in between. Give them a year of Belluh, and none of it slips away.</p>
           <p className="mt-7 inline-flex items-baseline gap-2 text-slate-500"><span className="font-serif text-2xl text-slate-900"><GiftCount /></span><span className="text-[15px]">gifts given, and counting</span></p>
@@ -332,9 +329,9 @@ function GiftSection() {
 
 const PLANS = [
   { name: 'Free', price: '$0', per: 'for good', blurb: 'Start your shared memory today.', cta: 'Start free',
-    items: ['Unlimited entries, private or shared', 'Your shared memory, kept for both of you', 'Belluh a few times a week', 'Weekly thing to try together'] },
+    items: ['Unlimited entries, private or shared', 'Your shared memory, kept for both of you', 'Bella a few times a week', 'Weekly thing to try together'] },
   { name: 'Duo', price: '$7.77', per: 'a month for both of you, not each', alt: 'or $88.88 a year for both', blurb: 'Belluh, all in, for both of you.', cta: 'Start free', featured: true,
-    items: ['Belluh whenever you want it', 'Text it on iMessage, WhatsApp or SMS', 'Dates planned, tables booked, flowers ready', 'Reminders, calendar, how-was-it follow ups'] },
+    items: ['Bella whenever you want her', 'Text her on iMessage, WhatsApp or SMS', 'Tables, gifts and flowers ready in a tap', 'Reminders, calendar, how-was-it follow ups'] },
   { name: 'For teams', price: 'Talk to us', per: 'employers, therapists, platforms', blurb: 'Belluh for the people you care for.', cta: 'Get in touch', team: true,
     items: ['A relationship benefit for your people', 'Between-sessions support for couples therapy', 'Belluh as a layer inside your platform', 'Private by design: you never see entries'] },
 ];
@@ -385,14 +382,8 @@ const MOMENTS = [
 ];
 const MOMENT_TONES = ['bg-white', 'bg-[#fdf0f8]', 'bg-[#eef7fa]'];
 
-// What Belluh connects to, shown in the second scrolling strip
-const INTEGRATIONS = [
-  { name: 'WhatsApp', domain: 'whatsapp.com', logo: '/logos/whatsapp.png' },
-  { name: 'Google Calendar', domain: 'calendar.google.com', logo: '/logos/google-calendar.png' },
-  { name: 'Apple iCloud', domain: 'icloud.com', logo: '/logos/icloud.png' },
-  { name: 'Outlook', domain: 'outlook.live.com', logo: '/logos/outlook.png' },
-  { name: 'Gemini', domain: 'gemini.google.com', logo: '/logos/gemini.png' },
-];
+// Edges that fade out, for the scrolling stories strip
+const FADE_X = { WebkitMaskImage: 'linear-gradient(to right, transparent, #000 12%, #000 88%, transparent)', maskImage: 'linear-gradient(to right, transparent, #000 12%, #000 88%, transparent)' } as React.CSSProperties;
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -401,56 +392,6 @@ interface LandingPageProps {
   onGoToAbout: () => void;
   onGoToCareers: () => void;
 }
-
-// Universities get one row and companies the other
-const isUniversity = (domain: string) => /\.(edu|ac\.uk|ca)$/.test(domain);
-
-type Org = { name: string; domain: string; logo?: string };
-
-// Real logos only (grey until you hover), served from belluh.com so they always load. Never text.
-const LogoItem = ({ org }: { org: Org }) => {
-  const [failed, setFailed] = useState(false);
-  if (!org.logo) return null;
-  return (
-    <img src={org.logo} alt={org.name} title={org.name} decoding="async" draggable={false} onError={() => setFailed(true)}
-      className={`max-h-10 md:max-h-12 max-w-full w-auto h-auto object-contain grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-[filter,opacity] duration-500 select-none ${failed ? 'invisible' : ''}`} />
-  );
-};
-
-const FADE_X = { WebkitMaskImage: 'linear-gradient(to right, transparent, #000 12%, #000 88%, transparent)', maskImage: 'linear-gradient(to right, transparent, #000 12%, #000 88%, transparent)' } as React.CSSProperties;
-
-const MarqueeRow = ({ orgs, reverse = false, speed = 60 }: { orgs: Org[]; reverse?: boolean; speed?: number }) => {
-  // Two identical halves, so sliding by half loops without a seam; short lists are repeated to fill wide screens
-  const shown = orgs.filter(o => o.logo);
-  const half = Array.from({ length: Math.max(1, Math.ceil(12 / Math.max(1, shown.length))) }, () => shown).flat();
-  return (
-    <div className="relative flex overflow-hidden group" style={FADE_X}>
-      <div className={`flex items-center w-max ${reverse ? 'animate-marquee-reverse' : 'animate-marquee'} group-hover:[animation-play-state:paused]`} style={{ animationDuration: `${speed}s`, willChange: 'transform', backfaceVisibility: 'hidden' }}>
-        {[...half, ...half].map((org, i) => (
-          <div key={i} aria-hidden={i >= half.length ? true : undefined} className="shrink-0 flex items-center justify-center h-16 w-[132px] md:w-[184px] px-4">
-            <LogoItem org={org} />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const LogoMarquee = ({ title, orgs, note }: { title: string; orgs: Org[]; note: string; repeat?: number }) => {
-  const schools = orgs.filter(o => isUniversity(o.domain));
-  const others = orgs.filter(o => !isUniversity(o.domain));
-  return (
-    <section className="w-full py-20 md:py-24 relative z-20" aria-label={title}>
-      <p className="text-center mb-10 md:mb-12 px-4 text-[11px] md:text-xs font-bold text-slate-400 tracking-[0.25em] uppercase">{title}</p>
-      <div className="space-y-6 md:space-y-8">
-        {schools.length > 0 && <MarqueeRow orgs={schools} reverse speed={70} />}
-        {others.length > 0 && <MarqueeRow orgs={others} speed={schools.length ? 80 : 45} />}
-      </div>
-      <p className="text-center mt-10 px-4 text-[10px] text-slate-300 font-medium tracking-wide uppercase">{note}</p>
-    </section>
-  );
-};
-
 
 // Tap Belluh and it becomes something else, then back to water
 const FUN_SHAPES: { emoji: string; label: string }[] = [
@@ -468,100 +409,6 @@ function useShapeTap() {
   };
   return { tap, label: n < 0 ? null : FUN_SHAPES[n].label };
 }
-
-const TRY_EXAMPLES = ['turn into a cat', 'become a sunflower', 'turn into the letter J', 'become a rocket', 'turn into a dolphin', 'become a heart'];
-const withArticle = (thing: string) => (/^(the|a|an)\s/i.test(thing) ? thing : `${/^[aeiou]/i.test(thing) ? 'an' : 'a'} ${thing}`);
-
-// Belluh, live: it listens as you type, thinks, talks word by word, and becomes what you ask for
-const MeetBelluh: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) => {
-  const [state, setState] = useState<BelluhState>(belluh.state());
-  const [text, setText] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [reply, setReply] = useState({ id: 0, text: "Hi, I'm Bella. Ask me to become anything." });
-  const [hint, setHint] = useState(0);
-  const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
-  useEffect(() => belluh.subscribe(setState), []);
-  useEffect(() => { belluh.prefetch(); const onR = () => setWide(window.innerWidth >= 768); window.addEventListener('resize', onR); return () => window.removeEventListener('resize', onR); }, []);
-  useEffect(() => { const t = setInterval(() => setHint(h => (h + 1) % TRY_EXAMPLES.length), 2600); return () => clearInterval(t); }, []);
-  const say = (t: string) => setReply(r => ({ id: r.id + 1, text: t }));
-
-  const submit = async (e?: React.FormEvent, asked?: string) => {
-    e?.preventDefault();
-    const t = (asked ?? text).trim();
-    if (!t || busy) return;
-    setText(''); setBusy(true);
-    const release = belluh.holdThinking();
-    const res = await belluh.tryShape(t).catch(() => ({ asked: false, done: false, subject: '' }));
-    await new Promise(r => setTimeout(r, 650));
-    release(); setBusy(false);
-    if (res.asked && res.subject === 'water') say("Back to water. This is where I'm most myself.");
-    else if (res.done) say(`Here I am as ${withArticle(res.subject)}. Still water, just a different shape.`);
-    else if (res.asked) say(`Sign up and I'll draw ${withArticle(res.subject)} for you. Here I only know everyday things.`);
-    else say('In the app I plan your dates, remember the little things and write with you both. Here, ask me to become something.');
-  };
-
-  const STATES: { key: BelluhState; label: string; text: string }[] = [
-    { key: 'listening', label: 'Listening', text: 'Every key you type ripples the water.' },
-    { key: 'thinking', label: 'Thinking', text: 'The ripples circle and it glows from inside.' },
-    { key: 'talking', label: 'Talking', text: 'Every word it says moves the water.' },
-  ];
-
-  return (
-    <section id="meet" className="relative z-10 px-6 pt-20 pb-8 scroll-mt-24">
-      <div className="max-w-7xl mx-auto">
-        <div className="relative rounded-[2.5rem] md:rounded-[3rem] overflow-hidden bg-gradient-to-br from-[#F8FBFC] via-[#F4FAFC] to-[#fdf5fa]">
-          <div className="absolute -top-40 -left-24 w-[520px] h-[520px] rounded-full bg-[#CDE9F2]/70 blur-[110px] pointer-events-none"></div>
-          <div className="absolute -bottom-48 right-[-10%] w-[560px] h-[560px] rounded-full bg-[#f0addd]/25 blur-[120px] pointer-events-none"></div>
-          <div className="relative grid grid-cols-1 md:grid-cols-2 items-center gap-6 md:gap-10 p-8 md:p-16">
-            <div className="flex flex-col items-center order-1">
-              <div className="relative">
-                <div className="absolute inset-[-18%] rounded-full bg-[radial-gradient(circle,rgba(205,233,242,0.9)_0%,rgba(205,233,242,0)_65%)] blur-2xl animate-breathing pointer-events-none"></div>
-                <BelluhOrb size={wide ? 300 : 210} onTap={() => {}} label="Belluh. Tap to make a ripple." />
-              </div>
-              <p className="mt-6 min-h-[3.5rem] max-w-sm text-center font-serif text-xl md:text-2xl leading-snug text-slate-800" aria-live="polite">
-                <BelluhSpeech key={reply.id} text={reply.text} />
-              </p>
-            </div>
-            <div className="order-2 text-center md:text-left">
-              <h2 className="text-4xl md:text-6xl font-serif leading-[1.05] tracking-tight mb-5 drop-shadow-sm">
-                <span className="text-[#9bbecb]">Meet</span> <span className="text-[#f0addd] italic">Bella.</span>
-              </h2>
-              <p className="text-lg md:text-xl text-slate-500 font-light leading-relaxed mb-8 max-w-md mx-auto md:mx-0">
-                You're both busy. Someone should be paying attention. Bella listens to you both, remembers what matters and nudges you back toward each other. Type below and watch her think.
-              </p>
-              <div className="mb-8">
-                <div className="inline-flex p-1 rounded-full bg-white/70 border border-white shadow-[0_8px_24px_-16px_rgba(15,23,42,0.3)]" aria-label="What Belluh is doing">
-                  {STATES.map(st => (
-                    <span key={st.key} className={`h-9 px-4 inline-flex items-center gap-2 rounded-full text-[13px] font-semibold transition-all duration-500 ${state === st.key ? 'bg-slate-900 text-white' : 'text-slate-400'}`}>
-                      {st.label}
-                    </span>
-                  ))}
-                </div>
-                <p className="mt-3 min-h-[1.5rem] text-slate-500">{(STATES.find(st => st.key === state) ?? { text: 'Type below and watch the water listen.' }).text}</p>
-              </div>
-              <form onSubmit={submit} className="flex items-center gap-2 bg-white rounded-full border border-slate-100 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.18)] p-1.5 pl-5 focus-within:border-[#CDE9F2] focus-within:shadow-[0_20px_50px_-15px_rgba(155,190,203,0.6)] transition-all">
-                <input
-                  value={text}
-                  onChange={e => { setText(e.target.value); belluh.key(); }}
-                  placeholder={`Try: ${TRY_EXAMPLES[hint]}`}
-                  aria-label="Say something to Belluh"
-                  maxLength={80}
-                  className="flex-1 min-w-0 bg-transparent py-2.5 text-[16px] text-slate-800 placeholder:text-slate-400 focus:outline-none"
-                />
-                <button type="submit" disabled={busy || !text.trim()} className="shrink-0 h-11 px-5 rounded-full bg-slate-900 text-white text-sm font-bold hover:bg-black disabled:bg-[#EAF4F8] disabled:text-[#7fa6b4] disabled:hover:bg-[#EAF4F8] transition-all active:scale-95">Ask</button>
-              </form>
-              <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-2">
-                {['a cat', 'a sunflower', 'the letter J', 'a rocket', 'a heart'].map(t => (
-                  <button key={t} type="button" disabled={busy} onClick={() => submit(undefined, `turn into ${t}`)} className="h-9 px-3.5 rounded-full bg-white/80 border border-slate-200/70 text-[13px] font-semibold text-slate-600 hover:border-[#9bbecb] hover:text-[#3f7486] disabled:opacity-50 transition-colors">{t}</button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
 
 const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShowLegal, onGoToAbout, onGoToCareers }) => {
   const [isNavVisible, setIsNavVisible] = useState(true);
@@ -619,8 +466,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const menuItems = [
-      { label: 'Meet Bella', action: () => scrollToSection('meet') },
-      { label: 'What it does', action: () => scrollToSection('features') },
+      { label: 'Meet Bella', action: () => scrollToSection('at-work') },
       { label: 'Inside', action: () => scrollToSection('inside') },
       { label: 'Stories', action: () => scrollToSection('stories') },
       { label: 'Pricing', action: () => scrollToSection('pricing') },
@@ -643,8 +489,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       {/* Top bar */}
       <SiteNav
           links={[
-              { label: 'Meet Bella', onClick: () => scrollToSection('meet'), section: 'meet' },
-              { label: 'What it does', onClick: () => scrollToSection('features'), section: 'features' },
+              { label: 'Meet Bella', onClick: () => scrollToSection('at-work'), section: 'at-work' },
               { label: 'Inside', onClick: () => scrollToSection('inside'), section: 'inside' },
               { label: 'Stories', onClick: () => scrollToSection('stories'), section: 'stories' },
               { label: 'Pricing', onClick: () => scrollToSection('pricing'), section: 'pricing' },
@@ -762,12 +607,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
          </div>
       </section>
 
-      {/* Where Belluh's couples are */}
-      <LogoMarquee title="Used by couples at" orgs={ORGANIZATIONS} note="* Used independently by individuals. Not affiliated with these organizations." />
 
-      <MeetBelluh onGetStarted={onGetStarted} />
 
-      <LandingDemos onShowPrivacy={() => onShowLegal('privacy')} />
 
       <BellaAtWork />
 
@@ -775,7 +616,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       <section id="inside" className="relative z-10 px-6 pb-28 scroll-mt-24">
           <div className="max-w-6xl mx-auto">
               <h2 className="text-3xl md:text-5xl font-serif text-center leading-tight mb-4 drop-shadow-sm">
-                  <span className="text-[#9bbecb]">Inside</span> <span className="text-[#f0addd] italic">Belluh.</span>
+                  <span className="text-slate-900">Inside Belluh.</span>
               </h2>
               <p className="text-center text-lg text-slate-500 font-light mb-12">What remembering for two looks like. Real screens, with a sample couple.</p>
 
@@ -821,14 +662,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       </section>
 
       {/* Marquee Section */}
-      <LogoMarquee title="Works with" orgs={INTEGRATIONS} note="* Trademarks belong to their owners." repeat={6} />
 
       {/* Infinite Marquee Section */}
-      <section id="stories" className="relative z-10 py-24 md:py-32 overflow-hidden scroll-mt-20">
+      <section id="stories" className="relative z-10 py-20 md:py-28 overflow-hidden scroll-mt-20">
         <div className="max-w-6xl mx-auto px-6 mb-14 md:mb-20 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-5">The kind of thing you'll write</p>
-                <h2 className="font-serif text-5xl md:text-7xl tracking-tight text-slate-900 leading-[1.02]">The ordinary <span className="italic text-[#f0addd]">Tuesdays</span><br className="hidden md:block" /> <span className="whitespace-nowrap">slip away.</span></h2>
+                <h2 className="font-serif text-5xl md:text-7xl tracking-tight text-slate-900 leading-[1.02]">The ordinary Tuesdays<br className="hidden md:block" /> <span className="whitespace-nowrap">slip away.</span></h2>
             </div>
             <p className="text-slate-500 text-lg md:text-xl font-light leading-relaxed max-w-sm md:text-right">
                 You'll remember the wedding. Belluh keeps the rest: the coffee, the late talks, the ticket stub in the drawer.
@@ -859,13 +698,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       </section>
       
       {/* Why Belluh exists, in Jimmy's words, next to the evening it started with */}
-      <section id="why" className="relative z-10 px-6 py-24 md:py-36 scroll-mt-24">
+      <section id="why" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.25fr_1fr] items-center gap-16 lg:gap-20">
               <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-8">Why Belluh exists</p>
                   <span className="block font-serif text-8xl leading-[0.5] text-[#f0addd] select-none" aria-hidden="true">&ldquo;</span>
                   <blockquote className="mt-2 font-serif text-[2.1rem] md:text-[3.4rem] leading-[1.1] tracking-tight text-slate-900">
-                      We've built a world of perfect documentation and <span className="text-[#f0addd] italic">zero remembrance.</span>
+                      We've built a world of perfect documentation and zero remembrance.
                   </blockquote>
                   <p className="mt-8 text-lg md:text-xl text-slate-500 font-light leading-relaxed max-w-xl">
                       Love isn't always built in the big moments. It's built in the supermarket. It's built in how someone listens when you talk about shrimp.
@@ -884,12 +722,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       </section>
 
       {/* Pricing: the shared memory is the product; you pay for Belluh doing more with it */}
-      <section id="pricing" className="relative z-10 px-6 py-24 md:py-32 scroll-mt-24">
+      <section id="pricing" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
           <div className="max-w-6xl mx-auto">
               <div className="max-w-2xl">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-5">Pricing</p>
                   <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
-                      <span className="text-slate-900">One memory.</span><br /><span className="text-[#f0addd] italic">Two of you.</span>
+                      <span className="text-slate-900">One memory.</span><br /><span className="text-slate-900">Two of you.</span>
                   </h2>
                   <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed">Everything you write becomes a memory you both own, and it only grows. One price covers the couple, never each of you.</p>
               </div>
@@ -919,12 +756,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       <GiftSection />
 
       {/* FAQ */}
-      <section id="faq" className="relative z-10 px-6 py-24 md:py-32 scroll-mt-24">
+      <section id="faq" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-10 lg:gap-16 items-start">
               <div className="lg:sticky lg:top-28">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bbecb] mb-5">FAQ</p>
                   <h2 className="font-serif text-5xl md:text-6xl tracking-tight leading-[1.02]">
-                      <span className="text-slate-900">Questions,</span><br /><span className="text-[#f0addd] italic">answered.</span>
+                      <span className="text-slate-900">Questions, answered.</span>
                   </h2>
                   <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed max-w-sm">Anything else, ask Bella. She knows how it all works, and it's free to try.</p>
                   <button onClick={() => { rememberCta('faq'); onGetStarted(); }} className="mt-7 group inline-flex items-center gap-2 h-11 px-5 rounded-full bg-slate-900 text-white text-sm font-bold hover:bg-black transition-colors">Start free <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" /></button>
