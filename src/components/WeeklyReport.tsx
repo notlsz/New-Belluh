@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { X, Activity, Zap, TrendingUp, Heart, ArrowRight } from 'lucide-react';
 import { JournalEntry, Mood } from '../types';
+import { useI18n, useUi } from '../i18n';
+import weeklyReportUi from '../i18n/ui/weeklyReport';
 
 interface WeeklyReportProps {
   onClose: () => void;
@@ -17,7 +19,8 @@ const LOVE_LANGUAGES = {
 };
 
 const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entries = [] }) => {
-  
+  const { f } = useI18n();
+  const T = useUi(weeklyReportUi);
   const stats = useMemo(() => {
       const now = new Date();
       const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -36,18 +39,18 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
       const negCount = currentEntries.filter(e => e.mood && negativeMoods.includes(e.mood)).length;
       
       let velocityTitle = "Balanced Flow";
-      let velocityDesc = "You are maintaining a consistent rhythm.";
+      let velocityDesc = T.descBalanced;
       let velocityColor = "text-slate-900";
       
       if (count === 0) {
           velocityTitle = "Silent Week";
-          velocityDesc = "No entries yet. Start a ritual to reconnect.";
+          velocityDesc = T.descSilent;
       } else if (posCount > count * 0.6) {
           velocityTitle = "High Frequency of Joy";
-          velocityDesc = "Pattern: Celebrating small wins.";
+          velocityDesc = T.descJoy;
       } else if (negCount > count * 0.5) {
           velocityTitle = "Processing Mode";
-          velocityDesc = "Pattern: Processing emotions safely.";
+          velocityDesc = T.descProcessing;
           velocityColor = "text-orange-600";
       }
 
@@ -69,14 +72,14 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
       const gChange = pctChange(currG, prevG);
       const iChange = pctChange(currI, prevI);
       
-      let correlationDesc = "Intimacy and gratitude are tracking steadily.";
+      let correlationDesc = T.corrSteady;
       if (count > 0) {
           if (gChange < -10 && iChange < -10) {
-              correlationDesc = `Gratitude skips correlate with intimacy drop ${Math.abs(iChange)}%.`;
+              correlationDesc = f(T.corrDrop, { n: Math.abs(iChange) });
           } else if (gChange > 10 && iChange > 10) {
-              correlationDesc = `Gratitude spike of ${gChange}% correlates with deepening intimacy.`;
+              correlationDesc = f(T.corrSpike, { n: gChange });
           } else if (gChange > 10 && iChange <= 0) {
-              correlationDesc = "Gratitude is rising, intimacy will follow.";
+              correlationDesc = T.corrRising;
           }
       }
 
@@ -105,15 +108,14 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
            const cs = currLL.total ? (currLL.scores[k] / currLL.total) * 100 : 0;
            const ps = prevLL.total ? (prevLL.scores[k] / prevLL.total) * 100 : 0;
            const change = Math.round(cs - ps);
-           // Capitalize key
-           const label = k.charAt(0).toUpperCase() + k.slice(1);
+           const label = ({ words: T.llWords, touch: T.llTouch, time: T.llTime, service: T.llService, gifts: T.llGifts } as Record<string, string>)[k] ?? k;
            return { key: k, label, change, val: Math.round(cs) };
       }).sort((a,b) => Math.abs(b.change) - Math.abs(a.change));
       
       const topDrifts = llChanges.slice(0, 2);
       const driftDesc = (currLL.total > 0 && Math.abs(topDrifts[0].change) > 10) 
-        ? "Your love languages drifted." 
-        : "Your love languages are stable.";
+        ? T.drifted
+        : T.stable;
 
       return {
           velocityTitle,
@@ -128,7 +130,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
           hasData: count > 0
       };
 
-  }, [entries]);
+  }, [entries, T, f]);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in" onClick={onClose}>
@@ -138,18 +140,18 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
       >
         {/* Header */}
         <div className="p-8 pb-4 relative z-10 bg-white">
-           <button onClick={onClose} className="absolute top-8 right-8 p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors">
+           <button onClick={onClose} aria-label={T.close} className="absolute top-8 right-8 p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors">
               <X size={20} className="text-slate-400" />
            </button>
            
            <div className="flex items-center gap-2 mb-2">
               <span className="px-3 py-1 bg-belluh-50 text-belluh-600 rounded-full text-[12px] font-semibold animate-pulse">
-                Real-Time Analysis
+                {T.realtime}
               </span>
-              <span className="text-[13px] font-semibold text-slate-400">{stats.recentCount} new signals</span>
+              <span className="text-[13px] font-semibold text-slate-400">{f(T.signals, { n: stats.recentCount })}</span>
            </div>
-           <h2 className="text-3xl font-serif text-slate-900 leading-tight">Our Report</h2>
-           <p className="text-slate-500 text-sm mt-2">Synced with your latest journal entries.</p>
+           <h2 className="text-3xl font-serif text-slate-900 leading-tight">{T.title}</h2>
+           <p className="text-slate-500 text-sm mt-2">{T.synced}</p>
         </div>
 
         {/* Scrollable Content */}
@@ -163,7 +165,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
                 <div className="relative z-10">
                     <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
                         <Zap size={16} className="text-orange-400 fill-orange-400" />
-                        Communication Velocity
+                        {T.commVelocity}
                     </h3>
                     
                     {/* Visual Graph (Abstract) */}
@@ -176,7 +178,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
 
                     <p className={`font-serif text-lg leading-relaxed ${stats.velocityColor}`}>
                         "{stats.velocityDesc} <br/>
-                        <span className="bg-slate-200 text-slate-600 px-1 text-sm font-sans font-bold">Based on {stats.recentCount} recent logs.</span>"
+                        <span className="bg-slate-200 text-slate-600 px-1 text-sm font-sans font-bold">{f(T.basedOn, { n: stats.recentCount })}</span>"
                     </p>
                 </div>
             </div>
@@ -187,7 +189,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
                 <div className="relative z-10">
                     <h3 className="text-sm font-bold text-cyan-800 mb-4 flex items-center gap-2">
                         <TrendingUp size={16} className="text-cyan-700" />
-                        Intimacy Correlation
+                        {T.intimacyCorr}
                     </h3>
                     
                     <div className="flex items-center justify-between mb-6">
@@ -195,14 +197,14 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
                              <div className={`text-3xl font-bold mb-1 ${stats.gratitudeChange < 0 ? 'text-cyan-700 opacity-60' : 'text-cyan-950'}`}>
                                 {stats.gratitudeChange > 0 ? '+' : ''}{stats.gratitudeChange}%
                              </div>
-                             <div className="text-[12px] text-cyan-700">Gratitude</div>
+                             <div className="text-[12px] text-cyan-700">{T.gratitude}</div>
                          </div>
                          <div className="h-px bg-cyan-800/20 flex-1 mx-4"></div>
                          <div className="text-center">
                              <div className={`text-3xl font-bold mb-1 drop-shadow-sm ${stats.intimacyChange < 0 ? 'text-cyan-700 opacity-60' : 'text-[#f0addd]'}`} style={{ textShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
                                 {stats.intimacyChange > 0 ? '+' : ''}{stats.intimacyChange}%
                              </div>
-                             <div className="text-[12px] text-cyan-700">Intimacy</div>
+                             <div className="text-[12px] text-cyan-700">{T.intimacy}</div>
                          </div>
                     </div>
 
@@ -210,10 +212,10 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
                         "{stats.correlationDesc}"
                     </p>
                     <button 
-                        onClick={() => onTryRitual("Write down 3 specific things you are grateful for about your partner right now.")}
+                        onClick={() => onTryRitual(T.ritualGratitude)}
                         className="mt-4 w-full py-3 bg-white/40 hover:bg-white/60 rounded-xl text-[13px] font-semibold transition-colors flex items-center justify-center gap-2 text-cyan-900"
                     >
-                        Try this ritual <ArrowRight size={12} />
+                        {T.tryRitual} <ArrowRight size={12} />
                     </button>
                 </div>
             </div>
@@ -222,7 +224,7 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
             <div className="bg-rose-50 rounded-3xl p-6 border border-rose-100">
                 <h3 className="text-sm font-bold text-rose-900 mb-4 flex items-center gap-2">
                     <Heart size={16} className="text-rose-500 fill-rose-500" />
-                    Love Language Drift
+                    {T.llDrift}
                 </h3>
 
                 <p className="font-serif text-lg leading-relaxed text-slate-800 mb-4">
@@ -235,14 +237,14 @@ const WeeklyReport: React.FC<WeeklyReportProps> = ({ onClose, onTryRitual, entri
                          </span>
                     ))}
                     {stats.topDrifts.length === 0 && (
-                        <span className="text-xs bg-white px-2 py-1 rounded-md border border-rose-100 text-slate-400 font-bold">No drift detected</span>
+                        <span className="text-xs bg-white px-2 py-1 rounded-md border border-rose-100 text-slate-400 font-bold">{T.noDrift}</span>
                     )}
                 </div>
                 <button 
-                    onClick={() => onTryRitual("What is one thing I could do this week that would make you feel most loved?")}
+                    onClick={() => onTryRitual(T.ritualLoved)}
                     className="mt-4 text-[13px] font-semibold text-rose-600 hover:underline"
                 >
-                    Recalibrate?
+                    {T.recalibrate}
                 </button>
             </div>
 

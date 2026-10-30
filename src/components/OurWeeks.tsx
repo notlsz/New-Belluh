@@ -3,12 +3,13 @@ import { X, Check, Minus, Clock, CalendarCheck } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { belluhAgent, type Plan } from '../services/belluhAgent';
 import { formatOption } from '../../supabase/functions/_shared/plans';
+import { useI18n, useUi } from '../i18n';
+import storyUi from '../i18n/ui/story';
 
 interface Week { id: string; action: string; why: string | null; week_start: string }
 interface Checkin { action_id: string; user_id: string; status: 'done' | 'not_yet' | 'skipped' }
 
 const tz = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return 'America/New_York'; } };
-const WORDS = { done: 'did it', not_yet: 'not yet', skipped: 'skipped' } as const;
 
 // What you've actually tried together, week by week, and the plans you've made. Real history, no made-up scores.
 const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> = ({ onClose, partnerName }) => {
@@ -16,6 +17,10 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
   const [checkins, setCheckins] = useState<Checkin[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [me, setMe] = useState<string | null>(null);
+  const { f, date } = useI18n();
+  const T = useUi(storyUi);
+  const WORDS = { done: T.done, not_yet: T.notYet, skipped: T.skipped } as const;
+  const day = (iso: string, o: Intl.DateTimeFormatOptions) => date(new Date(`${iso}T12:00:00`), o);
 
   useEffect(() => {
     (async () => {
@@ -32,7 +37,7 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
     })();
   }, []);
 
-  const other = partnerName || 'Partner';
+  const other = partnerName || T.partner;
   const doneBy = (w: Week, mine: boolean) => checkins.some(c => c.action_id === w.id && c.status === 'done' && (c.user_id === me) === mine);
   // Weeks in a row (newest first) where both of you tried it; this week doesn't break the streak while it's still going
   const streak = (() => {
@@ -51,35 +56,35 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
         <div className="sticky top-0 bg-white/95 backdrop-blur px-6 pt-6 pb-4 flex items-start justify-between border-b border-slate-50">
           <div>
             <p className="text-[12px] font-semibold text-belluh-500">Bella</p>
-            <h2 className="font-serif text-2xl text-slate-900 mt-1">Our weeks</h2>
-            {weeks && weeks.length > 0 && <p className="text-sm text-slate-500 mt-1">Of {weeks.length} {weeks.length === 1 ? 'suggestion' : 'suggestions'}, you did {did(true)} and {other} did {did(false)}.</p>}
+            <h2 className="font-serif text-2xl text-slate-900 mt-1">{T.ourWeeks}</h2>
+            {weeks && weeks.length > 0 && <p className="text-sm text-slate-500 mt-1">{f(weeks.length === 1 ? T.tallyOne : T.tally, { n: weeks.length, mine: did(true), partner: other, theirs: did(false) })}</p>}
           </div>
-          <button aria-label="Close" onClick={onClose} className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-700"><X size={18} /></button>
+          <button aria-label={T.close} onClick={onClose} className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-700"><X size={18} /></button>
         </div>
 
         <div className="px-6 py-5 space-y-6">
           {weeks === null && <div className="h-24 rounded-2xl bg-slate-50 animate-pulse" />}
           {weeks && weeks.length === 0 && (
-            <p className="text-sm text-slate-500 leading-relaxed">Every Sunday, Bella suggests one small thing for the two of you to try, based on what you share. Your weeks will collect here.</p>
+            <p className="text-sm text-slate-500 leading-relaxed">{T.weeksEmpty}</p>
           )}
 
           {weeks && weeks.length > 1 && (
-            <section aria-label="Last weeks at a glance">
+            <section aria-label={T.glanceLabel}>
               <div className="flex items-end justify-between mb-3">
-                <h3 className="text-[13px] font-semibold text-slate-400">At a glance</h3>
-                {streak > 1 && <p className="text-xs font-bold text-[#831843]">{streak} weeks in a row, together</p>}
+                <h3 className="text-[13px] font-semibold text-slate-400">{T.atAGlance}</h3>
+                {streak > 1 && <p className="text-xs font-bold text-[#831843]">{f(T.inARow, { n: streak })}</p>}
               </div>
               <div className="flex gap-1.5">
                 {[...weeks].slice(0, 8).reverse().map(w => (
-                  <div key={w.id} className="flex-1 min-w-0" title={`Week of ${w.week_start}: ${w.action}`}>
+                  <div key={w.id} className="flex-1 min-w-0" title={f(T.weekTitle, { date: day(w.week_start, { month: 'long', day: 'numeric' }), action: w.action })}>
                     <div className={`h-9 rounded-lg ${doneBy(w, true) ? 'bg-slate-900' : 'bg-slate-100'}`} />
                     <div className={`h-9 rounded-lg mt-1 ${doneBy(w, false) ? 'bg-[#9bbecb]' : 'bg-slate-100'}`} />
-                    <p className="text-[9px] text-slate-400 text-center mt-1">{new Date(`${w.week_start}T12:00:00`).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}</p>
+                    <p className="text-[9px] text-slate-400 text-center mt-1">{day(w.week_start, { month: 'numeric', day: 'numeric' })}</p>
                   </div>
                 ))}
               </div>
               <div className="flex gap-4 mt-2 text-[11px] text-slate-500">
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-slate-900" />You</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-slate-900" />{T.you}</span>
                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#9bbecb]" />{other}</span>
               </div>
             </section>
@@ -87,7 +92,7 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
 
           {plans.length > 0 && (
             <section>
-              <h3 className="text-[13px] font-semibold text-slate-400 mb-3">Plans you made</h3>
+              <h3 className="text-[13px] font-semibold text-slate-400 mb-3">{T.plansMade}</h3>
               <ul className="space-y-2">
                 {plans.map(p => {
                   const o = p.options.find(x => x.id === p.chosen_option);
@@ -104,7 +109,7 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
 
           {weeks && weeks.length > 0 && (
             <section>
-              <h3 className="text-[13px] font-semibold text-slate-400 mb-3">Week by week</h3>
+              <h3 className="text-[13px] font-semibold text-slate-400 mb-3">{T.weekByWeek}</h3>
               <ol className="space-y-3">
                 {weeks.map(w => {
                   const mine = checkins.find(c => c.action_id === w.id && c.user_id === me)?.status;
@@ -112,11 +117,11 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
                   const icon = (s?: string) => s === 'done' ? <Check size={12} /> : s === 'skipped' ? <Minus size={12} /> : <Clock size={12} />;
                   return (
                     <li key={w.id} className="p-4 rounded-2xl border border-slate-100">
-                      <p className="text-[11px] font-bold text-slate-400">Week of {new Date(`${w.week_start}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                      <p className="text-[11px] font-bold text-slate-400">{f(T.weekOf, { date: day(w.week_start, { month: 'short', day: 'numeric' }) })}</p>
                       <p className="font-serif text-[16px] text-slate-800 leading-snug mt-1">{w.action}</p>
                       <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full ${mine === 'done' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-500'}`}>{icon(mine)} You: {mine ? WORDS[mine] : 'no answer'}</span>
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full ${theirs === 'done' ? 'bg-[#CDE9F2] text-[#3d6b7b]' : 'bg-slate-50 text-slate-500'}`}>{icon(theirs)} {other}: {theirs ? WORDS[theirs] : 'no answer'}</span>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full ${mine === 'done' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-500'}`}>{icon(mine)} {f(T.statusOf, { name: T.you, status: mine ? WORDS[mine] : T.noAnswer })}</span>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full ${theirs === 'done' ? 'bg-[#CDE9F2] text-[#3d6b7b]' : 'bg-slate-50 text-slate-500'}`}>{icon(theirs)} {f(T.statusOf, { name: other, status: theirs ? WORDS[theirs] : T.noAnswer })}</span>
                       </div>
                     </li>
                   );

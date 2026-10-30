@@ -4,7 +4,8 @@ import { belluhAgent, AgentMessage } from '../services/belluhAgent';
 import PlanCard from './PlanCard';
 import { prettyPhone } from '../lib/phone';
 import { trackEvent } from '../services/analytics';
-import { useI18n } from '../i18n';
+import { useI18n, useUi } from '../i18n';
+import planActions from '../i18n/ui/planActions';
 
 
 /**
@@ -21,6 +22,7 @@ const BelluhActions: React.FC<{
   onBusy?: (busy: boolean) => void;
 }> = ({ msg, partnerName, onAdded, onCompose, onAsk, onBusy }) => {
   const { d, f } = useI18n(); const A = d.app.acts;
+  const T = useUi(planActions).acts;
   const [status, setStatus] = useState<string | undefined>(msg.meta?.status);
   const [busy, setBusy] = useState(false);
   // Orders they said no to, remembered on this device so they stay closed
@@ -113,7 +115,7 @@ const BelluhActions: React.FC<{
               <div className="p-3.5">
                 <p className="text-[13px] font-semibold text-slate-900 leading-snug line-clamp-2">{p.title}</p>
                 <p className="mt-1 text-xs text-slate-400 truncate">{p.seller}</p>
-                {p.ready && p.deliversTo && <p className="mt-1.5 text-xs text-slate-500 line-clamp-2">To {p.deliversTo}</p>}
+                {p.ready && p.deliversTo && <p className="mt-1.5 text-xs text-slate-500 line-clamp-2">{f(A.deliversTo, { place: p.deliversTo })}</p>}
                 <div className="mt-2.5 flex items-center justify-between gap-2">
                   <span className="font-serif text-base text-slate-900">{p.ready && p.total ? p.total : p.price}{p.ready && <span className="ml-1 font-sans text-[11px] text-slate-400">{A.withTax}</span>}</span>
                   {p.ready
@@ -135,12 +137,12 @@ const BelluhActions: React.FC<{
               {x.hours && <p className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-500"><Clock size={13} className="shrink-0 text-slate-300" /><span className="truncate">{x.hours}</span></p>}
               <div className="mt-auto pt-4 flex items-center gap-1.5">
                 {x.bookable && onAsk && (
-                  <button onClick={() => { trackEvent('belluh_spot_reserve', {}); onAsk(`Book us a table at ${x.name}${x.address ? `, ${x.address}` : ''}, for 2, at `); }}
+                  <button onClick={() => { trackEvent('belluh_spot_reserve', {}); onAsk(x.address ? f(T.bookAtAddress, { name: x.name, address: x.address }) : f(T.bookAt, { name: x.name })); }}
                     className="h-9 px-3.5 rounded-full bg-slate-900 text-white text-xs font-bold inline-flex items-center gap-1.5 hover:bg-black">{A.reserve}</button>
                 )}
                 <a href={x.map} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent('belluh_spot_map', {})}
                   className="h-9 px-3 rounded-full border border-slate-200 text-xs font-bold text-slate-700 inline-flex items-center gap-1.5 hover:border-slate-400">{A.map} <ArrowUpRight size={13} /></a>
-                {x.phone && <a href={`tel:${x.phone}`} aria-label={f(A.callPlace, { name: x.name })} className="h-9 px-3 rounded-full border border-slate-200 text-xs font-bold text-slate-700 inline-flex items-center gap-1.5 hover:border-slate-400"><Phone size={13} />Call</a>}
+                {x.phone && <a href={`tel:${x.phone}`} aria-label={f(A.callPlace, { name: x.name })} className="h-9 px-3 rounded-full border border-slate-200 text-xs font-bold text-slate-700 inline-flex items-center gap-1.5 hover:border-slate-400"><Phone size={13} />{T.call}</a>}
               </div>
             </div>
           ))}

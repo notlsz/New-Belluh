@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Play, Mail, Sparkles, Lock } from 'lucide-react';
 import { JournalEntry } from '../types';
 import { generateFutureLetter } from '../services/geminiService';
+import { useI18n, useUi } from '../i18n';
+import artifact from '../i18n/ui/artifact';
 
 interface ArtifactModalProps {
   type: 'reel' | 'letter';
@@ -13,6 +15,8 @@ interface ArtifactModalProps {
 }
 
 const ArtifactModal: React.FC<ArtifactModalProps> = ({ type, onClose, entries, currentUserId, userName, partnerName }) => {
+  const { f, date } = useI18n();
+  const T = useUi(artifact);
   // Reel State
   const [currentReelIndex, setCurrentReelIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -90,7 +94,7 @@ const ArtifactModal: React.FC<ArtifactModalProps> = ({ type, onClose, entries, c
   // Dynamic Date 5 years in future
   const futureDate = new Date();
   futureDate.setFullYear(futureDate.getFullYear() + 5);
-  const displayDate = futureDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const displayDate = date(futureDate, { month: 'long', year: 'numeric' });
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-4 bg-slate-900/60 backdrop-blur-xl animate-fade-in" onClick={onClose}>
@@ -98,7 +102,7 @@ const ArtifactModal: React.FC<ArtifactModalProps> = ({ type, onClose, entries, c
         className={`bg-white md:rounded-[2rem] w-full max-w-3xl shadow-2xl relative overflow-hidden flex flex-col transition-all duration-700 ${type === 'reel' ? 'h-full md:h-[90vh] md:aspect-[9/16] bg-[#CDE9F2]' : 'h-full md:h-[85vh]'}`} 
         onClick={e => e.stopPropagation()}
       >
-        <button onClick={onClose} className={`absolute top-6 right-6 z-50 p-2 rounded-full transition-colors ${type === 'reel' ? 'bg-white/40 hover:bg-white text-slate-900 backdrop-blur-md shadow-sm' : 'bg-white hover:bg-slate-50 text-slate-400 hover:text-slate-600 shadow-sm border border-slate-100'}`}>
+        <button onClick={onClose} aria-label={T.close} className={`absolute top-6 right-6 z-50 p-2 rounded-full transition-colors ${type === 'reel' ? 'bg-white/40 hover:bg-white text-slate-900 backdrop-blur-md shadow-sm' : 'bg-white hover:bg-slate-50 text-slate-400 hover:text-slate-600 shadow-sm border border-slate-100'}`}>
             <X size={20} />
         </button>
 
@@ -136,7 +140,7 @@ const ArtifactModal: React.FC<ArtifactModalProps> = ({ type, onClose, entries, c
                                 <img 
                                     src={currentEntry.mediaUrl} 
                                     className="absolute inset-0 w-full h-full object-cover animate-fade-in opacity-90"
-                                    alt="Memory"
+                                    alt={T.memoryAlt}
                                 />
                             </div>
                         ) : (
@@ -154,17 +158,17 @@ const ArtifactModal: React.FC<ArtifactModalProps> = ({ type, onClose, entries, c
                              <img src={currentEntry.authorAvatar} className="w-10 h-10 rounded-full border-2 border-white shadow-sm ring-1 ring-slate-100" alt={currentEntry.authorName} />
                              <div>
                                  <p className={`text-sm font-bold shadow-sm ${currentEntry.mediaUrl ? 'text-white drop-shadow-md' : 'text-slate-900'}`}>{currentEntry.authorName}</p>
-                                 <p className={`text-[10px] font-bold uppercase tracking-widest ${currentEntry.mediaUrl ? 'text-white/90 drop-shadow-md' : 'text-slate-500'}`}>{currentEntry.timestamp.toLocaleDateString()}</p>
+                                 <p className={`text-[10px] font-bold uppercase tracking-widest ${currentEntry.mediaUrl ? 'text-white/90 drop-shadow-md' : 'text-slate-500'}`}>{date(currentEntry.timestamp, { year: 'numeric', month: 'numeric', day: 'numeric' })}</p>
                              </div>
                         </div>
 
                         <div className="absolute bottom-0 left-0 right-0 p-8 pb-12 z-20">
                             <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 bg-white/80 backdrop-blur-md rounded-full border border-white shadow-sm">
                                 <Sparkles size={10} className="text-[#f0addd]" />
-                                <span className="text-[12px] font-semibold text-slate-900">Memory highlight</span>
+                                <span className="text-[12px] font-semibold text-slate-900">{T.highlight}</span>
                             </div>
                             <h2 className="text-2xl font-serif text-slate-900 leading-relaxed drop-shadow-sm">
-                                "{currentEntry.content}"
+                                {f(T.quoted, { text: currentEntry.content })}
                             </h2>
                             {currentEntry.prompt && (
                                 <p className="text-slate-600 text-sm mt-4 font-medium border-l-2 border-[#f0addd] pl-3">
@@ -175,7 +179,7 @@ const ArtifactModal: React.FC<ArtifactModalProps> = ({ type, onClose, entries, c
                     </>
                 ) : (
                      <div className="flex items-center justify-center h-full text-slate-500">
-                         <p>No highlights available yet.</p>
+                         <p>{T.noHighlights}</p>
                      </div>
                 )}
             </div>
@@ -193,10 +197,10 @@ const ArtifactModal: React.FC<ArtifactModalProps> = ({ type, onClose, entries, c
                          </div>
                          <div className="space-y-4">
                              <p className="font-serif text-sm text-slate-900 font-semibold animate-pulse tracking-wide">
-                                 {loadingStep === 0 && "Connecting to timeline..."}
-                                 {loadingStep === 1 && "Predicting trajectory..."}
-                                 {loadingStep === 2 && "Synthesizing emotional patterns..."}
-                                 {loadingStep >= 3 && "Drafting letter..."}
+                                 {loadingStep === 0 && T.stepConnect}
+                                 {loadingStep === 1 && T.stepPredict}
+                                 {loadingStep === 2 && T.stepPatterns}
+                                 {loadingStep >= 3 && T.stepDraft}
                              </p>
                          </div>
                      </div>
@@ -209,10 +213,10 @@ const ArtifactModal: React.FC<ArtifactModalProps> = ({ type, onClose, entries, c
                              <div className="mb-12 text-center md:text-left">
                                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-100 rounded-full mb-8">
                                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                                    <span className="text-[12px] font-semibold text-slate-500">Unlocks: {displayDate}</span>
+                                    <span className="text-[12px] font-semibold text-slate-500">{f(T.unlocks, { date: displayDate })}</span>
                                  </div>
                                  <h1 className="text-3xl md:text-5xl font-serif font-bold text-slate-900 tracking-tight leading-[1.2] mb-6">
-                                     A Letter from <br/> <span className="text-slate-400 italic">{userName} & {partnerName}</span>
+                                     {T.letterFrom} <br/> <span className="text-slate-400 italic">{f(T.names, { me: userName, partner: partnerName })}</span>
                                  </h1>
                                  <div className="w-16 h-1 bg-[#f0addd] rounded-full mb-8 md:mx-0 mx-auto"></div>
                              </div>
@@ -226,7 +230,7 @@ const ArtifactModal: React.FC<ArtifactModalProps> = ({ type, onClose, entries, c
                              <div className="mt-20 pt-10 border-t border-slate-100 flex items-center justify-between opacity-60">
                                  <div className="flex items-center gap-2">
                                      <Sparkles size={14} className="text-[#f0addd]" />
-                                     <span className="text-[13px] font-semibold text-slate-400">Bella’s prediction</span>
+                                     <span className="text-[13px] font-semibold text-slate-400">{T.prediction}</span>
                                  </div>
                              </div>
                          </div>
@@ -241,7 +245,7 @@ const ArtifactModal: React.FC<ArtifactModalProps> = ({ type, onClose, entries, c
                             className="pointer-events-auto bg-black text-white px-8 py-4 rounded-full font-bold text-sm hover:bg-slate-900 transition-all shadow-2xl hover:scale-[1.02] active:scale-95 flex items-center gap-2 backdrop-blur-xl"
                         >
                             <Lock size={14} />
-                            <span>Seal in Vault</span>
+                            <span>{T.seal}</span>
                         </button>
                     </div>
                 )}

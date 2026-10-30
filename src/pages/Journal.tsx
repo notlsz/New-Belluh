@@ -1,5 +1,6 @@
 
-import { useI18n, localQuestion } from '../i18n';
+import { useI18n, useUi, localQuestion } from '../i18n';
+import journalEntry from '../i18n/ui/journalEntry';
 import React, { useState, useRef } from 'react';
 import { EntryType, Mood } from '../types';
 import { DAILY_PROMPTS, MOOD_EMOJIS } from '../constants';
@@ -21,6 +22,7 @@ interface JournalProps {
 const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPremium, initialPrompt }) => {
   const { d, f, date } = useI18n();
   const a = d.app, c = d.app.compose;
+  const J = useUi(journalEntry), T = J.compose;
   const [content, setContent] = useState('');
   const [selectedMood, setSelectedMood] = useState<Mood | undefined>(undefined);
   // "+" opens a blank page; today's question is one tap away. Opening from the question card starts on it.
@@ -194,9 +196,9 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
       {step === 'success' ? (
         <div className="flex-1 flex flex-col items-center justify-center animate-scale-in">
            <div className="mb-8"><BelluhOrb size={96} /></div>
-           <h2 className="text-3xl font-serif text-slate-900 mb-3 text-center">Moment captured</h2>
+           <h2 className="text-3xl font-serif text-slate-900 mb-3 text-center">{T.captured}</h2>
            <p className="text-slate-500 text-[15px] text-center max-w-xs leading-relaxed">
-               {!isPrivate ? `Shared with ${partnerName || 'your partner'}.` : "Saved just for you."}
+               {!isPrivate ? f(T.sharedWith, { partner: partnerName || c.yourPartner }) : T.savedForYou}
            </p>
         </div>
       ) : (
@@ -220,8 +222,8 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
                 <div className="space-y-4 mb-4">
                     {hasImage && imagePreview && (
                         <div className="relative w-full h-48 rounded-2xl overflow-hidden shadow-sm animate-scale-in group">
-                            <img src={imagePreview} alt="Attached" className="w-full h-full object-cover" />
-                            <button onClick={handleImageClick} className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full backdrop-blur-md">
+                            <img src={imagePreview} alt={T.attachedAlt} className="w-full h-full object-cover" />
+                            <button onClick={handleImageClick} aria-label={T.removePhoto} className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full backdrop-blur-md">
                                 <X size={14} />
                             </button>
                         </div>
@@ -231,10 +233,10 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
                         <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 animate-slide-up">
                             <span className="text-slate-700">{isUploading ? <Loader2 size={18} className="animate-spin" /> : <Mic size={18} />}</span>
                             <div className="flex-1 text-xs font-bold">
-                                {isUploading ? "Saving voice note..." : uploadFailed ? "Couldn't save the recording. Your words are kept above." : "Voice note ready"}
+                                {isUploading ? T.savingVoice : uploadFailed ? T.voiceFailed : T.voiceReady}
                             </div>
                             {!isUploading && (
-                                <button onClick={handleDeleteAudio} className="p-2 text-slate-400 hover:text-red-400">
+                                <button onClick={handleDeleteAudio} aria-label={T.removeVoice} className="p-2 text-slate-400 hover:text-red-400">
                                     <X size={16} />
                                 </button>
                             )}
@@ -255,7 +257,7 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
                     <p className="text-xs text-slate-400 mb-2">{c.howFelt} <span className="text-slate-300">{c.optional}</span></p>
                     <div className="grid grid-cols-9 gap-0.5 pb-4" role="group" aria-label={`${c.howFelt} ${c.optional}`}>
                         {Object.values(Mood).map((m) => (
-                            <button key={m} type="button" aria-label={m} aria-pressed={selectedMood === m} title={m}
+                            <button key={m} type="button" aria-label={J.moods[m.toLowerCase() as keyof typeof J.moods] ?? m} aria-pressed={selectedMood === m} title={J.moods[m.toLowerCase() as keyof typeof J.moods] ?? m}
                                 onClick={() => setSelectedMood(selectedMood === m ? undefined : m)}
                                 className={`justify-self-center w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-[1.3rem] transition-all ${selectedMood === m ? 'bg-white shadow-md ring-2 ring-[#f0addd] scale-110' : selectedMood ? 'opacity-40 hover:opacity-100' : 'hover:scale-110'}`}>
                                 {MOOD_EMOJIS[m]}
@@ -264,7 +266,7 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
                     </div>
                     <div className="flex items-center justify-between gap-2">
                         <div className="flex gap-0.5 items-center min-w-0">
-                            <button onClick={handleMicClick} disabled={isBusy} aria-label={isRecording ? 'Stop recording' : 'Record a voice note'} className={`h-11 w-11 shrink-0 rounded-full flex items-center justify-center transition-all ${isRecording ? 'bg-[#fdf0f8] text-[#e58fc9]' : 'text-slate-500 hover:bg-slate-100'}`}>
+                            <button onClick={handleMicClick} disabled={isBusy} aria-label={isRecording ? T.stopRecording : T.recordVoice} className={`h-11 w-11 shrink-0 rounded-full flex items-center justify-center transition-all ${isRecording ? 'bg-[#fdf0f8] text-[#e58fc9]' : 'text-slate-500 hover:bg-slate-100'}`}>
                                 {isRecording ? <div className="w-2.5 h-2.5 bg-[#e58fc9] rounded-sm animate-pulse" /> : (isTranscribing ? <Loader2 size={18} className="animate-spin" /> : <Mic size={18} />)}
                             </button>
                             {!isRecording && !isBusy && <button onClick={handleImageClick} aria-label={c.addPhoto} className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all ${hasImage ? 'text-[#e58fc9]' : 'text-slate-500 hover:bg-slate-100'}`}><ImageIcon size={18} /></button>}

@@ -1,4 +1,5 @@
-import { useI18n } from '../i18n';
+import { useI18n, useUi } from '../i18n';
+import planActions from '../i18n/ui/planActions';
 import React, { useEffect, useState } from 'react';
 import { CalendarPlus, Check, Clock, X } from 'lucide-react';
 import { belluhAgent, type Plan } from '../services/belluhAgent';
@@ -16,8 +17,8 @@ const extraLabel = (o: { label?: string | null; starts_at: string }) => {
 const tz = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return 'America/New_York'; } };
 
 /** Downloads one event as .ics, which Apple Calendar and Outlook open directly. */
-function downloadIcs(plan: Plan, startsAt: string, minutes: number) {
-  const ics = icsCalendar(plan.title, [{ uid: `plan-${plan.id}`, title: plan.title, starts_at: startsAt, minutes, details: plan.details ?? 'Planned together in Belluh' }]);
+function downloadIcs(plan: Plan, startsAt: string, minutes: number, fallbackDetails: string) {
+  const ics = icsCalendar(plan.title, [{ uid: `plan-${plan.id}`, title: plan.title, starts_at: startsAt, minutes, details: plan.details ?? fallbackDetails }]);
   const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
   const a = document.createElement('a');
   a.href = url; a.download = `${plan.title.replace(/[^\w ]+/g, '').trim() || 'plan'}.ics`;
@@ -32,6 +33,7 @@ const PlanCard: React.FC<{ planId: string; partnerName?: string | null; onChange
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const { d: { app: { plan: pc } }, f, tag } = useI18n();
+  const T = useUi(planActions).plan;
   // Plan times the way people write them there: 11月2日(月) 19:00, lun. 2 nov. 19:00, Mon, Nov 2, 7:00 PM
   const when = (iso: string) => { try { return new Date(iso).toLocaleString(tag, { timeZone: tz(), weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch { return formatOption({ starts_at: iso }, tz()); } };
   const [calOpen, setCalOpen] = useState(false);
@@ -46,7 +48,7 @@ const PlanCard: React.FC<{ planId: string; partnerName?: string | null; onChange
 
   if (!plan || !me) return <div className="h-24 rounded-[1.75rem] bg-slate-50 animate-pulse" />;
   const mine = plan.created_by === me;
-  const other = partnerName || 'your partner';
+  const other = partnerName || T.yourPartner;
   const chosen = plan.options.find(o => o.id === plan.chosen_option);
 
   const respond = async (optionId: string | null) => {
@@ -121,7 +123,7 @@ const PlanCard: React.FC<{ planId: string; partnerName?: string | null; onChange
               <>
                 <a href={googleCalendarUrl({ uid: plan.id, title: plan.title, starts_at: chosen.starts_at, minutes: chosen.minutes, details: plan.details })} target="_blank" rel="noreferrer"
                   className="h-10 px-4 rounded-full bg-slate-900 text-white text-sm font-semibold hover:bg-black inline-flex items-center">{pc.google}</a>
-                <button onClick={() => downloadIcs(plan, chosen.starts_at, chosen.minutes)}
+                <button onClick={() => downloadIcs(plan, chosen.starts_at, chosen.minutes, T.icsDetails)}
                   className="h-10 px-4 rounded-full bg-slate-900 text-white text-sm font-semibold hover:bg-black inline-flex items-center">{pc.appleOutlook}</button>
               </>
             )}

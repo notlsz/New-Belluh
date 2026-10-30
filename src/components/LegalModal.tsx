@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { X, ArrowUp, ChevronDown } from 'lucide-react';
 import { TOS_TEXT } from '../data/Terms';
 import { PRIVACY_POLICY_TEXT } from '../data/PrivacyPolicy';
+import { useI18n, useUi } from '../i18n';
+import legalStrings from '../i18n/ui/legal';
 
 interface LegalModalProps {
   type: 'tos' | 'privacy';
@@ -66,10 +68,13 @@ function parse(text: string): { effective: string | null; sections: Section[]; i
 }
 
 const LegalModal: React.FC<LegalModalProps> = ({ type, onClose }) => {
+  // The frame follows the reader's language; the documents stay in English, the binding version
+  const T = useUi(legalStrings);
+  const { f, lang, date } = useI18n();
   const scroller = useRef<HTMLDivElement>(null);
   // Switch between the two documents without closing
   const [doc, setDoc] = useState<'tos' | 'privacy'>(type);
-  const title = doc === 'tos' ? 'Terms of Service' : 'Privacy Policy';
+  const title = doc === 'tos' ? T.tos : T.privacy;
   const { effective, sections, intro } = useMemo(() => parse(doc === 'tos' ? TOS_TEXT : PRIVACY_POLICY_TEXT), [doc]);
   const [active, setActive] = useState(sections[0]?.id ?? '');
   const [progress, setProgress] = useState(0);
@@ -98,6 +103,8 @@ const LegalModal: React.FC<LegalModalProps> = ({ type, onClose }) => {
     return () => io.disconnect();
   }, [sections]);
 
+  // "December 9, 2025" written the reader's way; left as is if it can't be read as a date
+  const effectiveOn = (s: string) => { const t = new Date(s); return Number.isNaN(t.getTime()) ? s : date(t, { year: 'numeric', month: 'long', day: 'numeric' }); };
   const go = (id: string) => { setTocOpen(false); document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   const current = sections.find(s => s.id === active) ?? sections[0];
 
@@ -144,12 +151,12 @@ const LegalModal: React.FC<LegalModalProps> = ({ type, onClose }) => {
         {/* Contents */}
         <aside className="relative hidden md:flex w-80 shrink-0 flex-col p-10 pr-6 overflow-y-auto">
           <p className="font-serif text-xl font-bold text-[#9bbecb]">Belluh</p>
-          <div role="tablist" aria-label="Document" className="mt-7 p-1 rounded-full bg-slate-100/80 flex text-[13px] font-semibold">
-            {([['tos', 'Terms'], ['privacy', 'Privacy']] as const).map(([k, l]) => (
+          <div role="tablist" aria-label={T.documentLabel} className="mt-7 p-1 rounded-full bg-slate-100/80 flex text-[13px] font-semibold">
+            {([['tos', T.tabTos], ['privacy', T.tabPrivacy]] as const).map(([k, l]) => (
               <button key={k} role="tab" aria-selected={doc === k} onClick={() => setDoc(k)} className={`flex-1 h-9 rounded-full transition-all ${doc === k ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>{l}</button>
             ))}
           </div>
-          <p className="mt-8 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-4">Contents</p>
+          <p className="mt-8 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-4">{T.contents}</p>
           <nav className="space-y-0.5">
             {sections.map(s => (
               <button key={s.id} onClick={() => go(s.id)} className={`w-full text-left flex gap-3 rounded-xl px-3 py-2 text-sm transition-colors ${active === s.id ? 'bg-slate-50 text-slate-900 font-semibold' : 'text-slate-500 hover:text-slate-900'}`}>
@@ -163,18 +170,19 @@ const LegalModal: React.FC<LegalModalProps> = ({ type, onClose }) => {
         {/* Document */}
         <div ref={scroller} onScroll={onScroll} className="relative flex-1 overflow-y-auto scroll-smooth">
           <div className="sticky top-0 z-20 h-[3px] bg-transparent" aria-hidden="true"><div className="h-full bg-gradient-to-r from-[#9bbecb] to-[#f0addd] transition-[width] duration-150" style={{ width: `${progress * 100}%` }} /></div>
-          <button onClick={onClose} aria-label="Close" className="sticky top-0 float-right z-10 m-4 md:m-6 p-2 text-slate-400 hover:text-slate-900 transition-colors">
+          <button onClick={onClose} aria-label={T.close} className="sticky top-0 float-right z-10 m-4 md:m-6 p-2 text-slate-400 hover:text-slate-900 transition-colors">
             <X size={24} />
           </button>
           <article className="max-w-3xl px-6 md:px-14 pt-12 md:pt-20 pb-28">
             {/* Phones: switch documents here */}
-            <div role="tablist" aria-label="Document" className="md:hidden mb-8 inline-flex p-1 rounded-full bg-slate-100/80 text-[13px] font-semibold">
-              {([['tos', 'Terms'], ['privacy', 'Privacy']] as const).map(([k, l]) => (
+            <div role="tablist" aria-label={T.documentLabel} className="md:hidden mb-8 inline-flex p-1 rounded-full bg-slate-100/80 text-[13px] font-semibold">
+              {([['tos', T.tabTos], ['privacy', T.tabPrivacy]] as const).map(([k, l]) => (
                 <button key={k} role="tab" aria-selected={doc === k} onClick={() => setDoc(k)} className={`h-9 px-5 rounded-full transition-all ${doc === k ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>{l}</button>
               ))}
             </div>
             <h1 className="font-serif text-5xl md:text-6xl tracking-tight text-slate-900 leading-[1.05]">{title}</h1>
-            <p className="mt-5 flex flex-wrap gap-x-6 gap-y-1 text-slate-400">{effective && <span>Effective {effective}</span>}<span>{minutes} minute read</span></p>
+            <p className="mt-5 flex flex-wrap gap-x-6 gap-y-1 text-slate-400">{effective && <span>{f(T.effective, { date: effectiveOn(effective) })}</span>}<span>{f(T.minutes, { n: minutes })}</span></p>
+            {lang !== 'en' && <p className="mt-4 text-[15px] leading-relaxed text-slate-500">{T.bindingNote}</p>}
             {intro.map(renderBlock)}
 
             {/* Phones: where you are, and every section a tap away */}
@@ -208,9 +216,9 @@ const LegalModal: React.FC<LegalModalProps> = ({ type, onClose }) => {
             ))}
 
             <div className="mt-20 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <button onClick={onClose} className="px-7 py-3.5 bg-slate-900 text-white rounded-full font-bold text-sm hover:bg-black transition-colors">I understand</button>
+              <button onClick={onClose} className="px-7 py-3.5 bg-slate-900 text-white rounded-full font-bold text-sm hover:bg-black transition-colors">{T.understand}</button>
               <button onClick={() => scroller.current?.scrollTo({ top: 0, behavior: 'smooth' })} className="inline-flex items-center gap-2 px-5 py-3.5 text-sm font-bold text-slate-500 hover:text-slate-900">
-                <ArrowUp size={16} /> Back to top
+                <ArrowUp size={16} /> {T.backToTop}
               </button>
             </div>
           </article>

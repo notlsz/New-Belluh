@@ -1,5 +1,6 @@
 
-import { useI18n, localQuestion } from '../i18n';
+import { useI18n, useUi, localQuestion } from '../i18n';
+import journalEntry from '../i18n/ui/journalEntry';
 import React, { useState, useRef } from 'react';
 import { JournalEntry } from '../types';
 import { MOOD_EMOJIS } from '../constants';
@@ -18,7 +19,8 @@ interface EntryCardProps {
 }
 
 const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onAskBelluh, onDelete, onUpdate, showContext, circleName, circleColor }) => {
-  const { d } = useI18n();
+  const { d, date, tag } = useI18n();
+  const J = useUi(journalEntry), T = J.entry;
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
@@ -26,15 +28,12 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(entry.content);
 
-  const dateStr = entry.timestamp.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  });
+  // Month and day on two lines, written the way they are where the reader lives (Nov / 2, nov. / 2, 11月 / 2日)
+  const monthStr = date(entry.timestamp, { month: 'short' });
+  const dayStr = date(entry.timestamp, { day: 'numeric' });
   
-  const timeStr = entry.timestamp.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+  let timeStr: string;
+  try { timeStr = entry.timestamp.toLocaleTimeString(tag, { hour: 'numeric', minute: '2-digit' }); } catch { timeStr = entry.timestamp.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
 
   const togglePlay = () => {
       if (!entry.audioUrl) return;
@@ -68,8 +67,8 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
     <div className="mb-8 w-full animate-fade-in relative group">
       {/* Date Marker (Side) */}
       <div className="absolute -left-20 top-6 w-12 flex flex-col items-end opacity-40 group-hover:opacity-100 transition-opacity pr-2">
-        <span className="text-[12px] font-semibold text-slate-400 leading-none">{dateStr.split(' ')[0]}</span>
-        <span className="text-sm font-serif font-bold text-slate-800 leading-none mt-1">{dateStr.split(' ')[1]}</span>
+        <span className="text-[12px] font-semibold text-slate-400 leading-none">{monthStr}</span>
+        <span className="text-sm font-serif font-bold text-slate-800 leading-none mt-1">{dayStr}</span>
       </div>
 
       {/* Main Card - Minimalist/OpenAI style */}
@@ -91,7 +90,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
                   <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-slate-900 tracking-tight">{entry.authorName}</span>
                       {!isCurrentUser && !entry.isPrivate && (
-                          <span className="px-2 py-0.5 rounded-full bg-[#CDE9F2]/70 text-[#2f6578] text-[10px] font-bold">Partner</span>
+                          <span className="px-2 py-0.5 rounded-full bg-[#CDE9F2]/70 text-[#2f6578] text-[10px] font-bold">{T.partner}</span>
                       )}
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -107,15 +106,15 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
               </div>
               {/* Private Indicator */}
               {entry.isPrivate && (
-                <div className="ml-2 flex items-center gap-1 text-slate-300 pointer-events-none select-none bg-slate-100/50 px-2 py-0.5 rounded-md" title="Private to you">
+                <div className="ml-2 flex items-center gap-1 text-slate-300 pointer-events-none select-none bg-slate-100/50 px-2 py-0.5 rounded-md" title={T.privateToYou}>
                     <Lock size={10} />
-                    <span className="text-[12px] font-semibold hidden sm:inline">Vault</span>
+                    <span className="text-[12px] font-semibold hidden sm:inline">{T.vault}</span>
                 </div>
               )}
            </div>
            <div className="flex items-center gap-3 pr-2">
               {entry.mood && (
-                  <span className="text-2xl grayscale-[0.5] group-hover:grayscale-0 transition-all opacity-80" title={entry.mood}>{MOOD_EMOJIS[entry.mood]}</span>
+                  <span className="text-2xl grayscale-[0.5] group-hover:grayscale-0 transition-all opacity-80" title={J.moods[entry.mood.toLowerCase() as keyof typeof J.moods] ?? entry.mood}>{MOOD_EMOJIS[entry.mood]}</span>
               )}
            </div>
         </div>
@@ -123,7 +122,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
         {/* Prompt */}
         {entry.prompt && (
           <div className="mb-4 relative z-10 pl-1 border-l-2 border-belluh-100 py-1">
-            <p className="text-[12px] font-semibold text-belluh-400 mb-1 opacity-80">Prompt</p>
+            <p className="text-[12px] font-semibold text-belluh-400 mb-1 opacity-80">{T.prompt}</p>
             <p className="text-sm font-medium text-slate-500 leading-snug">{localQuestion(d, entry.prompt)}</p>
           </div>
         )}
@@ -131,7 +130,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
         {/* Media */}
         {entry.mediaUrl && (
             <div className="mb-5 rounded-2xl overflow-hidden relative group/media cursor-pointer z-10 bg-slate-50 border border-slate-100">
-                <img src={entry.mediaUrl} alt="Memory" className={`w-full h-auto max-h-96 object-cover transition-transform duration-700 group-hover/media:scale-[1.02] ${entry.isPrivate ? 'grayscale-[0.5]' : ''}`} />
+                <img src={entry.mediaUrl} alt={T.memoryAlt} className={`w-full h-auto max-h-96 object-cover transition-transform duration-700 group-hover/media:scale-[1.02] ${entry.isPrivate ? 'grayscale-[0.5]' : ''}`} />
             </div>
         )}
         
@@ -140,6 +139,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
             <div className="mb-5 bg-[#fafafa] p-4 rounded-2xl flex items-center gap-4 border border-slate-100 z-10 relative group/audio hover:bg-slate-50 transition-colors">
                 <button 
                     onClick={togglePlay}
+                    aria-label={isPlaying ? T.pause : T.play}
                     className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md transition-all active:scale-90 ${isPlaying ? 'bg-belluh-400' : 'bg-slate-900 hover:bg-black'}`}
                 >
                     {isPlaying ? <Pause size={14} className="fill-current" /> : <Play size={14} className="ml-0.5 fill-current" />}
@@ -149,7 +149,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
                         <div key={i} className={`w-0.5 rounded-full transition-all duration-300 ${isPlaying ? 'bg-belluh-400 animate-pulse' : 'bg-slate-800'}`} style={{ height: `${Math.random() * 20 + 4}px`, opacity: Math.random() > 0.5 ? 1 : 0.5 }}></div>
                     ))}
                 </div>
-                <span className="text-[9px] font-bold text-slate-400 tracking-widest bg-white px-2 py-1 rounded-md border border-slate-100">VOICE</span>
+                <span className="text-[9px] font-bold text-slate-400 tracking-widest bg-white px-2 py-1 rounded-md border border-slate-100">{T.voice}</span>
             </div>
         )}
 
@@ -190,19 +190,19 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
                    <div className="flex items-center gap-0.5">
                        {isEditing ? (
                            <>
-                                <button onClick={handleSave} aria-label="Save" className="w-9 h-9 inline-flex items-center justify-center rounded-full bg-slate-900 text-white hover:bg-black transition-colors" title="Save">
+                                <button onClick={handleSave} aria-label={T.save} className="w-9 h-9 inline-flex items-center justify-center rounded-full bg-slate-900 text-white hover:bg-black transition-colors" title={T.save}>
                                     <Check size={15} />
                                 </button>
-                                <button onClick={handleCancel} aria-label="Cancel" className="w-9 h-9 inline-flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 transition-colors" title="Cancel">
+                                <button onClick={handleCancel} aria-label={T.cancel} className="w-9 h-9 inline-flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 transition-colors" title={T.cancel}>
                                     <X size={15} />
                                 </button>
                            </>
                        ) : (
                            <>
-                                <button onClick={() => setIsEditing(true)} aria-label="Edit" className="w-9 h-9 inline-flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-800 transition-colors" title="Edit">
+                                <button onClick={() => setIsEditing(true)} aria-label={T.edit} className="w-9 h-9 inline-flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-800 transition-colors" title={T.edit}>
                                     <Pencil size={15} />
                                 </button>
-                                <button onClick={onDelete} aria-label="Delete" className="w-9 h-9 inline-flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-800 transition-colors" title="Delete">
+                                <button onClick={onDelete} aria-label={T.delete} className="w-9 h-9 inline-flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-800 transition-colors" title={T.delete}>
                                     <Trash2 size={15} />
                                 </button>
                            </>
@@ -215,16 +215,16 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
                    <button
                         onClick={onAskBelluh}
                         className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-slate-500 hover:text-[#2f6578] hover:bg-[#CDE9F2]/40 transition-colors"
-                        title="Ask Belluh about this entry"
+                        title={T.askAbout}
                    >
                        <Sparkles size={15} />
-                       <span className="text-[13px] font-semibold whitespace-nowrap">Ask Belluh</span>
+                       <span className="text-[13px] font-semibold whitespace-nowrap">{T.ask}</span>
                    </button>
                )}
 
                <button 
                   onClick={() => onLike && onLike(entry.id)}
-                  aria-label={entry.isLiked ? 'Unlike' : 'Like'}
+                  aria-label={entry.isLiked ? T.unlike : T.like}
                   className={`h-9 min-w-[2.25rem] inline-flex items-center justify-center gap-1.5 px-2.5 rounded-full transition-colors duration-300 ${
                       entry.isLiked 
                       ? 'text-belluh-500 bg-belluh-50' 
