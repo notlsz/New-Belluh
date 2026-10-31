@@ -1,6 +1,7 @@
 
 import { useI18n, useUi, localQuestion } from '../i18n';
 import journalEntry from '../i18n/ui/journalEntry';
+import { Emoji } from '../lib/emoji3d';
 import React, { useState, useRef } from 'react';
 import { JournalEntry } from '../types';
 import { MOOD_EMOJIS } from '../constants';
@@ -114,7 +115,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
            </div>
            <div className="flex items-center gap-3 pr-2">
               {entry.mood && (
-                  <span className="text-2xl grayscale-[0.5] group-hover:grayscale-0 transition-all opacity-80" title={J.moods[entry.mood.toLowerCase() as keyof typeof J.moods] ?? entry.mood}>{MOOD_EMOJIS[entry.mood]}</span>
+                  <span className="text-2xl grayscale-[0.5] group-hover:grayscale-0 transition-all opacity-80" title={J.moods[entry.mood.toLowerCase() as keyof typeof J.moods] ?? entry.mood}><Emoji e={MOOD_EMOJIS[entry.mood]} size={28} /></span>
               )}
            </div>
         </div>

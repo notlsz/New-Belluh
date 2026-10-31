@@ -2,6 +2,7 @@
 import { useI18n, useUi } from '../i18n';
 import profile from '../i18n/ui/profile';
 import { calmAvatar, avatarFor } from '../lib/avatar';
+import { Emoji } from '../lib/emoji3d';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { User, LoveNote, Goal, Circle, CircleStatus, JournalEntry, Mood, RelationshipReceipt, ColorTheme } from '../types';
 import { Settings, Heart, Plus, X, Trash2, Shield, ChevronRight, Users, Check, Send, Trophy, Activity, Lock, Flame, Download, CheckCircle2, Mail, Archive, Star, FileText, Film, Edit3, Camera, UserPlus, LogOut, Infinity, ArrowRight, Play, Receipt, Share2, Instagram, Facebook, Copy, MessageCircle, Twitter, Camera as CameraIcon, Link as LinkIcon, Upload, Calendar, Clock, Gift, MoreHorizontal, PenLine, Sparkles, Maximize2, Eye, EyeOff, MoveDiagonal, RefreshCw, Palette } from 'lucide-react';
@@ -481,7 +482,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                           <div className="relative flex items-center justify-center">
                               {activeMembers.map((member, index) => (
                                   <React.Fragment key={member.id}>
-                                      <div className={`relative ${activeMembers.length <= 2 ? 'w-24 h-24 md:w-28 md:h-28' : activeMembers.length <= 4 ? 'w-20 h-20 md:w-24 md:h-24' : 'w-16 h-16 md:w-20 md:h-20'} rounded-full ring-[5px] ring-white shadow-[0_22px_44px_-18px_rgba(196,88,159,0.5)] overflow-hidden bg-gradient-to-br from-[#fde7f3] to-[#dff0f6] belluh-float belluh-wiggle ${index > 0 ? (activeMembers.length <= 4 ? '-ml-5' : '-ml-4') : ''}`} style={{ zIndex: 20 - index, ['--r' as any]: index % 2 ? '5deg' : '-5deg', animationDelay: `${index * -1.3}s` }}>
+                                      <div className={`relative ${activeMembers.length <= 2 ? 'w-24 h-24 md:w-28 md:h-28' : activeMembers.length <= 4 ? 'w-20 h-20 md:w-24 md:h-24' : 'w-16 h-16 md:w-20 md:h-20'} rounded-full ring-[5px] ring-white shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] overflow-hidden bg-[#eef7fa] belluh-float belluh-wiggle ${index > 0 ? (activeMembers.length <= 4 ? '-ml-5' : '-ml-4') : ''}`} style={{ zIndex: 20 - index, ['--r' as any]: index % 2 ? '5deg' : '-5deg', animationDelay: `${index * -1.3}s` }}>
                                           <img src={member.avatar} className="w-full h-full object-cover" alt={member.name} />
                                       </div>
                                   </React.Fragment>
@@ -497,7 +498,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                                     { n: totalMemoriesUs, label: totalMemoriesUs === 1 ? M.memory : M.memories, e: '📸', c: 'bg-[#e1f1f7] text-[#2f6b80]', r: '-2deg' },
                                 ].map((x, i) => (
                                     <div key={x.label} className={`belluh-pop rounded-[1.6rem] px-2 pt-3.5 pb-3.5 flex flex-col items-center ${x.c}`} style={{ animationDelay: `${120 + i * 80}ms` }}>
-                                        <span aria-hidden className="sticker text-[26px] leading-none inline-block" style={{ transform: `rotate(${x.r})` }}>{x.e}</span>
+                                        <Emoji e={x.e} size={32} style={{ transform: `rotate(${x.r})` }} />
                                         <p className="mt-2 font-serif text-[1.9rem] leading-none tabular-nums">{x.n}</p>
                                         <p className="mt-1.5 text-[11.5px] font-semibold leading-tight opacity-80 [text-wrap:balance]">{x.label}</p>
                                     </div>
