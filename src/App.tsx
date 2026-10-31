@@ -4,6 +4,9 @@ import BelluhOrb from './components/BelluhOrb';
 import DragonflyMark from './components/DragonflyMark';
 const LoveMap = React.lazy(() => import('./pages/LoveMap'));
 const GuidePage = React.lazy(() => import('./pages/GuidePage'));
+const MissionPage = React.lazy(() => import('./pages/company/Mission'));
+const ImpactPage = React.lazy(() => import('./pages/company/Impact'));
+const ResearchPage = React.lazy(() => import('./pages/company/Research'));
 const guideSlug = window.location.pathname.match(/^\/g\/([a-z0-9]{6,32})\/?$/i)?.[1] ?? null;
 import TabBar from './components/TabBar';
 import Journal from './pages/Journal';
@@ -97,23 +100,26 @@ const App: React.FC = () => {
   }, [sidebarCollapsed]);
   const [isOnboarding, setIsOnboarding] = useState(false);
   
-  // View State for Unauthenticated Users ('landing' | 'auth' | 'about' | 'careers' | 'acquisition' | 'report')
+  // View State for Unauthenticated Users ('landing' | 'auth' | 'about' | 'careers' | 'acquisition' | 'report' | 'mission' | 'impact' | 'research')
   const getInitialAuthView = () => {
     const path = window.location.pathname;
     if (path.startsWith('/report')) return 'report';
     if (path.startsWith('/we-have-been-acquired')) return 'acquisition';
     if (path.startsWith('/careers')) return 'careers';
+    if (path === '/mission') return 'mission';
+    if (path === '/impact') return 'impact';
+    if (path === '/research') return 'research';
     if (path === '/about') return 'about';
     if (path === '/login' || path === '/signup') return 'auth';
     return 'landing';
   };
-  const [authView, setAuthView] = useState<'landing' | 'auth' | 'about' | 'careers' | 'acquisition' | 'report'>(getInitialAuthView());
+  const [authView, setAuthView] = useState<'landing' | 'auth' | 'about' | 'careers' | 'acquisition' | 'report' | 'mission' | 'impact' | 'research'>(getInitialAuthView());
   const [recovering, setRecovering] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [authMode, setAuthMode] = useState<'login' | 'signup'>(window.location.pathname === '/login' ? 'login' : 'signup');
   // Where Log in / Start free was pressed, so Back on the login page returns there
-  const lastPublicView = useRef<'landing' | 'about' | 'careers'>('landing');
-  useEffect(() => { if (authView === 'landing' || authView === 'about' || authView === 'careers') lastPublicView.current = authView; }, [authView]);
+  const lastPublicView = useRef<'landing' | 'about' | 'careers' | 'mission' | 'impact' | 'research'>('landing');
+  useEffect(() => { if (authView !== 'auth' && authView !== 'acquisition' && authView !== 'report') lastPublicView.current = authView; }, [authView]);
   
   // App State
   // A notification opens Home with Belluh's panel up (?tab=belluh), then the address is tidied
@@ -258,6 +264,7 @@ const App: React.FC = () => {
       const path = window.location.pathname;
       if (path.startsWith('/we-have-been-acquired')) setAuthView('acquisition');
       else if (path.startsWith('/careers')) setAuthView('careers');
+      else if (path === '/mission' || path === '/impact' || path === '/research') setAuthView(path.slice(1) as 'mission');
       else if (path === '/about') setAuthView('about');
       else if (path === '/login' || path === '/signup') { setAuthMode(path === '/login' ? 'login' : 'signup'); setAuthView('auth'); }
       else setAuthView('landing');
@@ -272,6 +279,7 @@ const App: React.FC = () => {
     if (authView === 'landing' && path !== '/') window.history.pushState({}, '', '/');
     else if (authView === 'about' && path !== '/about') window.history.pushState({}, '', '/about');
     else if (authView === 'careers' && !path.startsWith('/careers')) window.history.pushState({}, '', '/careers');
+    else if ((authView === 'mission' || authView === 'impact' || authView === 'research') && path !== `/${authView}`) window.history.pushState({}, '', `/${authView}`);
     else if (authView === 'acquisition' && !path.startsWith('/we-have-been-acquired')) window.history.pushState({}, '', '/we-have-been-acquired');
     else if (authView === 'report' && !path.startsWith('/report')) window.history.pushState({}, '', '/report');
     else if (authView === 'auth' && !isAuthenticated && path !== '/login' && path !== '/signup') window.history.pushState({}, '', authMode === 'login' ? '/login' : '/signup');
@@ -1135,6 +1143,19 @@ const App: React.FC = () => {
   if (guideSlug) return <React.Suspense fallback={<div className="min-h-screen bg-[#fdf0e9]" />}><GuidePage slug={guideSlug} /></React.Suspense>;
   if (isLoading) return <div className="min-h-screen bg-[#fcfcfc] flex flex-col items-center justify-center gap-5" role="status" aria-label={T.opening}><DragonflyMark size={64} rippleOnMount={false} className="animate-pulse" />{opening && <p className="text-sm text-slate-400">{T.opening}</p>}</div>;
   if (showAdmin && isUserAdmin) return <AdminMetrics onBack={() => setShowAdmin(false)} />;
+
+  // The company pages are for everyone, signed in or not
+  if (authView === 'mission' || authView === 'impact' || authView === 'research') {
+      const Page = { mission: MissionPage, impact: ImpactPage, research: ResearchPage }[authView];
+      return (
+        <>
+          <React.Suspense fallback={<div className="min-h-screen bg-[#fffefd]" />}>
+            <Page onGetStarted={() => { setAuthMode('signup'); setAuthView('auth'); }} onLogin={() => { setAuthMode('login'); setAuthView('auth'); }} onShowLegal={(type) => setLegalModalOpen(type)} />
+          </React.Suspense>
+          {legalModalOpen && <LegalModal type={legalModalOpen} onClose={() => setLegalModalOpen(null)} />}
+        </>
+      );
+  }
 
   if (!isAuthenticated) {
       if (authView === 'landing') {

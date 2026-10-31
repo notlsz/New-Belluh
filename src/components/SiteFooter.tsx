@@ -2,7 +2,9 @@ import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import BelluhOrb from './BelluhOrb';
 import { belluh } from '../lib/belluhPresence';
-import { useI18n, LANGS, type Lang } from '../i18n';
+import { useI18n, useUi, LANGS, type Lang } from '../i18n';
+import siteUi from '../i18n/ui/site';
+import { go as goTo } from '../lib/go';
 
 // The site footer, shared by the landing page, Careers and Our Why. Section links scroll on the landing page and
 // go home first everywhere else.
@@ -16,7 +18,7 @@ const SiteFooter: React.FC<{
   onGoToCareers: () => void;
 }> = ({ onTop, onSection, onGetStarted, onLogin, onShowLegal, onGoToAbout, onGoToCareers }) => {
   const { d, lang, setLang } = useI18n();
-  const t = d.footer, n = d.nav;
+  const t = d.footer, n = d.nav, S = useUi(siteUi);
   return (
   <footer className="relative z-10 overflow-hidden bg-[#F8FAFB]">
       <div className="max-w-7xl mx-auto px-6 pt-16 md:pt-24 pb-10">
@@ -33,7 +35,7 @@ const SiteFooter: React.FC<{
               </div>
               {[
                   { title: t.product, links: [[n.meet, () => onSection('at-work')], [n.inside, () => onSection('inside')], [n.stories, () => onSection('stories')], [n.pricing, () => onSection('pricing')], [n.faq, () => onSection('faq')]] },
-                  { title: t.company, links: [[n.why, onGoToAbout], [n.careers, onGoToCareers], [d.common.logIn, onLogin]] },
+                  { title: t.company, links: [[S.mission, () => goTo('/mission')], [S.impact, () => goTo('/impact')], [S.research, () => goTo('/research')], [n.why, onGoToAbout], [n.careers, onGoToCareers], [d.common.logIn, onLogin]] },
                   { title: t.legal, links: [[t.terms, () => onShowLegal('tos')], [t.privacyPolicy, () => onShowLegal('privacy')]] },
               ].map(col => (
                   <div key={col.title} className="md:col-span-2 last:md:col-span-3">
