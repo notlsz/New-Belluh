@@ -14,6 +14,7 @@ import DragonflyMark from '../components/DragonflyMark';
 import { belluh } from '../lib/belluhPresence';
 import { useI18n, useUi } from '../i18n';
 import science from '../i18n/ui/science';
+import understood from '../i18n/ui/understood';
 
 
 // Priced from what a couple costs to run, not from what the market will bear: AI for both partners, texting, the odd
@@ -112,31 +113,6 @@ function GiftCalendar({ min, value, ink, onPick }: { min: Date; value: string; i
   );
 }
 
-const GIFTS_GIVEN = 17945;
-
-/** Counts up to the number of gifts given when it scrolls into view. */
-function GiftCount() {
-  const { num } = useI18n();
-  const ref = React.useRef<HTMLSpanElement>(null);
-  const [n, setN] = React.useState(GIFTS_GIVEN);
-  React.useEffect(() => {
-    const el = ref.current;
-    if (!el || typeof IntersectionObserver === 'undefined') return;
-    try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch { /* fine */ }
-    setN(Math.round(GIFTS_GIVEN * 0.9));
-    let raf = 0;
-    const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      io.disconnect();
-      const start = performance.now(), from = Math.round(GIFTS_GIVEN * 0.9);
-      const tick = (t: number) => { const k = Math.min(1, (t - start) / 1600); setN(Math.round(from + (GIFTS_GIVEN - from) * (1 - Math.pow(1 - k, 3)))); if (k < 1) raf = requestAnimationFrame(tick); };
-      raf = requestAnimationFrame(tick);
-    }, { threshold: 0.6 });
-    io.observe(el);
-    return () => { io.disconnect(); cancelAnimationFrame(raf); };
-  }, []);
-  return <span ref={ref} className="tabular-nums">{num(n)}</span>;
-}
 
 function GiftSection() {
   const { d, f, date } = useI18n();
@@ -266,7 +242,6 @@ function GiftSection() {
             <span className="text-slate-900">{g.title1}</span><br /><span className="text-slate-900">{g.title2}</span>
           </h2>
           <p className="mt-6 text-lg text-slate-500 font-light leading-relaxed">{g.sub}</p>
-          <p className="mt-7 inline-flex items-baseline gap-2 text-slate-500"><span className="font-serif text-2xl text-slate-900"><GiftCount /></span><span className="text-[15px]">{g.given}</span></p>
         </div>
 
         <div className="mt-14 md:mt-16 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
@@ -391,6 +366,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
   const [pastHero, setPastHero] = useState(false);
   const heroTap = useShapeTap();
   const SC = useUi(science);
+  const LU = useUi(understood);
   const ctaTap = useShapeTap();
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
   useEffect(() => { const onR = () => setIsDesktop(window.innerWidth >= 768); window.addEventListener('resize', onR); return () => window.removeEventListener('resize', onR); }, []);
@@ -681,6 +657,31 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
         </div>
       </section>
       
+      {/* "Love, understood.": the old belluh.com's strongest points, a sample weekly insight and three abilities, text-led */}
+      <section id="understood" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
+          <div className="max-w-5xl mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] gap-10 lg:gap-20 items-center">
+                  <div>
+                      <h2 className="font-serif text-[2.4rem] md:text-6xl leading-[1.05] tracking-tight text-slate-900 [text-wrap:balance]">{LU.title}</h2>
+                      <p className="mt-5 text-[17px] md:text-lg text-slate-500 leading-relaxed max-w-md [text-wrap:pretty]">{LU.sub}</p>
+                  </div>
+                  <figure className="rounded-[28px] bg-white/80 ring-1 ring-slate-200/70 shadow-[0_20px_60px_-30px_rgba(63,116,134,0.35)] px-7 py-8 md:px-9 md:py-10">
+                      <p className="text-xs font-semibold text-[#3f7486]">{LU.insightLabel}</p>
+                      <blockquote className="mt-4 font-serif text-[1.45rem] md:text-[1.75rem] leading-snug text-slate-900 [text-wrap:balance]">{LU.insight}</blockquote>
+                      <figcaption className="mt-5 text-sm text-slate-500">{LU.insightFrom}</figcaption>
+                  </figure>
+              </div>
+              <div className="mt-16 md:mt-24 grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
+                  {LU.abilities.map(x => (
+                      <div key={x.title}>
+                          <p className="font-serif text-[1.35rem] md:text-2xl leading-snug text-slate-900 [text-wrap:balance]">{x.title}</p>
+                          <p className="mt-3 text-[15px] md:text-base text-slate-600 leading-relaxed [text-wrap:pretty]">{x.body}</p>
+                      </div>
+                  ))}
+              </div>
+          </div>
+      </section>
+
       {/* Relationship science, as Hinge does with its research, but with the actual studies: a quiet list, no cards */}
       <section id="science" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
           <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_1.15fr] gap-10 lg:gap-20">
