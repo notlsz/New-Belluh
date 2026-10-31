@@ -536,43 +536,58 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                                           <Heart size={22} className="mx-auto text-[#f0addd]" />
                                           <p className="mt-4 font-serif text-2xl text-slate-900">{M.inviteTitle}</p>
                                           <p className="mt-2 text-[15px] text-slate-500 leading-relaxed max-w-sm mx-auto">{M.inviteBody}</p>
-                                          <button onClick={() => setIsEditingFacts(true)} className="mt-6 h-11 px-6 rounded-full bg-slate-900 text-white text-sm font-semibold hover:bg-black">{M.inviteButton}</button>
+                                          <button onClick={() => setIsEditingFacts(true)} className="mt-6 h-11 px-6 rounded-full bg-[#5e9db3] text-white text-sm font-semibold hover:bg-[#4f8ea4]">{M.inviteButton}</button>
                                       </div>
                                   );
+                                  // A bento of your dates, after Pampam and Zenly: a big "days together" tile, then a tile per date,
+                                  // each its own solid pastel with a 3D emoji. Tiles side by side are the same size.
+                                  const TILE: Record<string, { e: string; bg: string; ink: string; span: string }> = {
+                                      anniversary: { e: '💞', bg: 'bg-[#fde7f3]', ink: 'text-[#8f2a66]', span: 'col-span-1 md:col-span-2' },
+                                      firstMet: { e: '🫂', bg: 'bg-[#e1f1f7]', ink: 'text-[#2f6b80]', span: 'col-span-1 md:col-span-2' },
+                                      firstDate: { e: '🥂', bg: 'bg-[#fff1d6]', ink: 'text-[#8a5300]', span: 'col-span-1 md:col-span-2' },
+                                      firstKiss: { e: '💗', bg: 'bg-[#ede7fb]', ink: 'text-[#5b3fa0]', span: 'col-span-1 md:col-span-3' },
+                                      partnerBday: { e: '🎂', bg: 'bg-[#e3f5dc]', ink: 'text-[#3d6b2c]', span: 'col-span-2 md:col-span-3' },
+                                  };
                                   return (
-                                      <div className="rounded-[2rem] bg-white border border-slate-100 px-6 py-6">
+                                      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                                           {days !== null && !isEditingFacts && (
-                                              <div className="pb-5 mb-2">
-                                                  <p className="font-serif text-4xl text-slate-900 tracking-tight">{num(days)} <span className="text-slate-400 text-2xl">{days === 1 ? M.dayTogether : M.daysTogether}</span></p>
-                                                  {(() => {
-                                                      // The next moment worth marking: a 100-day milestone (day 100, day 1,000) or the anniversary, whichever comes first
-                                                      const mark = days < 1000 ? Math.ceil((days + 1) / 100) * 100 : Math.ceil((days + 1) / 1000) * 1000;
-                                                      const toMark = mark - days;
-                                                      const annivIn = nextAnniv === 'Today' ? 0 : nextAnniv === 'Tomorrow' ? 1 : nextAnniv ? parseInt(nextAnniv, 10) : NaN;
-                                                      const line = !isNaN(annivIn) && annivIn <= toMark
-                                                          ? (annivIn === 0 ? M.anniversaryToday : fill(M.anniversaryIn, { d: annivIn, days: annivIn === 1 ? M.day : M.days }))
-                                                          : fill(M.dayIn, { n: num(mark), d: toMark, days: toMark === 1 ? M.day : M.days });
-                                                      return <p className="mt-2 text-sm text-[#3f7486]">{line}</p>;
-                                                  })()}
+                                              <div className="belluh-pop col-span-2 md:col-span-6 rounded-[2rem] bg-white border border-slate-100 shadow-[0_8px_30px_-18px_rgba(15,23,42,0.25)] p-6 flex items-center gap-5">
+                                                  <Emoji e="🥰" size={60} />
+                                                  <div className="min-w-0">
+                                                      <p className="font-serif text-5xl text-slate-900 tracking-tight leading-none tabular-nums">{num(days)}</p>
+                                                      <p className="mt-1.5 text-[15px] font-semibold text-slate-500">{days === 1 ? M.dayTogether : M.daysTogether}</p>
+                                                      {(() => {
+                                                          // The next moment worth marking: a 100-day milestone (day 100, day 1,000) or the anniversary, whichever comes first
+                                                          const mark = days < 1000 ? Math.ceil((days + 1) / 100) * 100 : Math.ceil((days + 1) / 1000) * 1000;
+                                                          const toMark = mark - days;
+                                                          const annivIn = nextAnniv === 'Today' ? 0 : nextAnniv === 'Tomorrow' ? 1 : nextAnniv ? parseInt(nextAnniv, 10) : NaN;
+                                                          const line = !isNaN(annivIn) && annivIn <= toMark
+                                                              ? (annivIn === 0 ? M.anniversaryToday : fill(M.anniversaryIn, { d: annivIn, days: annivIn === 1 ? M.day : M.days }))
+                                                              : fill(M.dayIn, { n: num(mark), d: toMark, days: toMark === 1 ? M.day : M.days });
+                                                          return <p className="mt-1 text-sm font-semibold text-[#3f7486]">{line}</p>;
+                                                      })()}
+                                                  </div>
                                               </div>
                                           )}
-                                          {rows.map(r => {
+                                          {rows.map((r, i) => {
                                               const d = f[r.key];
-                                              const Icon = r.icon;
+                                              const t = TILE[r.key];
                                               return (
-                                                  <div key={r.key} className="flex items-center gap-4 py-3">
-                                                      <Icon size={18} strokeWidth={1.75} className="shrink-0 text-slate-400" />
-                                                      <span className="flex-1 min-w-0 text-[15px] text-slate-700">{r.label}</span>
-                                                      {isEditingFacts ? (
-                                                          <input type="date" aria-label={r.label} value={toInput(d)} onChange={e => setFacts({ ...facts, [r.key]: fromInput(e.target.value) })} className="h-10 rounded-xl border border-slate-200 px-3 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#9bbecb]" />
-                                                      ) : isSet(d) ? (
-                                                          <span className="text-right">
-                                                              <span className="block text-[15px] font-medium text-slate-900">{fmtDate(d, { month: 'short', day: 'numeric', year: r.mode === 'past' ? 'numeric' : undefined })}</span>
-                                                              <span className="block text-xs text-slate-400">{relative(d, r.mode)}</span>
-                                                          </span>
-                                                      ) : (
-                                                          <button onClick={() => setIsEditingFacts(true)} className="text-sm font-semibold text-[#3f7486] hover:text-slate-900">{L.common.add}</button>
-                                                      )}
+                                                  <div key={r.key} className={`belluh-pop ${t.span} ${t.bg} rounded-[1.75rem] p-5 min-h-[150px] flex flex-col justify-between gap-4`} style={{ animationDelay: `${80 + i * 60}ms` }}>
+                                                      <Emoji e={t.e} size={40} />
+                                                      <div className="min-w-0">
+                                                          <p className={`text-[13px] font-bold ${t.ink}`}>{r.label}</p>
+                                                          {isEditingFacts ? (
+                                                              <input type="date" aria-label={r.label} value={toInput(d)} onChange={e => setFacts({ ...facts, [r.key]: fromInput(e.target.value) })} className="mt-2 h-10 w-full rounded-xl border border-white bg-white/80 px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#9bbecb]" />
+                                                          ) : isSet(d) ? (
+                                                              <>
+                                                                  <p className="mt-1 font-serif text-[1.12rem] sm:text-[1.35rem] leading-tight text-slate-900 whitespace-nowrap">{fmtDate(d, { month: 'short', day: 'numeric', year: r.mode === 'past' ? 'numeric' : undefined })}</p>
+                                                                  <p className={`mt-0.5 text-xs font-semibold opacity-75 ${t.ink}`}>{relative(d, r.mode)}</p>
+                                                              </>
+                                                          ) : (
+                                                              <button onClick={() => setIsEditingFacts(true)} className={`mt-1 text-[15px] font-bold ${t.ink} hover:opacity-70`}>+&#xFE0E; {L.common.add}</button>
+                                                          )}
+                                                      </div>
                                                   </div>
                                               );
                                           })}
