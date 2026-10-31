@@ -5,12 +5,11 @@ import { calmAvatar, avatarFor } from '../lib/avatar';
 import { Emoji } from '../lib/emoji3d';
 import bentoUi from '../i18n/ui/bento';
 // The couple's own tiles: favorites, dislikes, their song, anything
-type CustomTile = { id: string; title: string; value: string; emoji: string; size: TileSize };
+type CustomTile = { id: string; title: string; value: string; emoji: string; size: TileSize; w?: number; h?: number };
 type TileSize = 'S' | 'M' | 'L';
 const CUSTOM_EMOJI = ['🌷', '🍣', '🎵', '🙅', '☕', '🐶', '🎬', '✨', '🍕', '💐', '🎁', '📚'];
 const TILE_COLORS = [{ bg: 'bg-[#fde7f3]', ink: 'text-[#8f2a66]' }, { bg: 'bg-[#e1f1f7]', ink: 'text-[#2f6b80]' }, { bg: 'bg-[#fff1d6]', ink: 'text-[#8a5300]' }, { bg: 'bg-[#ede7fb]', ink: 'text-[#5b3fa0]' }, { bg: 'bg-[#e3f5dc]', ink: 'text-[#3d6b2c]' }, { bg: 'bg-[#ffe4d6]', ink: 'text-[#8f3f1c]' }];
-// Sizes on the 6-column bento (laptops) and the 2-column one (phones)
-const SPAN: Record<TileSize, string> = { S: 'col-span-1 md:col-span-2', M: 'col-span-1 md:col-span-3', L: 'col-span-2 md:col-span-6' };
+import DragBento, { type BentoItem } from '../components/DragBento';
 const OurWorld = React.lazy(() => import('../components/OurWorld'));
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { User, LoveNote, Goal, Circle, CircleStatus, JournalEntry, Mood, RelationshipReceipt, ColorTheme } from '../types';
@@ -240,6 +239,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
   });
   const [isEditingFacts, setIsEditingFacts] = useState(false);
   const [customs, setCustoms] = useState<CustomTile[]>([]);
+  const [tileOrder, setTileOrder] = useState<string[]>([]);
   const B = useUi(bentoUi);
 
   // Avatar Upload State
@@ -276,6 +276,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                 anniversary: fromStored(parsed.anniversary),
             });
             if (parsed.configs) setFactConfigs(prev => ({...prev, ...parsed.configs}));
+            if (Array.isArray(parsed.order)) setTileOrder(parsed.order.filter((x: any) => typeof x === 'string').slice(0, 60));
             if (Array.isArray(parsed.custom)) setCustoms(parsed.custom.filter((c: any) => c && typeof c.title === 'string').slice(0, 24));
         } catch (e) { console.error("Failed to parse relationship facts", e); }
     }
@@ -384,7 +385,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
     setIsEditingFacts(false);
     const keep = (d: Date) => (isSet(d) ? toInput(d) : null);
     const payload = { firstMet: keep(facts.firstMet), firstKiss: keep(facts.firstKiss), firstDate: keep(facts.firstDate), partnerBday: keep(facts.partnerBday), anniversary: keep(facts.anniversary), configs: factConfigs };
-    const factsText = JSON.stringify({ ...payload, custom: customs.filter(c => c.title.trim() || c.value.trim()).map(c => ({ ...c, title: c.title.slice(0, 40), value: c.value.slice(0, 160) })) });
+    const factsText = JSON.stringify({ ...payload, order: tileOrder, custom: customs.filter(c => c.title.trim() || c.value.trim()).map(c => ({ ...c, title: c.title.slice(0, 40), value: c.value.slice(0, 160) })) });
     try {
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         if (!currentUser) return;
@@ -553,32 +554,78 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                                   );
                                   // A bento of your dates, after Pampam and Zenly: a big "days together" tile, then a tile per date,
                                   // each its own solid pastel with a 3D emoji. Tiles side by side are the same size.
-                                  const TILE: Record<string, { e: string; bg: string; ink: string; size: TileSize }> = {
-                                      anniversary: { e: '💞', ...TILE_COLORS[0], size: 'S' },
-                                      firstMet: { e: '🫂', ...TILE_COLORS[1], size: 'S' },
-                                      firstDate: { e: '🥂', ...TILE_COLORS[2], size: 'S' },
-                                      firstKiss: { e: '💗', ...TILE_COLORS[3], size: 'M' },
-                                      partnerBday: { e: '🎂', ...TILE_COLORS[4], size: 'M' },
+                                  const TILE: Record<string, { e: string; bg: string; ink: string; w: number }> = {
+                                      anniversary: { e: '💞', ...TILE_COLORS[0], w: 2 },
+                                      firstMet: { e: '🫂', ...TILE_COLORS[1], w: 2 },
+                                      firstDate: { e: '🥂', ...TILE_COLORS[2], w: 2 },
+                                      firstKiss: { e: '💗', ...TILE_COLORS[3], w: 3 },
+                                      partnerBday: { e: '🎂', ...TILE_COLORS[4], w: 3 },
                                   };
-                                  const sizeOf = (key: string, fallback: TileSize): TileSize => { const v = factConfigs[key]?.size; return v === 'S' || v === 'M' || v === 'L' ? v : fallback; };
-                                  const setSize = (key: string, v: TileSize) => setFactConfigs(prev => ({ ...prev, [key]: { ...(prev[key] ?? { hidden: false }), size: v } }));
-                                  // While editing, every tile can be resized: small, medium, or the whole row
-                                  const Sizer = ({ value, onPick, onRemove }: { value: TileSize; onPick: (v: TileSize) => void; onRemove?: () => void }) => (
-                                      <div className="absolute top-3 right-3 flex items-center gap-1">
-                                          <div role="radiogroup" aria-label={B.size} className="h-8 p-0.5 rounded-full bg-white/80 flex items-center text-[11px] font-bold">
-                                              {(['S', 'M', 'L'] as TileSize[]).map(v => (
-                                                  <button key={v} type="button" role="radio" aria-checked={value === v} onClick={() => onPick(v)} className={`w-7 h-7 rounded-full ${value === v ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>{v === 'S' ? B.small : v === 'M' ? B.medium : B.large}</button>
-                                              ))}
-                                          </div>
-                                          {onRemove && <button type="button" onClick={onRemove} aria-label={B.remove} className="w-8 h-8 rounded-full bg-white/80 text-slate-500 hover:text-slate-900 font-bold">✕&#xFE0E;</button>}
-                                      </div>
-                                  );
+                                  const LEGACY: Record<string, number> = { S: 2, M: 3, L: 6 };
+                                  const dims = (key: string, fallbackW: number) => { const c: any = factConfigs[key] ?? {}; return { w: c.w ?? LEGACY[c.size] ?? fallbackW, h: c.h ?? 1 }; };
                                   const updateCustom = (id: string, p: Partial<CustomTile>) => setCustoms(cs => cs.map(c => c.id === id ? { ...c, ...p } : c));
-                                  const addCustom = (title: string) => { setCustoms(cs => [...cs, { id: Math.random().toString(36).slice(2, 10), title, value: '', emoji: CUSTOM_EMOJI[cs.length % CUSTOM_EMOJI.length], size: 'S' }]); setIsEditingFacts(true); };
+                                  const addCustom = (title: string) => { setCustoms(cs => [...cs, { id: Math.random().toString(36).slice(2, 10), title, value: '', emoji: CUSTOM_EMOJI[cs.length % CUSTOM_EMOJI.length], size: 'S', w: 2, h: 1 }]); setIsEditingFacts(true); };
+                                  const items: BentoItem[] = [
+                                      ...rows.map(r => {
+                                          const d = f[r.key], t = TILE[r.key];
+                                          return { id: r.key, ...dims(r.key, t.w), node: (
+                                              <div className={`h-full ${t.bg} rounded-[1.75rem] p-5 flex flex-col justify-between gap-4`}>
+                                                  <Emoji e={t.e} size={40} />
+                                                  <div className="min-w-0">
+                                                      <p className={`text-[13px] font-bold ${t.ink}`}>{r.label}</p>
+                                                      {isEditingFacts ? (
+                                                          <input type="date" aria-label={r.label} value={toInput(d)} onChange={e => setFacts({ ...facts, [r.key]: fromInput(e.target.value) })} className="mt-2 h-10 w-full rounded-xl border border-white bg-white/80 px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#9bbecb]" />
+                                                      ) : isSet(d) ? (
+                                                          <>
+                                                              <p className="mt-1 font-serif text-[1.12rem] sm:text-[1.35rem] leading-tight text-slate-900 whitespace-nowrap">{fmtDate(d, { month: 'short', day: 'numeric', year: r.mode === 'past' ? 'numeric' : undefined })}</p>
+                                                              <p className={`mt-0.5 text-xs font-semibold opacity-75 ${t.ink}`}>{relative(d, r.mode)}</p>
+                                                          </>
+                                                      ) : (
+                                                          <button onClick={() => setIsEditingFacts(true)} className={`mt-1 text-[15px] font-bold ${t.ink} hover:opacity-70`}>+&#xFE0E; {L.common.add}</button>
+                                                      )}
+                                                  </div>
+                                              </div>
+                                          ) };
+                                      }),
+                                      ...customs.filter(c => isEditingFacts || c.title.trim() || c.value.trim()).map((c, i) => {
+                                          const col = TILE_COLORS[(i + 5) % TILE_COLORS.length];
+                                          return { id: c.id, w: c.w ?? LEGACY[c.size] ?? 2, h: c.h ?? 1, node: (
+                                              <div className={`relative h-full ${col.bg} rounded-[1.75rem] p-5 flex flex-col justify-between gap-4`}>
+                                                  {isEditingFacts
+                                                      ? <button type="button" onClick={() => updateCustom(c.id, { emoji: CUSTOM_EMOJI[(CUSTOM_EMOJI.indexOf(c.emoji) + 1) % CUSTOM_EMOJI.length] })} aria-label={B.emoji} className="self-start"><Emoji e={c.emoji} size={40} /></button>
+                                                      : <Emoji e={c.emoji} size={40} />}
+                                                  {isEditingFacts && <button type="button" onClick={() => setCustoms(cs => cs.filter(x => x.id !== c.id))} aria-label={B.remove} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 text-slate-500 hover:text-slate-900 font-bold">✕&#xFE0E;</button>}
+                                                  {isEditingFacts ? (
+                                                      <div className="space-y-2">
+                                                          <input value={c.title} onChange={e => updateCustom(c.id, { title: e.target.value.slice(0, 40) })} placeholder={B.titlePh} aria-label={B.titlePh} className={`w-full h-9 rounded-xl bg-white/80 px-3 text-[13px] font-bold ${col.ink} placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9bbecb]`} />
+                                                          <input value={c.value} onChange={e => updateCustom(c.id, { value: e.target.value.slice(0, 160) })} placeholder={B.valuePh} aria-label={B.valuePh} className="w-full h-10 rounded-xl bg-white/80 px-3 font-serif text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9bbecb]" />
+                                                      </div>
+                                                  ) : (
+                                                      <div className="min-w-0">
+                                                          <p className={`text-[13px] font-bold ${col.ink}`}>{c.title}</p>
+                                                          <p className="mt-1 font-serif text-[1.12rem] sm:text-[1.35rem] leading-snug text-slate-900 [text-wrap:pretty]">{c.value}</p>
+                                                      </div>
+                                                  )}
+                                              </div>
+                                          ) };
+                                      }),
+                                  ];
+                                  // The order they arranged, with anything new at the end
+                                  const rank = (id: string) => { const k = tileOrder.indexOf(id); return k < 0 ? 1000 + items.findIndex(x => x.id === id) : k; };
+                                  items.sort((a, b) => rank(a.id) - rank(b.id));
+                                  const move = (dragId: string, overId: string) => {
+                                      const ids = items.map(x => x.id).filter(x => x !== dragId);
+                                      ids.splice(ids.indexOf(overId) + (items.findIndex(x => x.id === dragId) < items.findIndex(x => x.id === overId) ? 1 : 0), 0, dragId);
+                                      setTileOrder(ids);
+                                  };
+                                  const resize = (id: string, w: number, h: number) => {
+                                      if (customs.some(c => c.id === id)) updateCustom(id, { w, h });
+                                      else setFactConfigs(prev => ({ ...prev, [id]: { ...(prev[id] ?? { hidden: false, size: 'standard' }), w, h } as any }));
+                                  };
                                   return (
-                                      <div className="grid grid-cols-2 md:grid-cols-6 gap-3 grid-flow-row-dense">
-                                          {days !== null && !isEditingFacts && (
-                                              <div className="belluh-pop col-span-2 md:col-span-6 rounded-[2rem] bg-white border border-slate-100 shadow-[0_8px_30px_-18px_rgba(15,23,42,0.25)] p-6 flex items-center gap-5">
+                                      <DragBento items={items} editing={isEditingFacts} onMove={move} onSize={resize} resizeLabel={B.size}
+                                          head={days !== null && !isEditingFacts ? (
+                                              <div className="belluh-pop rounded-[2rem] bg-white border border-slate-100 shadow-[0_8px_30px_-18px_rgba(15,23,42,0.25)] p-6 flex items-center gap-5" style={{ gridColumn: '1 / -1' }}>
                                                   <Emoji e="🥰" size={60} />
                                                   <div className="min-w-0">
                                                       <p className="font-serif text-5xl text-slate-900 tracking-tight leading-none tabular-nums">{num(days)}</p>
@@ -595,63 +642,18 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                                                       })()}
                                                   </div>
                                               </div>
-                                          )}
-                                          {rows.map((r, i) => {
-                                              const d = f[r.key];
-                                              const t = TILE[r.key];
-                                              return (
-                                                  <div key={r.key} className={`relative belluh-pop ${SPAN[sizeOf(r.key, t.size)]} ${t.bg} rounded-[1.75rem] p-5 min-h-[150px] flex flex-col justify-between gap-4`} style={{ animationDelay: `${80 + i * 60}ms` }}>
-                                                      <Emoji e={t.e} size={40} />
-                                                      {isEditingFacts && <Sizer value={sizeOf(r.key, t.size)} onPick={v => setSize(r.key, v)} />}
-                                                      <div className="min-w-0">
-                                                          <p className={`text-[13px] font-bold ${t.ink}`}>{r.label}</p>
-                                                          {isEditingFacts ? (
-                                                              <input type="date" aria-label={r.label} value={toInput(d)} onChange={e => setFacts({ ...facts, [r.key]: fromInput(e.target.value) })} className="mt-2 h-10 w-full rounded-xl border border-white bg-white/80 px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#9bbecb]" />
-                                                          ) : isSet(d) ? (
-                                                              <>
-                                                                  <p className="mt-1 font-serif text-[1.12rem] sm:text-[1.35rem] leading-tight text-slate-900 whitespace-nowrap">{fmtDate(d, { month: 'short', day: 'numeric', year: r.mode === 'past' ? 'numeric' : undefined })}</p>
-                                                                  <p className={`mt-0.5 text-xs font-semibold opacity-75 ${t.ink}`}>{relative(d, r.mode)}</p>
-                                                              </>
-                                                          ) : (
-                                                              <button onClick={() => setIsEditingFacts(true)} className={`mt-1 text-[15px] font-bold ${t.ink} hover:opacity-70`}>+&#xFE0E; {L.common.add}</button>
-                                                          )}
-                                                      </div>
+                                          ) : null}
+                                          tail={
+                                              <div className="rounded-[1.75rem] border-2 border-dashed border-slate-200 p-4" style={{ gridColumn: '1 / -1' }}>
+                                                  <p className="text-[13px] font-bold text-slate-500 inline-flex items-center gap-1.5"><span className="text-base leading-none">+&#xFE0E;</span> {B.addOwn}</p>
+                                                  <div className="mt-2.5 flex flex-wrap gap-2">
+                                                      {B.ideas.filter(x => !customs.some(c => c.title === x)).map(x => (
+                                                          <button key={x} type="button" onClick={() => addCustom(x)} className="h-9 px-3.5 rounded-full bg-slate-100 hover:bg-slate-200 text-[13px] font-semibold text-slate-700">{x}</button>
+                                                      ))}
+                                                      <button type="button" onClick={() => addCustom('')} className="h-9 w-9 rounded-full bg-slate-900 text-white text-lg font-bold" aria-label={B.addOwn}>+&#xFE0E;</button>
                                                   </div>
-                                              );
-                                          })}
-                                          {customs.filter(c => isEditingFacts || c.title.trim() || c.value.trim()).map((c, i) => {
-                                              const col = TILE_COLORS[(i + 5) % TILE_COLORS.length];
-                                              return (
-                                                  <div key={c.id} className={`relative belluh-pop ${SPAN[c.size]} ${col.bg} rounded-[1.75rem] p-5 min-h-[150px] flex flex-col justify-between gap-4`}>
-                                                      {isEditingFacts
-                                                          ? <button type="button" onClick={() => updateCustom(c.id, { emoji: CUSTOM_EMOJI[(CUSTOM_EMOJI.indexOf(c.emoji) + 1) % CUSTOM_EMOJI.length] })} aria-label={B.emoji} className="self-start"><Emoji e={c.emoji} size={40} /></button>
-                                                          : <Emoji e={c.emoji} size={40} />}
-                                                      {isEditingFacts && <Sizer value={c.size} onPick={v => updateCustom(c.id, { size: v })} onRemove={() => setCustoms(cs => cs.filter(x => x.id !== c.id))} />}
-                                                      {isEditingFacts ? (
-                                                          <div className="space-y-2">
-                                                              <input value={c.title} onChange={e => updateCustom(c.id, { title: e.target.value.slice(0, 40) })} placeholder={B.titlePh} aria-label={B.titlePh} className={`w-full h-9 rounded-xl bg-white/80 px-3 text-[13px] font-bold ${col.ink} placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9bbecb]`} />
-                                                              <input value={c.value} onChange={e => updateCustom(c.id, { value: e.target.value.slice(0, 160) })} placeholder={B.valuePh} aria-label={B.valuePh} className="w-full h-10 rounded-xl bg-white/80 px-3 font-serif text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9bbecb]" />
-                                                          </div>
-                                                      ) : (
-                                                          <div className="min-w-0">
-                                                              <p className={`text-[13px] font-bold ${col.ink}`}>{c.title}</p>
-                                                              <p className="mt-1 font-serif text-[1.12rem] sm:text-[1.35rem] leading-snug text-slate-900 [text-wrap:pretty]">{c.value}</p>
-                                                          </div>
-                                                      )}
-                                                  </div>
-                                              );
-                                          })}
-                                          {/* Their own tiles: one tap on an idea, or start from blank */}
-                                          <div className="col-span-2 md:col-span-6 rounded-[1.75rem] border-2 border-dashed border-slate-200 p-4">
-                                              <p className="text-[13px] font-bold text-slate-500 inline-flex items-center gap-1.5"><span className="text-base leading-none">+&#xFE0E;</span> {B.addOwn}</p>
-                                              <div className="mt-2.5 flex flex-wrap gap-2">
-                                                  {B.ideas.filter(x => !customs.some(c => c.title === x)).map(x => (
-                                                      <button key={x} type="button" onClick={() => addCustom(x)} className="h-9 px-3.5 rounded-full bg-slate-100 hover:bg-slate-200 text-[13px] font-semibold text-slate-700">{x}</button>
-                                                  ))}
-                                                  <button type="button" onClick={() => addCustom('')} className="h-9 w-9 rounded-full bg-slate-900 text-white text-lg font-bold" aria-label={B.addOwn}>+&#xFE0E;</button>
                                               </div>
-                                          </div>
-                                      </div>
+                                          } />
                                   );
                               })()}
                           </div>
