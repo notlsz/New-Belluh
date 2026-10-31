@@ -20,10 +20,13 @@ const PAPERS = [
   { photo: '/milestones/first-kiss.webp', kicker: 'Family Process, 2004', title: 'Turn toward the small things', body: 'Couples who respond to each other’s everyday bids for attention are happier and fight more kindly.', by: 'Driver & Gottman', doi: '10.1111/j.1545-5300.2004.00024.x' },
   { photo: '/milestones/just-married.webp', kicker: 'Journal of Personality and Social Psychology, 2004', title: 'Celebrate the good news', body: 'How you react when your partner shares something good predicts how close you feel, more than how you handle the bad.', by: 'Gable, Reis, Impett & Asher', doi: '10.1037/0022-3514.87.2.228' },
   { photo: '/milestones/78th-trip.webp', kicker: 'Journal of Personality and Social Psychology, 2000', title: 'Do something new together', body: 'Trying new, exciting things as a pair lifts relationship satisfaction, even years in.', by: 'Aron, Norman, Aron, McKenna & Heyman', doi: '10.1037/0022-3514.78.2.273' },
+  { photo: '/milestones/first-date.webp', kicker: 'Personal Relationships, 2010', title: 'It’s the little things', body: 'Everyday gratitude works like a booster shot for romance: noticing what a partner does lifts how connected both of you feel.', by: 'Algoe, Gable & Maisel', doi: '10.1111/j.1475-6811.2010.01273.x' },
+  { photo: '/milestones/first-baby.webp', kicker: 'Psychological Science, 2006', title: 'Lending a hand', body: 'Holding a partner’s hand under stress quiets the brain’s threat response, most of all in the happiest couples.', by: 'Coan, Schaefer & Davidson', doi: '10.1111/j.1467-9280.2006.01832.x' },
+  { photo: '/milestones/30th-anniversary.webp', kicker: 'Journal of Personality and Social Psychology, 1996', title: 'See the best in each other', body: 'Couples who see each other a little more generously than the facts alone would suggest are more satisfied, and stay that way.', by: 'Murray, Holmes & Griffin', doi: '10.1037/0022-3514.70.1.79' },
 ];
 
 const Research: React.FC<PageProps> = (p) => (
-  <Shell {...p} current="research" title="Belluh Research">
+  <Shell {...p} current="research" title="Belluh Research" hiring={{ eyebrow: 'About Belluh', line: 'Learn more about how Belluh does things.', cta: 'Get to know Belluh', to: '/mission' }}>
     <SplitHero photo="/milestones/30th-anniversary.webp" alt="A couple on their 30th anniversary" side="right">
       <p className="mb-6 text-[22px] tracking-tight"><span className="font-serif font-bold">Belluh</span><span className="font-light">Research</span></p>
       <Big as="h1" className="font-bold max-w-[12ch]">Research to help love last.</Big>
@@ -83,9 +86,6 @@ const Research: React.FC<PageProps> = (p) => (
     </section>
 
     <ShareBar text="Belluh Research: the science of helping love last." />
-    <Dark>
-      <Wrap><Reveal><Eyebrow dark>About Belluh</Eyebrow><Big>Learn more about how Belluh does things.</Big><div className="mt-8"><Pill light onClick={() => go('/mission')}>Get to know Belluh</Pill></div></Reveal></Wrap>
-    </Dark>
   </Shell>
 );
 

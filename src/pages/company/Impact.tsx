@@ -1,7 +1,7 @@
 // belluh.com/impact, laid out like hinge.co/onemorehour: Belluh Together, the work beyond the app to get couples off
 // their phones and out into the world, one evening at a time. It asks groups to get in touch; it promises no money.
 import React from 'react';
-import { Shell, SplitHero, Wrap, Eyebrow, Big, Body, Reveal, Lined, Photo, Pill, ShareBar, HiringLine, go, type PageProps } from './kit';
+import { Shell, SplitHero, Wrap, Eyebrow, Big, Body, Reveal, Lined, Photo, Pill, ShareBar, go, type PageProps } from './kit';
 
 const MAIL = 'elizabeth@belluh.com';
 const WORK = [
@@ -51,13 +51,12 @@ const Impact: React.FC<PageProps> = (p) => (
       <div className="absolute inset-0 bg-black/15" />
       <svg viewBox="0 0 300 300" className="impact-spin absolute left-1/2 top-1/2 w-[260px] h-[260px] md:w-[340px] md:h-[340px] -translate-x-1/2 -translate-y-1/2 text-white" aria-hidden>
         <defs><path id="ring" d="M150 150 m-110 0 a110 110 0 1 1 220 0 a110 110 0 1 1 -220 0" /></defs>
-        <text fill="currentColor" style={{ fontFamily: 'Merriweather, Georgia, serif', fontSize: 34, letterSpacing: 2 }}><textPath href="#ring">Belluh · Together · Belluh · Together ·</textPath></text>
+        <text fill="currentColor" style={{ fontFamily: 'Newsreader, Georgia, serif', fontSize: 36, letterSpacing: 2 }}><textPath href="#ring">Belluh Together   Belluh Together   </textPath></text>
       </svg>
       <style>{`@keyframes impact-spin { to { transform: translate(-50%, -50%) rotate(360deg); } } .impact-spin { animation: impact-spin 40s linear infinite; } @media (prefers-reduced-motion: reduce) { .impact-spin { animation: none; } }`}</style>
     </section>
 
     <ShareBar text="Belluh Together: helping love last, one evening at a time." />
-    <HiringLine />
   </Shell>
 );
 

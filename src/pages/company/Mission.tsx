@@ -1,7 +1,7 @@
 // belluh.com/mission, laid out like hinge.co/mission: what Belluh is for, what we value, how we work, what makes the
 // product different, where it started, and who we're looking for. Everything said about the product is what it does.
 import React from 'react';
-import { Shell, SplitHero, Wrap, Eyebrow, Big, Body, Reveal, Arrow, Swash, Numbered, Lined, Dark, Photo, Pill, ShareBar, HiringLine, go, type PageProps } from './kit';
+import { Shell, SplitHero, Wrap, Eyebrow, Big, Body, Reveal, Arrow, Swash, Numbered, Lined, Dark, Photo, Pill, ShareBar, go, type PageProps } from './kit';
 
 const VALUES = [
   { title: 'Presence', body: 'We build for the time you spend with each other, not the time you spend in an app. If Belluh is working, you’re looking up.' },
@@ -36,7 +36,7 @@ const Mission: React.FC<PageProps> = (p) => (
       <Wrap className="md:px-[12%]">
         <Reveal><Eyebrow>Belluh today</Eyebrow><Big className="max-w-[12ch] md:max-w-[14ch]">We want to help love last</Big></Reveal>
         <div className="mt-6 md:mt-0 md:ml-[38%]"><Arrow className="md:ml-[-5rem]" /></div>
-        <Reveal delay={150} className="mt-4 md:ml-[46%]"><Big className="max-w-[13ch]">by keeping the small, everyday moments that hold two people close.</Big></Reveal>
+        <Reveal delay={150} className="mt-4 md:ml-[46%]"><Big className="max-w-[15ch]">by keeping the small, everyday moments that hold two people close.</Big></Reveal>
       </Wrap>
     </section>
 
@@ -93,7 +93,6 @@ const Mission: React.FC<PageProps> = (p) => (
     </section>
 
     <Dark className="!py-0"><Wrap><ShareBar text="Belluh: helping love last." /></Wrap></Dark>
-    <HiringLine />
   </Shell>
 );
 

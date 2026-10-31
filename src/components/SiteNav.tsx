@@ -81,7 +81,7 @@ const SiteNav: React.FC<{
             {all.map(p => (
               <a key={p.id} href={p.path} onClick={e => { e.preventDefault(); setOpen(false); go(p.path); }} aria-current={current === p.id ? 'page' : undefined}
                 className="font-serif text-[2.6rem] leading-[1.15] tracking-tight text-[#1a1a1a] hover:opacity-60 transition-opacity inline-flex items-center gap-3">
-                {p.label}{current === p.id && <span aria-hidden className="w-2 h-2 rounded-full bg-[#1a1a1a]" />}
+                <span className={current === p.id ? 'underline decoration-2 underline-offset-[10px]' : ''}>{p.label}</span>
               </a>
             ))}
           </nav>

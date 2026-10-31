@@ -4,21 +4,71 @@
 // share bar and a hiring line at the end of every page.
 import React, { useEffect, useRef, useState } from 'react';
 import SiteNav, { type SitePage } from '../../components/SiteNav';
-import SiteFooter from '../../components/SiteFooter';
+import DragonflyMark from '../../components/DragonflyMark';
+import { useI18n, useUi, LANGS, type Lang } from '../../i18n';
+import siteUi from '../../i18n/ui/site';
 import { go } from '../../lib/go';
 
 export const INK = '#1a1a1a', PAPER = '#fffefd', BLUE = '#3f7486';
 export interface PageProps { onGetStarted: () => void; onLogin: () => void; onShowLegal: (t: 'tos' | 'privacy') => void }
 
-export const Shell: React.FC<PageProps & { current: SitePage; title: string; children: React.ReactNode }> = ({ current, title, children, onGetStarted, onLogin, onShowLegal }) => {
+// Hinge's type: a sharp, high-contrast display serif for statements and a clean grotesque for everything else
+const FONTS = 'https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap';
+const TYPE = `.co main, .co footer { font-family: 'DM Sans', system-ui, sans-serif; }
+.co main .font-serif, .co footer .font-serif { font-family: 'Newsreader', Georgia, serif; font-optical-sizing: auto; }`;
+
+export const Shell: React.FC<PageProps & { current: SitePage; title: string; children: React.ReactNode; hiring?: { eyebrow: string; line: string; cta: string; to: string } }> = ({ current, title, children, onGetStarted, onLogin, onShowLegal, hiring }) => {
   useEffect(() => { const before = document.title; document.title = `${title} | Belluh`; return () => { document.title = before; }; }, [title]);
+  useEffect(() => { if (document.getElementById('co-fonts')) return; const l = document.createElement('link'); l.id = 'co-fonts'; l.rel = 'stylesheet'; l.href = FONTS; document.head.appendChild(l); }, []);
   return (
-    <div className="min-h-screen text-[#1a1a1a] overflow-x-clip" style={{ background: PAPER }}>
+    <div className="co min-h-screen text-[#1a1a1a] overflow-x-clip" style={{ background: PAPER }}>
+      <style>{TYPE}</style>
       <SiteNav current={current} onHome={() => go('/')} onLogin={onLogin} onGetStarted={onGetStarted} />
       <main className="pt-[72px]">{children}</main>
-      <SiteFooter onTop={() => go('/')} onSection={id => { go('/'); setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 400); }}
-        onGetStarted={onGetStarted} onLogin={onLogin} onShowLegal={onShowLegal} onGoToAbout={() => go('/about')} onGoToCareers={() => go('/careers')} />
+      <Footer hiring={hiring ?? { eyebrow: 'Our job openings', line: 'Want to build this with us?', cta: 'We’re hiring', to: '/careers' }} onShowLegal={onShowLegal} />
     </div>
+  );
+};
+
+// The end of every company page, on one dark ground like hinge.co: the hiring line, a hairline, then the index
+const Footer: React.FC<{ hiring: { eyebrow: string; line: string; cta: string; to: string }; onShowLegal: PageProps['onShowLegal'] }> = ({ hiring, onShowLegal }) => {
+  const { d, lang, setLang } = useI18n();
+  const S = useUi(siteUi), n = d.nav, t = d.footer;
+  const home = (id: string) => () => { go('/'); setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 400); };
+  const cols: { title: string; links: [string, () => void][] }[] = [
+    { title: 'Index', links: [[S.mission, () => go('/mission')], [S.impact, () => go('/impact')], [S.research, () => go('/research')], [S.careers, () => go('/careers')], [S.why, () => go('/about')], ['Contact', () => { window.location.href = 'mailto:elizabeth@belluh.com'; }]] },
+    { title: t.product, links: [[n.meet, home('at-work')], [n.inside, home('inside')], [n.stories, home('stories')], [n.pricing, home('pricing')], [n.faq, home('faq')]] },
+    { title: t.legal, links: [[t.terms, () => onShowLegal('tos')], [t.privacyPolicy, () => onShowLegal('privacy')]] },
+  ];
+  return (
+    <footer className="text-white" style={{ background: INK }}>
+      <Wrap className="pt-20 md:pt-28 pb-16 md:pb-20 border-b border-white/15">
+        <Reveal><Eyebrow dark>{hiring.eyebrow}</Eyebrow><Big>{hiring.line}</Big><div className="mt-8"><Pill light onClick={() => go(hiring.to)}>{hiring.cta}</Pill></div></Reveal>
+      </Wrap>
+      <Wrap className="pt-16 md:pt-24 pb-12">
+        <div className="grid grid-cols-2 md:grid-cols-[1fr_auto_auto_auto] gap-x-10 md:gap-x-20 gap-y-12">
+          <a href="/" onClick={e => { e.preventDefault(); go('/'); }} className="col-span-2 md:col-span-1 self-start inline-flex items-center gap-1.5" aria-label="Belluh home">
+            <DragonflyMark size={26} /><span className="font-serif text-[26px] font-semibold tracking-tight">Belluh</span>
+          </a>
+          {cols.map(c => (
+            <div key={c.title}>
+              <p className="mb-4 text-[14px] text-white/55">{c.title}</p>
+              <ul className="space-y-3">{c.links.map(([label, on]) => <li key={label}><button onClick={on} className="text-[15px] font-medium hover:opacity-60 transition-opacity text-left">{label}</button></li>)}</ul>
+            </div>
+          ))}
+        </div>
+        <div className="mt-20 flex flex-wrap items-center gap-x-8 gap-y-4 text-[13px] text-white/55">
+          <span>© 2026 Belluh</span>
+          <label className="inline-flex items-center gap-2 text-white">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><circle cx="12" cy="12" r="9.5" /><path d="M2.5 12h19M12 2.5c3 3.2 3 15.8 0 19M12 2.5c-3 3.2-3 15.8 0 19" /></svg>
+            <span className="sr-only">{t.language}</span>
+            <select value={lang} onChange={e => setLang(e.target.value as Lang)} className="bg-transparent text-[13px] font-semibold text-white focus:outline-none cursor-pointer">
+              {LANGS.map(l => <option key={l.id} value={l.id} className="text-[#1a1a1a]">{l.name}</option>)}
+            </select>
+          </label>
+        </div>
+      </Wrap>
+    </footer>
   );
 };
 
@@ -80,10 +130,10 @@ export const Ring: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 // Numbered ideas in a row: giant numerals (on a dark band) or colored ones. Scrolls sideways on phones.
 export const Numbered: React.FC<{ items: { title: string; body: string }[]; dark?: boolean; giant?: boolean; start?: number }> = ({ items, dark, giant, start = 1 }) => (
-  <div className="-mx-5 px-5 md:mx-0 md:px-0 flex md:grid gap-6 md:gap-8 overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] md:overflow-visible" style={{ gridTemplateColumns: `repeat(${Math.min(items.length, 4)}, minmax(0, 1fr))` }}>
+  <div className="-mx-5 px-5 scroll-px-5 md:mx-0 md:px-0 flex md:grid gap-6 md:gap-8 overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] md:overflow-visible" style={{ gridTemplateColumns: `repeat(${Math.min(items.length, 4)}, minmax(0, 1fr))` }}>
     {items.map((it, i) => (
       <Reveal key={it.title} delay={i * 90} className="shrink-0 w-[78%] sm:w-[46%] md:w-auto snap-start">
-        <p className={`font-serif leading-none tracking-[-0.03em] ${giant ? 'text-[6.5rem] md:text-[8.5rem]' : 'text-[3.25rem] md:text-[3.5rem]'}`} style={{ color: dark ? '#fff' : BLUE }}>{String(i + start).padStart(2, '0')}</p>
+        <p className={`font-serif leading-none tracking-[-0.03em] ${giant ? 'text-[6.5rem] md:text-[8.5rem]' : 'text-[3.25rem] md:text-[3.5rem]'}`} style={{ color: dark ? '#fff' : BLUE }}>{i + start}</p>
         <h3 className={`mt-6 md:mt-10 ${giant ? 'font-serif text-[2rem] md:text-[2.4rem] tracking-tight' : 'text-[20px] font-semibold'} ${dark ? 'text-white' : ''}`}>{it.title}</h3>
         <p className={`mt-3 md:mt-5 text-[15px] leading-[1.6] ${dark ? 'text-white/80' : 'text-[#1a1a1a]/75'}`}>{it.body}</p>
       </Reveal>
@@ -121,8 +171,8 @@ export const ShareBar: React.FC<{ text: string }> = ({ text }) => {
   const url = typeof window !== 'undefined' ? window.location.href : 'https://belluh.com';
   const btn = 'w-11 h-11 rounded-full inline-flex items-center justify-center hover:bg-[#1a1a1a]/5 transition-colors';
   return (
-    <div className="flex items-center justify-center gap-2 py-14">
-      <span className="mr-3 text-[17px] font-semibold">Share this page:</span>
+    <div className="flex flex-wrap items-center justify-center gap-2 px-5 py-14">
+      <span className="mr-2 md:mr-3 text-[17px] font-semibold">Share this page:</span>
       <a className={btn} aria-label="Share on X" target="_blank" rel="noopener noreferrer" href={`https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`}>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M18.9 2H22l-7.6 8.7L23 22h-6.8l-5.3-6.9L4.8 22H1.7l8.1-9.3L1 2h7l4.8 6.3L18.9 2zm-1.2 18h1.9L6.4 3.9H4.4L17.7 20z" /></svg>
       </a>
@@ -136,14 +186,5 @@ export const ShareBar: React.FC<{ text: string }> = ({ text }) => {
     </div>
   );
 };
-
-// Every company page ends on the same question
-export const HiringLine: React.FC<{ eyebrow?: string; line?: string; cta?: string; to?: string }> = ({ eyebrow = 'Our job openings', line = 'Want to build this with us?', cta = 'We’re hiring', to = '/careers' }) => (
-  <Dark className="!py-20 md:!py-24">
-    <Wrap>
-      <Reveal><Eyebrow dark>{eyebrow}</Eyebrow><Big>{line}</Big><div className="mt-8"><Pill light onClick={() => go(to)}>{cta}</Pill></div></Reveal>
-    </Wrap>
-  </Dark>
-);
 
 export { go };
