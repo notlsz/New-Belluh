@@ -14,7 +14,7 @@ import { herePlace, placesOn, setPlacesOn } from '../lib/places';
 import { Emoji, emojiSrc } from '../lib/emoji3d';
 import SolarSystem, { type SolarSystemHandle } from '../components/SolarSystem';
 
-const OCEAN = '#7fd0f5', LAND = '#fff6e3';
+const OCEAN = '#c8def2', LAND = '#fbe9e3', ROAD = '#f1cbbb', ROAD_MAIN = '#eab7a2';
 const PALETTE = ['#ffd6a8', '#ffc4dc', '#c9f0b4', '#ffeb99', '#dccbff', '#b9e8f7'];
 // Places on the map as emoji stickers, the way Pampam does it
 const POI: Record<string, string> = { cafe: '☕', restaurant: '🍜', fast_food: '🍔', bar: '🍷', beer: '🍺', bakery: '🥐', ice_cream: '🍦', park: '🌳', garden: '🌷', museum: '🖼️', art_gallery: '🎨', cinema: '🎬', theatre: '🎭', music: '🎵', clothing_store: '👗', zoo: '🦒', aquarium: '🐠', castle: '🏰', attraction: '🎡', stadium: '🏟️', beach: '🏖️', campsite: '⛺', airport: '✈️', harbor: '⛵', florist: '💐', place_of_worship: '⛩️', playground: '🛝', swimming: '🏊', viewpoint: '🌅' };
@@ -41,8 +41,6 @@ function styleFor(lang: string): StyleSpecification {
   return {
     version: 8,
     projection: { type: 'globe' },
-    // Soft, even light so the toy buildings stay pastel on every side
-    light: { anchor: 'viewport', color: '#ffffff', intensity: 0.12, position: [1.2, 210, 30] },
     glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
     sources: {
       world: { type: 'geojson', data: countries },
@@ -52,32 +50,24 @@ function styleFor(lang: string): StyleSpecification {
       omt: { type: 'vector', url: 'https://tiles.openfreemap.org/planet', attribution: '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>' },
     },
     layers: [
-      // Ocean far out, land up close (the street tiles draw the water on top)
+      // One soft blush for everything, like Pampam: the land, the roads in a deeper blush, pale water with a few drawn
+      // waves, faint parks. No buildings, no white or yellow roads. The color is saved for your own pins.
       { id: 'bg', type: 'background', paint: { 'background-color': ['interpolate', ['linear'], ['zoom'], 4.8, OCEAN, 6, LAND] } },
-      { id: 'countries', type: 'fill', source: 'world', paint: { 'fill-color': '#fff3df', 'fill-antialias': false, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4.8, 1, 6, 0] } },
+      { id: 'countries', type: 'fill', source: 'world', paint: { 'fill-color': LAND, 'fill-antialias': false, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4.8, 1, 6, 0] } },
       // The countries you've been to together glow pink, like a scratch map
-      { id: 'visited', type: 'fill', source: 'world', filter: ['in', ['get', 'name'], ['literal', []]], paint: { 'fill-color': '#ffbfd8', 'fill-antialias': false, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4.8, 1, 6, 0] } },
-      { id: 'borders', type: 'line', source: 'borders', paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 1, 4, 2.5], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 4.8, 1, 6, 0] } },
-      { id: 'park', type: 'fill', source: 'omt', 'source-layer': 'park', minzoom: 5, paint: { 'fill-color': '#a8e38a' } },
-      { id: 'park-edge', type: 'line', source: 'omt', 'source-layer': 'park', minzoom: 11, paint: { 'line-color': '#8fd36b', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1.5, 16, 4] } },
-      { id: 'green', type: 'fill', source: 'omt', 'source-layer': 'landcover', minzoom: 5, filter: ['in', ['get', 'class'], ['literal', ['grass', 'wood', 'farmland']]], paint: { 'fill-color': '#d4f2c0', 'fill-opacity': 0.85 } },
+      { id: 'visited', type: 'fill', source: 'world', filter: ['in', ['get', 'name'], ['literal', []]], paint: { 'fill-color': '#f6b3cc', 'fill-antialias': false, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4.8, 1, 6, 0] } },
+      { id: 'borders', type: 'line', source: 'borders', paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 0.8, 4, 1.8], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 4.8, 1, 6, 0] } },
+      { id: 'park', type: 'fill', source: 'omt', 'source-layer': 'park', minzoom: 6, paint: { 'fill-color': '#e2ecd3' } },
+      { id: 'green', type: 'fill', source: 'omt', 'source-layer': 'landcover', minzoom: 6, filter: ['in', ['get', 'class'], ['literal', ['grass', 'wood', 'forest']]], paint: { 'fill-color': '#e7efd9', 'fill-opacity': 0.9 } },
       { id: 'water', type: 'fill', source: 'omt', 'source-layer': 'water', minzoom: 4.5, paint: { 'fill-color': OCEAN, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4.5, 0, 5.5, 1] } },
-      // A cartoon edge on the water, like a drawn shoreline
-      // Cartoon water: a light band just inside the shore and a deeper drawn edge, like Pampam
-      { id: 'water-shine', type: 'line', source: 'omt', 'source-layer': 'water', minzoom: 9, paint: { 'line-color': '#c4eefc', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 3, 16, 14], 'line-offset': ['interpolate', ['linear'], ['zoom'], 9, 1.5, 16, 7] } },
-      { id: 'water-edge', type: 'line', source: 'omt', 'source-layer': 'water', minzoom: 9, paint: { 'line-color': '#45b4e6', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1.4, 16, 3.5] } },
-      { id: 'river', type: 'line', source: 'omt', 'source-layer': 'waterway', minzoom: 8, paint: { 'line-color': OCEAN, 'line-width': 2.5 } },
-      // Toy-town buildings: soft pastel blocks that stand up when the map tilts
-      // Toy-town buildings in soft pastels, standing up as the city tilts
-      { id: 'building', type: 'fill-extrusion', source: 'omt', 'source-layer': 'building', minzoom: 13.5, filter: ['>=', ['coalesce', ['get', 'render_height'], 0], 6], paint: { 'fill-extrusion-color': ['match', ['%', ['to-number', ['coalesce', ['get', 'render_height'], 0]], 5], 0, '#ffd3e4', 1, '#e3d6fb', 2, '#ffe2bf', 3, '#cdeedd', '#d3eaf8'], 'fill-extrusion-height': ['*', ['coalesce', ['get', 'render_height'], 8], 0.8], 'fill-extrusion-base': 0, 'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 13.5, 0, 14.5, 0.95], 'fill-extrusion-vertical-gradient': true } },
-      { id: 'road-case', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'street']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#f0e2cf', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 2.2, 16, 24] } },
-      { id: 'road', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'street']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 1.4, 16, 20] } },
-      { id: 'main-road-case', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#f2c25c', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 2.6, 16, 28] } },
-      { id: 'main-road', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#ffe48f', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 1.6, 16, 22] } },
-      { id: 'place', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 5, filter: ['in', ['get', 'class'], ['literal', ['city', 'town', 'suburb']]], layout: { 'text-field': name, 'text-font': ['Noto Sans Bold'], 'text-size': ['interpolate', ['linear'], ['zoom'], 5, 11, 14, 15] }, paint: { 'text-color': '#7a6a8c', 'text-halo-color': '#ffffff', 'text-halo-width': 2 } },
-      // Cafés, parks, museums...: emoji stickers, drawn on demand (see styleimagemissing)
-      { id: 'poi', type: 'symbol', source: 'omt', 'source-layer': 'poi', minzoom: 15, filter: ['<=', ['get', 'rank'], 6], layout: { 'icon-image': ['concat', 'e:', ['coalesce', ['get', 'subclass'], ''], ':', ['get', 'class']], 'icon-size': ['interpolate', ['linear'], ['zoom'], 14, 0.42, 18, 0.62], 'icon-allow-overlap': false, 'icon-padding': 22 } },
-      { id: 'country-label', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 1, maxzoom: 6, filter: ['==', ['get', 'class'], 'country'], layout: { 'text-field': name, 'text-font': ['Noto Sans Bold'], 'text-size': 11 }, paint: { 'text-color': '#9a8aa8', 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 } },
+      { id: 'waves', type: 'fill', source: 'omt', 'source-layer': 'water', minzoom: 9, paint: { 'fill-pattern': 'pat:waves' } },
+      { id: 'river', type: 'line', source: 'omt', 'source-layer': 'waterway', minzoom: 9, paint: { 'line-color': OCEAN, 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1, 16, 4] } },
+      { id: 'road-minor', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 11, filter: ['in', ['get', 'class'], ['literal', ['tertiary', 'minor', 'street']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ROAD, 'line-width': ['interpolate', ['exponential', 1.5], ['zoom'], 11, 0.4, 17, 5] } },
+      { id: 'road-main', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 7, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ROAD_MAIN, 'line-width': ['interpolate', ['exponential', 1.5], ['zoom'], 7, 0.5, 17, 8] } },
+      { id: 'rail', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 12, filter: ['==', ['get', 'class'], 'rail'], paint: { 'line-color': ROAD, 'line-width': 1, 'line-dasharray': [3, 3] } },
+      { id: 'road-label', type: 'symbol', source: 'omt', 'source-layer': 'transportation_name', minzoom: 13, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary']]], layout: { 'symbol-placement': 'line', 'text-field': name, 'text-font': ['Noto Sans Regular'], 'text-size': 11 }, paint: { 'text-color': '#c99a85', 'text-halo-color': LAND, 'text-halo-width': 1.5 } },
+      { id: 'place', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 5, filter: ['in', ['get', 'class'], ['literal', ['city', 'town', 'suburb', 'quarter']]], layout: { 'text-field': name, 'text-font': ['Noto Sans Bold'], 'text-size': ['interpolate', ['linear'], ['zoom'], 5, 12, 14, 17], 'text-max-width': 8 }, paint: { 'text-color': '#bf8f78', 'text-halo-color': LAND, 'text-halo-width': 1.5 } },
+      { id: 'country-label', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 1, maxzoom: 6, filter: ['==', ['get', 'class'], 'country'], layout: { 'text-field': name, 'text-font': ['Noto Sans Bold'], 'text-size': 11 }, paint: { 'text-color': '#b08f80', 'text-halo-color': '#ffffff', 'text-halo-width': 1.2 } },
     ],
   };
 }
@@ -85,6 +75,15 @@ function styleFor(lang: string): StyleSpecification {
 // The 3D place stickers, fetched as soon as the map opens so they're ready by the time you zoom into streets
 const POI_IMG = new Map<string, HTMLImageElement>();
 [...new Set(Object.values(POI))].forEach(e => { const src = emojiSrc(e); if (!src) return; const im = new Image(); im.onload = () => POI_IMG.set(e, im); im.src = src; });
+
+// Pampam's water: a few small, thin wave marks in a deeper blue, far apart
+function waveTile(): ImageData {
+  const w = 300, h = 220, c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d')!; x.strokeStyle = '#a3c3e2'; x.lineWidth = 3; x.lineCap = 'round';
+  const wave = (cx: number, cy: number) => { x.beginPath(); x.moveTo(cx - 15, cy); x.bezierCurveTo(cx - 9, cy - 7, cx - 3, cy - 7, cx, cy); x.bezierCurveTo(cx + 3, cy + 7, cx + 9, cy + 7, cx + 15, cy); x.stroke(); };
+  wave(60, 50); wave(210, 160);
+  return x.getImageData(0, 0, w, h);
+}
 
 const emojiFor = (e: JournalEntry) => e.type === EntryType.Voice || e.audioUrl ? '🎙️' : e.type === EntryType.Photo ? '📸' : (e.mood && (MOOD_EMOJIS as any)[e.mood]) || '💌';
 
@@ -148,6 +147,7 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
     // Draw each place's emoji as a little sticker (a white outline and a soft shadow) the first time it's needed
     map.on('styleimagemissing', (ev: any) => {
       const id: string = ev.id;
+      if (id === 'pat:waves' && !map.hasImage(id)) { map.addImage(id, waveTile(), { pixelRatio: 2 }); return; }
       if (!id.startsWith('e:') || map.hasImage(id)) return;
       const [, sub, cls] = id.split(':');
       const emoji = POI[sub] ?? POI[cls];
@@ -173,11 +173,6 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
     });
     const zoomed = () => { const z = map.getZoom(); setFar(z < 3.2); setSpace(z < 0.85); };
     map.on('zoom', zoomed);
-    map.on('zoomend', () => {
-      const z = map.getZoom(), p = map.getPitch();
-      if (z >= 13 && p < 20) map.easeTo({ pitch: 48, duration: 900 });
-      else if (z < 8 && p > 0) map.easeTo({ pitch: 0, bearing: 0, duration: 900 });
-    });
     // Turning the globe turns the sky behind it
     map.on('move', () => { const c = map.getCenter(); sky.current?.turn(c.lng, c.lat); });
     return () => { map.remove(); mapRef.current = null; };
@@ -216,15 +211,17 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
       root.appendChild(el);
       el.setAttribute('aria-label', `${date(e.timestamp, { month: 'short', day: 'numeric' })}${g.length > 1 ? ` (${g.length})` : ''}`);
       el.className = 'belluh-pin';
-      el.style.setProperty('--ring', mine ? '#f28cc6' : '#7cc3dc');
-      el.style.setProperty('--tilt', `${(e.id.charCodeAt(0) % 3 - 1) * 5}deg`);
-      const add = (tag: string, cls: string, set: (n: any) => void) => { const n = document.createElement(tag); if (cls) n.className = cls; set(n); el.appendChild(n); };
-      if (e.mediaUrl) add('img', 'belluh-pin-photo', n => { n.src = e.mediaUrl; n.alt = ''; });
-      else if (emojiSrc(emojiFor(e))) add('img', 'belluh-pin-emoji', n => { n.src = emojiSrc(emojiFor(e)); n.alt = ''; });
-      else add('span', 'belluh-pin-emoji', n => { n.textContent = emojiFor(e); });
-      if (e.authorAvatar) add('img', 'belluh-pin-face', n => { n.src = e.authorAvatar; n.alt = ''; });
-      if (g.length > 1) add('span', 'belluh-pin-count', n => { n.textContent = String(g.length); });
-      el.onclick = (ev) => { ev.stopPropagation(); setOpen(g); map.easeTo({ center: [e.lng!, e.lat!], zoom: Math.max(map.getZoom(), 15.5), pitch: 50, bearing: -12, duration: 1200 }); };
+      el.style.setProperty('--tilt', `${(e.id.charCodeAt(0) % 3 - 1) * 4}deg`);
+      const add = (tag: string, cls: string, set: (n: any) => void, parent: HTMLElement = el) => { const n = document.createElement(tag); if (cls) n.className = cls; set(n); parent.appendChild(n); return n; };
+      // A sticker (the photo, or the moment's 3D emoji) with a white edge, like Pampam's pins, and a bold label under it
+      const stk = add('span', 'belluh-pin-stk', () => {});
+      if (e.mediaUrl) add('img', 'belluh-pin-photo', n => { n.src = e.mediaUrl; n.alt = ''; }, stk);
+      else if (emojiSrc(emojiFor(e))) add('img', 'belluh-pin-emoji', n => { n.src = emojiSrc(emojiFor(e)); n.alt = ''; }, stk);
+      else add('span', 'belluh-pin-emoji', n => { n.textContent = emojiFor(e); }, stk);
+      if (e.authorAvatar) add('img', 'belluh-pin-face', n => { n.src = e.authorAvatar; n.alt = ''; n.style.borderColor = mine ? '#f6b3cc' : '#a9d3ea'; }, stk);
+      if (g.length > 1) add('span', 'belluh-pin-count', n => { n.textContent = String(g.length); }, stk);
+      add('span', 'belluh-pin-label', n => { n.textContent = e.location || date(e.timestamp, { month: 'short', day: 'numeric' }); });
+      el.onclick = (ev) => { ev.stopPropagation(); setOpen(g); map.easeTo({ center: [e.lng!, e.lat!], zoom: Math.max(map.getZoom(), 14), duration: 1000 }); };
       return new maplibregl.Marker({ element: root, anchor: 'bottom' }).setLngLat([e.lng!, e.lat!]).addTo(map);
     });
     // Our path: a dotted pink line through your places, in the order they happened
@@ -235,7 +232,7 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
       if (src) src.setData(data);
       else if (path.length > 1) {
         map.addSource('path', { type: 'geojson', data });
-        map.addLayer({ id: 'path', type: 'line', source: 'path', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#f28cc6', 'line-width': ['interpolate', ['linear'], ['zoom'], 1, 2.5, 12, 4.5], 'line-dasharray': [0.2, 2.2], 'line-opacity': 0.9 } });
+        map.addLayer({ id: 'path', type: 'line', source: 'path', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#e58bb4', 'line-width': ['interpolate', ['linear'], ['zoom'], 1, 2.5, 12, 4.5], 'line-dasharray': [0.2, 2.2], 'line-opacity': 0.9 } });
       }
     };
     if (map.isStyleLoaded()) draw(); else map.once('load', draw);
@@ -253,13 +250,14 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
   return (
     <div className="fixed inset-0 z-10 lg:left-[var(--sidebar-w,16rem)] transition-colors duration-1000" style={{ background: space ? '#0b0a1d' : '#fbe3f1' }}>
       <style>{`
-        .belluh-pin { width: 52px; height: 52px; rotate: var(--tilt, -4deg); border-radius: 9999px; background: #fff; border: 3px solid var(--ring); box-shadow: 0 12px 24px -10px rgba(15,23,42,.45); display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: scale .3s cubic-bezier(.34,1.56,.64,1); animation: belluh-pop .6s cubic-bezier(.34,1.56,.64,1) both; }
-        .belluh-pin:hover { scale: 1.15; rotate: 0deg; } .belluh-pin:active { scale: .92; }
-        .belluh-pin::after { content: ''; position: absolute; bottom: -9px; left: 50%; translate: -50% 0; border: 7px solid transparent; border-top-color: var(--ring); border-bottom: 0; }
-        .belluh-pin-photo { width: 100%; height: 100%; object-fit: cover; border-radius: 9999px; }
-        .belluh-pin-emoji { font-size: 31px; line-height: 1; } img.belluh-pin-emoji { width: 30px; height: 30px; }
-        .belluh-pin-face { position: absolute; right: -8px; bottom: -6px; width: 24px; height: 24px; border-radius: 9999px; border: 2.5px solid #fff; background: #fde7f3; object-fit: cover; }
-        .belluh-pin-count { position: absolute; top: -8px; right: -8px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 9999px; background: #1e293b; color: #fff; font: 700 12px/22px Inter, system-ui, sans-serif; border: 2px solid #fff; }
+        .belluh-pin { display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: 0; padding: 0; cursor: pointer; transition: scale .3s cubic-bezier(.34,1.56,.64,1); animation: belluh-pop .6s cubic-bezier(.34,1.56,.64,1) both; }
+        .belluh-pin:hover { scale: 1.12; } .belluh-pin:active { scale: .92; }
+        .belluh-pin-stk { position: relative; display: block; rotate: var(--tilt, 0deg); }
+        .belluh-pin-emoji { display: block; width: 46px; height: 46px; font-size: 40px; line-height: 46px; filter: drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff) drop-shadow(0 6px 8px rgba(15,23,42,.22)); }
+        .belluh-pin-photo { display: block; width: 50px; height: 50px; object-fit: cover; border-radius: 14px; border: 3px solid #fff; box-shadow: 0 8px 16px -6px rgba(15,23,42,.35); }
+        .belluh-pin-face { position: absolute; right: -9px; bottom: -5px; width: 22px; height: 22px; border-radius: 9999px; border: 2.5px solid #fff; background: #fde7f3; object-fit: cover; }
+        .belluh-pin-label { font: 700 13px/1.15 Inter, system-ui, sans-serif; color: #2a2230; white-space: nowrap; text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff, 0 0 4px #fff; }
+        .belluh-pin-count { position: absolute; top: -8px; right: -10px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 9999px; background: #1e293b; color: #fff; font: 700 12px/22px Inter, system-ui, sans-serif; border: 2px solid #fff; }
         @keyframes belluh-twinkle { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
         .belluh-star { animation: belluh-twinkle 3.2s ease-in-out infinite; box-shadow: 0 0 6px rgba(255,255,255,.8); }
         @keyframes belluh-orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
