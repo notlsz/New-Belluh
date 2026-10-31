@@ -9,9 +9,11 @@ import { Mic, Image as ImageIcon, X, Loader2, Lock, Users, ArrowRight, ArrowUp }
 import BelluhOrb from '../components/BelluhOrb';
 import { transcribeAudio } from '../services/geminiService';
 import { uploadPrivate } from '../services/media';
+import { placesOn, setPlacesOn, herePlace, whereFor } from '../lib/places';
+import mapUi from '../i18n/ui/map';
 
 interface JournalProps {
-  onAddEntry: (content: string, mood: Mood | undefined, type: EntryType, prompt?: string, isPrivate?: boolean, audioUrl?: string, mediaUrl?: string) => void;
+  onAddEntry: (content: string, mood: Mood | undefined, type: EntryType, prompt?: string, isPrivate?: boolean, audioUrl?: string, mediaUrl?: string, where?: { lat: number; lng: number } | null) => void;
   partnerName: string;
   onTriggerPremium: () => void;
   initialPrompt?: string;
@@ -29,6 +31,8 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
   const todaysQuestion = questionForDay(DAILY_PROMPTS);
   const [dailyPrompt, setDailyPrompt] = useState<string | null>(initialPrompt || null);
   const [isPrivate, setIsPrivate] = useState(false);
+  const [pinOn, setPinOn] = useState(placesOn());
+  const MU = useUi(mapUi);
   const [step, setStep] = useState<'write' | 'success'>('write');
   
   const [isRecording, setIsRecording] = useState(false);
@@ -173,6 +177,7 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
            const ext = (photoFile.name.split('.').pop() || 'jpg').toLowerCase();
            photoRef = (await uploadPrivate('photos', photoFile, ext, photoFile.type || 'image/jpeg')) ?? undefined;
        }
+       const where = await whereFor(hasImage ? photoFile : null);
        onAddEntry(
            content, 
            selectedMood, 
@@ -180,7 +185,8 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
            dailyPrompt ?? undefined, 
            isPrivate, 
            audioUrl || undefined, 
-           photoRef ?? (hasImage ? imagePreview || undefined : undefined)
+           photoRef ?? (hasImage ? imagePreview || undefined : undefined),
+           where
        );
        setIsSaving(false);
        setStep('success');
@@ -270,6 +276,7 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
                                 {isRecording ? <div className="w-2.5 h-2.5 bg-[#e58fc9] rounded-sm animate-pulse" /> : (isTranscribing ? <Loader2 size={18} className="animate-spin" /> : <Mic size={18} />)}
                             </button>
                             {!isRecording && !isBusy && <button onClick={handleImageClick} aria-label={c.addPhoto} className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all ${hasImage ? 'text-[#e58fc9]' : 'text-slate-500 hover:bg-slate-100'}`}><ImageIcon size={18} /></button>}
+                            {!isRecording && !isBusy && <button type="button" onClick={() => { const on = !pinOn; setPinOn(on); setPlacesOn(on); if (on) void herePlace(); }} aria-label={MU.pinHere} aria-pressed={pinOn} title={pinOn ? MU.pinned : MU.pinHere} className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all text-[19px] ${pinOn ? '' : 'grayscale opacity-40 hover:opacity-80'}`}>📍</button>}
                             <div role="radiogroup" aria-label={c.whoSees} className="h-11 shrink-0 p-1 rounded-full bg-slate-100/80 flex items-center text-xs font-bold">
                                 <button type="button" role="radio" aria-checked={!isPrivate} onClick={() => setIsPrivate(false)} className={`h-9 px-3 rounded-full inline-flex items-center gap-1.5 transition-all ${!isPrivate ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}><Users size={13} /> {(partnerName || '').split(' ')[0] ? f(c.withPartner, { partner: (partnerName || '').split(' ')[0] }) : d.common.shared}</button>
                                 <button type="button" role="radio" aria-checked={isPrivate} onClick={() => setIsPrivate(true)} className={`h-9 px-3 rounded-full inline-flex items-center gap-1.5 transition-all ${isPrivate ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}><Lock size={13} /> {c.justMe}</button>

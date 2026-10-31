@@ -96,6 +96,9 @@ export interface JournalEntry {
   isPrivate: boolean;
   circleId: string;
   location?: string;
+  /** Where it was written, for the love map */
+  lat?: number;
+  lng?: number;
   likes?: number;
   isLiked?: boolean;
 }

@@ -517,7 +517,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
        </div>
 
        {/* Input Area */}
-       <div className={`fixed bottom-0 left-0 right-0 p-4 ${inSheet ? 'pb-6' : 'pb-28 lg:pb-8 lg:left-[var(--sidebar-w,16rem)]'} bg-belluh-25 pt-3 z-40`}>
+       <div className={`fixed bottom-0 left-0 right-0 p-4 ${inSheet ? 'pb-6' : 'pb-28 md:pb-32'} bg-belluh-25 pt-3 z-40`}>
             {/* A short fade above a solid bar: the conversation never shows through behind the chips */}
             <div aria-hidden="true" className="pointer-events-none absolute -top-10 inset-x-0 h-10 bg-gradient-to-t from-belluh-25 to-transparent" />
             <div className="max-w-2xl mx-auto relative flex flex-col">
