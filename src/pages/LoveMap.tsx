@@ -4,7 +4,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import maplibregl, { type StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { feature } from 'topojson-client';
+import { feature, mesh } from 'topojson-client';
 import world from 'world-atlas/countries-110m.json';
 import { useI18n, useUi } from '../i18n';
 import mapUi from '../i18n/ui/map';
@@ -20,15 +20,17 @@ const POI: Record<string, string> = { cafe: '☕', restaurant: '🍜', fast_food
 
 function styleFor(lang: string): StyleSpecification {
   const countries = feature(world as any, (world as any).objects.countries) as any;
-  // Pieces that cross the date line (Fiji, the tip of Russia) would draw a line around the whole globe: leave them out
+  // Shapes that cross the date line (Russia's far east, Fiji) would draw a line around the whole globe. Split each one
+  // into its eastern and western half, each pinned to the date line, so the whole country still shows.
   const wraps = (ring: number[][]) => ring.some((pt, i) => i > 0 && Math.abs(pt[0] - ring[i - 1][0]) > 180);
+  const half = (ring: number[][], east: boolean) => ring.map(([lng, lat]) => [east ? (lng < 0 ? 180 : lng) : (lng > 0 ? -180 : lng), lat]);
+  const fix = (polys: number[][][][]) => polys.flatMap(poly => wraps(poly[0]) ? [poly.map(r => half(r, true)), poly.map(r => half(r, false))] : [poly]);
   countries.features.forEach((f: any, i: number) => {
     f.properties = { ...f.properties, c: i % PALETTE.length };
     const g = f.geometry; if (!g) return;
-    if (g.type === 'Polygon' && wraps(g.coordinates[0])) f.geometry = null;
-    if (g.type === 'MultiPolygon') g.coordinates = g.coordinates.filter((poly: number[][][]) => !wraps(poly[0]));
+    if (g.type === 'Polygon' && wraps(g.coordinates[0])) f.geometry = { type: 'MultiPolygon', coordinates: fix([g.coordinates]) };
+    else if (g.type === 'MultiPolygon') g.coordinates = fix(g.coordinates);
   });
-  countries.features = countries.features.filter((f: any) => f.geometry && (f.geometry.type !== 'MultiPolygon' || f.geometry.coordinates.length));
   const name: any = ['coalesce', ['get', `name:${lang}`], ['get', 'name']];
   return {
     version: 8,
@@ -38,28 +40,39 @@ function styleFor(lang: string): StyleSpecification {
     glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
     sources: {
       world: { type: 'geojson', data: countries },
+      // Only the lines between two countries: no coastlines doubled, no cut along the date line
+      borders: { type: 'geojson', data: mesh(world as any, (world as any).objects.countries, (a: any, b: any) => a !== b) as any },
+      sea: { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]]] } } as any },
       omt: { type: 'vector', url: 'https://tiles.openfreemap.org/planet', attribution: '<a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>' },
     },
     layers: [
       // Ocean far out, land up close (the street tiles draw the water on top)
       { id: 'bg', type: 'background', paint: { 'background-color': ['interpolate', ['linear'], ['zoom'], 4.8, OCEAN, 6, LAND] } },
+      // Drawn waves on the sea, like Pampam: on the globe's ocean, then on every lake and river up close
+      { id: 'sea-waves', type: 'fill', source: 'sea', maxzoom: 6, paint: { 'fill-pattern': 'pat:waves', 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4.6, 0.9, 5.4, 0] } },
       { id: 'countries', type: 'fill', source: 'world', paint: { 'fill-color': ['match', ['get', 'c'], 0, PALETTE[0], 1, PALETTE[1], 2, PALETTE[2], 3, PALETTE[3], 4, PALETTE[4], PALETTE[5]], 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4.8, 1, 6, 0] } },
-      { id: 'borders', type: 'line', source: 'world', paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 1, 4, 2.5], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 4.8, 1, 6, 0] } },
+      { id: 'borders', type: 'line', source: 'borders', paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 1, 4, 2.5], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 4.8, 1, 6, 0] } },
+      // Up close, the city in the same candy patchwork as the countries on the globe: homes pink, shops lavender, schools
+      // peach, hospitals blue, industry yellow, with the streets as clean white lines between them
+      { id: 'landuse', type: 'fill', source: 'omt', 'source-layer': 'landuse', minzoom: 9, paint: { 'fill-color': ['match', ['get', 'class'], ['residential', 'suburb', 'neighbourhood', 'quarter'], '#ffd9e8', ['commercial', 'retail'], '#e6dcfb', ['industrial', 'railway', 'garages'], '#fff0b8', ['school', 'university', 'college', 'kindergarten'], '#ffd6a8', 'hospital', '#d3eef7', ['cemetery', 'stadium', 'pitch', 'playground'], '#c9f0b4', '#fff1dc'], 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 9, 0, 11, 0.85] } },
       { id: 'park', type: 'fill', source: 'omt', 'source-layer': 'park', minzoom: 5, paint: { 'fill-color': '#b5e795' } },
       { id: 'park-edge', type: 'line', source: 'omt', 'source-layer': 'park', minzoom: 11, paint: { 'line-color': '#8fd36b', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1.5, 16, 4] } },
       { id: 'green', type: 'fill', source: 'omt', 'source-layer': 'landcover', minzoom: 5, filter: ['in', ['get', 'class'], ['literal', ['grass', 'wood', 'farmland']]], paint: { 'fill-color': '#d4f2c0', 'fill-opacity': 0.85 } },
+      { id: 'trees', type: 'fill', source: 'omt', 'source-layer': 'landcover', minzoom: 8, filter: ['in', ['get', 'class'], ['literal', ['wood', 'forest', 'grass']]], paint: { 'fill-pattern': 'pat:trees', 'fill-opacity': 0.95 } },
+      { id: 'park-trees', type: 'fill', source: 'omt', 'source-layer': 'park', minzoom: 10, paint: { 'fill-pattern': 'pat:trees', 'fill-opacity': 0.95 } },
       { id: 'water', type: 'fill', source: 'omt', 'source-layer': 'water', minzoom: 4.5, paint: { 'fill-color': OCEAN, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4.5, 0, 5.5, 1] } },
       // A cartoon edge on the water, like a drawn shoreline
       { id: 'water-edge', type: 'line', source: 'omt', 'source-layer': 'water', minzoom: 9, paint: { 'line-color': '#5fbfe8', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1.2, 16, 4] } },
+      { id: 'water-waves', type: 'fill', source: 'omt', 'source-layer': 'water', minzoom: 5, paint: { 'fill-pattern': 'pat:waves', 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0, 6, 0.9] } },
       { id: 'river', type: 'line', source: 'omt', 'source-layer': 'waterway', minzoom: 8, paint: { 'line-color': OCEAN, 'line-width': 2.5 } },
       // Toy-town buildings: soft pastel blocks that stand up when the map tilts
       { id: 'building', type: 'fill-extrusion', source: 'omt', 'source-layer': 'building', minzoom: 14.5, filter: ['>=', ['coalesce', ['get', 'render_height'], 0], 12], paint: { 'fill-extrusion-color': ['match', ['%', ['to-number', ['coalesce', ['get', 'render_height'], 0]], 4], 0, '#fbe9f1', 1, '#efe9fb', 2, '#fff1e2', '#e8f4fa'], 'fill-extrusion-height': ['*', ['coalesce', ['get', 'render_height'], 8], 0.7], 'fill-extrusion-base': 0, 'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 14.5, 0, 15.5, 0.92], 'fill-extrusion-vertical-gradient': true } },
-      { id: 'road-case', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'street']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#ead9c3', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 2.2, 16, 26] } },
+      { id: 'road-case', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'street']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 2.2, 16, 26] } },
       { id: 'road', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'street']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 1.4, 16, 20] } },
       { id: 'place', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 5, filter: ['in', ['get', 'class'], ['literal', ['city', 'town', 'suburb']]], layout: { 'text-field': name, 'text-font': ['Noto Sans Bold'], 'text-size': ['interpolate', ['linear'], ['zoom'], 5, 12, 14, 17], 'text-letter-spacing': 0.02 }, paint: { 'text-color': '#6b4a80', 'text-halo-color': '#ffffff', 'text-halo-width': 3.5, 'text-halo-blur': 0 } },
       // Cafés, parks, museums...: emoji stickers, drawn on demand (see styleimagemissing)
       { id: 'poi', type: 'symbol', source: 'omt', 'source-layer': 'poi', minzoom: 15, filter: ['<=', ['get', 'rank'], 6], layout: { 'icon-image': ['concat', 'e:', ['coalesce', ['get', 'subclass'], ''], ':', ['get', 'class']], 'icon-size': ['interpolate', ['linear'], ['zoom'], 14, 0.42, 18, 0.62], 'icon-allow-overlap': false, 'icon-padding': 22 } },
-      { id: 'country-label', type: 'symbol', source: 'omt', 'source-layer': 'place', maxzoom: 6, filter: ['==', ['get', 'class'], 'country'], layout: { 'text-field': name, 'text-font': ['Noto Sans Bold'], 'text-size': 12, 'text-transform': 'uppercase', 'text-letter-spacing': 0.08 }, paint: { 'text-color': '#8b7a99', 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 } },
+      { id: 'country-label', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 1, maxzoom: 6, filter: ['==', ['get', 'class'], 'country'], layout: { 'text-field': name, 'text-font': ['Noto Sans Bold'], 'text-size': 12, 'text-transform': 'uppercase', 'text-letter-spacing': 0.08 }, paint: { 'text-color': '#8b7a99', 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 } },
     ],
   };
 }
@@ -67,6 +80,33 @@ function styleFor(lang: string): StyleSpecification {
 // The 3D place stickers, fetched as soon as the map opens so they're ready by the time you zoom into streets
 const POI_IMG = new Map<string, HTMLImageElement>();
 [...new Set(Object.values(POI))].forEach(e => { const src = emojiSrc(e); if (!src) return; const im = new Image(); im.onload = () => POI_IMG.set(e, im); im.src = src; });
+
+// The drawn art, as repeating tiles: little wave strokes for water, round cartoon trees for parks and woods
+function drawPattern(id: string): ImageData {
+  const w = id === 'pat:waves' ? 120 : 140, h = id === 'pat:waves' ? 84 : 140;
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d')!;
+  if (id === 'pat:waves') {
+    x.strokeStyle = 'rgba(255,255,255,0.85)'; x.lineWidth = 3.5; x.lineCap = 'round';
+    const wave = (cx: number, cy: number) => { x.beginPath(); x.moveTo(cx - 18, cy); x.quadraticCurveTo(cx - 9, cy - 9, cx, cy); x.quadraticCurveTo(cx + 9, cy + 9, cx + 18, cy); x.stroke(); };
+    wave(30, 22); wave(90, 64);
+  } else {
+    const tree = (cx: number, cy: number, r: number, leaf: string, dark: string) => {
+      x.fillStyle = '#b98a5e'; x.beginPath(); x.roundRect(cx - 3, cy + r * 0.5, 6, r * 0.9, 3); x.fill();
+      x.fillStyle = leaf; x.strokeStyle = dark; x.lineWidth = 3;
+      x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill(); x.stroke();
+      x.fillStyle = 'rgba(255,255,255,0.45)'; x.beginPath(); x.ellipse(cx - r * 0.35, cy - r * 0.35, r * 0.28, r * 0.18, -0.6, 0, Math.PI * 2); x.fill();
+    };
+    tree(36, 34, 15, '#7fcf5c', '#5aae3c'); tree(104, 102, 17, '#8ed66b', '#61b544'); tree(98, 30, 11, '#a4e07f', '#6fbd4f');
+  }
+  return x.getImageData(0, 0, w, h);
+}
+
+// A fixed star field (the same sky every time): left %, top %, size px, twinkle delay s
+const STARS: [number, number, number, number][] = Array.from({ length: 70 }, (_, i) => {
+  const r = (n: number) => { const x = Math.sin(i * 12.9898 + n * 78.233) * 43758.5453; return x - Math.floor(x); };
+  return [r(1) * 100, r(2) * 100, 1 + Math.round(r(3) * 2.4), -r(4) * 3];
+});
 
 const emojiFor = (e: JournalEntry) => e.type === EntryType.Voice || e.audioUrl ? '🎙️' : e.type === EntryType.Photo ? '📸' : (e.mood && (MOOD_EMOJIS as any)[e.mood]) || '💌';
 
@@ -81,6 +121,8 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
   const [on, setOn] = useState(placesOn());
   const [note, setNote] = useState('');
   const [far, setFar] = useState(true);
+  // Zoomed all the way out, the sky becomes space: stars, the Moon, planets, a satellite, a rocket
+  const [space, setSpace] = useState(false);
   // The welcome card says its piece, then gets out of the way (or as soon as they touch the map)
   const [hint, setHint] = useState(true);
   const [hintTurn, setHintTurn] = useState(0);
@@ -112,8 +154,9 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
 
   useEffect(() => {
     if (!box.current) return;
-    const map = new maplibregl.Map({ container: box.current, style: styleFor(lang), center: [10, 25], zoom: 1.25, attributionControl: { compact: true }, maxPitch: 60 });
+    const map = new maplibregl.Map({ container: box.current, style: styleFor(lang), center: [10, 25], zoom: 1.25, minZoom: -1.2, attributionControl: { compact: true }, maxPitch: 60 });
     mapRef.current = map;
+    (window as any).__belluhMap = map; // for screenshots and debugging
     // An empty globe spins slowly, like a toy, until it's touched
     let spinning = true;
     const stop = () => { spinning = false; };
@@ -125,7 +168,9 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
     map.on('load', () => { if (!groups.length) spin(); else spinning = false; });
     // Draw each place's emoji as a little sticker (a white outline and a soft shadow) the first time it's needed
     map.on('styleimagemissing', (ev: any) => {
-      const id: string = ev.id; if (!id.startsWith('e:') || map.hasImage(id)) return;
+      const id: string = ev.id;
+      if ((id === 'pat:waves' || id === 'pat:trees') && !map.hasImage(id)) { map.addImage(id, drawPattern(id), { pixelRatio: 2 }); return; }
+      if (!id.startsWith('e:') || map.hasImage(id)) return;
       const [, sub, cls] = id.split(':');
       const emoji = POI[sub] ?? POI[cls];
       const size = 96, c = document.createElement('canvas'); c.width = c.height = size;
@@ -148,7 +193,7 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
       x.shadowColor = 'transparent'; x.fillText(emoji, size / 2, size / 2 + 4);
       map.addImage(id, x.getImageData(0, 0, size, size), { pixelRatio: 2 });
     });
-    const zoomed = () => setFar(map.getZoom() < 3.2);
+    const zoomed = () => { const z = map.getZoom(); setFar(z < 3.2); setSpace(z < 0.85); };
     map.on('zoom', zoomed);
     return () => { map.remove(); mapRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -202,7 +247,7 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-10 bg-[#fbe3f1] lg:left-[var(--sidebar-w,16rem)]">
+    <div className="fixed inset-0 z-10 lg:left-[var(--sidebar-w,16rem)] transition-colors duration-1000" style={{ background: space ? '#16133a' : '#fbe3f1' }}>
       <style>{`
         .belluh-pin { width: 62px; height: 62px; rotate: var(--tilt, -4deg); border-radius: 9999px; background: #fff; border: 4px solid var(--ring); box-shadow: 0 12px 24px -10px rgba(15,23,42,.45); display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: scale .3s cubic-bezier(.34,1.56,.64,1); animation: belluh-pop .6s cubic-bezier(.34,1.56,.64,1) both; }
         .belluh-pin:hover { scale: 1.15; rotate: 0deg; } .belluh-pin:active { scale: .92; }
@@ -211,11 +256,32 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
         .belluh-pin-emoji { font-size: 31px; line-height: 1; } img.belluh-pin-emoji { width: 36px; height: 36px; }
         .belluh-pin-face { position: absolute; right: -8px; bottom: -6px; width: 24px; height: 24px; border-radius: 9999px; border: 2.5px solid #fff; background: #fde7f3; object-fit: cover; }
         .belluh-pin-count { position: absolute; top: -8px; right: -8px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 9999px; background: #1e293b; color: #fff; font: 700 12px/22px Inter, system-ui, sans-serif; border: 2px solid #fff; }
+        @keyframes belluh-twinkle { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+        .belluh-star { animation: belluh-twinkle 3.2s ease-in-out infinite; box-shadow: 0 0 6px rgba(255,255,255,.8); }
+        @keyframes belluh-orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .belluh-orbit { width: 0; height: 0; animation: belluh-orbit 38s linear infinite; }
+        @keyframes belluh-rocket { 0% { transform: translate(-15vw, 105vh) rotate(0deg); } 100% { transform: translate(110vw, -20vh) rotate(0deg); } }
+        .belluh-rocket { left: 0; top: 0; animation: belluh-rocket 16s linear infinite; animation-delay: -5s; }
+        @keyframes belluh-comet { 0% { transform: translate(-10vw, 8vh); opacity: 0; } 8% { opacity: 1; } 60% { opacity: 1; } 100% { transform: translate(105vw, 48vh); opacity: 0; } }
+        .belluh-comet { left: 0; top: 0; animation: belluh-comet 11s ease-in infinite; animation-delay: -3s; }
+        @media (prefers-reduced-motion: reduce) { .belluh-star, .belluh-orbit, .belluh-rocket, .belluh-comet { animation: none; } }
         .maplibregl-ctrl-attrib { font-size: 10px; } .maplibregl-ctrl-bottom-right { bottom: 92px; } @media (min-width: 1024px) { .maplibregl-ctrl-bottom-right { bottom: 0; } }
       `}</style>
+      <div aria-hidden className={`pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-1000 ${space ? 'opacity-100' : 'opacity-0'}`}>
+        {STARS.map(([l, t, r, d], i) => <span key={i} className="belluh-star absolute rounded-full bg-white" style={{ left: `${l}%`, top: `${t}%`, width: r, height: r, animationDelay: `${d}s` }} />)}
+        <span className="absolute belluh-float" style={{ right: '8%', top: '13%', animationDuration: '7s' }}><Emoji e="🌕" size={78} /></span>
+        <span className="absolute belluh-float" style={{ left: '5%', top: '58%', animationDuration: '9s', animationDelay: '-2s' }}><Emoji e="🪐" size={92} /></span>
+        <span className="absolute belluh-float" style={{ left: '14%', top: '16%', animationDuration: '8s', animationDelay: '-4s' }}><Emoji e="🌑" size={34} /></span>
+        <span className="absolute belluh-float" style={{ right: '12%', bottom: '24%', animationDuration: '6s', animationDelay: '-1s' }}><Emoji e="🛸" size={44} /></span>
+        <span className="absolute" style={{ left: '62%', top: '30%' }}><Emoji e="🌟" size={22} /></span>
+        <span className="absolute" style={{ left: '30%', bottom: '18%' }}><Emoji e="🌟" size={18} /></span>
+        <span className="belluh-orbit absolute left-1/2 top-1/2"><span className="absolute" style={{ left: 'min(42vw, 330px)', top: 0 }}><Emoji e="🛰️" size={40} /></span></span>
+        <span className="belluh-rocket absolute"><Emoji e="🚀" size={58} /></span>
+        <span className="belluh-comet absolute"><Emoji e="☄️" size={46} /></span>
+      </div>
       <div className="absolute inset-0"><div ref={box} style={{ width: '100%', height: '100%' }} /></div>
       {/* A toy globe: clouds and sparkles drift around it while you're zoomed out */}
-      <div aria-hidden className={`pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-700 ${far ? 'opacity-100' : 'opacity-0'}`}>
+      <div aria-hidden className={`pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-700 ${far && !space ? 'opacity-100' : 'opacity-0'}`}>
         {[['☁️', '8%', '22%', 54, 0], ['☁️', '74%', '30%', 44, -3], ['☁️', '14%', '72%', 40, -6], ['☁️', '80%', '68%', 58, -1.5], ['✨', '86%', '18%', 26, -2], ['✨', '6%', '48%', 22, -4], ['💫', '70%', '82%', 24, -1], ['⭐', '30%', '12%', 18, -5]].map(([e, l, t, s, d], i) => (
           <span key={i} className="absolute belluh-float" style={{ left: l as string, top: t as string, animationDelay: `${d}s`, animationDuration: `${5 + i % 3}s` }}><Emoji e={e as string} size={(s as number) * 1.15} /></span>
         ))}
