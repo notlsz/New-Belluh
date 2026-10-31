@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Lock, Menu, X, ChevronDown, Heart, MessageCircle, CalendarCheck, Plus, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, Lock, Menu, Sparkles, Activity, TrendingUp, Fingerprint, X, ChevronDown, Heart, MessageCircle, CalendarCheck, Plus, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Receipt } from './About';
 import { rememberCta } from '../services/analytics';
 import { supabaseUrl } from '../lib/supabaseClient';
@@ -657,29 +657,143 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
         </div>
       </section>
       
-      {/* "Love, understood.": the old belluh.com's strongest points, a sample weekly insight and three abilities, text-led */}
-      <section id="understood" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
-          <div className="max-w-5xl mx-auto">
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] gap-10 lg:gap-20 items-center">
-                  <div>
-                      <h2 className="font-serif text-[2.4rem] md:text-6xl leading-[1.05] tracking-tight text-slate-900 [text-wrap:balance]">{LU.title}</h2>
-                      <p className="mt-5 text-[17px] md:text-lg text-slate-500 leading-relaxed max-w-md [text-wrap:pretty]">{LU.sub}</p>
-                  </div>
-                  <figure className="rounded-[28px] bg-white/80 ring-1 ring-slate-200/70 shadow-[0_20px_60px_-30px_rgba(63,116,134,0.35)] px-7 py-8 md:px-9 md:py-10">
-                      <p className="text-xs font-semibold text-[#3f7486]">{LU.insightLabel}</p>
-                      <blockquote className="mt-4 font-serif text-[1.45rem] md:text-[1.75rem] leading-snug text-slate-900 [text-wrap:balance]">{LU.insight}</blockquote>
-                      <figcaption className="mt-5 text-sm text-slate-500">{LU.insightFrom}</figcaption>
-                  </figure>
+      {/* The old belluh.com, brought back: its colors, its grid and its strongest points, with true copy */}
+      <section id="intelligence" className="relative z-10 px-6 pb-24 pt-24 md:pt-32 scroll-mt-24">
+          <div className="max-w-7xl mx-auto">
+              <div className="text-center mb-14 md:mb-16">
+                   <h2 className="text-4xl md:text-6xl font-serif font-bold text-slate-900 mb-6 tracking-tighter [text-wrap:balance] [word-break:auto-phrase]">{LU.title}</h2>
+                   <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-light [text-wrap:pretty]">{LU.sub}</p>
               </div>
-              <div className="mt-16 md:mt-24 grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
-                  {LU.abilities.map(x => (
-                      <div key={x.title}>
-                          <p className="font-serif text-[1.35rem] md:text-2xl leading-snug text-slate-900 [text-wrap:balance]">{x.title}</p>
-                          <p className="mt-3 text-[15px] md:text-base text-slate-600 leading-relaxed [text-wrap:pretty]">{x.body}</p>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                  <div className="md:col-span-8 bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] flex flex-col justify-between gap-10 relative overflow-hidden group hover:scale-[1.005] transition-all duration-700 md:min-h-[440px]">
+                      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-[#CDE9F2]/40 to-transparent rounded-bl-full opacity-60 pointer-events-none"></div>
+                      <div className="relative z-10">
+                          <div className="flex items-center gap-2.5 mb-8">
+                              <Sparkles size={18} className="text-[#f0addd] fill-[#f0addd]" />
+                              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{LU.weekly}</span>
+                          </div>
+                          <h3 className="text-3xl md:text-5xl font-serif text-slate-900 leading-[1.15] mb-6 tracking-tight [text-wrap:balance]">
+                              {LU.insightPre}<span className="text-[#f0addd] underline decoration-[#f0addd]/30 underline-offset-4 decoration-4">{LU.insightWord}</span>{LU.insightPost}
+                          </h3>
+                          <p className="text-lg text-slate-500 leading-relaxed max-w-2xl font-light">{LU.insightDetail}</p>
                       </div>
-                  ))}
+                      <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-5 md:gap-6">
+                          <button onClick={() => { rememberCta('insight'); onGetStarted(); }} className="h-14 px-8 bg-slate-50 hover:bg-slate-100 rounded-full text-sm font-bold text-slate-900 transition-colors inline-flex items-center justify-center gap-2 border border-slate-100">
+                              {LU.view} <ArrowRight size={16} />
+                          </button>
+                          <div className="flex items-center gap-2 text-slate-400">
+                              <Activity size={16} className="text-[#9bbecb]" />
+                              <span className="text-xs font-medium">{LU.from}</span>
+                          </div>
+                      </div>
+                  </div>
+                  <div className="md:col-span-4 bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.08)] flex flex-col justify-between gap-6 relative overflow-hidden hover:scale-[1.01] transition-transform duration-500 min-h-[300px]">
+                      <div className="flex justify-between items-center">
+                          <span className="text-xs font-bold uppercase tracking-widest text-slate-400">{LU.synergy}</span>
+                          <span className="h-6 px-3 bg-[#f0addd]/10 text-[#c06ba5] rounded-full text-[11px] font-bold inline-flex items-center gap-1"><TrendingUp size={12} /> +12</span>
+                      </div>
+                      <div className="flex items-end gap-2 h-28">
+                          {[20, 45, 30, 60, 45, 80, 70, 50, 90, 85].map((h, i) => (
+                              <div key={i} className={`flex-1 rounded-t-md ${i % 2 === 0 ? 'bg-[#CDE9F2]' : 'bg-[#f0addd]'}`} style={{ height: `${h}%`, opacity: 0.6 + i / 20 }} />
+                          ))}
+                      </div>
+                      <div>
+                          <div className="text-6xl font-sans font-semibold tracking-tighter text-slate-900">94</div>
+                          <p className="text-sm text-slate-500 mt-1 font-medium">{LU.synergyNote}</p>
+                      </div>
+                  </div>
               </div>
           </div>
+      </section>
+
+      <section id="features" className="relative z-10 py-24 md:py-32 px-6 bg-slate-50/50 scroll-mt-24">
+        <div className="max-w-7xl mx-auto space-y-10 md:space-y-16">
+            <div className="group relative bg-white rounded-[3rem] p-8 md:p-20 shadow-2xl shadow-slate-200/50 border border-white overflow-hidden transition-transform duration-700 hover:scale-[1.01]">
+                <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-b from-[#f0addd]/25 to-transparent rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3 opacity-60 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none"></div>
+                <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] items-center gap-12 lg:gap-16">
+                    <div>
+                        <div className="inline-flex items-center gap-2 h-9 px-4 bg-slate-100 rounded-full mb-8">
+                             <Sparkles size={14} className="text-[#f0addd]" />
+                             <span className="text-xs font-bold uppercase tracking-widest text-slate-500">{LU.patternLabel}</span>
+                        </div>
+                        <h2 className="text-[2.6rem] md:text-7xl font-serif font-semibold tracking-tighter [word-break:auto-phrase] [text-wrap:balance] text-slate-900 mb-6 leading-[1.02]">{LU.pattern1}<br/><span className="text-[#9bbecb]">{LU.pattern2}</span></h2>
+                        <p className="text-xl md:text-2xl text-slate-500 leading-relaxed font-light max-w-lg">{LU.patternBody}</p>
+                    </div>
+                    <div className="bg-white/80 backdrop-blur-xl border border-white/60 p-6 md:p-7 rounded-3xl shadow-[0_30px_60px_-25px_rgba(240,173,221,0.55)] ring-1 ring-[#f0addd]/20 rotate-3 transition-transform duration-700 group-hover:rotate-0 group-hover:scale-105">
+                        <div className="flex items-center gap-2.5 mb-4">
+                            <Sparkles size={16} className="text-[#f0addd] fill-[#f0addd]" />
+                            <div className="text-xs font-bold uppercase tracking-wider text-slate-400">{LU.detected}</div>
+                        </div>
+                        <p className="font-serif text-lg md:text-xl leading-relaxed text-slate-800">{LU.patternQuote}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="group relative bg-[#CDE9F2] rounded-[3rem] p-8 md:p-20 shadow-2xl overflow-hidden text-slate-900 transition-transform duration-700 hover:scale-[1.01]">
+                 <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-white/40 rounded-full blur-[80px] pointer-events-none animate-float"></div>
+                 <div className="absolute bottom-[-10%] left-[-20%] w-[500px] h-[500px] bg-white/30 rounded-full blur-[60px] pointer-events-none animate-pulse-slow"></div>
+                 <div className="relative z-10 flex flex-col md:flex-row items-center gap-10 md:gap-24">
+                     <div className="flex-1 text-center md:text-left">
+                         <div className="inline-flex items-center gap-2 h-9 px-4 bg-white/60 backdrop-blur-sm rounded-full mb-8 border border-white/40 shadow-sm">
+                             <Lock size={14} className="text-cyan-700" />
+                             <span className="text-xs font-bold uppercase tracking-widest text-cyan-900">{LU.vaultLabel}</span>
+                         </div>
+                         <h2 className="text-[2.6rem] md:text-7xl font-serif font-semibold tracking-tighter [word-break:auto-phrase] [text-wrap:balance] text-cyan-950 mb-6 leading-[1.02]">{LU.vault1}<br/><span className="text-cyan-700">{LU.vault2}</span></h2>
+                         <p className="text-xl md:text-2xl text-cyan-900/80 leading-relaxed font-light">{LU.vaultBody}</p>
+                     </div>
+                     <div className="relative w-72 h-60 md:w-80 md:h-80 flex items-center justify-center shrink-0" aria-hidden>
+                          <div className="relative animate-float">
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-white/50 blur-[70px] rounded-full"></div>
+                                <div className="relative z-10 drop-shadow-[0_15px_35px_rgba(50,120,160,0.15)]">
+                                    <div className="relative w-64 h-48 md:w-72 md:h-56">
+                                        <div className="absolute bottom-0 left-4 w-28 h-28 md:w-32 md:h-32 bg-white rounded-full"></div>
+                                        <div className="absolute bottom-2 right-4 w-32 h-32 md:w-36 md:h-36 bg-white rounded-full"></div>
+                                        <div className="absolute bottom-12 left-14 w-36 h-36 md:w-40 md:h-40 bg-white rounded-full"></div>
+                                        <div className="absolute bottom-8 right-20 w-24 h-24 md:w-28 md:h-28 bg-white rounded-full"></div>
+                                        <div className="absolute bottom-4 left-10 w-48 h-20 bg-white blur-lg rounded-full"></div>
+                                    </div>
+                                </div>
+                                <Sparkles className="absolute -top-4 right-10 text-white w-8 h-8 animate-pulse fill-white/60" />
+                                <Sparkles className="absolute bottom-10 -left-6 text-white w-5 h-5 animate-pulse fill-white/60" />
+                          </div>
+                     </div>
+                 </div>
+            </div>
+
+            <div className="bg-[#fcfcfc] rounded-[3rem] p-8 md:p-16 border border-slate-100 shadow-xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500">
+                <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-[#f0addd]/25 to-transparent rounded-bl-full opacity-60 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+                <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1fr_auto] items-center gap-8 lg:gap-16">
+                    <div>
+                        <Fingerprint size={30} className="text-slate-900 mb-7" />
+                        <h3 className="text-4xl md:text-5xl font-serif font-semibold text-slate-900 mb-4 tracking-tight [word-break:auto-phrase]">{LU.learnsTitle}</h3>
+                        <p className="text-lg md:text-xl text-slate-500 leading-relaxed max-w-xl">{LU.learnsBody}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2.5 lg:grid lg:grid-cols-2 lg:gap-3">
+                        {LU.modes.map((m, i) => (
+                            <span key={m} className={`h-10 md:h-11 px-4 md:px-5 rounded-full text-[13px] md:text-sm font-bold inline-flex items-center justify-center whitespace-nowrap shadow-sm ${i % 2 === 0 ? 'bg-[#f7d8ee] text-[#831843]' : 'bg-[#CDE9F2] text-cyan-900'}`}>{m}</span>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+      </section>
+
+      <section id="moments" className="relative z-10 py-24 overflow-hidden bg-white/50 backdrop-blur-sm scroll-mt-24">
+        <div className="max-w-7xl mx-auto px-6 mb-14 text-center">
+            <h2 className="text-4xl md:text-6xl font-serif font-semibold text-slate-900 mb-6 tracking-tighter">{LU.momentsTitle}</h2>
+            <p className="text-slate-500 text-lg max-w-2xl mx-auto leading-relaxed [text-wrap:pretty]">{LU.momentsSub}</p>
+        </div>
+        <div className="relative w-full overflow-hidden py-4" style={{ maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)' }}>
+             <div className="flex gap-6 md:gap-8 w-max animate-marquee hover:[animation-play-state:paused]" style={{ animationDuration: '45s' }}>
+                 {[...LU.entries, ...LU.entries].map((t, idx) => (
+                     <div key={idx} className={`w-[300px] md:w-[340px] h-[220px] rounded-3xl border border-black/5 shrink-0 p-8 flex flex-col justify-between hover:scale-[1.02] transition-all shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] ${idx % 5 === 2 ? 'bg-[#CDE9F2]' : 'bg-[#f7d8ee]'}`}>
+                         <span className="text-5xl opacity-60 text-white font-serif leading-none">❝</span>
+                         <p className={`font-serif text-lg leading-relaxed line-clamp-3 ${idx % 5 === 2 ? 'text-cyan-950' : 'text-[#5e1c43]'}`}>{t}</p>
+                         <div className={`text-[11px] font-bold uppercase tracking-widest ${idx % 5 === 2 ? 'text-cyan-800' : 'text-[#831843]'}`}>{LU.entry} {100 + (idx % 5) + 1}</div>
+                     </div>
+                 ))}
+             </div>
+        </div>
       </section>
 
       {/* Relationship science, as Hinge does with its research, but with the actual studies: a quiet list, no cards */}
