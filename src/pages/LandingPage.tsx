@@ -15,6 +15,7 @@ import { belluh } from '../lib/belluhPresence';
 import { useI18n, useUi } from '../i18n';
 import science from '../i18n/ui/science';
 import understood from '../i18n/ui/understood';
+import AskMoments, { PENDING_ASK } from '../components/AskMoments';
 
 
 // Priced from what a couple costs to run, not from what the market will bear: AI for both partners, texting, the odd
@@ -778,18 +779,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
         </div>
       </section>
 
-      {/* Every first, and every 78th: real-feeling moments on film, a strip you can swipe */}
-      <section id="firsts" className="relative z-10 py-20 md:py-28 overflow-hidden">
-        <h2 className="px-6 text-center text-4xl md:text-6xl font-serif font-semibold text-slate-900 tracking-tighter [text-wrap:balance] [word-break:auto-phrase]">{LU.firstsTitle}</h2>
-        <div className="mt-12 flex gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory px-6 md:px-12 scroll-px-6 md:scroll-px-12 pb-4 [scrollbar-width:none]">
-          {['just-married', 'first-date', 'first-kiss', 'first-baby', '78th-trip', '30th-anniversary'].map((k, i) => (
-            <figure key={k} className="snap-start shrink-0 w-[72vw] sm:w-[300px] md:w-[340px]">
-              <img src={`/milestones/${k}.webp`} alt={LU.firsts[i]} loading="lazy" className="w-full aspect-[4/5] object-cover rounded-[1.75rem] shadow-[0_24px_50px_-28px_rgba(15,23,42,0.6)]" />
-              <figcaption className="mt-4 font-serif text-xl text-slate-900">{LU.firsts[i]}</figcaption>
-            </figure>
-          ))}
-        </div>
-      </section>
+      <AskMoments title={LU.firstsTitle} lead={LU.askLead} names={LU.firsts} asks={LU.asks} onAsk={(text) => { try { localStorage.setItem(PENDING_ASK, text); } catch { /* storage off */ } rememberCta('ask'); onGetStarted(); }} />
 
       <section id="moments" className="relative z-10 py-24 overflow-hidden bg-white/50 backdrop-blur-sm scroll-mt-24">
         <div className="max-w-7xl mx-auto px-6 mb-14 text-center">
