@@ -142,7 +142,7 @@ const About: React.FC<AboutProps> = ({ onBack, onGetStarted, onLogin, onShowLega
       {/* Reading progress */}
       <div className="fixed top-0 left-0 h-[3px] bg-gradient-to-r from-[#9bbecb] to-[#f0addd] z-[60]" style={{ width: `${scrollProgress * 100}%` }} />
 
-      <SiteNav
+      <SiteNav current="why"
         links={[
           { label: 'Home', onClick: onBack },
           { label: 'Our Why', onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }), current: true },

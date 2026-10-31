@@ -440,7 +440,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       </div>
 
       {/* Top bar */}
-      <SiteNav
+      <SiteNav current="home"
           links={[
               { label: n_.meet, onClick: () => scrollToSection('at-work'), section: 'at-work' },
               { label: n_.inside, onClick: () => scrollToSection('inside'), section: 'inside' },
@@ -500,7 +500,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       </div>
 
       {/* Hero: what it is on the left, Belluh doing it on the right */}
-      <section className="relative z-10 min-h-[100svh] flex items-center pt-[68px] pb-5 md:pt-24 md:pb-12 px-6">
+      <section className="relative z-10 min-h-[100svh] flex items-center pt-[84px] pb-5 md:pt-24 md:pb-12 px-6">
          <div className="w-full max-w-7xl mx-auto md:px-6 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] items-center gap-6 sm:gap-12 lg:gap-6">
              <div className="text-center lg:text-left" style={{ animation: 'slideUp 0.9s cubic-bezier(0.16,1,0.3,1) both' }}>
                  <h1 className="font-serif tracking-tight leading-[0.98] text-[2.85rem] sm:text-7xl xl:text-[5.6rem]">
