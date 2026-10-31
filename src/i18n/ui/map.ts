@@ -18,6 +18,13 @@ const en = {
   photo: 'Photo',
   close: 'Close',
   you: 'You',
+  search: 'Search our map',
+  dateLabel: 'Date',
+  placeLabel: 'Place',
+  back: 'Back',
+  noResults: 'Nothing here yet',
+  memories: '{n} memories',
+  memory: '1 memory',
 };
 const es = {
   tab: 'Mapa',
@@ -36,6 +43,13 @@ const es = {
   photo: 'Foto',
   close: 'Cerrar',
   you: 'Tú',
+  search: 'Buscar en el mapa',
+  dateLabel: 'Fecha',
+  placeLabel: 'Lugar',
+  back: 'Atrás',
+  noResults: 'Aún no hay nada',
+  memories: '{n} recuerdos',
+  memory: '1 recuerdo',
 };
 const pt = {
   tab: 'Mapa',
@@ -54,17 +68,24 @@ const pt = {
   photo: 'Foto',
   close: 'Fechar',
   you: 'Você',
+  search: 'Buscar no mapa',
+  dateLabel: 'Data',
+  placeLabel: 'Lugar',
+  back: 'Voltar',
+  noResults: 'Nada aqui ainda',
+  memories: '{n} memórias',
+  memory: '1 memória',
 };
 const map: UiTable<typeof en> = {
   en,
-  ja: { tab: 'マップ', title: 'ふたりの地図', places: '{n}か所', place: '1か所', emptyTitle: 'ふたりの思い出マップ', emptyBody: '場所をオンにすると、日記も写真もボイスメモも、その場所にピンが立ちます。写真は撮った場所に。', turnOn: '場所をオンにする', denied: 'ブラウザかスマホの設定で、Belluhの位置情報がオフになっています。', pinHere: 'いまいる場所にピン', pinned: 'いまいる場所にピンを立てます', globe: '世界をみる', ours: 'ふたりの場所', voice: 'ボイスメモ', photo: '写真', close: '閉じる', you: 'あなた' },
-  fr: { tab: 'Carte', title: 'Notre carte', places: '{n} lieux', place: '1 lieu', emptyTitle: 'Votre carte de l’amour', emptyBody: 'Active les lieux et chaque note, photo et mémo vocal s’épingle là où c’est arrivé. Les photos gardent l’endroit où elles ont été prises.', turnOn: 'Activer les lieux', denied: 'La localisation est désactivée pour Belluh dans les réglages du navigateur ou du téléphone.', pinHere: 'Épingler où je suis', pinned: 'Épinglé là où tu es', globe: 'Le monde entier', ours: 'Nos lieux', voice: 'Mémo vocal', photo: 'Photo', close: 'Fermer', you: 'Toi' },
-  it: { tab: 'Mappa', title: 'La nostra mappa', places: '{n} posti', place: '1 posto', emptyTitle: 'La vostra mappa dell’amore', emptyBody: 'Attiva i luoghi e ogni pagina, foto e nota vocale si appunta dove è successa. Le foto tengono il posto in cui sono state scattate.', turnOn: 'Attiva i luoghi', denied: 'La posizione è disattivata per Belluh nelle impostazioni del browser o del telefono.', pinHere: 'Segna dove sono', pinned: 'Segnato dove sei', globe: 'Tutto il mondo', ours: 'I nostri posti', voice: 'Nota vocale', photo: 'Foto', close: 'Chiudi', you: 'Tu' },
+  ja: { tab: 'マップ', title: 'ふたりの地図', places: '{n}か所', place: '1か所', emptyTitle: 'ふたりの思い出マップ', emptyBody: '場所をオンにすると、日記も写真もボイスメモも、その場所にピンが立ちます。写真は撮った場所に。', turnOn: '場所をオンにする', denied: 'ブラウザかスマホの設定で、Belluhの位置情報がオフになっています。', pinHere: 'いまいる場所にピン', pinned: 'いまいる場所にピンを立てます', globe: '世界をみる', ours: 'ふたりの場所', voice: 'ボイスメモ', photo: '写真', close: '閉じる', you: 'あなた', search: '地図を検索', dateLabel: '日付', placeLabel: '場所', back: '戻る', noResults: 'まだ何もありません', memories: '思い出{n}件', memory: '思い出1件' },
+  fr: { tab: 'Carte', title: 'Notre carte', places: '{n} lieux', place: '1 lieu', emptyTitle: 'Votre carte de l’amour', emptyBody: 'Active les lieux et chaque note, photo et mémo vocal s’épingle là où c’est arrivé. Les photos gardent l’endroit où elles ont été prises.', turnOn: 'Activer les lieux', denied: 'La localisation est désactivée pour Belluh dans les réglages du navigateur ou du téléphone.', pinHere: 'Épingler où je suis', pinned: 'Épinglé là où tu es', globe: 'Le monde entier', ours: 'Nos lieux', voice: 'Mémo vocal', photo: 'Photo', close: 'Fermer', you: 'Toi', search: 'Chercher sur la carte', dateLabel: 'Date', placeLabel: 'Lieu', back: 'Retour', noResults: 'Rien pour l’instant', memories: '{n} souvenirs', memory: '1 souvenir' },
+  it: { tab: 'Mappa', title: 'La nostra mappa', places: '{n} posti', place: '1 posto', emptyTitle: 'La vostra mappa dell’amore', emptyBody: 'Attiva i luoghi e ogni pagina, foto e nota vocale si appunta dove è successa. Le foto tengono il posto in cui sono state scattate.', turnOn: 'Attiva i luoghi', denied: 'La posizione è disattivata per Belluh nelle impostazioni del browser o del telefono.', pinHere: 'Segna dove sono', pinned: 'Segnato dove sei', globe: 'Tutto il mondo', ours: 'I nostri posti', voice: 'Nota vocale', photo: 'Foto', close: 'Chiudi', you: 'Tu', search: 'Cerca nella mappa', dateLabel: 'Data', placeLabel: 'Luogo', back: 'Indietro', noResults: 'Ancora niente', memories: '{n} ricordi', memory: '1 ricordo' },
   pt,
-  zh: { tab: '地图', title: '我们的地图', places: '{n} 个地方', place: '1 个地方', emptyTitle: '你们的爱情地图', emptyBody: '打开位置，每篇日记、照片和语音都会钉在发生的地方。照片会记在拍摄的地点。', turnOn: '打开位置', denied: '浏览器或手机设置里关闭了 Belluh 的位置权限。', pinHere: '钉在我现在的位置', pinned: '钉在你现在的位置', globe: '看整个世界', ours: '我们的地方', voice: '语音', photo: '照片', close: '关闭', you: '你' },
-  de: { tab: 'Karte', title: 'Unsere Karte', places: '{n} Orte', place: '1 Ort', emptyTitle: 'Eure Liebeskarte', emptyBody: 'Schalte Orte ein, und jeder Eintrag, jedes Foto und jede Sprachnachricht steckt dort, wo es passiert ist. Fotos behalten den Ort, an dem sie entstanden sind.', turnOn: 'Orte einschalten', denied: 'Der Standort ist für Belluh in den Browser- oder Handy-Einstellungen aus.', pinHere: 'Hier anpinnen', pinned: 'Wird angepinnt, wo du bist', globe: 'Ganze Welt', ours: 'Unsere Orte', voice: 'Sprachnachricht', photo: 'Foto', close: 'Schließen', you: 'Du' },
+  zh: { tab: '地图', title: '我们的地图', places: '{n} 个地方', place: '1 个地方', emptyTitle: '你们的爱情地图', emptyBody: '打开位置，每篇日记、照片和语音都会钉在发生的地方。照片会记在拍摄的地点。', turnOn: '打开位置', denied: '浏览器或手机设置里关闭了 Belluh 的位置权限。', pinHere: '钉在我现在的位置', pinned: '钉在你现在的位置', globe: '看整个世界', ours: '我们的地方', voice: '语音', photo: '照片', close: '关闭', you: '你', search: '搜索地图', dateLabel: '日期', placeLabel: '地点', back: '返回', noResults: '这里还什么都没有', memories: '{n} 段回忆', memory: '1 段回忆' },
+  de: { tab: 'Karte', title: 'Unsere Karte', places: '{n} Orte', place: '1 Ort', emptyTitle: 'Eure Liebeskarte', emptyBody: 'Schalte Orte ein, und jeder Eintrag, jedes Foto und jede Sprachnachricht steckt dort, wo es passiert ist. Fotos behalten den Ort, an dem sie entstanden sind.', turnOn: 'Orte einschalten', denied: 'Der Standort ist für Belluh in den Browser- oder Handy-Einstellungen aus.', pinHere: 'Hier anpinnen', pinned: 'Wird angepinnt, wo du bist', globe: 'Ganze Welt', ours: 'Unsere Orte', voice: 'Sprachnachricht', photo: 'Foto', close: 'Schließen', you: 'Du', search: 'Karte durchsuchen', dateLabel: 'Datum', placeLabel: 'Ort', back: 'Zurück', noResults: 'Noch nichts hier', memories: '{n} Erinnerungen', memory: '1 Erinnerung' },
   es,
   'es-MX': { emptyTitle: 'Su mapa del amor', denied: 'La ubicación está desactivada para Belluh en la configuración del navegador o del celular.' },
-  'pt-PT': { emptyTitle: 'O vosso mapa do amor', emptyBody: 'Ativa os locais e cada registo, foto e nota de voz fica marcado onde aconteceu. As fotos guardam o sítio onde foram tiradas.', turnOn: 'Ativar locais', places: '{n} locais', place: '1 local', denied: 'A localização está desativada para o Belluh nas definições do browser ou do telemóvel.', pinned: 'Marcado onde estás', ours: 'Os nossos sítios', voice: 'Nota de voz', you: 'Tu', title: 'O nosso mapa' },
+  'pt-PT': { emptyTitle: 'O vosso mapa do amor', emptyBody: 'Ativa os locais e cada registo, foto e nota de voz fica marcado onde aconteceu. As fotos guardam o sítio onde foram tiradas.', turnOn: 'Ativar locais', places: '{n} locais', place: '1 local', denied: 'A localização está desativada para o Belluh nas definições do browser ou do telemóvel.', pinned: 'Marcado onde estás', ours: 'Os nossos sítios', voice: 'Nota de voz', you: 'Tu', title: 'O nosso mapa', search: 'Pesquisar no mapa', memories: '{n} memórias' },
 };
 export default map;

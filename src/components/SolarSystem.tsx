@@ -1,8 +1,7 @@
-// Space behind the globe when you zoom all the way out: a starlight sky like a Rolls-Royce headliner (hundreds of tiny
-// points of light at different brightness, a few twinkling), and the other seven planets of our solar system drawn as
-// flat cartoon planets (Earth is the globe itself), plus the Moon, a satellite, a rocket and a comet. Everything sits at
-// a depth and slides as the globe turns, nearer things faster, so spinning the Earth spins the sky with it.
-import React, { useEffect, useMemo, useRef } from 'react';
+// Space behind the globe, like Google Earth's: a real sky sphere of stars (a Rolls-Royce headliner of tiny lights) with
+// the other seven planets and the Moon fixed on it, so turning the Earth sweeps the sky past. Plus a satellite circling
+// the Earth, a rocket and a comet.
+import React, { useEffect, useRef } from 'react';
 import { Emoji } from '../lib/emoji3d';
 
 // Flat cartoon planets: a solid body, a darker side, a soft highlight, and their own details
@@ -38,83 +37,102 @@ const Planet: React.FC<{ kind: string; size: number }> = ({ kind, size }) => {
   );
 };
 
-// Where each thing sits in the sky (x %, y %), how big, and how near (nearer things slide more as the globe turns)
-const SKY: { k: string; x: number; y: number; s: number; d: number }[] = [
-  { k: 'mercury', x: 12, y: 18, s: 26, d: 0.9 },
-  { k: 'venus', x: 30, y: 9, s: 40, d: 0.8 },
-  { k: 'moon', x: 72, y: 14, s: 58, d: 1.2 },
-  { k: 'mars', x: 86, y: 34, s: 34, d: 0.85 },
-  { k: 'jupiter', x: 8, y: 52, s: 84, d: 0.55 },
-  { k: 'saturn', x: 78, y: 72, s: 62, d: 0.5 },
-  { k: 'uranus', x: 34, y: 84, s: 40, d: 0.35 },
-  { k: 'neptune', x: 58, y: 92, s: 36, d: 0.3 },
-  { k: 'satellite', x: 62, y: 28, s: 38, d: 1.4 },
-  { k: 'ufo', x: 20, y: 72, s: 40, d: 1.1 },
+// Where each thing sits on the sky sphere (sky longitude and latitude in degrees, like stars on a star chart) and how
+// big it is. The sky is fixed, like Google Earth's: turning the globe sweeps it past behind the Earth.
+const SKY: { k: string; lon: number; lat: number; s: number }[] = [
+  { k: 'moon', lon: 200, lat: 12, s: 64 },
+  { k: 'mercury', lon: 150, lat: -6, s: 26 },
+  { k: 'venus', lon: 245, lat: 20, s: 42 },
+  { k: 'mars', lon: 300, lat: -18, s: 36 },
+  { k: 'jupiter', lon: 20, lat: 26, s: 92 },
+  { k: 'saturn', lon: 80, lat: -22, s: 70 },
+  { k: 'uranus', lon: 120, lat: 34, s: 44 },
+  { k: 'neptune', lon: 350, lat: -38, s: 40 },
+  { k: 'ufo', lon: 40, lat: -48, s: 40 },
 ];
 
-// Hundreds of tiny stars, drawn once into a tile that repeats across the sky
-function starTile(): string {
-  const n = 512, c = document.createElement('canvas'); c.width = c.height = n;
-  const x = c.getContext('2d')!;
-  let seed = 7; const r = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-  for (let i = 0; i < 420; i++) {
-    const big = r() > 0.94, a = big ? 0.9 : 0.25 + r() * 0.6, rad = big ? 1.1 + r() * 0.7 : 0.35 + r() * 0.55;
-    x.beginPath(); x.arc(r() * n, r() * n, rad, 0, Math.PI * 2);
-    x.fillStyle = `rgba(${235 + Math.round(r() * 20)},${235 + Math.round(r() * 20)},255,${a})`;
-    if (big) { x.shadowColor = 'rgba(200,215,255,0.9)'; x.shadowBlur = 6; } else x.shadowBlur = 0;
-    x.fill();
-  }
-  return c.toDataURL();
-}
+const rad = Math.PI / 180;
+const vec = (lon: number, lat: number) => [Math.cos(lat * rad) * Math.cos(lon * rad), Math.cos(lat * rad) * Math.sin(lon * rad), Math.sin(lat * rad)];
+
+// A fixed starfield: 1,800 stars scattered evenly over the whole sky, a few of them big and bright
+const STARS = (() => {
+  let seed = 11; const r = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  return Array.from({ length: 1800 }, () => {
+    const z = r() * 2 - 1, t = r() * Math.PI * 2, q = Math.sqrt(1 - z * z);
+    const big = r() > 0.965;
+    return { v: [q * Math.cos(t), q * Math.sin(t), z], r: big ? 1.3 + r() * 0.9 : 0.4 + r() * 0.7, a: big ? 0.95 : 0.25 + r() * 0.65, tint: r() };
+  });
+})();
 
 export interface SolarSystemHandle { turn: (lng: number, lat: number) => void }
 
 const SolarSystem = React.forwardRef<SolarSystemHandle, { visible: boolean }>(({ visible }, ref) => {
   const box = useRef<HTMLDivElement>(null);
+  const canvas = useRef<HTMLCanvasElement>(null);
   const items = useRef<(HTMLSpanElement | null)[]>([]);
-  const tile = useMemo(() => (typeof document === 'undefined' ? '' : starTile()), []);
-  // A few brighter stars twinkle on top of the field
-  const twinkles = useMemo(() => Array.from({ length: 26 }, (_, i) => { const r = (n: number) => { const v = Math.sin(i * 91.7 + n * 47.3) * 43758.5453; return v - Math.floor(v); }; return [r(1) * 100, r(2) * 100, r(3) * 4]; }), []);
+  const view = useRef({ lng: 10, lat: 25 });
+  const frame = useRef(0);
+
+  // Look at the sky behind the Earth from where the camera is: the camera sits above (lng, lat), so the sky we see is in
+  // the opposite direction. East is right, north is up, and a wide lens spreads the sky across the screen.
+  const draw = () => {
+    frame.current = 0;
+    const el = box.current, cv = canvas.current; if (!el || !cv) return;
+    const w = el.clientWidth, h = el.clientHeight, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    const { lng, lat } = view.current;
+    const cam = vec(lng, lat), f = cam.map(c => -c);
+    const e = [-Math.sin(lng * rad), Math.cos(lng * rad), 0];
+    const n = [-Math.sin(lat * rad) * Math.cos(lng * rad), -Math.sin(lat * rad) * Math.sin(lng * rad), Math.cos(lat * rad)];
+    const dot = (a: number[], b: number[]) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    const focal = Math.max(w, h) * 0.55;
+    const project = (v: number[]) => { const z = dot(v, f); if (z < 0.15) return null; return [w / 2 - dot(v, e) / z * focal, h / 2 - dot(v, n) / z * focal, z]; };
+    const x = cv.getContext('2d')!; x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, w, h);
+    for (const st of STARS) {
+      const p = project(st.v); if (!p || p[0] < -4 || p[0] > w + 4 || p[1] < -4 || p[1] > h + 4) continue;
+      x.globalAlpha = st.a;
+      x.fillStyle = st.tint > 0.8 ? '#ffe9c4' : st.tint > 0.6 ? '#cfe0ff' : '#ffffff';
+      x.beginPath(); x.arc(p[0], p[1], st.r, 0, Math.PI * 2); x.fill();
+      if (st.r > 1.3) { x.globalAlpha = st.a * 0.25; x.beginPath(); x.arc(p[0], p[1], st.r * 3, 0, Math.PI * 2); x.fill(); }
+    }
+    x.globalAlpha = 1;
+    SKY.forEach((o, i) => {
+      const node = items.current[i]; if (!node) return;
+      const p = project(vec(o.lon, o.lat));
+      if (!p) { node.style.opacity = '0'; return; }
+      node.style.opacity = '1';
+      node.style.transform = `translate(${(p[0] - o.s / 2).toFixed(1)}px, ${(p[1] - o.s / 2).toFixed(1)}px)`;
+    });
+  };
 
   React.useImperativeHandle(ref, () => ({
-    turn: (lng, lat) => {
-      const el = box.current; if (!el) return;
-      const w = el.clientWidth || 1;
-      el.style.backgroundPosition = `${(-lng * 2.2).toFixed(1)}px ${(lat * 1.4).toFixed(1)}px, ${(-lng * 1.1).toFixed(1)}px ${(lat * 0.7).toFixed(1)}px`;
-      SKY.forEach((o, i) => {
-        const n = items.current[i]; if (!n) return;
-        // Slide with the globe and wrap around the sky, so the planets come back round as it turns
-        const px = ((o.x / 100) * w - (lng / 360) * w * 2.4 * o.d) % (w * 1.3);
-        n.style.transform = `translate(${(px < -w * 0.15 ? px + w * 1.3 : px).toFixed(1)}px, ${(lat * 0.9 * o.d).toFixed(1)}px)`;
-      });
-    },
+    turn: (lng, lat) => { view.current = { lng, lat }; if (!frame.current) frame.current = requestAnimationFrame(draw); },
   }), []);
 
-  useEffect(() => { /* place things before the first turn */ (ref as any)?.current?.turn?.(10, 25); }, [ref]);
+  useEffect(() => { draw(); const on = () => draw(); window.addEventListener('resize', on); return () => window.removeEventListener('resize', on); }, []);
 
   return (
-    <div ref={box} aria-hidden className={`pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-1000 ${visible ? 'opacity-100' : 'opacity-0'}`}
-      style={{ backgroundColor: '#0b0a1d', backgroundImage: `url(${tile}), url(${tile})`, backgroundSize: '512px 512px, 340px 340px' }}>
+    <div ref={box} aria-hidden className={`pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-1000 ${visible ? 'opacity-100' : 'opacity-0'}`} style={{ backgroundColor: '#0b0a1d' }}>
       <style>{`
-        @keyframes ss-twinkle { 0%, 100% { opacity: .15; transform: scale(.7); } 50% { opacity: 1; transform: scale(1); } }
-        .ss-tw { animation: ss-twinkle 3.6s ease-in-out infinite; box-shadow: 0 0 8px 2px rgba(210,225,255,.75); }
         @keyframes ss-rocket { 0% { transform: translate(-12vw, 108vh); } 100% { transform: translate(112vw, -22vh); } }
         .ss-rocket { left: 0; top: 0; animation: ss-rocket 18s linear infinite; animation-delay: -6s; }
         /* The comet flies head first: its head is at the lower left, its tail streams up and to the right */
         @keyframes ss-comet { 0% { transform: translate(105vw, -12vh); opacity: 0; } 8% { opacity: 1; } 70% { opacity: 1; } 100% { transform: translate(-18vw, 62vh); opacity: 0; } }
         .ss-comet { left: 0; top: 0; animation: ss-comet 10s ease-in infinite; animation-delay: -2s; }
-        @media (prefers-reduced-motion: reduce) { .ss-tw, .ss-rocket, .ss-comet { animation: none; } }
+        @keyframes ss-orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .ss-orbit { width: 0; height: 0; animation: ss-orbit 40s linear infinite; }
+        @media (prefers-reduced-motion: reduce) { .ss-rocket, .ss-comet, .ss-orbit { animation: none; } }
       `}</style>
-      {twinkles.map(([l, t, d], i) => <span key={i} className="ss-tw absolute rounded-full bg-white" style={{ left: `${l}%`, top: `${t}%`, width: 2.5, height: 2.5, animationDelay: `-${d}s` }} />)}
+      <canvas ref={canvas} className="absolute inset-0 w-full h-full" />
       {SKY.map((o, i) => (
-        <span key={o.k} ref={n => { items.current[i] = n; }} className="absolute left-0 will-change-transform" style={{ top: `${o.y}%` }}>
-          <span className="block belluh-float" style={{ animationDuration: `${6 + (i % 4)}s`, animationDelay: `-${i}s` }}>
-            {o.k === 'moon' ? <Emoji e="🌕" size={o.s} /> : o.k === 'satellite' ? <Emoji e="🛰️" size={o.s} /> : o.k === 'ufo' ? <Emoji e="🛸" size={o.s} /> : <Planet kind={o.k} size={o.s} />}
-          </span>
+        <span key={o.k} ref={node => { items.current[i] = node; }} className="absolute left-0 top-0 transition-opacity duration-300 will-change-transform" style={{ opacity: 0 }}>
+          {o.k === 'moon' ? <Emoji e="🌕" size={o.s} /> : o.k === 'ufo' ? <Emoji e="🛸" size={o.s} /> : <Planet kind={o.k} size={o.s} />}
         </span>
       ))}
-      <span className="ss-rocket absolute"><Emoji e="🚀" size={56} /></span>
-      <span className="ss-comet absolute"><Emoji e="☄️" size={48} /></span>
+      {/* A satellite circling the Earth itself */}
+      <span className="ss-orbit absolute left-1/2 top-1/2"><span className="absolute" style={{ left: 'min(36vw, 300px)', top: -18 }}><Emoji e="🛰️" size={36} /></span></span>
+      <span className="ss-rocket absolute"><Emoji e="🚀" size={54} /></span>
+      <span className="ss-comet absolute"><Emoji e="☄️" size={46} /></span>
     </div>
   );
 });
