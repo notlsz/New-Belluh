@@ -3,6 +3,7 @@ import { useI18n, useUi } from '../i18n';
 import profile from '../i18n/ui/profile';
 import { calmAvatar, avatarFor } from '../lib/avatar';
 import { Emoji } from '../lib/emoji3d';
+const OurWorld = React.lazy(() => import('../components/OurWorld'));
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { User, LoveNote, Goal, Circle, CircleStatus, JournalEntry, Mood, RelationshipReceipt, ColorTheme } from '../types';
 import { Settings, Heart, Plus, X, Trash2, Shield, ChevronRight, Users, Check, Send, Trophy, Activity, Lock, Flame, Download, CheckCircle2, Mail, Archive, Star, FileText, Film, Edit3, Camera, UserPlus, LogOut, Infinity, ArrowRight, Play, Receipt, Share2, Instagram, Facebook, Copy, MessageCircle, Twitter, Camera as CameraIcon, Link as LinkIcon, Upload, Calendar, Clock, Gift, MoreHorizontal, PenLine, Sparkles, Maximize2, Eye, EyeOff, MoveDiagonal, RefreshCw, Palette } from 'lucide-react';
@@ -506,7 +507,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                           </div>
                       </div>
                       
-                      <div className="mb-14"></div>
+                      <div className="mt-10 mb-12 md:max-w-2xl"><React.Suspense fallback={null}><OurWorld entries={entries} /></React.Suspense></div>
 
                       {/* Relationship Facts Grid */}
                       {activeCircle && (
