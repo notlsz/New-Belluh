@@ -5,6 +5,8 @@
 import type { UiTable } from '../ui';
 
 const en = {
+  firstsTitle: "For every first, and every 78th.",
+  firsts: ["Just married", "First date", "First kiss", "First baby", "78th trip", "30th anniversary"],
   title: 'Intelligence, applied to intimacy.',
   sub: 'Belluh turns thousands of small moments into a clear understanding of your shared life.',
   weekly: 'Weekly insight',
@@ -42,6 +44,8 @@ const en = {
 };
 
 const es = {
+  firstsTitle: "Para cada primera vez, y cada número 78.",
+  firsts: ["Recién casados", "Primera cita", "Primer beso", "Primer bebé", "Viaje número 78", "30.º aniversario"],
   title: 'Inteligencia, al servicio de la intimidad.',
   sub: 'Belluh convierte miles de pequeños momentos en una comprensión clara de vuestra vida juntos.',
   weekly: 'Lo de esta semana',
@@ -79,6 +83,8 @@ const es = {
 };
 
 const pt = {
+  firstsTitle: "Para cada primeira vez, e cada 78ª.",
+  firsts: ["Recém-casados", "Primeiro encontro", "Primeiro beijo", "Primeiro bebê", "78ª viagem", "30º aniversário"],
   title: 'Inteligência a serviço da intimidade.',
   sub: 'O Belluh transforma milhares de pequenos momentos num entendimento claro da vida de vocês juntos.',
   weekly: 'O destaque da semana',
@@ -118,6 +124,8 @@ const pt = {
 const understood: UiTable<typeof en> = {
   en,
   ja: {
+    firstsTitle: "はじめての日も、78回目の日も。",
+    firsts: ["結婚したての日", "はじめてのデート", "ファーストキス", "はじめての赤ちゃん", "78回目の旅", "結婚30周年"],
     title: 'AIの知性を、ふたりの親密さに。',
     sub: 'Belluhは、たくさんの小さな瞬間を、ふたりの暮らしへの確かな理解に変えていきます。',
     weekly: '今週の気づき',
@@ -154,6 +162,8 @@ const understood: UiTable<typeof en> = {
     entry: '日記',
   },
   fr: {
+    firstsTitle: "Pour chaque première fois, et chaque 78e.",
+    firsts: ["Jeunes mariés", "Premier rendez-vous", "Premier baiser", "Premier bébé", "78e voyage", "30 ans de mariage"],
     title: 'L’intelligence, au service de l’intimité.',
     sub: 'Belluh fait de milliers de petits moments une compréhension claire de votre vie à deux.',
     weekly: 'Ce qui ressort cette semaine',
@@ -190,6 +200,8 @@ const understood: UiTable<typeof en> = {
     entry: 'Note',
   },
   it: {
+    firstsTitle: "Per ogni prima volta, e ogni 78ª.",
+    firsts: ["Appena sposati", "Primo appuntamento", "Primo bacio", "Primo figlio", "78° viaggio", "30° anniversario"],
     title: 'L’intelligenza, al servizio dell’intimità.',
     sub: 'Belluh trasforma migliaia di piccoli momenti in una comprensione chiara della vostra vita insieme.',
     weekly: 'Lo spunto della settimana',
@@ -227,6 +239,8 @@ const understood: UiTable<typeof en> = {
   },
   pt,
   zh: {
+    firstsTitle: "每一个第一次，也有第78次。",
+    firsts: ["新婚", "第一次约会", "初吻", "第一个宝宝", "第78次旅行", "结婚30周年"],
     title: '让智能，懂得亲密。',
     sub: 'Belluh 把成千上万个小瞬间，变成对你们共同生活的清晰理解。',
     weekly: '本周发现',
@@ -263,6 +277,8 @@ const understood: UiTable<typeof en> = {
     entry: '日记',
   },
   de: {
+    firstsTitle: "Für jedes erste Mal, und jedes 78.",
+    firsts: ["Frisch verheiratet", "Erstes Date", "Erster Kuss", "Erstes Baby", "78. Reise", "30. Hochzeitstag"],
     title: 'Intelligenz, für eure Nähe.',
     sub: 'Belluh macht aus tausenden kleinen Momenten ein klares Verständnis eures gemeinsamen Lebens.',
     weekly: 'Erkenntnis der Woche',
