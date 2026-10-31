@@ -11,6 +11,8 @@ import { EntryType, type JournalEntry } from '../types';
 import { MOOD_EMOJIS } from '../constants';
 import { herePlace, placesOn, setPlacesOn } from '../lib/places';
 import { Emoji, emojiSrc } from '../lib/emoji3d';
+import GuidesPanel from '../components/GuidesPanel';
+import guidesUi from '../i18n/ui/guides';
 import SolarSystem, { type SolarSystemHandle } from '../components/SolarSystem';
 
 const OCEAN = '#c6d8eb', LAND = '#fdf0e9', ROAD = '#f7cdb2', ROAD_MAIN = '#f3b994';
@@ -18,7 +20,7 @@ const PALETTE = ['#ffd6a8', '#ffc4dc', '#c9f0b4', '#ffeb99', '#dccbff', '#b9e8f7
 // Places on the map as emoji stickers, the way Pampam does it
 const POI: Record<string, string> = { cafe: '☕', restaurant: '🍜', fast_food: '🍔', bar: '🍷', beer: '🍺', bakery: '🥐', ice_cream: '🍦', park: '🌳', garden: '🌷', museum: '🖼️', art_gallery: '🎨', cinema: '🎬', theatre: '🎭', music: '🎵', clothing_store: '👗', zoo: '🦒', aquarium: '🐠', castle: '🏰', attraction: '🎡', stadium: '🏟️', beach: '🏖️', campsite: '⛺', airport: '✈️', harbor: '⛵', florist: '💐', place_of_worship: '⛩️', playground: '🛝', swimming: '🏊', viewpoint: '🌅' };
 
-function styleFor(lang: string): StyleSpecification {
+export function styleFor(lang: string): StyleSpecification {
   const name: any = ['coalesce', ['get', `name:${lang}`], ['get', 'name']];
   return {
     version: 8,
@@ -78,9 +80,13 @@ const titleOf = (e: JournalEntry) => {
 
 const emojiFor = (e: JournalEntry) => e.type === EntryType.Voice || e.audioUrl ? '🎙️' : e.type === EntryType.Photo ? '📸' : (e.mood && (MOOD_EMOJIS as any)[e.mood]) || '💌';
 
-interface Props { entries: JournalEntry[]; currentUserId: string }
+interface Props { entries: JournalEntry[]; currentUserId: string; myName?: string | null }
 
-const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
+const LoveMap: React.FC<Props> = ({ entries, currentUserId, myName = null }) => {
+  const G = useUi(guidesUi);
+  const [tab, setTab] = useState<'memories' | 'guides'>('memories');
+  // A guide is open: only its pins show, and its countries light up
+  const [focus, setFocus] = useState<string[] | null>(null);
   const { lang, f, date } = useI18n();
   const T = useUi(mapUi);
   const box = useRef<HTMLDivElement>(null);
@@ -177,9 +183,12 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
   const visited = useMemo(() => [...new Set(groups.map(g => countryOf(g[0].lng!, g[0].lat!)).filter(Boolean) as string[])], [groups]);
   useEffect(() => {
     const map = mapRef.current; if (!map) return;
-    const set = () => { if (map.getLayer('visited')) map.setFilter('visited', ['in', ['get', 'name'], ['literal', visited]]); };
+    const set = () => {
+      if (map.getLayer('visited')) map.setFilter('visited', ['in', ['get', 'name'], ['literal', focus ?? visited]]);
+      if (map.getLayer('path')) map.setLayoutProperty('path', 'visibility', focus ? 'none' : 'visible');
+    };
     if (map.isStyleLoaded()) set(); else map.once('load', set);
-  }, [visited]);
+  }, [visited, focus]);
 
   const fitted = useRef(false);
   // The bubbles: a photo if there is one, else an emoji; pink for you, blue for your partner
@@ -233,9 +242,10 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-10 lg:left-[var(--sidebar-w,16rem)] transition-colors duration-1000" style={{ background: space ? '#0b0a1d' : '#fbe3f1' }}>
+    <div className={`fixed inset-0 z-10 lg:left-[var(--sidebar-w,16rem)] transition-colors duration-1000 ${focus ? 'guide-open' : ''}`} style={{ background: space ? '#0b0a1d' : '#fbe3f1' }}>
       <style>{`
         .belluh-pin { display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: 0; padding: 0; cursor: pointer; transition: scale .3s cubic-bezier(.34,1.56,.64,1); animation: belluh-pop .6s cubic-bezier(.34,1.56,.64,1) both; }
+        .guide-open .belluh-pin:not(.guide-pin) { display: none; }
         .belluh-pin:hover { scale: 1.12; } .belluh-pin:active { scale: .92; }
         .belluh-pin-stk { position: relative; display: block; rotate: var(--tilt, 0deg); }
         .belluh-pin-emoji { display: block; width: 46px; height: 46px; font-size: 40px; line-height: 46px; filter: drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff) drop-shadow(0 -2.5px 0 #fff) drop-shadow(0 6px 8px rgba(15,23,42,.22)); }
@@ -344,17 +354,24 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
         );
         return (
           <div className={`absolute z-20 flex flex-col rounded-[1.75rem] bg-white border border-white shadow-[0_24px_60px_-24px_rgba(15,23,42,0.4)] overflow-hidden transition-[max-height] duration-500
-            inset-x-3 bottom-[104px] ${sheet ? 'max-h-[62vh]' : 'max-h-[64px]'}
+            inset-x-3 bottom-[104px] ${sheet ? 'max-h-[66vh]' : 'max-h-[64px]'}
             md:inset-x-auto md:left-5 md:top-5 md:bottom-5 md:w-[340px] md:max-h-none`}>
-            <div className="shrink-0 p-3 flex items-center gap-2">
+ <div className="shrink-0 px-3 pt-3 flex items-center gap-2">
+              <div role="tablist" className="flex-1 h-10 p-1 rounded-full bg-slate-100 grid grid-cols-2 text-[14px] font-bold">
+                {(['memories', 'guides'] as const).map(t => (
+                  <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => { setTab(t); setSheet(true); setOpen(null); }} className={`rounded-full inline-flex items-center justify-center gap-1.5 ${tab === t ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}><Emoji e={t === 'memories' ? '💌' : '🧭'} size={16} />{t === 'memories' ? G.memoriesTab : G.guidesTab}</button>
+                ))}
+              </div>
+              <button type="button" onClick={() => setSheet(v => !v)} aria-label={sheet ? T.close : T.title} className="md:hidden w-10 h-10 rounded-full flex items-center justify-center text-slate-500 text-lg font-bold">{sheet ? '⌄' : '⌃'}</button>
+            </div>
+            {tab === 'memories' && <div className="shrink-0 p-3 flex items-center gap-2">
               {open ? <button type="button" onClick={() => setOpen(null)} aria-label={T.back} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 text-xl font-bold">←&#xFE0E;</button> : null}
               <label className="flex-1 h-10 rounded-full bg-slate-100 flex items-center gap-2 px-3.5" onFocus={() => setSheet(true)}>
                 <Emoji e="🔍" size={16} />
                 <input value={q} onChange={ev => { setQ(ev.target.value); setOpen(null); }} placeholder={T.search} aria-label={T.search} className="flex-1 min-w-0 bg-transparent text-[15px] text-slate-800 placeholder:text-slate-400 focus:outline-none" />
               </label>
-              <button type="button" onClick={() => setSheet(v => !v)} aria-label={sheet ? T.close : T.title} className="md:hidden w-10 h-10 rounded-full flex items-center justify-center text-slate-500 text-lg font-bold">{sheet ? '⌄' : '⌃'}</button>
-            </div>
-            <div className="flex-1 overflow-y-auto overscroll-contain">{body}</div>
+            </div>}
+            <div className={`flex-1 overflow-y-auto overscroll-contain ${tab === 'guides' ? 'pt-3' : ''}`}>{tab === 'memories' ? body : <GuidesPanel me={currentUserId} myName={myName} map={() => mapRef.current} onFocus={setFocus} />}</div>
           </div>
         );
       })()}

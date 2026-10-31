@@ -3,6 +3,8 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import BelluhOrb from './components/BelluhOrb';
 import DragonflyMark from './components/DragonflyMark';
 const LoveMap = React.lazy(() => import('./pages/LoveMap'));
+const GuidePage = React.lazy(() => import('./pages/GuidePage'));
+const guideSlug = window.location.pathname.match(/^\/g\/([a-z0-9]{6,32})\/?$/i)?.[1] ?? null;
 import TabBar from './components/TabBar';
 import Journal from './pages/Journal';
 import Timeline from './pages/Timeline';
@@ -150,6 +152,13 @@ const App: React.FC = () => {
   // Asking Belluh from Home opens the conversation as a panel over Home, instead of sending you to another tab
   const [belluhSheet, setBelluhSheet] = useState(openedFromLink);
   const askBelluh = (message: string) => { setBelluhAsk(message || null); setBelluhReply(null); setNewFromBelluh(false); setBelluhSheet(true); };
+  // A question asked on the landing page before signing up: Bella answers it once they're in
+  useEffect(() => {
+    if (!isAuthenticated || isLoading || isOnboarding) return;
+    let q: string | null = null;
+    try { q = localStorage.getItem('belluh_pending_ask'); localStorage.removeItem('belluh_pending_ask'); } catch { /* storage off */ }
+    if (q && q.trim()) askBelluh(q.trim());
+  }, [isAuthenticated, isLoading, isOnboarding]);
   useEffect(() => {
     if (!belluhSheet) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setBelluhSheet(false); };
@@ -259,6 +268,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const path = window.location.pathname;
+    if (guideSlug) return;
     if (authView === 'landing' && path !== '/') window.history.pushState({}, '', '/');
     else if (authView === 'about' && path !== '/about') window.history.pushState({}, '', '/about');
     else if (authView === 'careers' && !path.startsWith('/careers')) window.history.pushState({}, '', '/careers');
@@ -1121,6 +1131,8 @@ const App: React.FC = () => {
   const handleCircleChange = (circleId: string) => setUser({...user, activeCircleId: circleId});
 
   // --- Rendering ---
+  // A shared guide (belluh.com/g/<link>) opens for anyone, signed in or not
+  if (guideSlug) return <React.Suspense fallback={<div className="min-h-screen bg-[#fdf0e9]" />}><GuidePage slug={guideSlug} /></React.Suspense>;
   if (isLoading) return <div className="min-h-screen bg-[#fcfcfc] flex flex-col items-center justify-center gap-5" role="status" aria-label={T.opening}><DragonflyMark size={64} rippleOnMount={false} className="animate-pulse" />{opening && <p className="text-sm text-slate-400">{T.opening}</p>}</div>;
   if (showAdmin && isUserAdmin) return <AdminMetrics onBack={() => setShowAdmin(false)} />;
 
@@ -1233,7 +1245,7 @@ const App: React.FC = () => {
   return (
     <div data-app className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in lg:pl-[var(--sidebar-w,16rem)] lg:transition-[padding] lg:duration-300">
       {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} partnerName={user.partnerName} avatars={hasPartner ? [user.avatar, calmAvatar(user.partnerAvatar) || avatarFor(user.partnerName || 'partner')] : [user.avatar]} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} onAskBelluh={askBelluh} onOpenBelluh={() => askBelluh('')} />}
-      {currentTab === 'map' && <React.Suspense fallback={<div className="fixed inset-0 bg-[#fbe3f1]" />}><LoveMap entries={readableEntries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} /></React.Suspense>}
+      {currentTab === 'map' && <React.Suspense fallback={<div className="fixed inset-0 bg-[#fbe3f1]" />}><LoveMap entries={readableEntries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} myName={user.name} /></React.Suspense>}
       {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => handleCompose(prompt)} initialSpace={hasPartner ? tabSpace : undefined} />}
       {belluhSheet && (
         <div className="fixed inset-0 z-[70] bg-paper animate-slide-up" role="dialog" aria-label="Bella">
