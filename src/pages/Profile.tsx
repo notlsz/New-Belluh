@@ -10,6 +10,7 @@ type TileSize = 'S' | 'M' | 'L';
 const CUSTOM_EMOJI = ['🌷', '🍣', '🎵', '🙅', '☕', '🐶', '🎬', '✨', '🍕', '💐', '🎁', '📚'];
 const TILE_COLORS = [{ bg: 'bg-[#fde7f3]', ink: 'text-[#8f2a66]' }, { bg: 'bg-[#e1f1f7]', ink: 'text-[#2f6b80]' }, { bg: 'bg-[#fff1d6]', ink: 'text-[#8a5300]' }, { bg: 'bg-[#ede7fb]', ink: 'text-[#5b3fa0]' }, { bg: 'bg-[#e3f5dc]', ink: 'text-[#3d6b2c]' }, { bg: 'bg-[#ffe4d6]', ink: 'text-[#8f3f1c]' }];
 import DragBento, { type BentoItem } from '../components/DragBento';
+import ProfileStudio from '../components/ProfileStudio';
 const OurWorld = React.lazy(() => import('../components/OurWorld'));
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { User, LoveNote, Goal, Circle, CircleStatus, JournalEntry, Mood, RelationshipReceipt, ColorTheme } from '../types';
@@ -700,12 +701,9 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
           </div>
       ) : (
           <div className="px-6 animate-fade-in pb-20">
-              <div className="flex flex-col items-center mb-12">
-                  <div className="w-28 h-28 rounded-full ring-[5px] ring-[#fcfcfc] shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] overflow-hidden mb-6 bg-[#eef7fa]"><img src={user.avatar} alt={user.name} className="w-full h-full object-cover" /></div>
-                  <h2 className="text-4xl font-serif text-slate-900 tracking-tight">{user.name}</h2>
-                  <p className="text-sm text-slate-400 mt-2">{totalMemoriesMe} {totalMemoriesMe === 1 ? M.memory : M.memories}</p>
-                  <button onClick={() => setIsEditingProfile(true)} className="mt-4 h-9 px-4 rounded-full inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"><Edit3 size={15} /> {T.editProfile}</button>
-              </div>
+              <ProfileStudio userId={user.id} name={user.name} avatar={user.avatar} subtitle={`${totalMemoriesMe} ${totalMemoriesMe === 1 ? M.memory : M.memories}`}
+                memoryPhotos={entries.filter(e => e.userId === user.id && e.mediaUrl && !/\.(webm|mp3|m4a|ogg|wav|mp4|mov)(\?|$)/i.test(e.mediaUrl)).map(e => e.mediaUrl!).slice(0, 24)}
+                onEditProfile={() => setIsEditingProfile(true)} editLabel={T.editProfile} />
 
               {/* Circles: the people you keep a journal with */}
               <h3 className="font-serif text-xl text-slate-900 pl-1 mb-4">{T.yourCircles}</h3>
