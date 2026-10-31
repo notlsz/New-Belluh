@@ -12,25 +12,31 @@ import { EntryType, type JournalEntry } from '../types';
 import { MOOD_EMOJIS } from '../constants';
 import { herePlace, placesOn, setPlacesOn } from '../lib/places';
 import { Emoji, emojiSrc } from '../lib/emoji3d';
+import SolarSystem, { type SolarSystemHandle } from '../components/SolarSystem';
 
-const OCEAN = '#8fd3f4', LAND = '#fffaf3';
+const OCEAN = '#7fd0f5', LAND = '#fff6e3';
 const PALETTE = ['#ffd6a8', '#ffc4dc', '#c9f0b4', '#ffeb99', '#dccbff', '#b9e8f7'];
 // Places on the map as emoji stickers, the way Pampam does it
 const POI: Record<string, string> = { cafe: '☕', restaurant: '🍜', fast_food: '🍔', bar: '🍷', beer: '🍺', bakery: '🥐', ice_cream: '🍦', park: '🌳', garden: '🌷', museum: '🖼️', art_gallery: '🎨', cinema: '🎬', theatre: '🎭', music: '🎵', clothing_store: '👗', zoo: '🦒', aquarium: '🐠', castle: '🏰', attraction: '🎡', stadium: '🏟️', beach: '🏖️', campsite: '⛺', airport: '✈️', harbor: '⛵', florist: '💐', place_of_worship: '⛩️', playground: '🛝', swimming: '🏊', viewpoint: '🌅' };
 
-function styleFor(lang: string): StyleSpecification {
-  const countries = feature(world as any, (world as any).objects.countries) as any;
+// The world's countries, prepared once
+const COUNTRIES = feature(world as any, (world as any).objects.countries) as any;
+(() => {
   // Shapes that cross the date line (Russia's far east, Fiji) would draw a line around the whole globe. Split each one
   // into its eastern and western half, each pinned to the date line, so the whole country still shows.
   const wraps = (ring: number[][]) => ring.some((pt, i) => i > 0 && Math.abs(pt[0] - ring[i - 1][0]) > 180);
   const half = (ring: number[][], east: boolean) => ring.map(([lng, lat]) => [east ? (lng < 0 ? 180 : lng) : (lng > 0 ? -180 : lng), lat]);
   const fix = (polys: number[][][][]) => polys.flatMap(poly => wraps(poly[0]) ? [poly.map(r => half(r, true)), poly.map(r => half(r, false))] : [poly]);
-  countries.features.forEach((f: any, i: number) => {
+  COUNTRIES.features.forEach((f: any, i: number) => {
     f.properties = { ...f.properties, c: i % PALETTE.length };
     const g = f.geometry; if (!g) return;
     if (g.type === 'Polygon' && wraps(g.coordinates[0])) f.geometry = { type: 'MultiPolygon', coordinates: fix([g.coordinates]) };
     else if (g.type === 'MultiPolygon') g.coordinates = fix(g.coordinates);
   });
+})();
+
+function styleFor(lang: string): StyleSpecification {
+  const countries = COUNTRIES;
   const name: any = ['coalesce', ['get', `name:${lang}`], ['get', 'name']];
   return {
     version: 8,
@@ -48,31 +54,30 @@ function styleFor(lang: string): StyleSpecification {
     layers: [
       // Ocean far out, land up close (the street tiles draw the water on top)
       { id: 'bg', type: 'background', paint: { 'background-color': ['interpolate', ['linear'], ['zoom'], 4.8, OCEAN, 6, LAND] } },
-      // Drawn waves on the sea, like Pampam: on the globe's ocean, then on every lake and river up close
-      { id: 'sea-waves', type: 'fill', source: 'sea', maxzoom: 6, paint: { 'fill-pattern': 'pat:waves', 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4.6, 0.9, 5.4, 0] } },
-      { id: 'countries', type: 'fill', source: 'world', paint: { 'fill-color': ['match', ['get', 'c'], 0, PALETTE[0], 1, PALETTE[1], 2, PALETTE[2], 3, PALETTE[3], 4, PALETTE[4], PALETTE[5]], 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4.8, 1, 6, 0] } },
+      { id: 'countries', type: 'fill', source: 'world', paint: { 'fill-color': '#fff3df', 'fill-antialias': false, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4.8, 1, 6, 0] } },
+      // The countries you've been to together glow pink, like a scratch map
+      { id: 'visited', type: 'fill', source: 'world', filter: ['in', ['get', 'name'], ['literal', []]], paint: { 'fill-color': '#ffbfd8', 'fill-antialias': false, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4.8, 1, 6, 0] } },
       { id: 'borders', type: 'line', source: 'borders', paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 1, 4, 2.5], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 4.8, 1, 6, 0] } },
-      // Up close, the city in the same candy patchwork as the countries on the globe: homes pink, shops lavender, schools
-      // peach, hospitals blue, industry yellow, with the streets as clean white lines between them
-      { id: 'landuse', type: 'fill', source: 'omt', 'source-layer': 'landuse', minzoom: 9, paint: { 'fill-color': ['match', ['get', 'class'], ['residential', 'suburb', 'neighbourhood', 'quarter'], '#ffd9e8', ['commercial', 'retail'], '#e6dcfb', ['industrial', 'railway', 'garages'], '#fff0b8', ['school', 'university', 'college', 'kindergarten'], '#ffd6a8', 'hospital', '#d3eef7', ['cemetery', 'stadium', 'pitch', 'playground'], '#c9f0b4', '#fff1dc'], 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 9, 0, 11, 0.85] } },
-      { id: 'park', type: 'fill', source: 'omt', 'source-layer': 'park', minzoom: 5, paint: { 'fill-color': '#b5e795' } },
+      { id: 'park', type: 'fill', source: 'omt', 'source-layer': 'park', minzoom: 5, paint: { 'fill-color': '#a8e38a' } },
       { id: 'park-edge', type: 'line', source: 'omt', 'source-layer': 'park', minzoom: 11, paint: { 'line-color': '#8fd36b', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1.5, 16, 4] } },
       { id: 'green', type: 'fill', source: 'omt', 'source-layer': 'landcover', minzoom: 5, filter: ['in', ['get', 'class'], ['literal', ['grass', 'wood', 'farmland']]], paint: { 'fill-color': '#d4f2c0', 'fill-opacity': 0.85 } },
-      { id: 'trees', type: 'fill', source: 'omt', 'source-layer': 'landcover', minzoom: 8, filter: ['in', ['get', 'class'], ['literal', ['wood', 'forest', 'grass']]], paint: { 'fill-pattern': 'pat:trees', 'fill-opacity': 0.95 } },
-      { id: 'park-trees', type: 'fill', source: 'omt', 'source-layer': 'park', minzoom: 10, paint: { 'fill-pattern': 'pat:trees', 'fill-opacity': 0.95 } },
       { id: 'water', type: 'fill', source: 'omt', 'source-layer': 'water', minzoom: 4.5, paint: { 'fill-color': OCEAN, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4.5, 0, 5.5, 1] } },
       // A cartoon edge on the water, like a drawn shoreline
-      { id: 'water-edge', type: 'line', source: 'omt', 'source-layer': 'water', minzoom: 9, paint: { 'line-color': '#5fbfe8', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1.2, 16, 4] } },
-      { id: 'water-waves', type: 'fill', source: 'omt', 'source-layer': 'water', minzoom: 5, paint: { 'fill-pattern': 'pat:waves', 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0, 6, 0.9] } },
+      // Cartoon water: a light band just inside the shore and a deeper drawn edge, like Pampam
+      { id: 'water-shine', type: 'line', source: 'omt', 'source-layer': 'water', minzoom: 9, paint: { 'line-color': '#c4eefc', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 3, 16, 14], 'line-offset': ['interpolate', ['linear'], ['zoom'], 9, 1.5, 16, 7] } },
+      { id: 'water-edge', type: 'line', source: 'omt', 'source-layer': 'water', minzoom: 9, paint: { 'line-color': '#45b4e6', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1.4, 16, 3.5] } },
       { id: 'river', type: 'line', source: 'omt', 'source-layer': 'waterway', minzoom: 8, paint: { 'line-color': OCEAN, 'line-width': 2.5 } },
       // Toy-town buildings: soft pastel blocks that stand up when the map tilts
-      { id: 'building', type: 'fill-extrusion', source: 'omt', 'source-layer': 'building', minzoom: 14.5, filter: ['>=', ['coalesce', ['get', 'render_height'], 0], 12], paint: { 'fill-extrusion-color': ['match', ['%', ['to-number', ['coalesce', ['get', 'render_height'], 0]], 4], 0, '#fbe9f1', 1, '#efe9fb', 2, '#fff1e2', '#e8f4fa'], 'fill-extrusion-height': ['*', ['coalesce', ['get', 'render_height'], 8], 0.7], 'fill-extrusion-base': 0, 'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 14.5, 0, 15.5, 0.92], 'fill-extrusion-vertical-gradient': true } },
-      { id: 'road-case', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'street']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 2.2, 16, 26] } },
+      // Toy-town buildings in soft pastels, standing up as the city tilts
+      { id: 'building', type: 'fill-extrusion', source: 'omt', 'source-layer': 'building', minzoom: 13.5, filter: ['>=', ['coalesce', ['get', 'render_height'], 0], 6], paint: { 'fill-extrusion-color': ['match', ['%', ['to-number', ['coalesce', ['get', 'render_height'], 0]], 5], 0, '#ffd3e4', 1, '#e3d6fb', 2, '#ffe2bf', 3, '#cdeedd', '#d3eaf8'], 'fill-extrusion-height': ['*', ['coalesce', ['get', 'render_height'], 8], 0.8], 'fill-extrusion-base': 0, 'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 13.5, 0, 14.5, 0.95], 'fill-extrusion-vertical-gradient': true } },
+      { id: 'road-case', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'street']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#f0e2cf', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 2.2, 16, 24] } },
       { id: 'road', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'street']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 1.4, 16, 20] } },
-      { id: 'place', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 5, filter: ['in', ['get', 'class'], ['literal', ['city', 'town', 'suburb']]], layout: { 'text-field': name, 'text-font': ['Noto Sans Bold'], 'text-size': ['interpolate', ['linear'], ['zoom'], 5, 12, 14, 17], 'text-letter-spacing': 0.02 }, paint: { 'text-color': '#6b4a80', 'text-halo-color': '#ffffff', 'text-halo-width': 3.5, 'text-halo-blur': 0 } },
+      { id: 'main-road-case', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#f2c25c', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 2.6, 16, 28] } },
+      { id: 'main-road', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#ffe48f', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 1.6, 16, 22] } },
+      { id: 'place', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 5, filter: ['in', ['get', 'class'], ['literal', ['city', 'town', 'suburb']]], layout: { 'text-field': name, 'text-font': ['Noto Sans Bold'], 'text-size': ['interpolate', ['linear'], ['zoom'], 5, 11, 14, 15] }, paint: { 'text-color': '#7a6a8c', 'text-halo-color': '#ffffff', 'text-halo-width': 2 } },
       // Cafés, parks, museums...: emoji stickers, drawn on demand (see styleimagemissing)
       { id: 'poi', type: 'symbol', source: 'omt', 'source-layer': 'poi', minzoom: 15, filter: ['<=', ['get', 'rank'], 6], layout: { 'icon-image': ['concat', 'e:', ['coalesce', ['get', 'subclass'], ''], ':', ['get', 'class']], 'icon-size': ['interpolate', ['linear'], ['zoom'], 14, 0.42, 18, 0.62], 'icon-allow-overlap': false, 'icon-padding': 22 } },
-      { id: 'country-label', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 1, maxzoom: 6, filter: ['==', ['get', 'class'], 'country'], layout: { 'text-field': name, 'text-font': ['Noto Sans Bold'], 'text-size': 12, 'text-transform': 'uppercase', 'text-letter-spacing': 0.08 }, paint: { 'text-color': '#8b7a99', 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 } },
+      { id: 'country-label', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 1, maxzoom: 6, filter: ['==', ['get', 'class'], 'country'], layout: { 'text-field': name, 'text-font': ['Noto Sans Bold'], 'text-size': 11 }, paint: { 'text-color': '#9a8aa8', 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 } },
     ],
   };
 }
@@ -80,33 +85,6 @@ function styleFor(lang: string): StyleSpecification {
 // The 3D place stickers, fetched as soon as the map opens so they're ready by the time you zoom into streets
 const POI_IMG = new Map<string, HTMLImageElement>();
 [...new Set(Object.values(POI))].forEach(e => { const src = emojiSrc(e); if (!src) return; const im = new Image(); im.onload = () => POI_IMG.set(e, im); im.src = src; });
-
-// The drawn art, as repeating tiles: little wave strokes for water, round cartoon trees for parks and woods
-function drawPattern(id: string): ImageData {
-  const w = id === 'pat:waves' ? 120 : 140, h = id === 'pat:waves' ? 84 : 140;
-  const c = document.createElement('canvas'); c.width = w; c.height = h;
-  const x = c.getContext('2d')!;
-  if (id === 'pat:waves') {
-    x.strokeStyle = 'rgba(255,255,255,0.85)'; x.lineWidth = 3.5; x.lineCap = 'round';
-    const wave = (cx: number, cy: number) => { x.beginPath(); x.moveTo(cx - 18, cy); x.quadraticCurveTo(cx - 9, cy - 9, cx, cy); x.quadraticCurveTo(cx + 9, cy + 9, cx + 18, cy); x.stroke(); };
-    wave(30, 22); wave(90, 64);
-  } else {
-    const tree = (cx: number, cy: number, r: number, leaf: string, dark: string) => {
-      x.fillStyle = '#b98a5e'; x.beginPath(); x.roundRect(cx - 3, cy + r * 0.5, 6, r * 0.9, 3); x.fill();
-      x.fillStyle = leaf; x.strokeStyle = dark; x.lineWidth = 3;
-      x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill(); x.stroke();
-      x.fillStyle = 'rgba(255,255,255,0.45)'; x.beginPath(); x.ellipse(cx - r * 0.35, cy - r * 0.35, r * 0.28, r * 0.18, -0.6, 0, Math.PI * 2); x.fill();
-    };
-    tree(36, 34, 15, '#7fcf5c', '#5aae3c'); tree(104, 102, 17, '#8ed66b', '#61b544'); tree(98, 30, 11, '#a4e07f', '#6fbd4f');
-  }
-  return x.getImageData(0, 0, w, h);
-}
-
-// A fixed star field (the same sky every time): left %, top %, size px, twinkle delay s
-const STARS: [number, number, number, number][] = Array.from({ length: 70 }, (_, i) => {
-  const r = (n: number) => { const x = Math.sin(i * 12.9898 + n * 78.233) * 43758.5453; return x - Math.floor(x); };
-  return [r(1) * 100, r(2) * 100, 1 + Math.round(r(3) * 2.4), -r(4) * 3];
-});
 
 const emojiFor = (e: JournalEntry) => e.type === EntryType.Voice || e.audioUrl ? '🎙️' : e.type === EntryType.Photo ? '📸' : (e.mood && (MOOD_EMOJIS as any)[e.mood]) || '💌';
 
@@ -123,6 +101,7 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
   const [far, setFar] = useState(true);
   // Zoomed all the way out, the sky becomes space: stars, the Moon, planets, a satellite, a rocket
   const [space, setSpace] = useState(false);
+  const sky = useRef<SolarSystemHandle>(null);
   // The welcome card says its piece, then gets out of the way (or as soon as they touch the map)
   const [hint, setHint] = useState(true);
   const [hintTurn, setHintTurn] = useState(0);
@@ -169,7 +148,6 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
     // Draw each place's emoji as a little sticker (a white outline and a soft shadow) the first time it's needed
     map.on('styleimagemissing', (ev: any) => {
       const id: string = ev.id;
-      if ((id === 'pat:waves' || id === 'pat:trees') && !map.hasImage(id)) { map.addImage(id, drawPattern(id), { pixelRatio: 2 }); return; }
       if (!id.startsWith('e:') || map.hasImage(id)) return;
       const [, sub, cls] = id.split(':');
       const emoji = POI[sub] ?? POI[cls];
@@ -195,9 +173,35 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
     });
     const zoomed = () => { const z = map.getZoom(); setFar(z < 3.2); setSpace(z < 0.85); };
     map.on('zoom', zoomed);
+    map.on('zoomend', () => {
+      const z = map.getZoom(), p = map.getPitch();
+      if (z >= 13 && p < 20) map.easeTo({ pitch: 48, duration: 900 });
+      else if (z < 8 && p > 0) map.easeTo({ pitch: 0, bearing: 0, duration: 900 });
+    });
+    // Turning the globe turns the sky behind it
+    map.on('move', () => { const c = map.getCenter(); sky.current?.turn(c.lng, c.lat); });
     return () => { map.remove(); mapRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang]);
+
+  // Which countries you've pinned something in (ray casting on the world shapes)
+  const visited = useMemo(() => {
+    const inRing = (pt: number[], ring: number[][]) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [xi, yi] = ring[i], [xj, yj] = ring[j]; if ((yi > pt[1]) !== (yj > pt[1]) && pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi) c = !c; } return c; };
+    const names = new Set<string>();
+    for (const g of groups) {
+      const pt = [g[0].lng!, g[0].lat!];
+      for (const f of COUNTRIES.features as any[]) {
+        const polys = f.geometry?.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry?.coordinates ?? [];
+        if (polys.some((poly: number[][][]) => inRing(pt, poly[0]))) { names.add(f.properties.name); break; }
+      }
+    }
+    return [...names];
+  }, [groups]);
+  useEffect(() => {
+    const map = mapRef.current; if (!map) return;
+    const set = () => { if (map.getLayer('visited')) map.setFilter('visited', ['in', ['get', 'name'], ['literal', visited]]); };
+    if (map.isStyleLoaded()) set(); else map.once('load', set);
+  }, [visited]);
 
   const fitted = useRef(false);
   // The bubbles: a photo if there is one, else an emoji; pink for you, blue for your partner
@@ -247,13 +251,13 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-10 lg:left-[var(--sidebar-w,16rem)] transition-colors duration-1000" style={{ background: space ? '#16133a' : '#fbe3f1' }}>
+    <div className="fixed inset-0 z-10 lg:left-[var(--sidebar-w,16rem)] transition-colors duration-1000" style={{ background: space ? '#0b0a1d' : '#fbe3f1' }}>
       <style>{`
-        .belluh-pin { width: 62px; height: 62px; rotate: var(--tilt, -4deg); border-radius: 9999px; background: #fff; border: 4px solid var(--ring); box-shadow: 0 12px 24px -10px rgba(15,23,42,.45); display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: scale .3s cubic-bezier(.34,1.56,.64,1); animation: belluh-pop .6s cubic-bezier(.34,1.56,.64,1) both; }
+        .belluh-pin { width: 52px; height: 52px; rotate: var(--tilt, -4deg); border-radius: 9999px; background: #fff; border: 3px solid var(--ring); box-shadow: 0 12px 24px -10px rgba(15,23,42,.45); display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: scale .3s cubic-bezier(.34,1.56,.64,1); animation: belluh-pop .6s cubic-bezier(.34,1.56,.64,1) both; }
         .belluh-pin:hover { scale: 1.15; rotate: 0deg; } .belluh-pin:active { scale: .92; }
         .belluh-pin::after { content: ''; position: absolute; bottom: -9px; left: 50%; translate: -50% 0; border: 7px solid transparent; border-top-color: var(--ring); border-bottom: 0; }
         .belluh-pin-photo { width: 100%; height: 100%; object-fit: cover; border-radius: 9999px; }
-        .belluh-pin-emoji { font-size: 31px; line-height: 1; } img.belluh-pin-emoji { width: 36px; height: 36px; }
+        .belluh-pin-emoji { font-size: 31px; line-height: 1; } img.belluh-pin-emoji { width: 30px; height: 30px; }
         .belluh-pin-face { position: absolute; right: -8px; bottom: -6px; width: 24px; height: 24px; border-radius: 9999px; border: 2.5px solid #fff; background: #fde7f3; object-fit: cover; }
         .belluh-pin-count { position: absolute; top: -8px; right: -8px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 9999px; background: #1e293b; color: #fff; font: 700 12px/22px Inter, system-ui, sans-serif; border: 2px solid #fff; }
         @keyframes belluh-twinkle { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
@@ -267,22 +271,11 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
         @media (prefers-reduced-motion: reduce) { .belluh-star, .belluh-orbit, .belluh-rocket, .belluh-comet { animation: none; } }
         .maplibregl-ctrl-attrib { font-size: 10px; } .maplibregl-ctrl-bottom-right { bottom: 92px; } @media (min-width: 1024px) { .maplibregl-ctrl-bottom-right { bottom: 0; } }
       `}</style>
-      <div aria-hidden className={`pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-1000 ${space ? 'opacity-100' : 'opacity-0'}`}>
-        {STARS.map(([l, t, r, d], i) => <span key={i} className="belluh-star absolute rounded-full bg-white" style={{ left: `${l}%`, top: `${t}%`, width: r, height: r, animationDelay: `${d}s` }} />)}
-        <span className="absolute belluh-float" style={{ right: '8%', top: '13%', animationDuration: '7s' }}><Emoji e="🌕" size={78} /></span>
-        <span className="absolute belluh-float" style={{ left: '5%', top: '58%', animationDuration: '9s', animationDelay: '-2s' }}><Emoji e="🪐" size={92} /></span>
-        <span className="absolute belluh-float" style={{ left: '14%', top: '16%', animationDuration: '8s', animationDelay: '-4s' }}><Emoji e="🌑" size={34} /></span>
-        <span className="absolute belluh-float" style={{ right: '12%', bottom: '24%', animationDuration: '6s', animationDelay: '-1s' }}><Emoji e="🛸" size={44} /></span>
-        <span className="absolute" style={{ left: '62%', top: '30%' }}><Emoji e="🌟" size={22} /></span>
-        <span className="absolute" style={{ left: '30%', bottom: '18%' }}><Emoji e="🌟" size={18} /></span>
-        <span className="belluh-orbit absolute left-1/2 top-1/2"><span className="absolute" style={{ left: 'min(42vw, 330px)', top: 0 }}><Emoji e="🛰️" size={40} /></span></span>
-        <span className="belluh-rocket absolute"><Emoji e="🚀" size={58} /></span>
-        <span className="belluh-comet absolute"><Emoji e="☄️" size={46} /></span>
-      </div>
+      <SolarSystem ref={sky} visible={space} />
       <div className="absolute inset-0"><div ref={box} style={{ width: '100%', height: '100%' }} /></div>
       {/* A toy globe: clouds and sparkles drift around it while you're zoomed out */}
       <div aria-hidden className={`pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-700 ${far && !space ? 'opacity-100' : 'opacity-0'}`}>
-        {[['☁️', '8%', '22%', 54, 0], ['☁️', '74%', '30%', 44, -3], ['☁️', '14%', '72%', 40, -6], ['☁️', '80%', '68%', 58, -1.5], ['✨', '86%', '18%', 26, -2], ['✨', '6%', '48%', 22, -4], ['💫', '70%', '82%', 24, -1], ['⭐', '30%', '12%', 18, -5]].map(([e, l, t, s, d], i) => (
+        {[['☁️', '8%', '24%', 50, 0], ['☁️', '78%', '66%', 52, -1.5], ['✨', '84%', '20%', 24, -2]].map(([e, l, t, s, d], i) => (
           <span key={i} className="absolute belluh-float" style={{ left: l as string, top: t as string, animationDelay: `${d}s`, animationDuration: `${5 + i % 3}s` }}><Emoji e={e as string} size={(s as number) * 1.15} /></span>
         ))}
       </div>
