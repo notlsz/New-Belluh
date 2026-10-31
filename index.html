@@ -152,6 +152,19 @@
       @media (prefers-reduced-motion: reduce) { .belluh-ripple { animation-duration: 0.01s; } .belluh-ripple ~ .belluh-mark { animation: none; } }
       @keyframes belluh-orb-breathe { 0%, 100% { transform: scale(0.92); opacity: 0.7; } 50% { transform: scale(1.06); opacity: 1; } }
       @media (prefers-reduced-motion: reduce) { .belluh-orb-glow { animation: none !important; } }
+      /* Playful layer, after Zenly and amo: every press squishes and springs back, stickers pop in, bubbles float */
+      [data-app] button:not(:disabled), [data-app] a { transition: scale .32s cubic-bezier(.34,1.56,.64,1), color .2s, background-color .2s, border-color .2s, box-shadow .25s, opacity .2s; }
+      [data-app] button:not(:disabled):active, [data-app] a:active { scale: .95; transition-duration: .08s; }
+      @keyframes belluh-pop { 0% { transform: scale(.4) rotate(var(--r, 0deg)); opacity: 0; } 60% { transform: scale(1.14) rotate(var(--r, 0deg)); opacity: 1; } 100% { transform: scale(1) rotate(var(--r, 0deg)); } }
+      .belluh-pop { animation: belluh-pop .6s cubic-bezier(.34,1.56,.64,1) both; }
+      @keyframes belluh-float { 0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); } 50% { transform: translateY(-5px) rotate(var(--r, 0deg)); } }
+      .belluh-float { animation: belluh-float 4.2s ease-in-out infinite; }
+      @keyframes belluh-wiggle { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-9deg) scale(1.06); } 45% { transform: rotate(7deg); } 70% { transform: rotate(-3deg); } }
+      .belluh-wiggle:hover, .belluh-wiggle:active { animation: belluh-wiggle .6s ease-in-out; }
+      @keyframes belluh-bounce-in { 0% { transform: scale(.7) translateY(4px); } 55% { transform: scale(1.18) translateY(-2px); } 100% { transform: scale(1); } }
+      .belluh-bounce-in { animation: belluh-bounce-in .5s cubic-bezier(.34,1.56,.64,1); }
+      .sticker { filter: drop-shadow(0 0 0 #fff) drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff) drop-shadow(0 6px 10px rgba(15,23,42,.18)); }
+      @media (prefers-reduced-motion: reduce) { .belluh-pop, .belluh-float, .belluh-bounce-in, .belluh-wiggle:hover { animation: none !important; } [data-app] button:active { scale: 1; } }
       @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @media (prefers-reduced-motion: reduce) { [class*="animate-[fadeUp"] { animation: none !important; } }
 </style>

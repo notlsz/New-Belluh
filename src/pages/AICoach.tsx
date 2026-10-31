@@ -440,7 +440,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                  );
                  if (msg.role === 'user') return (
                    <div key={msg.id} className="group animate-slide-up flex justify-end">
-                     <div className={`max-w-[85%] md:max-w-[80%] rounded-3xl p-5 md:p-6 text-[16px] leading-relaxed ${msg.meta?.mode === 'mediate' ? 'bg-[#fdf0f8] text-slate-800' : 'bg-slate-100 text-slate-800'}`}>
+                     <div className={`max-w-[85%] md:max-w-[80%] rounded-[1.75rem] rounded-br-lg px-5 py-4 md:px-6 md:py-5 text-[16px] leading-relaxed belluh-pop ${msg.meta?.mode === 'mediate' ? 'bg-[#fdf0f8] text-slate-800' : 'bg-gradient-to-br from-[#fde3f1] to-[#f3e6fb] text-[#4a2340] shadow-[0_12px_26px_-18px_rgba(196,88,159,0.6)]'}`}>
                        {(msg.meta?.photo_preview || (msg.meta?.photo && photoLinks.get(msg.meta.photo))) && (
                          <img src={msg.meta.photo_preview || photoLinks.get(msg.meta.photo)} alt={T.yourPhoto} className="mb-2 max-h-64 w-auto rounded-2xl object-cover" />
                        )}
@@ -564,7 +564,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                         aria-label={T.send}
                         onClick={handleSendMessage}
                         disabled={(!chatInput.trim() && !photo) || isTyping}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 ml-2 ${chatInput.trim() || photo ? 'bg-[#9bbecb] text-white hover:bg-belluh-700 active:scale-95' : 'bg-slate-100 text-slate-300'}`}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 ml-2 ${chatInput.trim() || photo ? 'bg-gradient-to-br from-[#ee8fcc] to-[#7fb4c6] text-white shadow-[0_8px_18px_-8px_rgba(196,88,159,0.7)] belluh-bounce-in' : 'bg-slate-100 text-slate-300'}`}
                     >
                         <ArrowUp size={20} strokeWidth={2.5} />
                     </button>

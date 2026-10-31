@@ -20,6 +20,8 @@ interface TimelineProps {
   entries: JournalEntry[];
   currentUserId: string;
   partnerName?: string;
+  /** The two of you, as bubbles beside your names */
+  avatars?: string[];
   onTriggerPremium: () => void;
   activeCircleId: string;
   circles: Circle[];
@@ -36,7 +38,7 @@ interface TimelineProps {
   onOpenBelluh?: () => void;
 }
 
-const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName, activeCircleId, circles, onCircleChange, onLikeEntry, onCompose, onSearch: _onSearch, onDeleteEntry, onUpdateEntry, streak, onAskBelluh, onOpenBelluh }) => {
+const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName, avatars = [], activeCircleId, circles, onCircleChange, onLikeEntry, onCompose, onSearch: _onSearch, onDeleteEntry, onUpdateEntry, streak, onAskBelluh, onOpenBelluh }) => {
   const { d: d0, f, date } = useI18n();
   const T = useUi(storyUi);
   const a = d0.app;
@@ -320,6 +322,15 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                         onClick={() => setIsCircleMenuOpen(!isCircleMenuOpen)}
                         className="text-left group focus:outline-none"
                     >
+                            {!isConstellation && avatars.length > 0 && (
+                                <span className="flex items-center mb-3" aria-hidden>
+                                    {avatars.map((src, i) => (
+                                        <span key={i} className="belluh-pop belluh-wiggle block w-11 h-11 md:w-12 md:h-12 rounded-full ring-[3px] ring-white overflow-hidden bg-gradient-to-br from-[#fde7f3] to-[#dff0f6] shadow-[0_10px_22px_-10px_rgba(196,88,159,0.55)]" style={{ marginLeft: i ? -14 : 0, zIndex: 5 - i, ['--r' as any]: i ? '6deg' : '-6deg', animationDelay: `${i * 90}ms` }}>
+                                            <img src={src} alt="" className="w-full h-full object-cover" />
+                                        </span>
+                                    ))}
+                                </span>
+                            )}
                         <h1 className="font-serif text-3xl md:text-4xl text-slate-900 leading-tight group-hover:opacity-70 transition-opacity flex items-center gap-2">
                             {isConstellation ? T.myConstellation : activeCircle?.name}
                             {isArchived && <Archive size={20} className="text-slate-300" />}
@@ -409,7 +420,8 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                          <div className="relative space-y-3">
                              {shown.map(m => (
                                  <div key={m.id} className="relative z-10 w-full animate-scale-in">
-                                     <div className="bg-[#f3f8fa] border border-[#dcebf0] rounded-[1.5rem] p-5 flex items-start gap-4 hover:border-[#c5dde5] transition-colors">
+                                     <div className="relative overflow-hidden bg-gradient-to-br from-[#e4f2f7] via-[#f3eefa] to-[#fde9f4] border border-white rounded-[1.75rem] p-5 flex items-start gap-4 shadow-[0_22px_44px_-26px_rgba(196,88,159,0.55)]">
+                                         <div className="pointer-events-none absolute -right-10 -top-12 w-40 h-40 rounded-full bg-white/50 blur-2xl" />
                                          <div className="shrink-0 pt-0.5"><BelluhOrb size={30} /></div>
                                          <div className="min-w-0 flex-1">
                                              <button type="button" onClick={() => onOpenBelluh?.()} className="w-full text-left">
@@ -483,7 +495,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
 
        <div className="relative min-h-[400px]">
           {/* Timeline Stem */}
-          <div className="absolute left-14 md:left-20 top-0 bottom-0 w-px bg-slate-200/70"></div>
+          <div className="absolute left-14 md:left-20 top-0 bottom-0 w-[3px] rounded-full bg-gradient-to-b from-[#f0addd]/70 via-[#cde9f2] to-transparent"></div>
 
           {/* Today: what needs you now, before the story */}
           {!isArchived && !isConstellation && (

@@ -5,6 +5,7 @@ import { CalendarPlus, Check, Clock, X } from 'lucide-react';
 import { belluhAgent, type Plan } from '../services/belluhAgent';
 import { formatOption, googleCalendarUrl, icsCalendar } from '../../supabase/functions/_shared/plans';
 import { trackEvent } from '../services/analytics';
+import { stickerFor } from '../lib/sticker';
 
 // A label like "Friday" or "Saturday evening" only repeats the date, so it's shown only when it adds something ("After work")
 const extraLabel = (o: { label?: string | null; starts_at: string }) => {
@@ -67,8 +68,9 @@ const PlanCard: React.FC<{ planId: string; partnerName?: string | null; onChange
   };
 
   return (
-    <div className="w-full rounded-[1.75rem] border border-slate-100 bg-white p-5 shadow-[0_8px_30px_-18px_rgba(15,23,42,0.25)]">
-      <div className="flex items-center gap-2">
+    <div className="relative w-full rounded-[2rem] border border-white bg-gradient-to-b from-white to-[#fff7fb] p-5 shadow-[0_18px_40px_-22px_rgba(196,88,159,0.45)]">
+      <span aria-hidden className="sticker belluh-pop absolute -top-3 right-4 text-[40px] leading-none select-none" style={{ ['--r' as any]: '12deg' }}>{stickerFor(plan.title)}</span>
+      <div className="flex items-center gap-2 pr-12">
         <span className="text-[13px] font-semibold text-[#c4589f]">
           {plan.status === 'confirmed' ? pc.itsAPlan : mine ? f(pc.planFor, { partner: other }) : f(pc.wantsToPlan, { partner: other })}
         </span>
