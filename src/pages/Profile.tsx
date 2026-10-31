@@ -481,7 +481,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                           <div className="relative flex items-center justify-center">
                               {activeMembers.map((member, index) => (
                                   <React.Fragment key={member.id}>
-                                      <div className={`relative ${activeMembers.length <= 2 ? 'w-24 h-24 md:w-28 md:h-28' : activeMembers.length <= 4 ? 'w-20 h-20 md:w-24 md:h-24' : 'w-16 h-16 md:w-20 md:h-20'} rounded-full ring-[5px] ring-[#fcfcfc] shadow-[0_18px_40px_-18px_rgba(15,23,42,0.35)] overflow-hidden bg-[#eef7fa] ${index > 0 ? (activeMembers.length <= 4 ? '-ml-5' : '-ml-4') : ''}`} style={{ zIndex: 20 - index }}>
+                                      <div className={`relative ${activeMembers.length <= 2 ? 'w-24 h-24 md:w-28 md:h-28' : activeMembers.length <= 4 ? 'w-20 h-20 md:w-24 md:h-24' : 'w-16 h-16 md:w-20 md:h-20'} rounded-full ring-[5px] ring-white shadow-[0_22px_44px_-18px_rgba(196,88,159,0.5)] overflow-hidden bg-gradient-to-br from-[#fde7f3] to-[#dff0f6] belluh-float belluh-wiggle ${index > 0 ? (activeMembers.length <= 4 ? '-ml-5' : '-ml-4') : ''}`} style={{ zIndex: 20 - index, ['--r' as any]: index % 2 ? '5deg' : '-5deg', animationDelay: `${index * -1.3}s` }}>
                                           <img src={member.avatar} className="w-full h-full object-cover" alt={member.name} />
                                       </div>
                                   </React.Fragment>
@@ -490,15 +490,16 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                           <h2 className="text-4xl md:text-5xl font-serif text-slate-900 mt-7 tracking-tight text-center px-4">
                               {activeMembers.map(m => m.name.split(' ')[0]).join(' & ')}
                           </h2>
-                          <div className="mt-6 flex flex-wrap justify-center gap-x-8 gap-y-3 text-center">
+                          <div className="mt-7 grid grid-cols-3 gap-2.5 md:gap-3 w-full max-w-md text-center">
                                 {[
-                                    { n: streak, label: streak === 1 ? M.dayInRow : M.daysInRow },
-                                    { n: sharedThisMonth, label: M.sharedMonth },
-                                    { n: totalMemoriesUs, label: totalMemoriesUs === 1 ? M.memory : M.memories },
-                                ].map(x => (
-                                    <div key={x.label}>
-                                        <p className="font-serif text-2xl text-slate-900 leading-none">{x.n}</p>
-                                        <p className="mt-1.5 text-xs text-slate-400">{x.label}</p>
+                                    { n: streak, label: streak === 1 ? M.dayInRow : M.daysInRow, e: '🔥', c: 'bg-[#fff1d6] text-[#8a5300]', r: '-3deg' },
+                                    { n: sharedThisMonth, label: M.sharedMonth, e: '💌', c: 'bg-[#fde7f3] text-[#9d2d6f]', r: '2deg' },
+                                    { n: totalMemoriesUs, label: totalMemoriesUs === 1 ? M.memory : M.memories, e: '📸', c: 'bg-[#e1f1f7] text-[#2f6b80]', r: '-2deg' },
+                                ].map((x, i) => (
+                                    <div key={x.label} className={`belluh-pop rounded-[1.6rem] px-2 pt-3.5 pb-3.5 flex flex-col items-center ${x.c}`} style={{ animationDelay: `${120 + i * 80}ms` }}>
+                                        <span aria-hidden className="sticker text-[26px] leading-none inline-block" style={{ transform: `rotate(${x.r})` }}>{x.e}</span>
+                                        <p className="mt-2 font-serif text-[1.9rem] leading-none tabular-nums">{x.n}</p>
+                                        <p className="mt-1.5 text-[11.5px] font-semibold leading-tight opacity-80 [text-wrap:balance]">{x.label}</p>
                                     </div>
                                 ))}
                           </div>
