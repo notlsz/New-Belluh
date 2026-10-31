@@ -3,6 +3,14 @@ import { useI18n, useUi } from '../i18n';
 import profile from '../i18n/ui/profile';
 import { calmAvatar, avatarFor } from '../lib/avatar';
 import { Emoji } from '../lib/emoji3d';
+import bentoUi from '../i18n/ui/bento';
+// The couple's own tiles: favorites, dislikes, their song, anything
+type CustomTile = { id: string; title: string; value: string; emoji: string; size: TileSize };
+type TileSize = 'S' | 'M' | 'L';
+const CUSTOM_EMOJI = ['🌷', '🍣', '🎵', '🙅', '☕', '🐶', '🎬', '✨', '🍕', '💐', '🎁', '📚'];
+const TILE_COLORS = [{ bg: 'bg-[#fde7f3]', ink: 'text-[#8f2a66]' }, { bg: 'bg-[#e1f1f7]', ink: 'text-[#2f6b80]' }, { bg: 'bg-[#fff1d6]', ink: 'text-[#8a5300]' }, { bg: 'bg-[#ede7fb]', ink: 'text-[#5b3fa0]' }, { bg: 'bg-[#e3f5dc]', ink: 'text-[#3d6b2c]' }, { bg: 'bg-[#ffe4d6]', ink: 'text-[#8f3f1c]' }];
+// Sizes on the 6-column bento (laptops) and the 2-column one (phones)
+const SPAN: Record<TileSize, string> = { S: 'col-span-1 md:col-span-2', M: 'col-span-1 md:col-span-3', L: 'col-span-2 md:col-span-6' };
 const OurWorld = React.lazy(() => import('../components/OurWorld'));
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { User, LoveNote, Goal, Circle, CircleStatus, JournalEntry, Mood, RelationshipReceipt, ColorTheme } from '../types';
@@ -227,10 +235,12 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
 
   // Editable Facts State
   const [facts, setFacts] = useState({ firstMet: NO_DATE(), firstKiss: NO_DATE(), firstDate: NO_DATE(), partnerBday: NO_DATE(), anniversary: NO_DATE() });
-  const [factConfigs, setFactConfigs] = useState<Record<string, { size: 'standard' | 'wide' | 'tall' | 'big'; hidden: boolean }>>({
+  const [factConfigs, setFactConfigs] = useState<Record<string, { size: string; hidden: boolean }>>({
       timeTogether: { size: 'standard', hidden: false }, nextAnniversary: { size: 'standard', hidden: false }, firstMet: { size: 'standard', hidden: false }, firstKiss: { size: 'standard', hidden: false }, firstDate: { size: 'standard', hidden: false }, partnerBday: { size: 'standard', hidden: false }, anniversary: { size: 'standard', hidden: false }, 
   });
   const [isEditingFacts, setIsEditingFacts] = useState(false);
+  const [customs, setCustoms] = useState<CustomTile[]>([]);
+  const B = useUi(bentoUi);
 
   // Avatar Upload State
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -266,6 +276,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                 anniversary: fromStored(parsed.anniversary),
             });
             if (parsed.configs) setFactConfigs(prev => ({...prev, ...parsed.configs}));
+            if (Array.isArray(parsed.custom)) setCustoms(parsed.custom.filter((c: any) => c && typeof c.title === 'string').slice(0, 24));
         } catch (e) { console.error("Failed to parse relationship facts", e); }
     }
   }, [user.relationshipFacts, activeCircle?.id]);
@@ -373,7 +384,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
     setIsEditingFacts(false);
     const keep = (d: Date) => (isSet(d) ? toInput(d) : null);
     const payload = { firstMet: keep(facts.firstMet), firstKiss: keep(facts.firstKiss), firstDate: keep(facts.firstDate), partnerBday: keep(facts.partnerBday), anniversary: keep(facts.anniversary), configs: factConfigs };
-    const factsText = JSON.stringify(payload);
+    const factsText = JSON.stringify({ ...payload, custom: customs.filter(c => c.title.trim() || c.value.trim()).map(c => ({ ...c, title: c.title.slice(0, 40), value: c.value.slice(0, 160) })) });
     try {
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         if (!currentUser) return;
@@ -405,7 +416,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
     } catch (e) { console.error('Could not sync dates', e); }
   };
 
-  const cycleSize = (id: string) => { setFactConfigs(prev => { const sizes: ('standard' | 'wide' | 'tall' | 'big')[] = ['standard', 'wide', 'tall', 'big']; const current = prev[id]?.size || 'standard'; const next = sizes[(sizes.indexOf(current) + 1) % sizes.length]; return { ...prev, [id]: { ...prev[id], size: next } }; }); };
+  const cycleSize = (id: string) => { setFactConfigs(prev => { const sizes: string[] = ['standard', 'wide', 'tall', 'big']; const current = prev[id]?.size || 'standard'; const next = sizes[(sizes.indexOf(current) + 1) % sizes.length]; return { ...prev, [id]: { ...prev[id], size: next } }; }); };
   const toggleHidden = (id: string) => { setFactConfigs(prev => ({ ...prev, [id]: { ...prev[id], hidden: !prev[id].hidden } })); };
   const currentColor = RECEIPT_COLORS[receiptColorIdx];
 
@@ -507,11 +518,11 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                           </div>
                       </div>
                       
-                      <div className="mt-10 mb-12 md:max-w-2xl"><React.Suspense fallback={null}><OurWorld entries={entries} /></React.Suspense></div>
+                      <div className="mt-10 mb-12"><React.Suspense fallback={null}><OurWorld entries={entries} /></React.Suspense></div>
 
                       {/* Relationship Facts Grid */}
                       {activeCircle && (
-                          <div className="mb-12 relative group/facts md:max-w-2xl">
+                          <div className="mb-12 relative group/facts">
                               <div className="flex items-center justify-between mb-6">
                                   <h3 className="font-serif text-xl text-slate-900 pl-1">{M.yourDates}</h3>
                                   <button onClick={() => isEditingFacts ? saveFacts() : setIsEditingFacts(true)} className={`h-9 px-4 rounded-full text-sm font-semibold transition-colors inline-flex items-center gap-1.5 ${isEditingFacts ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}>
@@ -542,15 +553,30 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                                   );
                                   // A bento of your dates, after Pampam and Zenly: a big "days together" tile, then a tile per date,
                                   // each its own solid pastel with a 3D emoji. Tiles side by side are the same size.
-                                  const TILE: Record<string, { e: string; bg: string; ink: string; span: string }> = {
-                                      anniversary: { e: '💞', bg: 'bg-[#fde7f3]', ink: 'text-[#8f2a66]', span: 'col-span-1 md:col-span-2' },
-                                      firstMet: { e: '🫂', bg: 'bg-[#e1f1f7]', ink: 'text-[#2f6b80]', span: 'col-span-1 md:col-span-2' },
-                                      firstDate: { e: '🥂', bg: 'bg-[#fff1d6]', ink: 'text-[#8a5300]', span: 'col-span-1 md:col-span-2' },
-                                      firstKiss: { e: '💗', bg: 'bg-[#ede7fb]', ink: 'text-[#5b3fa0]', span: 'col-span-1 md:col-span-3' },
-                                      partnerBday: { e: '🎂', bg: 'bg-[#e3f5dc]', ink: 'text-[#3d6b2c]', span: 'col-span-2 md:col-span-3' },
+                                  const TILE: Record<string, { e: string; bg: string; ink: string; size: TileSize }> = {
+                                      anniversary: { e: '💞', ...TILE_COLORS[0], size: 'S' },
+                                      firstMet: { e: '🫂', ...TILE_COLORS[1], size: 'S' },
+                                      firstDate: { e: '🥂', ...TILE_COLORS[2], size: 'S' },
+                                      firstKiss: { e: '💗', ...TILE_COLORS[3], size: 'M' },
+                                      partnerBday: { e: '🎂', ...TILE_COLORS[4], size: 'M' },
                                   };
+                                  const sizeOf = (key: string, fallback: TileSize): TileSize => { const v = factConfigs[key]?.size; return v === 'S' || v === 'M' || v === 'L' ? v : fallback; };
+                                  const setSize = (key: string, v: TileSize) => setFactConfigs(prev => ({ ...prev, [key]: { ...(prev[key] ?? { hidden: false }), size: v } }));
+                                  // While editing, every tile can be resized: small, medium, or the whole row
+                                  const Sizer = ({ value, onPick, onRemove }: { value: TileSize; onPick: (v: TileSize) => void; onRemove?: () => void }) => (
+                                      <div className="absolute top-3 right-3 flex items-center gap-1">
+                                          <div role="radiogroup" aria-label={B.size} className="h-8 p-0.5 rounded-full bg-white/80 flex items-center text-[11px] font-bold">
+                                              {(['S', 'M', 'L'] as TileSize[]).map(v => (
+                                                  <button key={v} type="button" role="radio" aria-checked={value === v} onClick={() => onPick(v)} className={`w-7 h-7 rounded-full ${value === v ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>{v === 'S' ? B.small : v === 'M' ? B.medium : B.large}</button>
+                                              ))}
+                                          </div>
+                                          {onRemove && <button type="button" onClick={onRemove} aria-label={B.remove} className="w-8 h-8 rounded-full bg-white/80 text-slate-500 hover:text-slate-900 font-bold">✕&#xFE0E;</button>}
+                                      </div>
+                                  );
+                                  const updateCustom = (id: string, p: Partial<CustomTile>) => setCustoms(cs => cs.map(c => c.id === id ? { ...c, ...p } : c));
+                                  const addCustom = (title: string) => { setCustoms(cs => [...cs, { id: Math.random().toString(36).slice(2, 10), title, value: '', emoji: CUSTOM_EMOJI[cs.length % CUSTOM_EMOJI.length], size: 'S' }]); setIsEditingFacts(true); };
                                   return (
-                                      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                                      <div className="grid grid-cols-2 md:grid-cols-6 gap-3 grid-flow-row-dense">
                                           {days !== null && !isEditingFacts && (
                                               <div className="belluh-pop col-span-2 md:col-span-6 rounded-[2rem] bg-white border border-slate-100 shadow-[0_8px_30px_-18px_rgba(15,23,42,0.25)] p-6 flex items-center gap-5">
                                                   <Emoji e="🥰" size={60} />
@@ -574,8 +600,9 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                                               const d = f[r.key];
                                               const t = TILE[r.key];
                                               return (
-                                                  <div key={r.key} className={`belluh-pop ${t.span} ${t.bg} rounded-[1.75rem] p-5 min-h-[150px] flex flex-col justify-between gap-4`} style={{ animationDelay: `${80 + i * 60}ms` }}>
+                                                  <div key={r.key} className={`relative belluh-pop ${SPAN[sizeOf(r.key, t.size)]} ${t.bg} rounded-[1.75rem] p-5 min-h-[150px] flex flex-col justify-between gap-4`} style={{ animationDelay: `${80 + i * 60}ms` }}>
                                                       <Emoji e={t.e} size={40} />
+                                                      {isEditingFacts && <Sizer value={sizeOf(r.key, t.size)} onPick={v => setSize(r.key, v)} />}
                                                       <div className="min-w-0">
                                                           <p className={`text-[13px] font-bold ${t.ink}`}>{r.label}</p>
                                                           {isEditingFacts ? (
@@ -592,6 +619,38 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                                                   </div>
                                               );
                                           })}
+                                          {customs.filter(c => isEditingFacts || c.title.trim() || c.value.trim()).map((c, i) => {
+                                              const col = TILE_COLORS[(i + 5) % TILE_COLORS.length];
+                                              return (
+                                                  <div key={c.id} className={`relative belluh-pop ${SPAN[c.size]} ${col.bg} rounded-[1.75rem] p-5 min-h-[150px] flex flex-col justify-between gap-4`}>
+                                                      {isEditingFacts
+                                                          ? <button type="button" onClick={() => updateCustom(c.id, { emoji: CUSTOM_EMOJI[(CUSTOM_EMOJI.indexOf(c.emoji) + 1) % CUSTOM_EMOJI.length] })} aria-label={B.emoji} className="self-start"><Emoji e={c.emoji} size={40} /></button>
+                                                          : <Emoji e={c.emoji} size={40} />}
+                                                      {isEditingFacts && <Sizer value={c.size} onPick={v => updateCustom(c.id, { size: v })} onRemove={() => setCustoms(cs => cs.filter(x => x.id !== c.id))} />}
+                                                      {isEditingFacts ? (
+                                                          <div className="space-y-2">
+                                                              <input value={c.title} onChange={e => updateCustom(c.id, { title: e.target.value.slice(0, 40) })} placeholder={B.titlePh} aria-label={B.titlePh} className={`w-full h-9 rounded-xl bg-white/80 px-3 text-[13px] font-bold ${col.ink} placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9bbecb]`} />
+                                                              <input value={c.value} onChange={e => updateCustom(c.id, { value: e.target.value.slice(0, 160) })} placeholder={B.valuePh} aria-label={B.valuePh} className="w-full h-10 rounded-xl bg-white/80 px-3 font-serif text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9bbecb]" />
+                                                          </div>
+                                                      ) : (
+                                                          <div className="min-w-0">
+                                                              <p className={`text-[13px] font-bold ${col.ink}`}>{c.title}</p>
+                                                              <p className="mt-1 font-serif text-[1.12rem] sm:text-[1.35rem] leading-snug text-slate-900 [text-wrap:pretty]">{c.value}</p>
+                                                          </div>
+                                                      )}
+                                                  </div>
+                                              );
+                                          })}
+                                          {/* Their own tiles: one tap on an idea, or start from blank */}
+                                          <div className="col-span-2 md:col-span-6 rounded-[1.75rem] border-2 border-dashed border-slate-200 p-4">
+                                              <p className="text-[13px] font-bold text-slate-500 inline-flex items-center gap-1.5"><span className="text-base leading-none">+&#xFE0E;</span> {B.addOwn}</p>
+                                              <div className="mt-2.5 flex flex-wrap gap-2">
+                                                  {B.ideas.filter(x => !customs.some(c => c.title === x)).map(x => (
+                                                      <button key={x} type="button" onClick={() => addCustom(x)} className="h-9 px-3.5 rounded-full bg-slate-100 hover:bg-slate-200 text-[13px] font-semibold text-slate-700">{x}</button>
+                                                  ))}
+                                                  <button type="button" onClick={() => addCustom('')} className="h-9 w-9 rounded-full bg-slate-900 text-white text-lg font-bold" aria-label={B.addOwn}>+&#xFE0E;</button>
+                                              </div>
+                                          </div>
                                       </div>
                                   );
                               })()}
