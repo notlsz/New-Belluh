@@ -50,6 +50,8 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), aboutPage()],
+    // Emojis instead of line icons, everywhere (see src/lib/emojiIcons.tsx)
+    resolve: { alias: { 'lucide-react': path.resolve(__dirname, 'src/lib/emojiIcons.tsx') } },
     // This defines process.env variables globally for the browser at BUILD time.
     define: {
       'process.env.NEXT_PUBLIC_SUPABASE_URL': JSON.stringify(env.NEXT_PUBLIC_SUPABASE_URL),
