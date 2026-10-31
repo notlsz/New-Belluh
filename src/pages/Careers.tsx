@@ -4,7 +4,7 @@
 // already publish: grants up to $50K, a $200K full-time path, drift spotted 3 weeks early.
 import React, { useEffect, useState } from 'react';
 import { Emoji } from '../lib/emoji3d';
-import { Shell, Wrap, Eyebrow, Big, Body, Reveal, Numbered, Dark, Pill, ShareBar, HiringLine, BLUE, type PageProps } from './company/kit';
+import { Shell, Wrap, Eyebrow, Big, Body, Reveal, Numbered, Dark, Pill, ShareBar, BLUE, type PageProps } from './company/kit';
 
 interface CareersProps extends PageProps { onBack?: () => void; onGoToAbout?: () => void }
 
@@ -29,7 +29,7 @@ const STEPS = [
   { e: '🚀', title: 'Your first mission.', body: 'Fellows start with a mission: real work, with a grant behind it, so we both see what it’s like to build together.' },
   { e: '🤝', title: 'The path to full-time.', body: 'For top performers, a direct path to a full-time role.' },
 ];
-const ROLES = [{ team: 'Growth', about: 'Gets Belluh to every couple who would love it.', roles: [{ id: 'fellow', title: 'Belluh Fellow', where: 'Hybrid · Full-time' }] }];
+const ROLES = [{ team: 'Growth', about: 'Gets Belluh to every couple who would love it.', roles: [{ id: 'fellow', title: 'Belluh Fellow', where: 'Hybrid, full-time' }] }];
 
 const Careers: React.FC<CareersProps> = (p) => {
   const [fellow, setFellow] = useState(window.location.pathname === '/careers/fellows');
@@ -77,7 +77,7 @@ const Careers: React.FC<CareersProps> = (p) => {
   const shown = ROLES.filter(r => team === 'all' || r.team === team);
   const photos = ['just-married', 'first-date', '78th-trip', 'first-kiss', '30th-anniversary', 'first-baby'];
   return (
-    <Shell {...p} current="careers" title="Careers">
+    <Shell {...p} current="careers" title="Careers" hiring={{ eyebrow: 'About us', line: 'Sound like you?', cta: 'Get to know us', to: '/mission' }}>
       {/* A drifting strip of photos, then the line */}
       <section className="pt-8 md:pt-10 overflow-hidden">
         <div className="flex w-max gap-4 md:gap-5 careers-strip" aria-hidden>
@@ -191,7 +191,6 @@ const Careers: React.FC<CareersProps> = (p) => {
       </section>
 
       <ShareBar text="Help more love last. Belluh is hiring." />
-      <HiringLine eyebrow="About us" line="Sound like you?" cta="Get to know us" to="/mission" />
     </Shell>
   );
 };
