@@ -12,7 +12,8 @@ import SiteFooter from '../components/SiteFooter';
 import SiteNav from '../components/SiteNav';
 import DragonflyMark from '../components/DragonflyMark';
 import { belluh } from '../lib/belluhPresence';
-import { useI18n } from '../i18n';
+import { useI18n, useUi } from '../i18n';
+import science from '../i18n/ui/science';
 
 
 // Priced from what a couple costs to run, not from what the market will bear: AI for both partners, texting, the odd
@@ -389,6 +390,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pastHero, setPastHero] = useState(false);
   const heroTap = useShapeTap();
+  const SC = useUi(science);
   const ctaTap = useShapeTap();
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
   useEffect(() => { const onR = () => setIsDesktop(window.innerWidth >= 768); window.addEventListener('resize', onR); return () => window.removeEventListener('resize', onR); }, []);
@@ -584,6 +586,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
 
 
 
+      {/* The promise in one line, the way Hinge leads with its mission */}
+      <section className="relative z-10 px-6 pt-16 pb-4 md:pt-24">
+          <div className="max-w-3xl mx-auto text-center">
+              <p className="font-serif text-[1.9rem] md:text-[2.8rem] leading-[1.15] tracking-tight text-slate-900 [text-wrap:balance]">{SC.missionLine}</p>
+              <p className="mt-4 text-[17px] md:text-lg text-slate-500 leading-relaxed max-w-xl mx-auto [text-wrap:pretty]">{SC.missionSub}</p>
+          </div>
+      </section>
+
       <BellaAtWork />
 
       {/* Real app screens */}
@@ -671,6 +681,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
         </div>
       </section>
       
+      {/* Relationship science, as Hinge does with its research, but with the actual studies: a quiet list, no cards */}
+      <section id="science" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
+          <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_1.15fr] gap-10 lg:gap-20">
+              <div>
+                  <h2 className="font-serif text-[2.1rem] md:text-5xl leading-[1.1] tracking-tight text-slate-900 [text-wrap:balance]">{SC.title}</h2>
+                  <p className="mt-5 text-[17px] md:text-lg text-slate-500 leading-relaxed max-w-md [text-wrap:pretty]">{SC.sub}</p>
+              </div>
+              <ol className="space-y-9">
+                  {SC.findings.map(x => (
+                      <li key={x.title}>
+                          <p className="font-serif text-[1.35rem] md:text-2xl leading-snug text-slate-900">{x.title}</p>
+                          <p className="mt-2 text-[15px] md:text-base text-slate-600 leading-relaxed">{x.body}</p>
+                          <p className="mt-2 text-xs font-semibold text-[#3f7486]">{x.source}</p>
+                      </li>
+                  ))}
+              </ol>
+          </div>
+      </section>
+
       {/* Why Belluh exists, in Jimmy's words, next to the evening it started with */}
       <section id="why" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.25fr_1fr] items-center gap-16 lg:gap-20">
