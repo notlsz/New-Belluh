@@ -6,7 +6,7 @@ import type { UiTable } from '../ui';
 
 const en = {
   askLead: "Ask Bella",
-  asks: ["Plan our honeymoon: 10 days in Portugal, under $4,000", "Find a cozy spot for a first date this Friday", "Remind us every year on the day of our first kiss", "Keep a list of the baby’s firsts for both of us", "Find somewhere new for trip 78, a train ride away", "Plan a surprise dinner for our 30th, and invite the kids"],
+  asks: ["Ideas for where we’ll say I do", "A quiet table for our first date", "Never let me forget our first kiss", "Keep all our baby’s firsts", "Somewhere new for trip 78", "Book Friday at 6 for our 30th"],
   firstsTitle: "For every first, and every 78th.",
   firsts: ["Just married", "First date", "First kiss", "First baby", "78th trip", "30th anniversary"],
   title: 'Intelligence, applied to intimacy.',
@@ -47,7 +47,7 @@ const en = {
 
 const es = {
   askLead: "Pregúntale a Bella",
-  asks: ["Planea nuestra luna de miel: 10 días en Portugal, menos de 4.000 €", "Busca un sitio acogedor para una primera cita este viernes", "Recuérdanos cada año el día de nuestro primer beso", "Guarda una lista de las primeras veces del bebé para los dos", "Busca un sitio nuevo para el viaje 78, a un tren de distancia", "Organiza una cena sorpresa por nuestros 30 años e invita a los niños"],
+  asks: ["Ideas para decir «sí, quiero»", "Una mesa para nuestra primera cita", "Guarda para siempre el primer beso", "Guarda cada primera vez del bebé", "Algo nuevo para el viaje 78", "Mesa el viernes a las 6 por los 30"],
   firstsTitle: "Para cada primera vez, y cada número 78.",
   firsts: ["Recién casados", "Primera cita", "Primer beso", "Primer bebé", "Viaje número 78", "30.º aniversario"],
   title: 'Inteligencia, al servicio de la intimidad.',
@@ -88,7 +88,7 @@ const es = {
 
 const pt = {
   askLead: "Pergunte à Bella",
-  asks: ["Planeje nossa lua de mel: 10 dias em Portugal, até R$ 20 mil", "Ache um lugar aconchegante para um primeiro encontro nesta sexta", "Lembre a gente todo ano do dia do nosso primeiro beijo", "Guarde uma lista das primeiras vezes do bebê para nós dois", "Ache um lugar novo para a viagem 78, a uma viagem de trem", "Planeje um jantar surpresa pelos nossos 30 anos e chame os filhos"],
+  asks: ["Ideias de onde dizer sim", "Um cantinho pro primeiro encontro", "Nosso primeiro beijo, pra sempre", "Guarde cada primeira vez do bebê", "Algo novo pra viagem 78, juntos", "Reserve sexta às 18h, nossos 30"],
   firstsTitle: "Para cada primeira vez, e cada 78ª.",
   firsts: ["Recém-casados", "Primeiro encontro", "Primeiro beijo", "Primeiro bebê", "78ª viagem", "30º aniversário"],
   title: 'Inteligência a serviço da intimidade.',
@@ -131,7 +131,7 @@ const understood: UiTable<typeof en> = {
   en,
   ja: {
     askLead: "Bellaにきいてみる",
-    asks: ["新婚旅行を計画して：ポルトガルで10日間、60万円以内", "今週の金曜、初デートにぴったりの落ち着いたお店を探して", "毎年、ファーストキスの日を教えて", "赤ちゃんの「はじめて」をふたりで残せるリストにして", "78回目の旅、電車で行ける新しい場所を探して", "結婚30周年のサプライズディナーを計画して、子どもたちも呼んで"],
+    asks: ["ふたりが誓う場所のアイデアを", "初デートに、静かなお店を", "初めてのキスを、ずっと覚えていて", "赤ちゃんの「はじめて」を全部残して", "78回目の旅、まだ知らない場所へ", "金曜18時、30周年のお店を予約して"],
     firstsTitle: "はじめての日も、78回目の日も。",
     firsts: ["結婚したての日", "はじめてのデート", "ファーストキス", "はじめての赤ちゃん", "78回目の旅", "結婚30周年"],
     title: 'AIの知性を、ふたりの親密さに。',
@@ -171,7 +171,7 @@ const understood: UiTable<typeof en> = {
   },
   fr: {
     askLead: "Demande à Bella",
-    asks: ["Organise notre lune de miel : 10 jours au Portugal, moins de 4 000 €", "Trouve un endroit cosy pour un premier rendez-vous vendredi", "Rappelle-nous chaque année le jour de notre premier baiser", "Garde la liste des premières fois du bébé pour nous deux", "Trouve un endroit nouveau pour le voyage 78, à un train d’ici", "Organise un dîner surprise pour nos 30 ans, et invite les enfants"],
+    asks: ["Des idées pour se dire oui", "Un premier verre, au calme", "N’oublie jamais notre premier baiser", "Garde les premières fois du bébé", "Un endroit neuf pour le voyage 78", "Réserve vendredi 18 h, nos 30 ans"],
     firstsTitle: "Pour chaque première fois, et chaque 78e.",
     firsts: ["Jeunes mariés", "Premier rendez-vous", "Premier baiser", "Premier bébé", "78e voyage", "30 ans de mariage"],
     title: 'L’intelligence, au service de l’intimité.',
@@ -211,7 +211,7 @@ const understood: UiTable<typeof en> = {
   },
   it: {
     askLead: "Chiedi a Bella",
-    asks: ["Organizza la nostra luna di miele: 10 giorni in Portogallo, sotto i 4.000 €", "Trova un posto accogliente per un primo appuntamento venerdì", "Ricordaci ogni anno il giorno del nostro primo bacio", "Tieni una lista delle prime volte del bambino per tutti e due", "Trova un posto nuovo per il viaggio 78, a un treno di distanza", "Organizza una cena a sorpresa per i nostri 30 anni e invita i ragazzi"],
+    asks: ["Idee per dove dirci sì", "Un tavolino per il primo incontro", "Non farmi scordare il primo bacio", "Conserva le prime volte del bimbo", "Un posto nuovo per il viaggio 78", "Prenota venerdì alle 18, i 30 anni"],
     firstsTitle: "Per ogni prima volta, e ogni 78ª.",
     firsts: ["Appena sposati", "Primo appuntamento", "Primo bacio", "Primo figlio", "78° viaggio", "30° anniversario"],
     title: 'L’intelligenza, al servizio dell’intimità.',
@@ -252,7 +252,7 @@ const understood: UiTable<typeof en> = {
   pt,
   zh: {
     askLead: "问问 Bella",
-    asks: ["帮我们规划蜜月：葡萄牙 10 天，预算 3 万元以内", "这周五第一次约会，找个安静舒服的地方", "每年提醒我们初吻的那一天", "帮我们记下宝宝的每个第一次", "第 78 次旅行，找个坐火车就能到的新地方", "为结婚 30 周年安排一顿惊喜晚餐，把孩子们也叫上"],
+    asks: ["帮我们想想在哪里说“我愿意”", "第一次约会，找个安静的小店", "永远替我记住我们的初吻", "留住宝宝的每一个第一次", "第 78 次旅行，去个没去过的地方", "周五晚 6 点，订 30 周年的晚餐"],
     firstsTitle: "每一个第一次，也有第78次。",
     firsts: ["新婚", "第一次约会", "初吻", "第一个宝宝", "第78次旅行", "结婚30周年"],
     title: '让智能，懂得亲密。',
@@ -292,7 +292,7 @@ const understood: UiTable<typeof en> = {
   },
   de: {
     askLead: "Frag Bella",
-    asks: ["Plan unsere Flitterwochen: 10 Tage Portugal, unter 4.000 €", "Finde ein gemütliches Lokal für ein erstes Date am Freitag", "Erinnere uns jedes Jahr an den Tag unseres ersten Kusses", "Führ eine Liste mit den ersten Malen des Babys für uns beide", "Finde ein neues Ziel für Reise 78, mit dem Zug erreichbar", "Plan ein Überraschungsessen zu unserem 30. und lad die Kinder ein"],
+    asks: ["Ideen, wo wir Ja sagen", "Ein ruhiger Tisch fürs erste Date", "Erinnere uns an den ersten Kuss", "Halt jedes Erste unseres Babys fest", "Reise 78: irgendwo neu, zu zweit", "Freitag 18 Uhr, Tisch für den 30."],
     firstsTitle: "Für jedes erste Mal, und jedes 78.",
     firsts: ["Frisch verheiratet", "Erstes Date", "Erster Kuss", "Erstes Baby", "78. Reise", "30. Hochzeitstag"],
     title: 'Intelligenz, für eure Nähe.',
@@ -332,7 +332,7 @@ const understood: UiTable<typeof en> = {
   },
   es,
   'es-MX': {
-    asks: ["Planea nuestra luna de miel: 10 días en Portugal, menos de 80 mil pesos","Busca un lugar acogedor para una primera cita este viernes","Recuérdanos cada año el día de nuestro primer beso","Guarda una lista de las primeras veces del bebé para los dos","Busca un lugar nuevo para el viaje 78, a un camión de distancia","Organiza una cena sorpresa por nuestros 30 años e invita a los niños"],
+    asks: ["Ideas para decir «sí, acepto»", "Una mesa para nuestra primera cita", "Guarda para siempre el primer beso", "Guarda cada primera vez del bebé", "Algo nuevo para el viaje 78", "Mesa el viernes a las 6 por los 30"],
     sub: 'Belluh convierte miles de pequeños momentos en una comprensión clara de su vida juntos.',
     patternBody: 'Ritmo emocional. Cadencia de conexión. Belluh lee los patrones que no se dicen en su relación.',
     patternQuote: '“Cuando estás estresado te alejas, pero a tu pareja lo que más le ayuda es un rato de calma juntos. Prueben estar en silencio, uno al lado del otro.”',
@@ -347,7 +347,7 @@ const understood: UiTable<typeof en> = {
   },
   'pt-PT': {
     askLead: 'Pergunta à Bella',
-    asks: ["Planeia a nossa lua de mel: 10 dias nos Açores, até 4.000 €","Encontra um sítio acolhedor para um primeiro encontro esta sexta","Lembra-nos todos os anos do dia do nosso primeiro beijo","Guarda uma lista das primeiras vezes do bebé para os dois","Encontra um sítio novo para a viagem 78, a uma viagem de comboio","Organiza um jantar surpresa pelos nossos 30 anos e convida os miúdos"],
+    asks: ["Ideias de onde dizer sim", "Um cantinho para o 1.º encontro", "O nosso primeiro beijo, para sempre", "Guarda cada primeira vez do bebé", "Algo novo para a viagem 78, juntos", "Reserva sexta às 18h, os nossos 30"],
     sub: 'O Belluh transforma milhares de pequenos momentos numa compreensão clara da vossa vida a dois.',
     insightPre: '“Nos conflitos, refugias-te no silêncio. Mas esta semana escolheste as ',
     insightDetail: 'A Bella reparou na mudança na terça: em vez de te afastares, disseste que tinhas medo. É nesse momento que um casal volta mais próximo.',
