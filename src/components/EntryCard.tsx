@@ -114,7 +114,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, isCurrentUser, onLike, onA
               )}
            </div>
            <div className="flex items-center gap-3 pr-2">
-              {entry.mood && (
+              {entry.mood && MOOD_EMOJIS[entry.mood] && (
                   <span className="text-2xl grayscale-[0.5] group-hover:grayscale-0 transition-all opacity-80" title={J.moods[entry.mood.toLowerCase() as keyof typeof J.moods] ?? entry.mood}><Emoji e={MOOD_EMOJIS[entry.mood]} size={28} /></span>
               )}
            </div>
