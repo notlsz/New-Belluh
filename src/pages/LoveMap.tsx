@@ -33,6 +33,8 @@ function styleFor(lang: string): StyleSpecification {
   return {
     version: 8,
     projection: { type: 'globe' },
+    // Soft, even light so the toy buildings stay pastel on every side
+    light: { anchor: 'viewport', color: '#ffffff', intensity: 0.12, position: [1.2, 210, 30] },
     glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
     sources: {
       world: { type: 'geojson', data: countries },
@@ -43,15 +45,18 @@ function styleFor(lang: string): StyleSpecification {
       { id: 'bg', type: 'background', paint: { 'background-color': ['interpolate', ['linear'], ['zoom'], 4.8, OCEAN, 6, LAND] } },
       { id: 'countries', type: 'fill', source: 'world', paint: { 'fill-color': ['match', ['get', 'c'], 0, PALETTE[0], 1, PALETTE[1], 2, PALETTE[2], 3, PALETTE[3], 4, PALETTE[4], PALETTE[5]], 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4.8, 1, 6, 0] } },
       { id: 'borders', type: 'line', source: 'world', paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 1, 4, 2.5], 'line-opacity': ['interpolate', ['linear'], ['zoom'], 4.8, 1, 6, 0] } },
-      { id: 'park', type: 'fill', source: 'omt', 'source-layer': 'park', minzoom: 5, paint: { 'fill-color': '#bfeaa6' } },
-      { id: 'park-edge', type: 'line', source: 'omt', 'source-layer': 'park', minzoom: 11, paint: { 'line-color': '#a6dd8a', 'line-width': 2 } },
+      { id: 'park', type: 'fill', source: 'omt', 'source-layer': 'park', minzoom: 5, paint: { 'fill-color': '#b5e795' } },
+      { id: 'park-edge', type: 'line', source: 'omt', 'source-layer': 'park', minzoom: 11, paint: { 'line-color': '#8fd36b', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1.5, 16, 4] } },
       { id: 'green', type: 'fill', source: 'omt', 'source-layer': 'landcover', minzoom: 5, filter: ['in', ['get', 'class'], ['literal', ['grass', 'wood', 'farmland']]], paint: { 'fill-color': '#d4f2c0', 'fill-opacity': 0.85 } },
       { id: 'water', type: 'fill', source: 'omt', 'source-layer': 'water', minzoom: 4.5, paint: { 'fill-color': OCEAN, 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 4.5, 0, 5.5, 1] } },
+      // A cartoon edge on the water, like a drawn shoreline
+      { id: 'water-edge', type: 'line', source: 'omt', 'source-layer': 'water', minzoom: 9, paint: { 'line-color': '#5fbfe8', 'line-width': ['interpolate', ['linear'], ['zoom'], 9, 1.2, 16, 4] } },
       { id: 'river', type: 'line', source: 'omt', 'source-layer': 'waterway', minzoom: 8, paint: { 'line-color': OCEAN, 'line-width': 2.5 } },
-      { id: 'building', type: 'fill', source: 'omt', 'source-layer': 'building', minzoom: 14, paint: { 'fill-color': '#f6eee6', 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0, 15.5, 0.8], 'fill-outline-color': '#f6eee6' } },
-      { id: 'road-case', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'street']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#f1e4d3', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 1.6, 16, 20] } },
-      { id: 'road', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'street']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 1.2, 16, 17] } },
-      { id: 'place', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 5, filter: ['in', ['get', 'class'], ['literal', ['city', 'town', 'suburb']]], layout: { 'text-field': name, 'text-font': ['Noto Sans Bold'], 'text-size': ['interpolate', ['linear'], ['zoom'], 5, 12, 14, 17], 'text-letter-spacing': 0.02 }, paint: { 'text-color': '#7a5a8c', 'text-halo-color': '#ffffff', 'text-halo-width': 2.5 } },
+      // Toy-town buildings: soft pastel blocks that stand up when the map tilts
+      { id: 'building', type: 'fill-extrusion', source: 'omt', 'source-layer': 'building', minzoom: 14.5, filter: ['>=', ['coalesce', ['get', 'render_height'], 0], 12], paint: { 'fill-extrusion-color': ['match', ['%', ['to-number', ['coalesce', ['get', 'render_height'], 0]], 4], 0, '#fbe9f1', 1, '#efe9fb', 2, '#fff1e2', '#e8f4fa'], 'fill-extrusion-height': ['*', ['coalesce', ['get', 'render_height'], 8], 0.7], 'fill-extrusion-base': 0, 'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 14.5, 0, 15.5, 0.92], 'fill-extrusion-vertical-gradient': true } },
+      { id: 'road-case', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'street']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#ead9c3', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 2.2, 16, 26] } },
+      { id: 'road', type: 'line', source: 'omt', 'source-layer': 'transportation', minzoom: 9, filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'street']]], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 9, 1.4, 16, 20] } },
+      { id: 'place', type: 'symbol', source: 'omt', 'source-layer': 'place', minzoom: 5, filter: ['in', ['get', 'class'], ['literal', ['city', 'town', 'suburb']]], layout: { 'text-field': name, 'text-font': ['Noto Sans Bold'], 'text-size': ['interpolate', ['linear'], ['zoom'], 5, 12, 14, 17], 'text-letter-spacing': 0.02 }, paint: { 'text-color': '#6b4a80', 'text-halo-color': '#ffffff', 'text-halo-width': 3.5, 'text-halo-blur': 0 } },
       // Cafés, parks, museums...: emoji stickers, drawn on demand (see styleimagemissing)
       { id: 'poi', type: 'symbol', source: 'omt', 'source-layer': 'poi', minzoom: 15, filter: ['<=', ['get', 'rank'], 6], layout: { 'icon-image': ['concat', 'e:', ['coalesce', ['get', 'subclass'], ''], ':', ['get', 'class']], 'icon-size': ['interpolate', ['linear'], ['zoom'], 14, 0.42, 18, 0.62], 'icon-allow-overlap': false, 'icon-padding': 22 } },
       { id: 'country-label', type: 'symbol', source: 'omt', 'source-layer': 'place', maxzoom: 6, filter: ['==', ['get', 'class'], 'country'], layout: { 'text-field': name, 'text-font': ['Noto Sans Bold'], 'text-size': 12, 'text-transform': 'uppercase', 'text-letter-spacing': 0.08 }, paint: { 'text-color': '#8b7a99', 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 } },
@@ -76,6 +81,10 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
   const [on, setOn] = useState(placesOn());
   const [note, setNote] = useState('');
   const [far, setFar] = useState(true);
+  // The welcome card says its piece, then gets out of the way (or as soon as they touch the map)
+  const [hint, setHint] = useState(true);
+  const [hintTurn, setHintTurn] = useState(0);
+  useEffect(() => { setHint(true); const t = setTimeout(() => setHint(false), hintTurn ? 3000 : 4000); return () => clearTimeout(t); }, [hintTurn]);
 
   // Entries at the same spot (about 100 m) share one bubble
   const groups = useMemo(() => {
@@ -109,6 +118,8 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
     let spinning = true;
     const stop = () => { spinning = false; };
     map.on('mousedown', stop); map.on('touchstart', stop); map.on('wheel', stop);
+    const away = () => setHint(false);
+    map.on('dragstart', away); map.on('click', away); map.on('wheel', away);
     const spin = () => { if (!spinning || !mapRef.current) return; if (map.getZoom() < 3) map.easeTo({ center: [map.getCenter().lng - 12, map.getCenter().lat], duration: 1200, easing: t => t }); };
     map.on('moveend', spin);
     map.on('load', () => { if (!groups.length) spin(); else spinning = false; });
@@ -164,7 +175,7 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
       else add('span', 'belluh-pin-emoji', n => { n.textContent = emojiFor(e); });
       if (e.authorAvatar) add('img', 'belluh-pin-face', n => { n.src = e.authorAvatar; n.alt = ''; });
       if (g.length > 1) add('span', 'belluh-pin-count', n => { n.textContent = String(g.length); });
-      el.onclick = (ev) => { ev.stopPropagation(); setOpen(g); map.easeTo({ center: [e.lng!, e.lat!], zoom: Math.max(map.getZoom(), 14.5), duration: 900 }); };
+      el.onclick = (ev) => { ev.stopPropagation(); setOpen(g); map.easeTo({ center: [e.lng!, e.lat!], zoom: Math.max(map.getZoom(), 15.5), pitch: 50, bearing: -12, duration: 1200 }); };
       return new maplibregl.Marker({ element: root, anchor: 'bottom' }).setLngLat([e.lng!, e.lat!]).addTo(map);
     });
     // Our path: a dotted pink line through your places, in the order they happened
@@ -185,6 +196,7 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
   const turnOn = async () => {
     setPlacesOn(true); setOn(true); setNote('');
     const here = await herePlace();
+    setHintTurn(n => n + 1);
     if (!here) { setNote(T.denied); return; }
     mapRef.current?.flyTo({ center: [here.lng, here.lat], zoom: 12.5, duration: 2600 });
   };
@@ -216,15 +228,16 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
           <p className="mt-1.5 text-[13px] font-bold text-[#c4589f] inline-flex items-center gap-1.5"><Emoji e="📍" size={16} /> {groups.length === 1 ? T.place : f(T.places, { n: groups.length })}</p>
         </div>
         <div className="pointer-events-auto flex items-center gap-2">
-          <button type="button" onClick={() => mapRef.current?.flyTo({ zoom: 1.25, duration: 2200 })} className="h-12 px-4 rounded-full bg-white/85 backdrop-blur-xl border border-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.5)] inline-flex items-center gap-2 text-sm font-bold text-slate-800"><Emoji e="🌍" size={24} /><span className="hidden sm:inline">{T.globe}</span></button>
+          <button type="button" onClick={() => mapRef.current?.flyTo({ zoom: 1.25, pitch: 0, bearing: 0, duration: 2200 })} className="h-12 px-4 rounded-full bg-white/85 backdrop-blur-xl border border-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.5)] inline-flex items-center gap-2 text-sm font-bold text-slate-800"><Emoji e="🌍" size={24} /><span className="hidden sm:inline">{T.globe}</span></button>
           {groups.length > 0 && <button type="button" onClick={() => fit()} className="h-12 px-4 rounded-full bg-white/85 backdrop-blur-xl border border-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.5)] inline-flex items-center gap-2 text-sm font-bold text-slate-800"><Emoji e="💞" size={24} /><span className="hidden sm:inline">{T.ours}</span></button>}
         </div>
       </div>
 
-      {/* Nothing pinned yet */}
+      {/* Nothing pinned yet: a card for a few seconds, then just a small pill if places are still off */}
       {groups.length === 0 && !open && (
-        <div className="absolute z-10 inset-x-0 bottom-32 md:bottom-36 lg:bottom-10 px-5 flex justify-center">
-          <div className="belluh-pop w-full max-w-sm rounded-[2rem] bg-white/90 backdrop-blur-xl border border-white shadow-[0_24px_50px_-24px_rgba(196,88,159,0.6)] p-6 text-center">
+        <div className="absolute z-10 inset-x-0 bottom-32 md:bottom-36 lg:bottom-10 px-5 flex justify-center pointer-events-none">
+          <div className={`relative w-full max-w-sm rounded-[2rem] bg-white/90 backdrop-blur-xl border border-white shadow-[0_24px_50px_-24px_rgba(196,88,159,0.6)] p-6 text-center transition-all duration-500 ${hint ? 'opacity-100 translate-y-0 pointer-events-auto belluh-pop' : 'opacity-0 translate-y-6'}`} aria-hidden={!hint}>
+            <button type="button" onClick={() => setHint(false)} aria-label={T.close} className="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-800 font-bold">✕&#xFE0E;</button>
             <Emoji e="🗺️" size={56} style={{ transform: 'rotate(-8deg)' }} />
             <h2 className="mt-3 font-serif text-2xl text-slate-900">{T.emptyTitle}</h2>
             <p className="mt-2 text-[15px] text-slate-500 leading-relaxed [text-wrap:pretty]">{T.emptyBody}</p>
@@ -235,6 +248,9 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId }) => {
             )}
             {note && <p className="mt-3 text-[13px] text-slate-500">{note}</p>}
           </div>
+          {!hint && !on && (
+            <button type="button" onClick={turnOn} className="belluh-pop pointer-events-auto absolute bottom-0 h-12 px-5 rounded-full bg-white/90 backdrop-blur-xl border border-white shadow-[0_14px_30px_-16px_rgba(15,23,42,0.45)] inline-flex items-center gap-2 text-sm font-bold text-slate-800"><Emoji e="📍" size={20} />{T.turnOn}</button>
+          )}
         </div>
       )}
 
