@@ -111,7 +111,7 @@ const UsThread: React.FC<{ partnerName: string; myName?: string | null; header: 
           <div ref={end} className="h-64" aria-hidden="true" />
         </div>
       </div>
-      <div className={`fixed ${inSheet ? 'bottom-4' : 'bottom-24 md:bottom-28'} left-0 right-0 z-20 px-4 pt-8 bg-gradient-to-t from-belluh-25 via-belluh-25 to-transparent`}>
+      <div className={`fixed ${inSheet ? 'bottom-4' : 'bottom-24 md:bottom-28 lg:bottom-6 lg:left-[var(--sidebar-w,16rem)]'} left-0 right-0 z-20 px-4 pt-8 bg-gradient-to-t from-belluh-25 via-belluh-25 to-transparent`}>
         <div className="max-w-3xl mx-auto">
           <p className="text-center text-[10px] text-slate-400 mb-2">{f(T.bothSee, { me: myFirst, partner: partnerName })}</p>
           <div className="w-full rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-200 bg-white flex items-center p-2 pr-3 min-h-[60px] focus-within:border-belluh-200">

@@ -87,6 +87,12 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Added loading state to prevent flash
   const [opening, setOpening] = useState(false); // signed in, journal on its way
+  // Laptops: the side panel can fold down to its icons, and stays the way you left it
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => { try { return localStorage.getItem('belluh_sidebar') === 'collapsed'; } catch { return false; } });
+  useEffect(() => {
+    document.documentElement.style.setProperty('--sidebar-w', sidebarCollapsed ? '5rem' : '16rem');
+    try { localStorage.setItem('belluh_sidebar', sidebarCollapsed ? 'collapsed' : 'open'); } catch { /* storage off */ }
+  }, [sidebarCollapsed]);
   const [isOnboarding, setIsOnboarding] = useState(false);
   
   // View State for Unauthenticated Users ('landing' | 'auth' | 'about' | 'careers' | 'acquisition' | 'report')
@@ -1225,7 +1231,7 @@ const App: React.FC = () => {
   if (isOnboarding) return <>{inviteModal}{recoveryModal}<Onboarding onComplete={handleOnboardingComplete} /></>;
 
   return (
-    <div data-app className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in">
+    <div data-app className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in lg:pl-[var(--sidebar-w,16rem)] lg:transition-[padding] lg:duration-300">
       {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} partnerName={user.partnerName} avatars={hasPartner ? [user.avatar, calmAvatar(user.partnerAvatar) || avatarFor(user.partnerName || 'partner')] : [user.avatar]} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} onAskBelluh={askBelluh} onOpenBelluh={() => askBelluh('')} />}
       {currentTab === 'map' && <React.Suspense fallback={<div className="fixed inset-0 bg-[#fbe3f1]" />}><LoveMap entries={readableEntries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} /></React.Suspense>}
       {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => handleCompose(prompt)} initialSpace={hasPartner ? tabSpace : undefined} />}
@@ -1240,7 +1246,7 @@ const App: React.FC = () => {
       {inviteModal}
       {recoveryModal}
       {belluhReply && currentTab !== 'ai-coach' && !isComposeOpen && (
-        <div className="fixed bottom-28 left-0 right-0 px-6 z-[55] flex justify-center animate-slide-up">
+        <div className="fixed bottom-28 left-0 right-0 px-6 z-[55] flex justify-center animate-slide-up lg:bottom-8 lg:left-[var(--sidebar-w,16rem)]">
           <div className="max-w-[360px] w-full bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-900/10 border border-white p-4 flex gap-3">
             <div className="shrink-0 pt-0.5"><BelluhOrb size={24} /></div>
             <button className="text-left flex-1" onClick={() => { setBelluhReply(null); setCurrentTab('ai-coach'); }}>
@@ -1252,7 +1258,7 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
-      <TabBar currentTab={currentTab} usTab={hasPartner} badges={{ 'ai-coach': unreadNotes > 0 || newFromBelluh }} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); if (tab === 'ai-coach') { setTabSpace(unreadNotes > 0 || newFromBelluh ? 'me' : 'us'); setUnreadNotes(0); setNewFromBelluh(false); setBelluhReply(null); } setCurrentTab(tab); }} onCompose={() => handleCompose()} />
+      <TabBar currentTab={currentTab} usTab={hasPartner} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(c => !c)} badges={{ 'ai-coach': unreadNotes > 0 || newFromBelluh }} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); if (tab === 'ai-coach') { setTabSpace(unreadNotes > 0 || newFromBelluh ? 'me' : 'us'); setUnreadNotes(0); setNewFromBelluh(false); setBelluhReply(null); } setCurrentTab(tab); }} onCompose={() => handleCompose()} />
       {isComposeOpen && <div className="fixed inset-0 z-[60] bg-paper animate-slide-up"><button onClick={() => setIsComposeOpen(false)} aria-label={T.close} className="absolute top-5 right-4 w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 z-50 transition-colors"><X size={22} /></button><Journal onAddEntry={handleAddEntry} partnerName={user.partnerName || ''} onTriggerPremium={handleTriggerPremium} initialPrompt={composePrompt} userName={user.name} partnerHasEntry={partnerHasEntry} /></div>}
       
       {showIntro && <IntroGuide onClose={() => setShowIntro(false)} />}

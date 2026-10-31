@@ -325,7 +325,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                             {!isConstellation && avatars.length > 0 && (
                                 <span className="flex items-center mb-3" aria-hidden>
                                     {avatars.map((src, i) => (
-                                        <span key={i} className="belluh-pop belluh-wiggle block w-11 h-11 md:w-12 md:h-12 rounded-full ring-[3px] ring-white overflow-hidden bg-gradient-to-br from-[#fde7f3] to-[#dff0f6] shadow-[0_10px_22px_-10px_rgba(196,88,159,0.55)]" style={{ marginLeft: i ? -14 : 0, zIndex: 5 - i, ['--r' as any]: i ? '6deg' : '-6deg', animationDelay: `${i * 90}ms` }}>
+                                        <span key={i} className="belluh-pop belluh-wiggle block w-11 h-11 md:w-12 md:h-12 rounded-full ring-[3px] ring-white overflow-hidden bg-[#eef7fa] shadow-[0_10px_22px_-12px_rgba(15,23,42,0.35)]" style={{ marginLeft: i ? -14 : 0, zIndex: 5 - i, ['--r' as any]: i ? '6deg' : '-6deg', animationDelay: `${i * 90}ms` }}>
                                             <img src={src} alt="" className="w-full h-full object-cover" />
                                         </span>
                                     ))}
@@ -420,8 +420,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                          <div className="relative space-y-3">
                              {shown.map(m => (
                                  <div key={m.id} className="relative z-10 w-full animate-scale-in">
-                                     <div className="relative overflow-hidden bg-gradient-to-br from-[#e4f2f7] via-[#f3eefa] to-[#fde9f4] border border-white rounded-[1.75rem] p-5 flex items-start gap-4 shadow-[0_22px_44px_-26px_rgba(196,88,159,0.55)]">
-                                         <div className="pointer-events-none absolute -right-10 -top-12 w-40 h-40 rounded-full bg-white/50 blur-2xl" />
+                                     <div className="bg-[#f3f8fa] border border-[#dcebf0] rounded-[1.75rem] p-5 flex items-start gap-4 hover:border-[#c5dde5] transition-colors">
                                          <div className="shrink-0 pt-0.5"><BelluhOrb size={30} /></div>
                                          <div className="min-w-0 flex-1">
                                              <button type="button" onClick={() => onOpenBelluh?.()} className="w-full text-left">
@@ -495,7 +494,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
 
        <div className="relative min-h-[400px]">
           {/* Timeline Stem */}
-          <div className="absolute left-14 md:left-20 top-0 bottom-0 w-[3px] rounded-full bg-gradient-to-b from-[#f0addd]/70 via-[#cde9f2] to-transparent"></div>
+          <div className="absolute left-14 md:left-20 top-0 bottom-0 w-[3px] rounded-full bg-[#e8eef1]"></div>
 
           {/* Today: what needs you now, before the story */}
           {!isArchived && !isConstellation && (

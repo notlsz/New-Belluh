@@ -1,20 +1,22 @@
-// Belluh draws no line icons: like Airbnb's, the pictures are emojis. This module stands in for lucide-react (Vite
+// Belluh draws no line icons: like Airbnb's and Pampam's, the pictures are 3D emoji (see emoji3d.tsx). This module stands in for lucide-react (Vite
 // aliases the package here), so every icon in the app becomes an emoji with the same name and props. Controls that
 // are really punctuation (close, arrows, chevrons, plus, check) are plain text glyphs, so they take the text color.
 import React from 'react';
+import { emojiSrc } from './emoji3d';
 
 type Props = { size?: number | string; className?: string; strokeWidth?: number | string; fill?: string; fillOpacity?: number; color?: string; style?: React.CSSProperties; 'aria-label'?: string; 'aria-hidden'?: boolean | 'true' | 'false'; onClick?: React.MouseEventHandler };
 
 const T = '︎'; // text presentation: an arrow stays an arrow, not an emoji tile
 
 const make = (emoji: string, glyph = false) => {
+  const src = glyph ? null : emojiSrc(emoji);
   const C = React.forwardRef<HTMLSpanElement, Props>(({ size = 24, className = '', style, strokeWidth, fill, fillOpacity, color, ...rest }, ref) => {
     const px = typeof size === 'number' ? size : parseFloat(String(size)) || 24;
     return (
       <span ref={ref} role="img" aria-hidden={rest['aria-label'] ? undefined : true} {...rest}
         className={`belluh-emoji inline-flex items-center justify-center shrink-0 leading-none select-none ${glyph ? 'font-sans font-bold' : ''} ${className}`}
         style={{ width: px, height: px, fontSize: glyph ? px * 0.82 : px * 0.86, color, ...style }}>
-        {glyph ? emoji + T : emoji}
+        {src ? <img src={src} alt="" draggable={false} style={{ width: '100%', height: '100%' }} /> : glyph ? emoji + T : emoji}
       </span>
     );
   });
@@ -116,7 +118,7 @@ export const Twitter = make('🐦');
 export const Upload = make('📤');
 export const User = make('🙂');
 export const UserPlus = make('🫶');
-export const Users = make('👫');
+export const Users = make('🫂');
 export const UtensilsCrossed = make('🍽️');
 export const Wallet = make('👛');
 export const Wand2 = make('🪄');

@@ -9,6 +9,7 @@ import { Mic, Image as ImageIcon, X, Loader2, Lock, Users, ArrowRight, ArrowUp }
 import BelluhOrb from '../components/BelluhOrb';
 import { transcribeAudio } from '../services/geminiService';
 import { uploadPrivate } from '../services/media';
+import { Emoji } from '../lib/emoji3d';
 import { placesOn, setPlacesOn, herePlace, whereFor } from '../lib/places';
 import mapUi from '../i18n/ui/map';
 
@@ -266,7 +267,7 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
                             <button key={m} type="button" aria-label={J.moods[m.toLowerCase() as keyof typeof J.moods] ?? m} aria-pressed={selectedMood === m} title={J.moods[m.toLowerCase() as keyof typeof J.moods] ?? m}
                                 onClick={() => setSelectedMood(selectedMood === m ? undefined : m)}
                                 className={`justify-self-center w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-[1.3rem] transition-all ${selectedMood === m ? 'bg-white shadow-md ring-2 ring-[#f0addd] scale-110' : selectedMood ? 'opacity-40 hover:opacity-100' : 'hover:scale-110'}`}>
-                                {MOOD_EMOJIS[m]}
+                                <Emoji e={MOOD_EMOJIS[m]} size={26} />
                             </button>
                         ))}
                     </div>
@@ -276,7 +277,7 @@ const Journal: React.FC<JournalProps> = ({ onAddEntry, partnerName, onTriggerPre
                                 {isRecording ? <div className="w-2.5 h-2.5 bg-[#e58fc9] rounded-sm animate-pulse" /> : (isTranscribing ? <Loader2 size={18} className="animate-spin" /> : <Mic size={18} />)}
                             </button>
                             {!isRecording && !isBusy && <button onClick={handleImageClick} aria-label={c.addPhoto} className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all ${hasImage ? 'text-[#e58fc9]' : 'text-slate-500 hover:bg-slate-100'}`}><ImageIcon size={18} /></button>}
-                            {!isRecording && !isBusy && <button type="button" onClick={() => { const on = !pinOn; setPinOn(on); setPlacesOn(on); if (on) void herePlace(); }} aria-label={MU.pinHere} aria-pressed={pinOn} title={pinOn ? MU.pinned : MU.pinHere} className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all text-[19px] ${pinOn ? '' : 'grayscale opacity-40 hover:opacity-80'}`}>📍</button>}
+                            {!isRecording && !isBusy && <button type="button" onClick={() => { const on = !pinOn; setPinOn(on); setPlacesOn(on); if (on) void herePlace(); }} aria-label={MU.pinHere} aria-pressed={pinOn} title={pinOn ? MU.pinned : MU.pinHere} className={`w-11 h-11 shrink-0 rounded-full flex items-center justify-center transition-all ${pinOn ? '' : 'grayscale opacity-40 hover:opacity-80'}`}><Emoji e="📍" size={22} /></button>}
                             <div role="radiogroup" aria-label={c.whoSees} className="h-11 shrink-0 p-1 rounded-full bg-slate-100/80 flex items-center text-xs font-bold">
                                 <button type="button" role="radio" aria-checked={!isPrivate} onClick={() => setIsPrivate(false)} className={`h-9 px-3 rounded-full inline-flex items-center gap-1.5 transition-all ${!isPrivate ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}><Users size={13} /> {(partnerName || '').split(' ')[0] ? f(c.withPartner, { partner: (partnerName || '').split(' ')[0] }) : d.common.shared}</button>
                                 <button type="button" role="radio" aria-checked={isPrivate} onClick={() => setIsPrivate(true)} className={`h-9 px-3 rounded-full inline-flex items-center gap-1.5 transition-all ${isPrivate ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}><Lock size={13} /> {c.justMe}</button>
