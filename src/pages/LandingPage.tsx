@@ -12,7 +12,8 @@ import SiteFooter from '../components/SiteFooter';
 import SiteNav from '../components/SiteNav';
 import DragonflyMark from '../components/DragonflyMark';
 import { belluh } from '../lib/belluhPresence';
-import { useI18n } from '../i18n';
+import { useI18n, useUi } from '../i18n';
+import science from '../i18n/ui/science';
 
 
 // Priced from what a couple costs to run, not from what the market will bear: AI for both partners, texting, the odd
@@ -380,7 +381,7 @@ function useShapeTap() {
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShowLegal, onGoToAbout, onGoToCareers }) => {
-  const { d, f, country, textApps } = useI18n();
+  const { d, f, country, textApps, lang } = useI18n();
   const c = d.common, n_ = d.nav;
   const FAQ = d.faq.items.map(x => ({ q: x.q, a: f(x.a, { apps: textApps }) }));
   const PLANS = d.pricing.plans.map((p, i) => ({ ...p, featured: i === 1, team: i === 2, items: p.items.map(it => f(it, { apps: textApps })) }));
@@ -389,10 +390,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pastHero, setPastHero] = useState(false);
   const heroTap = useShapeTap();
+  const cjk = lang === 'ja' || lang === 'zh';
+  const heroLong = (d.hero.line1 + d.hero.line2).length > 34;
+  const SC = useUi(science);
+  // The hero plays once: Bella asks, "Plan it" is tapped, the plan appears. Reduced motion shows the end straight away.
+  const [heroStep, setHeroStep] = useState(0);
+  useEffect(() => {
+    let reduce = false;
+    try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { /* old browser */ }
+    if (reduce) { setHeroStep(2); return; }
+    const a = setTimeout(() => setHeroStep(1), 1900), b = setTimeout(() => setHeroStep(2), 2500);
+    return () => { clearTimeout(a); clearTimeout(b); };
+  }, []);
   const ctaTap = useShapeTap();
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
   useEffect(() => { const onR = () => setIsDesktop(window.innerWidth >= 768); window.addEventListener('resize', onR); return () => window.removeEventListener('resize', onR); }, []);
-  const heroSize = () => (typeof window === 'undefined' ? 200 : window.innerWidth >= 1024 ? Math.min(260, Math.round(window.innerHeight * 0.3)) : window.innerWidth >= 640 ? 230 : 112);
+  const heroSize = () => (typeof window === 'undefined' ? 150 : window.innerWidth >= 1024 ? Math.min(168, Math.round(window.innerHeight * 0.19)) : window.innerWidth >= 640 ? 150 : 104);
   const [heroOrb, setHeroOrb] = useState(heroSize);
   useEffect(() => {
     const onR = () => setHeroOrb(heroSize());
@@ -449,6 +462,37 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       { label: n_.why, action: () => { toggleMenu(); onGoToAbout(); } },
       { label: n_.careers, action: () => { toggleMenu(); onGoToCareers(); } }
   ];
+
+  // Bella, live: she notices, offers, and once you say yes the plan is in both calendars
+  const heroCard = (
+                 <div className="relative mt-5 mx-auto max-w-[440px] rounded-[1.75rem] bg-white/90 backdrop-blur-xl border border-white shadow-[0_30px_70px_-30px_rgba(15,23,42,0.35)] p-5 sm:p-6 text-left" style={{ animation: 'slideUp 0.8s 0.5s cubic-bezier(0.16,1,0.3,1) both' }}>
+                     <div className="flex items-center gap-2.5"><BelluhOrb size={24} /><span className="text-[13px] font-bold text-slate-900">Bella</span><span className="ml-auto text-[11px] font-medium text-slate-400">{c.now}</span></div>
+                     <p className="mt-3 font-serif text-[16px] sm:text-[17px] leading-snug text-slate-800">{f(d.hero.cardBella, { partner: c.partner })}</p>
+                     <div className="mt-4 flex items-center gap-2">
+                         <span className={`h-9 px-4 inline-flex items-center gap-1.5 rounded-full text-xs font-bold transition-all duration-300 ${heroStep >= 1 ? 'bg-[#3f7486] text-white scale-[0.97]' : 'bg-slate-900 text-white'}`}>{heroStep >= 1 && <Check size={13} />}{d.hero.planIt}</span>
+                         <span className={`h-9 px-3 inline-flex items-center text-xs font-semibold transition-opacity duration-300 ${heroStep >= 1 ? 'opacity-0' : 'text-slate-400'}`}>{d.hero.notNow}</span>
+                     </div>
+                     <div className={`grid transition-[grid-template-rows,opacity,margin] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${heroStep >= 2 ? 'grid-rows-[1fr] opacity-100 mt-4' : 'grid-rows-[0fr] opacity-0 mt-0'}`}>
+                         <div className="overflow-hidden">
+                             <div className="rounded-2xl bg-[#f3f8fa] border border-[#dcebf0] p-4">
+                                 <p className="text-[13px] font-semibold text-[#e58fc9]">{f(d.hero.cardPlanLabel, { partner: c.partner })}</p>
+                                 <p className="mt-1 font-serif text-[16px] text-slate-900">{d.hero.cardPlanTitle}</p>
+                                 <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[#3f7486]"><CalendarCheck size={14} /> {d.hero.cardPlanWhen}</p>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+  );
+  const heroScene = (
+             <div className="relative mx-auto w-full max-w-[440px]" style={{ animation: 'slideUp 1s 0.15s cubic-bezier(0.16,1,0.3,1) both' }}>
+                 <div className="absolute left-1/2 top-[18%] -translate-x-1/2 w-[130%] aspect-square rounded-full bg-[radial-gradient(circle,rgba(205,233,242,0.9)_0%,rgba(240,173,221,0.16)_42%,rgba(255,255,255,0)_68%)] blur-2xl animate-breathing pointer-events-none" />
+                 <div className="relative flex flex-col items-center">
+                     <BelluhOrb size={heroOrb} onTap={heroTap.tap} label={c.bellaTapLabel} />
+                     <p className="mt-2.5 h-5 text-xs font-semibold tracking-wide text-slate-400" aria-live="polite">{heroTap.label ? f(c.tapAgain, { shape: heroTap.label }) : c.tapBella}</p>
+                 </div>
+                 {heroCard}
+             </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] text-slate-900 font-sans selection:bg-[#f0addd] selection:text-white overflow-x-hidden relative">
@@ -520,69 +564,54 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
           </div>
       </div>
 
-      {/* Hero: what it is on the left, Belluh doing it on the right */}
-      <section className="relative z-10 min-h-[100svh] flex items-center pt-[68px] pb-5 md:pt-24 md:pb-12 px-6">
-         <div className="w-full max-w-7xl mx-auto md:px-6 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] items-center gap-6 sm:gap-12 lg:gap-6">
+      {/* Hero: the problem in one line, then Bella solving it before they ask: she speaks first, they say yes, it's ready */}
+      <section className="relative z-10 h-[100svh] min-h-[600px] lg:min-h-[700px] flex items-center pt-[72px] pb-16 px-6 overflow-hidden">
+         <div className="w-full max-w-7xl mx-auto md:px-6 grid grid-cols-1 lg:grid-cols-[1.08fr_1fr] items-center gap-12 lg:gap-10">
              <div className="text-center lg:text-left" style={{ animation: 'slideUp 0.9s cubic-bezier(0.16,1,0.3,1) both' }}>
-                 <h1 className="font-serif tracking-tight leading-[0.98] text-[2.85rem] sm:text-7xl xl:text-[5.6rem]">
-                     <span className="text-[#9bbecb]">{d.hero.line1}</span><br />
-                     <span className="text-[#f0addd] italic">{d.hero.line2}</span>
+                 {/* On phones the first screen gets Bella herself, the way Hinge leads with a face */}
+                 <div className="lg:hidden flex flex-col items-center mb-7">
+                     <BelluhOrb size={92} onTap={heroTap.tap} label={c.bellaTapLabel} />
+                     <p className="mt-2 h-4 text-[11px] font-semibold tracking-wide text-slate-400" aria-live="polite">{heroTap.label ? f(c.tapAgain, { shape: heroTap.label }) : c.tapBella}</p>
+                 </div>
+                 {/* Chinese and Japanese break between phrases and stand upright (italic is a fake slant there); long lines step down a size */}
+                 <h1 lang={lang} style={cjk ? { wordBreak: 'auto-phrase' as any } : undefined}
+                     className={`font-serif text-slate-900 ${cjk ? 'tracking-normal leading-[1.2] text-[2.2rem] sm:text-6xl xl:text-[4.1rem]' : `tracking-[-0.02em] leading-[1.02] [text-wrap:balance] ${heroLong ? 'text-[2.6rem] sm:text-6xl xl:text-[4.5rem]' : 'text-[2.9rem] sm:text-7xl xl:text-[5.4rem]'}`}`}>
+                     {d.hero.line1}<br />
+                     <span className={`${cjk ? '' : 'italic '}text-[#e58fc9]`}>
+                         {cjk ? d.hero.line2.split(/(?<=[、，])/).map((part, i) => <React.Fragment key={i}>{i > 0 && <br />}{part}</React.Fragment>) : d.hero.line2}
+                     </span>
                  </h1>
-                 <p className="mt-5 sm:mt-7 text-[17px] md:text-[1.35rem] text-slate-500 font-light leading-relaxed max-w-xl mx-auto lg:mx-0 min-h-[5.4rem] md:min-h-[4.4rem] [text-wrap:pretty]">
-                     <BelluhSpeech key={d.hero.sub} text={d.hero.sub} delay={500} />
-                 </p>
-                 <div className="mt-7 sm:mt-9 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-1.5 sm:gap-3">
+                 <p className="mt-6 sm:mt-7 text-[17px] md:text-xl text-slate-600 leading-relaxed max-w-[34rem] mx-auto lg:mx-0 [text-wrap:pretty]">{d.hero.sub}</p>
+                 <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-2 sm:gap-3">
                      <button onClick={() => { rememberCta('hero'); onGetStarted(); }} className="group w-full sm:w-auto h-14 px-8 rounded-full bg-slate-900 text-white text-[15px] font-bold inline-flex items-center justify-center gap-2 hover:bg-black transition-colors shadow-[0_18px_40px_-18px_rgba(15,23,42,0.6)]">
                          {c.startFree} <ArrowRight size={17} className="transition-transform group-hover:translate-x-0.5" />
                      </button>
-                     <button onClick={onLogin} className="w-full sm:w-auto h-11 sm:h-14 px-7 rounded-full text-[15px] font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/80 transition-colors">
+                     <button onClick={onLogin} className="w-full sm:w-auto h-12 sm:h-14 px-7 rounded-full text-[15px] font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/80 transition-colors">
                          {c.haveAccount}
                      </button>
                  </div>
-                 <div className="mt-5 sm:mt-9 flex flex-wrap justify-center lg:justify-start gap-x-5 sm:gap-x-7 gap-y-2 text-[13px] sm:text-sm text-slate-500">
-                     <span className="inline-flex items-center gap-2"><Heart size={15} className="text-[#f0addd]" /> {d.hero.chipFree}</span>
+                 <div className="mt-6 sm:mt-8 flex flex-wrap justify-center lg:justify-start gap-x-6 gap-y-2 text-[13px] sm:text-sm text-slate-500">
+                     <span className="inline-flex items-center gap-2"><Heart size={15} className="text-[#e58fc9]" /> {d.hero.chipFree}</span>
                      <span className="inline-flex items-center gap-2"><Lock size={15} className="text-[#9bbecb]" /> {d.hero.chipPrivate}</span>
                      <span className="inline-flex items-center gap-2"><MessageCircle size={15} className="text-[#9bbecb]" /> {d.hero.chipText}</span>
                  </div>
              </div>
 
-             {/* Belluh, live, with what it's doing for a couple floating around it */}
-             <div className="relative order-first lg:order-none mx-auto w-full max-w-[min(560px,72svh)]" style={{ animation: 'slideUp 1s 0.15s cubic-bezier(0.16,1,0.3,1) both' }}>
-                 <div className="relative h-[150px] sm:h-auto sm:aspect-square">
-                     <div className="absolute inset-[8%] rounded-full bg-[radial-gradient(circle,rgba(205,233,242,0.95)_0%,rgba(240,173,221,0.18)_45%,rgba(255,255,255,0)_70%)] blur-2xl animate-breathing pointer-events-none" />
-                     <div className="absolute inset-0 flex flex-col items-center justify-center sm:pb-[6%]">
-                         <BelluhOrb size={heroOrb} onTap={heroTap.tap} label={c.bellaTapLabel} />
-                         <p className="mt-2 sm:mt-3 h-5 text-xs font-semibold tracking-wide text-slate-400" aria-live="polite">{heroTap.label ? f(c.tapAgain, { shape: heroTap.label }) : c.tapBella}</p>
-                     </div>
-
-                     <div className="hidden sm:block absolute left-0 top-[6%] w-[60%] max-w-[300px]" style={{ animation: 'slideUp 0.8s 0.9s cubic-bezier(0.16,1,0.3,1) both' }}>
-                         <div className="animate-float rounded-3xl bg-white/90 backdrop-blur-xl border border-white shadow-[0_24px_60px_-24px_rgba(15,23,42,0.35)] p-4">
-                             <div className="flex items-center gap-2"><BelluhOrb size={22} /><span className="text-[13px] font-bold text-slate-900">Bella</span><span className="ml-auto text-[11px] text-slate-400">{c.now}</span></div>
-                             <p className="mt-2 font-serif text-[14px] sm:text-[15px] leading-snug text-slate-800">{f(d.hero.cardBella, { partner: c.partner })}</p>
-                             <div className="mt-3 flex items-center gap-2"><span className="h-8 px-3.5 inline-flex items-center rounded-full bg-slate-900 text-white text-xs font-bold">{d.hero.planIt}</span><span className="h-8 px-3 inline-flex items-center text-xs font-semibold text-slate-400">{d.hero.notNow}</span></div>
-                         </div>
-                     </div>
-
-                     <div className="hidden sm:block absolute right-0 -bottom-[2%] w-[56%] max-w-[290px]" style={{ animation: 'slideUp 0.8s 1.5s cubic-bezier(0.16,1,0.3,1) both' }}>
-                         <div className="animate-float rounded-3xl bg-white/90 backdrop-blur-xl border border-white shadow-[0_24px_60px_-24px_rgba(15,23,42,0.35)] p-4" style={{ animationDelay: '-3s' }}>
-                             <p className="text-[13px] font-semibold text-[#e58fc9]">{f(d.hero.cardPlanLabel, { partner: c.partner })}</p>
-                             <p className="mt-1.5 font-serif text-[15px] sm:text-base text-slate-900">{d.hero.cardPlanTitle}</p>
-                             <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[#3f7486]"><CalendarCheck size={14} /> {d.hero.cardPlanWhen}</p>
-                         </div>
-                     </div>
-
-                     <div className="hidden sm:block absolute right-[2%] top-[14%]" style={{ animation: 'slideUp 0.8s 2.1s cubic-bezier(0.16,1,0.3,1) both' }}>
-                         <div className="animate-float inline-flex items-center gap-2 h-10 px-4 rounded-full bg-white/90 backdrop-blur-xl border border-white shadow-[0_18px_40px_-20px_rgba(15,23,42,0.35)] text-[13px] font-semibold text-slate-700" style={{ animationDelay: '-1.5s' }}>
-                             <Lock size={14} className="text-[#e58fc9]" /> {d.hero.cardPrivate}
-                         </div>
-                     </div>
-                 </div>
-             </div>
+             <div className="hidden lg:block">{heroScene}</div>
          </div>
+         <button type="button" onClick={() => window.scrollTo({ top: window.innerHeight - 56, behavior: 'smooth' })} aria-label={d.nav.meet} className="absolute bottom-4 left-1/2 -translate-x-1/2 w-11 h-11 flex items-center justify-center text-slate-400 hover:text-slate-700 animate-bounce"><ChevronDown size={26} /></button>
       </section>
 
+      {/* On phones, Bella's scene comes right after the first screen */}
+      <div className="lg:hidden relative z-10 px-6 pt-4 pb-16">{heroCard}</div>
 
-
+      {/* The promise, in one line (what Hinge does best: a mission you can feel) */}
+      <section className="relative z-10 px-6 pt-10 pb-6 md:pt-16">
+          <div className="max-w-4xl mx-auto text-center">
+              <p className="font-serif text-[2rem] md:text-[3.2rem] leading-[1.1] tracking-tight text-slate-900 [text-wrap:balance]">{SC.missionLine}</p>
+              <p className="mt-5 text-[17px] md:text-xl text-slate-500 leading-relaxed max-w-2xl mx-auto [text-wrap:pretty]">{SC.missionSub}</p>
+          </div>
+      </section>
 
       <BellaAtWork />
 
@@ -671,6 +700,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
         </div>
       </section>
       
+      {/* Relationship science (Hinge's "love scientists", but with the actual studies, which Bella cites when asked) */}
+      <section id="science" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
+          <div className="max-w-6xl mx-auto">
+              <h2 className="font-serif text-[2.1rem] md:text-5xl leading-tight tracking-tight text-slate-900 text-center [text-wrap:balance]">{SC.title}</h2>
+              <p className="mt-5 text-[17px] md:text-xl text-slate-500 leading-relaxed max-w-2xl mx-auto text-center [text-wrap:pretty]">{SC.sub}</p>
+              <div className="mt-12 md:mt-16 grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+                  {SC.findings.map(x => (
+                      <div key={x.title} className="h-full flex flex-col rounded-[1.75rem] bg-white/80 border border-white shadow-[0_24px_60px_-34px_rgba(15,23,42,0.35)] p-7">
+                          <p className="font-serif text-[1.35rem] leading-snug text-slate-900">{x.title}</p>
+                          <p className="mt-3 text-[15px] text-slate-600 leading-relaxed flex-1">{x.body}</p>
+                          <p className="mt-6 text-xs font-semibold text-[#3f7486]">{x.source}</p>
+                      </div>
+                  ))}
+              </div>
+          </div>
+      </section>
+
       {/* Why Belluh exists, in Jimmy's words, next to the evening it started with */}
       <section id="why" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.25fr_1fr] items-center gap-16 lg:gap-20">
