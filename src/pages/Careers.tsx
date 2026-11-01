@@ -34,7 +34,11 @@ const PERKS = [
   { title: 'Fertility support', body: 'Support for every path to building a family.' },
 ];
 // Only numbers that are true go here
-const TEAM_NUMBERS = [{ big: '0', small: 'times “because I’m senior” has settled an argument here. The best idea wins, whoever has it.' }];
+const TEAM_NUMBERS = [
+  { big: '0', sup: '', small: 'arguments settled by “because I’m senior.” The best idea wins, whoever has it.' },
+  { big: '8', sup: '', small: 'languages Belluh already speaks to couples in, from Japanese to Portuguese.' },
+  { big: '350K', sup: '+*', small: 'players on a game one of our collaborators built at 12. Spikes, not résumés.' },
+];
 const FELLOW_NUMBERS = [{ big: '$50K', small: 'in grants for each fellow, at most' }, { big: '$200K', small: 'salary on the full-time path for top performers' }, { big: '3 wks', small: 'how early Belluh spots a couple drifting apart' }];
 const STEPS = [
   { e: '✉️', title: 'Tell us your spikes.', body: `Send an email to ${APPLY} with what makes you uniquely spiked. A few lines and a link or two is plenty.` },
@@ -125,11 +129,12 @@ const Careers: React.FC<CareersProps> = (p) => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-10 gap-y-12">
             {TEAM_NUMBERS.map((x, i) => (
               <Reveal key={x.small} delay={i * 90}>
-                <p className="font-serif text-[4.5rem] md:text-[5.5rem] leading-none tracking-[-0.03em] whitespace-nowrap">{x.big}</p>
+                <p className="font-serif text-[4.5rem] md:text-[clamp(3.5rem,5.6vw,5.5rem)] leading-none tracking-[-0.03em] whitespace-nowrap">{x.big}{x.sup && <sup className="ml-1 align-top text-[1rem] font-sans font-semibold" style={{ color: BLUE }}>{x.sup}</sup>}</p>
                 <p className="mt-4 text-[15px] leading-snug text-[#1a1a1a]/75 max-w-[240px]">{x.small}</p>
               </Reveal>
             ))}
           </div>
+          <p className="lg:col-start-2 -mt-4 text-[12px] leading-snug text-[#1a1a1a]/55 max-w-[260px]">* From our previously successful collaborators, below.</p>
         </Wrap>
       </section>
 

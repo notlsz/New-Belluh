@@ -18,7 +18,7 @@ const FONTS = 'https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,
 const TYPE = `.co main, .co footer { font-family: 'DM Sans', system-ui, sans-serif; }
 .co main .font-serif, .co footer .font-serif { font-family: 'Newsreader', Georgia, serif; font-optical-sizing: auto; }`;
 
-export const Shell: React.FC<PageProps & { current: SitePage; title: string; children: React.ReactNode; hiring?: { eyebrow: string; line: string; cta: string; to: string } }> = ({ current, title, children, onGetStarted, onLogin, onShowLegal, hiring }) => {
+export const Shell: React.FC<PageProps & { current?: SitePage; title: string; children: React.ReactNode; hiring?: { eyebrow: string; line: string; cta: string; to: string } }> = ({ current, title, children, onGetStarted, onLogin, onShowLegal, hiring }) => {
   useEffect(() => { const before = document.title; document.title = `${title} | Belluh`; return () => { document.title = before; }; }, [title]);
   useEffect(() => { if (document.getElementById('co-fonts')) return; const l = document.createElement('link'); l.id = 'co-fonts'; l.rel = 'stylesheet'; l.href = FONTS; document.head.appendChild(l); }, []);
   return (
@@ -35,11 +35,10 @@ export const Shell: React.FC<PageProps & { current: SitePage; title: string; chi
 const Footer: React.FC<{ hiring: { eyebrow: string; line: string; cta: string; to: string }; onShowLegal: PageProps['onShowLegal'] }> = ({ hiring, onShowLegal }) => {
   const { d, lang, setLang } = useI18n();
   const S = useUi(siteUi), n = d.nav, t = d.footer;
-  const home = (id: string) => () => { go('/'); setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }), 400); };
-  const cols: { title: string; links: [string, () => void][] }[] = [
-    { title: 'Index', links: [[S.mission, () => go('/mission')], [S.impact, () => go('/impact')], [S.research, () => go('/research')], [S.careers, () => go('/careers')], [S.why, () => go('/about')], ['Contact', () => { window.location.href = 'mailto:elizabeth@belluh.com'; }]] },
-    { title: t.product, links: [[n.meet, home('at-work')], [n.inside, home('inside')], [n.stories, home('stories')], [n.pricing, home('pricing')], [n.faq, home('faq')]] },
-    { title: t.legal, links: [[t.terms, () => onShowLegal('tos')], [t.privacyPolicy, () => onShowLegal('privacy')]] },
+    const cols: { title: string; links: [string, () => void][] }[] = [
+    { title: 'Index', links: [[S.mission, () => go('/mission')], [S.impact, () => go('/impact')], [S.research, () => go('/research')], [S.careers, () => go('/careers')], ['Newsroom', () => go('/newsroom')], ['Success stories', () => go('/stories')], [S.why, () => go('/about')], ['Contact', () => go('/contact')]] },
+    { title: 'Resources', links: [['Safety tips', () => go('/safety-tips')], [n.faq, () => go('/faq')], ['Trust & Safety', () => go('/trust-and-safety')], ['Press resources', () => go('/press')], ['How Belluh works', () => go('/how-belluh-works')], ['NFAQ', () => go('/nfaq')]] },
+    { title: t.legal, links: [['Security', () => go('/security')], [t.terms, () => onShowLegal('tos')], [t.privacyPolicy, () => onShowLegal('privacy')], ['Cookie policy', () => go('/cookies')], ['Consumer health data', () => go('/consumer-health-data')], ['Your privacy choices', () => go('/privacy-choices')], ['Accessibility', () => go('/accessibility')]] },
   ];
   return (
     <footer className="text-white" style={{ background: INK }}>
