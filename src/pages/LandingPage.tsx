@@ -17,6 +17,8 @@ import { useI18n, useUi } from '../i18n';
 import science from '../i18n/ui/science';
 import understood from '../i18n/ui/understood';
 import AskMoments, { PENDING_ASK } from '../components/AskMoments';
+import logoStrip from '../i18n/ui/logoStrip';
+import { ORGANIZATIONS } from '../constants';
 
 
 // Priced in line with Hinge+ ($29.99 a month), but for the couple, not each person: one Duo covers both partners.
@@ -356,6 +358,62 @@ function useShapeTap() {
   return { tap, label: n < 0 ? null : d.common.shapes[n] ?? '' };
 }
 
+// What Belluh connects to, shown in the second scrolling strip
+const INTEGRATIONS = [
+  { name: 'WhatsApp', domain: 'whatsapp.com', logo: '/logos/whatsapp.png' },
+  { name: 'Google Calendar', domain: 'calendar.google.com', logo: '/logos/google-calendar.png' },
+  { name: 'Apple iCloud', domain: 'icloud.com', logo: '/logos/icloud.png' },
+  { name: 'Outlook', domain: 'outlook.live.com', logo: '/logos/outlook.png' },
+  { name: 'Gemini', domain: 'gemini.google.com', logo: '/logos/gemini.png' },
+];
+
+// Universities get one row and companies the other
+const isUniversity = (domain: string) => /\.(edu|ac\.uk|ca)$/.test(domain);
+type Org = { name: string; domain: string; logo?: string };
+
+// Real logos only (grey until you hover), served from belluh.com so they always load. Never text.
+const LogoItem = ({ org }: { org: Org }) => {
+  const [failed, setFailed] = useState(false);
+  if (!org.logo) return null;
+  return (
+    <img src={org.logo} alt={org.name} title={org.name} decoding="async" draggable={false} onError={() => setFailed(true)}
+      className={`max-h-10 md:max-h-12 max-w-full w-auto h-auto object-contain grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-[filter,opacity] duration-500 select-none ${failed ? 'invisible' : ''}`} />
+  );
+};
+
+
+const MarqueeRow = ({ orgs, reverse = false, speed = 60 }: { orgs: Org[]; reverse?: boolean; speed?: number }) => {
+  // Two identical halves, so sliding by half loops without a seam; short lists are repeated to fill wide screens
+  const shown = orgs.filter(o => o.logo);
+  const half = Array.from({ length: Math.max(1, Math.ceil(12 / Math.max(1, shown.length))) }, () => shown).flat();
+  return (
+    <div className="relative flex overflow-hidden group" style={FADE_X}>
+      <div className={`flex items-center w-max ${reverse ? 'animate-marquee-reverse' : 'animate-marquee'} group-hover:[animation-play-state:paused]`} style={{ animationDuration: `${speed}s`, willChange: 'transform', backfaceVisibility: 'hidden' }}>
+        {[...half, ...half].map((org, i) => (
+          <div key={i} aria-hidden={i >= half.length ? true : undefined} className="shrink-0 flex items-center justify-center h-16 w-[132px] md:w-[184px] px-4">
+            <LogoItem org={org} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const LogoMarquee = ({ title, orgs, note }: { title: string; orgs: Org[]; note: string }) => {
+  const schools = orgs.filter(o => isUniversity(o.domain));
+  const others = orgs.filter(o => !isUniversity(o.domain));
+  return (
+    <section className="w-full py-20 md:py-24 relative z-20" aria-label={title}>
+      <p className="text-center mb-10 md:mb-12 px-4 text-[11px] md:text-xs font-bold text-slate-400 tracking-[0.25em] uppercase">{title}</p>
+      <div className="space-y-6 md:space-y-8">
+        {schools.length > 0 && <MarqueeRow orgs={schools} reverse speed={70} />}
+        {others.length > 0 && <MarqueeRow orgs={others} speed={schools.length ? 80 : 45} />}
+      </div>
+      <p className="text-center mt-10 px-4 text-[10px] text-slate-300 font-medium tracking-wide uppercase">{note}</p>
+    </section>
+  );
+};
+
 const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShowLegal, onGoToAbout, onGoToCareers }) => {
   const { d, f, country, textApps } = useI18n();
   const c = d.common, n_ = d.nav;
@@ -368,6 +426,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
   const heroTap = useShapeTap();
   const SC = useUi(science);
   const LU = useUi(understood);
+  const LS = useUi(logoStrip);
   const ctaTap = useShapeTap();
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
   useEffect(() => { const onR = () => setIsDesktop(window.innerWidth >= 768); window.addEventListener('resize', onR); return () => window.removeEventListener('resize', onR); }, []);
@@ -538,6 +597,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
           </div>
       </section>
 
+      {/* Where Belluh's couples are */}
+      <LogoMarquee title={LS.usedBy} orgs={ORGANIZATIONS} note={LS.usedByNote} />
+
       <BellaAtWork />
 
       <TextingDemo />
@@ -591,7 +653,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
           </div>
       </section>
 
-      {/* Marquee Section */}
+      {/* What Belluh works with */}
+      <LogoMarquee title={LS.worksWith} orgs={INTEGRATIONS} note={LS.worksWithNote} />
 
       {/* Infinite Marquee Section */}
       <section id="stories" className="relative z-10 py-20 md:py-28 overflow-hidden scroll-mt-20">
