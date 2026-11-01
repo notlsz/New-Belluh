@@ -1,0 +1,43 @@
+// The landing's "Bella in your messages" phone: a sample couple's thread with Bella, the way it looks in iMessage
+import type { UiTable } from '../ui';
+
+const en = {
+  eyebrow: 'Works over text', title: 'Text Bella like you’d text a friend.', sub: 'No new app to open. Bella lives in iMessage, WhatsApp or SMS, remembers what matters to you both, and gets it done.',
+  contact: 'Bella', status: 'iMessage', today: 'Today 6:41 PM', delivered: 'Delivered', input: 'iMessage',
+  thread: [
+    { me: true, text: 'Our anniversary is Friday and I have nothing planned 😭' },
+    { me: false, text: 'I’ve got you. You both still talk about the Thai place on 5th. Table for two, Friday at 7:30?' },
+    { me: true, text: 'yes!! can you book it' },
+    { me: false, text: 'Booked. It’s in both your calendars. Want peonies waiting at the table? Dan said they’re her favorite.' },
+    { me: true, text: 'you’re the best' },
+  ],
+  card: { label: 'Booked', title: 'Thai place on 5th', when: 'Fri, 7:30 PM, table for 2' },
+  note: 'Illustration with a sample couple.',
+};
+const t: UiTable<typeof en> = {
+  en,
+  ja: { eyebrow: 'メッセージで使える', title: '友だちに送るみたいに、Bellaにメッセージ。', sub: '新しいアプリはいりません。BellaはiMessageやLINE、SMSの中にいて、ふたりの大切なことを覚えて、ちゃんと形にします。', contact: 'Bella', status: 'iMessage', today: '今日 18:41', delivered: '配信済み', input: 'iMessage',
+    thread: [{ me: true, text: '金曜が記念日なのに、何も決めてない 😭' }, { me: false, text: 'まかせて。ふたりとも、5番街のタイ料理の話をよくしてるよね。金曜19時半に2名でどう？' }, { me: true, text: 'それ！予約できる？' }, { me: false, text: '予約したよ。ふたりのカレンダーにも入れておいた。テーブルにシャクヤクを用意しておく？ダンが彼女の好きな花だって。' }, { me: true, text: '最高すぎる' }],
+    card: { label: '予約済み', title: '5番街のタイ料理', when: '金曜 19:30、2名' }, note: 'サンプルのカップルによるイメージです。' },
+  fr: { eyebrow: 'Marche par SMS', title: 'Écris à Bella comme à une amie.', sub: 'Aucune nouvelle app à ouvrir. Bella vit dans iMessage, WhatsApp ou les SMS, se souvient de ce qui compte pour vous deux, et s’en occupe.', contact: 'Bella', status: 'iMessage', today: 'Aujourd’hui 18:41', delivered: 'Distribué', input: 'iMessage',
+    thread: [{ me: true, text: 'Notre anniversaire, c’est vendredi et je n’ai rien prévu 😭' }, { me: false, text: 'Je m’en occupe. Vous parlez encore tous les deux du thaï de la 5e. Une table pour deux, vendredi à 19h30 ?' }, { me: true, text: 'oui !! tu peux réserver ?' }, { me: false, text: 'C’est réservé, et c’est dans vos deux agendas. Des pivoines sur la table ? Dan dit que ce sont ses préférées.' }, { me: true, text: 't’es la meilleure' }],
+    card: { label: 'Réservé', title: 'Le thaï de la 5e', when: 'Ven. 19h30, table pour 2' }, note: 'Illustration avec un couple fictif.' },
+  it: { eyebrow: 'Funziona via messaggio', title: 'Scrivi a Bella come a un’amica.', sub: 'Nessuna nuova app da aprire. Bella vive in iMessage, WhatsApp o SMS, ricorda ciò che conta per voi due e se ne occupa.', contact: 'Bella', status: 'iMessage', today: 'Oggi 18:41', delivered: 'Consegnato', input: 'iMessage',
+    thread: [{ me: true, text: 'Venerdì è il nostro anniversario e non ho organizzato niente 😭' }, { me: false, text: 'Ci penso io. Parlate ancora tutti e due del thailandese sulla Quinta. Tavolo per due, venerdì alle 19:30?' }, { me: true, text: 'sì!! puoi prenotare?' }, { me: false, text: 'Prenotato, ed è nei calendari di tutti e due. Vuoi delle peonie al tavolo? Dan dice che sono le sue preferite.' }, { me: true, text: 'sei la migliore' }],
+    card: { label: 'Prenotato', title: 'Il thailandese sulla Quinta', when: 'Ven, 19:30, tavolo per 2' }, note: 'Illustrazione con una coppia di esempio.' },
+  pt: { eyebrow: 'Funciona por mensagem', title: 'Mande mensagem pra Bella como pra uma amiga.', sub: 'Nenhum app novo pra abrir. A Bella vive no iMessage, no WhatsApp ou no SMS, lembra o que importa pra vocês dois e resolve.', contact: 'Bella', status: 'iMessage', today: 'Hoje 18:41', delivered: 'Entregue', input: 'iMessage',
+    thread: [{ me: true, text: 'Nosso aniversário de namoro é sexta e eu não planejei nada 😭' }, { me: false, text: 'Deixa comigo. Vocês dois ainda falam daquele tailandês da Quinta. Mesa pra dois, sexta às 19h30?' }, { me: true, text: 'sim!! consegue reservar?' }, { me: false, text: 'Reservado, e já está na agenda dos dois. Quer peônias esperando na mesa? O Dan disse que são as favoritas dela.' }, { me: true, text: 'você é demais' }],
+    card: { label: 'Reservado', title: 'Tailandês da Quinta', when: 'Sex, 19h30, mesa pra 2' }, note: 'Ilustração com um casal de exemplo.' },
+  zh: { eyebrow: '发消息就能用', title: '像给朋友发消息一样，发给 Bella。', sub: '不用再打开新的 App。Bella 就在 iMessage、WhatsApp 或短信里，记得你们俩在乎的事，并且办妥。', contact: 'Bella', status: 'iMessage', today: '今天 18:41', delivered: '已送达', input: 'iMessage',
+    thread: [{ me: true, text: '周五是我们的纪念日，我什么都还没安排 😭' }, { me: false, text: '交给我。你们俩还常提起第五大道那家泰国菜。周五晚上 7:30，两位，怎么样？' }, { me: true, text: '好！！能帮我订吗' }, { me: false, text: '订好了，也加进了你们俩的日历。要不要在桌上放一束芍药？Dan 说那是她最喜欢的花。' }, { me: true, text: '你太棒了' }],
+    card: { label: '已预订', title: '第五大道泰国菜', when: '周五 19:30，两位' }, note: '示意图，情侣为虚构示例。' },
+  de: { eyebrow: 'Funktioniert per Nachricht', title: 'Schreib Bella wie einer Freundin.', sub: 'Keine neue App. Bella wohnt in iMessage, WhatsApp oder SMS, merkt sich, was euch beiden wichtig ist, und kümmert sich darum.', contact: 'Bella', status: 'iMessage', today: 'Heute 18:41', delivered: 'Zugestellt', input: 'iMessage',
+    thread: [{ me: true, text: 'Freitag ist unser Jahrestag und ich hab nichts geplant 😭' }, { me: false, text: 'Mach ich. Ihr redet beide immer noch vom Thai in der Fünften. Tisch für zwei, Freitag um 19:30?' }, { me: true, text: 'ja!! kannst du reservieren?' }, { me: false, text: 'Reserviert, und es steht in euren beiden Kalendern. Pfingstrosen auf dem Tisch? Dan sagt, das sind ihre Lieblingsblumen.' }, { me: true, text: 'du bist die beste' }],
+    card: { label: 'Reserviert', title: 'Thai in der Fünften', when: 'Fr, 19:30, Tisch für 2' }, note: 'Illustration mit einem Beispielpaar.' },
+  es: { eyebrow: 'Funciona por mensaje', title: 'Escríbele a Bella como a una amiga.', sub: 'Sin apps nuevas que abrir. Bella vive en iMessage, WhatsApp o SMS, recuerda lo que os importa a los dos y lo resuelve.', contact: 'Bella', status: 'iMessage', today: 'Hoy 18:41', delivered: 'Entregado', input: 'iMessage',
+    thread: [{ me: true, text: 'El viernes es nuestro aniversario y no tengo nada planeado 😭' }, { me: false, text: 'Yo me encargo. Seguís hablando del tailandés de la Quinta. ¿Mesa para dos, el viernes a las 19:30?' }, { me: true, text: '¡¡sí!! ¿puedes reservar?' }, { me: false, text: 'Reservado, y ya está en vuestros calendarios. ¿Peonías esperando en la mesa? Dan dice que son sus favoritas.' }, { me: true, text: 'eres la mejor' }],
+    card: { label: 'Reservado', title: 'Tailandés de la Quinta', when: 'Vie, 19:30, mesa para 2' }, note: 'Ilustración con una pareja de ejemplo.' },
+  'es-MX': { sub: 'Sin apps nuevas que abrir. Bella vive en iMessage, WhatsApp o SMS, recuerda lo que les importa a los dos y lo resuelve.' },
+  'pt-PT': { title: 'Envie mensagem à Bella como a uma amiga.', sub: 'Nenhuma app nova para abrir. A Bella vive no iMessage, no WhatsApp ou em SMS, lembra o que importa aos dois e trata do resto.' },
+};
+export default t;
