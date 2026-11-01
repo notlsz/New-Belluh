@@ -14,6 +14,8 @@ import studioUi from '../i18n/ui/studio';
 import { Emoji, emojiSrc } from '../lib/emoji3d';
 import DragBento, { type BentoItem } from './DragBento';
 import FreeCanvas, { FONT, INK } from './FreeCanvas';
+import FaceRecorder, { FaceSprite } from './FaceRecorder';
+import { ShapeSvg } from './FreeCanvas';
 import { Decoration, ProfileEffect, InkName, NamePad, DECOS, PFX, FX_CSS, isDeco } from './ProfileFx';
 import { uploadPrivate, resolveMedia, isPrivateRef } from '../services/media';
 import { loadLook, saveLook, musicEmbed, findBooks, findMovies, DEFAULT_LOOK, type Look, type Block, type BlockType, type Effect, type Pattern, type NameFont, type Layer } from '../services/look';
@@ -63,6 +65,7 @@ const ProfileStudio: React.FC<{ userId: string; name: string; avatar: string; su
   const [boardH, setBoardH] = useState(0);
   const [mini, setMini] = useState(false);
   const [pad, setPad] = useState(false);
+  const [rec, setRec] = useState(false);
   const [pen, setPen] = useState({ on: false, color: '#e5484d', w: 6 });
   useEffect(() => { const el = board.current; if (!el) return; const ro = new ResizeObserver(() => setBoardH(el.offsetHeight)); ro.observe(el); return () => ro.disconnect(); }, []);
   useEffect(() => { if (!editing) setPen(p => ({ ...p, on: false })); }, [editing]);
@@ -77,7 +80,7 @@ const ProfileStudio: React.FC<{ userId: string; name: string; avatar: string; su
 
   useEffect(() => { loadLook(userId).then(l => { setLook(l); setLoaded(true); }); }, [userId]);
   // Private photos and voice notes get short-lived links to show them
-  const refs = useMemo(() => [look.bannerPhoto, look.bgPhoto, ...look.layers.map(s => s.photo), ...look.blocks.map(b => b.data.ref)].filter(isPrivateRef), [look]);
+  const refs = useMemo(() => [look.bannerPhoto, look.bgPhoto, ...look.layers.map(s => s.photo), ...look.layers.map(s => s.face?.ref), look.face?.ref, ...look.blocks.map(b => b.data.ref)].filter(isPrivateRef), [look]);
   useEffect(() => { const missing = refs.filter(r => !links.has(r)); if (missing.length) resolveMedia(missing).then(m => setLinks(prev => new Map([...prev, ...m]))); }, [refs.join('|')]);
   const show = (u?: string | null) => (u ? (isPrivateRef(u) ? links.get(u) : u) : undefined);
 
@@ -199,19 +202,21 @@ const ProfileStudio: React.FC<{ userId: string; name: string; avatar: string; su
         @keyframes pfx-fall { from { translate: 0 -10px; } to { translate: 12px 200px; } } .pfx-fall { animation: pfx-fall 4s linear infinite; }
         @media (prefers-reduced-motion: reduce) { .pfx-orbit, .pfx-glow, .pfx-twinkle, .pfx-bob, .pfx-flicker, .pfx-fall { animation: none; } }
       `}</style>
-      <div ref={board} className="relative" style={{ paddingBottom: look.extra }}>
+      <div ref={board} className="relative rounded-[1.75rem]" style={{ paddingBottom: look.extra, minHeight: look.bare ? 1100 : undefined, background: look.bare && editing ? 'radial-gradient(#d7dee6 1.2px, transparent 1.4px) 0 0 / 22px 22px' : undefined }}>
         <button type="button" onClick={() => { setEditing(v => !v); if (editing) saveLook(userId, look); }}
           className="absolute top-3 right-3 z-40 h-10 px-4 rounded-full bg-white/90 backdrop-blur text-[14px] font-bold text-slate-900 inline-flex items-center gap-2 shadow-[0_8px_20px_-10px_rgba(15,23,42,0.5)]">
           {editing ? <>✓&#xFE0E; {T.done}</> : <><Emoji e="🎨" size={18} />{T.customize}</>}
         </button>
         {/* Banner */}
-        {!look.blank &&         <div className="relative h-40 md:h-56 rounded-[1.75rem] overflow-hidden" style={{ background: look.bannerColor }}>
+        {!look.blank && !look.bare && <div className="relative h-40 md:h-56 rounded-[1.75rem] overflow-hidden" style={{ background: look.bannerColor }}>
           {bannerPhoto ? <img src={bannerPhoto} alt="" className="absolute inset-0 w-full h-full object-cover" /> : <div className="absolute inset-0" style={{ background: PATTERN[look.bannerPattern] }} />}
         </div>}
         {/* Avatar with its effect, name, a line about you */}
-        <div className={`flex flex-col items-center relative z-10 ${look.blank ? 'pt-16' : '-mt-14 md:-mt-16'}`}>
+        {!look.bare && <div className={`flex flex-col items-center relative z-10 ${look.blank ? 'pt-16' : '-mt-14 md:-mt-16'}`}>
           <div className="relative w-28 h-28 md:w-32 md:h-32">
-            <button type="button" onClick={onEditProfile} aria-label={editLabel} className="relative block w-full h-full rounded-full ring-[5px] ring-white overflow-hidden bg-[#eef7fa] shadow-[0_18px_40px_-18px_rgba(15,23,42,0.45)]"><img src={avatar} alt={name} className="w-full h-full object-cover" /></button>
+            {look.facePfp && look.face && show(look.face.ref)
+              ? <button type="button" onClick={() => editing ? setRec(true) : onEditProfile()} aria-label={editLabel} className="relative block w-full h-full"><FaceSprite src={show(look.face.ref)!} face={look.face} size={160} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[56%]" style={{ filter: 'drop-shadow(4px 0 0 #fff) drop-shadow(-4px 0 0 #fff) drop-shadow(0 4px 0 #fff) drop-shadow(0 -4px 0 #fff) drop-shadow(0 14px 18px rgba(15,23,42,.28))' }} /></button>
+              : <button type="button" onClick={onEditProfile} aria-label={editLabel} className="relative block w-full h-full rounded-full ring-[5px] ring-white overflow-hidden bg-[#eef7fa] shadow-[0_18px_40px_-18px_rgba(15,23,42,0.45)]"><img src={avatar} alt={name} className="w-full h-full object-cover" /></button>}
             <AvatarFx effect={look.effect} accent={look.accent} />
           </div>
           {look.nameInk?.strokes.length
@@ -221,18 +226,21 @@ const ProfileStudio: React.FC<{ userId: string; name: string; avatar: string; su
             ? <input value={look.bio} onChange={e => set({ bio: e.target.value.slice(0, 140) })} placeholder={T.bioPh} aria-label={T.bioPh} className="mt-3 w-full max-w-md h-11 rounded-full bg-white/85 px-4 text-center text-[15px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9bbecb]" />
             : look.bio && <p className="mt-2 max-w-md text-center text-[16px] leading-relaxed" style={{ color: look.nameColor, opacity: 0.75 }}>{look.bio}</p>}
           <p className="mt-2 text-sm font-semibold" style={{ color: look.accent }}>{subtitle}</p>
-        </div>
+        </div>}
 
       {/* Blocks, arranged like iPhone apps */}
-      <div className="mt-8 px-1 md:px-2">
+      {!look.bare && <div className="mt-8 px-1 md:px-2">
         {items.length > 0
           ? <DragBento items={items} editing={editing} resizeLabel={T.customize} onMove={(d, o) => setLook(l => { const ids = l.blocks.map(b => b.id); const from = ids.indexOf(d), to = ids.indexOf(o); const next = [...l.blocks]; const [x] = next.splice(from, 1); next.splice(to, 0, x); return { ...l, blocks: next }; })} onSize={(id, w, h) => setBlock(id, { w, h })} />
           : !look.blank && <button type="button" onClick={() => { setEditing(true); setTab('add'); }} className="w-full rounded-[1.75rem] border-2 border-dashed border-slate-200 bg-white/60 p-6 text-center text-[15px] text-slate-500 hover:border-slate-300">{T.empty}</button>}
-      </div>
-        <FreeCanvas layers={look.layers} editing={editing} height={boardH} pen={pen} onChange={setLayers} show={u => show(u)} S={T.cv} />
+      </div>}
+        <FreeCanvas layers={look.layers} editing={editing} height={boardH} pen={pen} onChange={setLayers} show={u => show(u)} S={{ ...T.cv, dup: T.face.dup, opacity: T.face.opacity }} />
       </div>
 
       {/* The studio: one panel, everything live */}
+      {rec && <FaceRecorder S={T.face} onClose={() => setRec(false)} resolve={u => show(u)}
+        upload={async (b, ext, type) => { const ref = await uploadPrivate('photos', b, ext, type); if (ref && isPrivateRef(ref)) { const m = await resolveMedia([ref]); setLinks(prev => new Map([...prev, ...m])); } return ref; }}
+        onDone={(face, as) => { setRec(false); if (as === 'pfp') set({ face, facePfp: true }); else addLayer({ k: 'face', face, s: 1, r: 0 }); }} />}
       {pad && <NamePad color={look.nameColor} initial={look.nameInk} S={T.fx} onClose={() => setPad(false)} onSave={ink => { set({ nameInk: ink }); setPad(false); }} />}
       {/* Drawing takes the whole screen: just the pen, its colors and sizes */}
       {editing && pen.on && (
@@ -252,6 +260,12 @@ const ProfileStudio: React.FC<{ userId: string; name: string; avatar: string; su
           </div>
           {!mini && <div className="flex-1 overflow-y-auto px-4 pb-4">
             {tab === 'look' && <>
+              <H>{T.face.pfp}</H>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => set({ facePfp: false })} className={`h-14 rounded-2xl inline-flex items-center justify-center gap-2 text-[15px] font-bold ${!look.facePfp ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-800'}`}><Emoji e="🖼️" size={22} />{T.face.photo}</button>
+                <button type="button" onClick={() => look.face ? set({ facePfp: true }) : setRec(true)} className={`h-14 rounded-2xl inline-flex items-center justify-center gap-2 text-[15px] font-bold ${look.facePfp ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-800'}`}><Emoji e="🤪" size={22} />{T.face.yourFace}</button>
+              </div>
+              <button type="button" onClick={() => setRec(true)} className="mt-2 w-full h-11 rounded-2xl bg-slate-100 text-[14px] font-bold text-slate-700 inline-flex items-center justify-center gap-2"><Emoji e="📸" size={18} />{T.face.record}</button>
               <H>{T.background}</H><Swatches value={look.bg} onPick={c => set({ bg: c, bgPhoto: null })} />
               <div className="mt-2 flex gap-2"><button type="button" onClick={() => pick(async f => { const ref = await upload(f); if (ref) set({ bgPhoto: ref }); })} className="h-9 px-3.5 rounded-full bg-slate-100 text-[13px] font-bold text-slate-700 inline-flex items-center gap-1.5"><Emoji e="🖼️" size={16} />{T.upload}</button>{look.bgPhoto && <button type="button" onClick={() => set({ bgPhoto: null })} className="h-9 px-3 rounded-full text-[13px] font-semibold text-slate-500">{T.remove}</button>}</div>
               <H>{T.accent}</H><Swatches value={look.accent} onPick={c => set({ accent: c })} list={INK} />
@@ -279,6 +293,12 @@ const ProfileStudio: React.FC<{ userId: string; name: string; avatar: string; su
               {memoryPhotos.length > 0 && <><H>{T.fromMemories}</H><div className="grid grid-cols-4 gap-2">{memoryPhotos.slice(0, 12).map(p => <button key={p} type="button" onClick={() => addLayer({ k: 'photo', photo: p })} className="aspect-square rounded-xl overflow-hidden border-2 border-white shadow-sm"><img src={show(p) ?? p} alt="" className="w-full h-full object-cover" /></button>)}</div></>}
             </>}
             {tab === 'canvas' && <>
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                <button type="button" onClick={() => setRec(true)} className="h-14 rounded-2xl bg-slate-900 text-white flex items-center gap-2.5 px-3.5 text-[14px] font-bold"><Emoji e="🤪" size={24} />{T.face.record}</button>
+                <button type="button" onClick={() => pick(async f => { if (f.size > 40e6) return; const ext = (f.name.split('.').pop() || 'mp4').toLowerCase(); const ref = await uploadPrivate('photos', f, ext, f.type || 'video/mp4'); if (ref) { if (isPrivateRef(ref)) { const m = await resolveMedia([ref]); setLinks(prev => new Map([...prev, ...m])); } addLayer({ k: 'video', photo: ref }); } }, 'video/*')} className="h-14 rounded-2xl bg-slate-100 flex items-center gap-2.5 px-3.5 text-[14px] font-bold text-slate-800"><Emoji e="🎬" size={24} />{T.face.video}</button>
+              </div>
+              <H>{T.face.shapes}</H>
+              <div className="grid grid-cols-6 gap-1.5 mb-1">{(['rect', 'ellipse', 'heart', 'star', 'line', 'arrow'] as const).map(sh => <button key={sh} type="button" onClick={() => addLayer({ k: 'shape', shape: sh, color: look.accent, sw: 120, sh: sh === 'line' || sh === 'arrow' ? 40 : 120 })} aria-label={sh} className="aspect-square rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center"><ShapeSvg shape={sh} fill="#0f172a" w={28} h={28} /></button>)}</div>
               <p className="pt-1 text-[13px] text-slate-500">{T.cv.hint}</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => setPen(p => ({ ...p, on: !p.on }))} className={`h-14 rounded-2xl flex items-center gap-2.5 px-3.5 text-[14px] font-bold ${pen.on ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-800'}`}><Emoji e="🖍️" size={24} />{pen.on ? T.cv.stopDraw : T.cv.draw}</button>
@@ -293,6 +313,8 @@ const ProfileStudio: React.FC<{ userId: string; name: string; avatar: string; su
               <div className="mt-4 flex flex-wrap gap-2">
                 {look.layers.some(l => l.k === 'draw') && <button type="button" onClick={() => setLayers(ls => ls.filter(l => l.k !== 'draw'))} className="h-9 px-3.5 rounded-full bg-slate-100 text-[13px] font-bold text-slate-700">{T.cv.clearDraw}</button>}
                 {look.extra > 0 && <button type="button" onClick={() => set({ extra: Math.max(0, look.extra - 320) })} className="h-9 px-3.5 rounded-full bg-slate-100 text-[13px] font-bold text-slate-700">−</button>}
+                <button type="button" onClick={() => { if (window.confirm(T.face.bareSure)) set({ bare: true, blank: true, bannerPhoto: null, bg: '#ffffff', bgPhoto: null, effect: 'none', pfx: 'none', blocks: [], layers: [], extra: 0 }); }} className="h-9 px-3.5 rounded-full bg-slate-900 text-white text-[13px] font-bold inline-flex items-center gap-1.5"><Emoji e="🤍" size={16} />{T.face.bare}</button>
+                {look.bare && <button type="button" onClick={() => set({ bare: false })} className="h-9 px-3.5 rounded-full bg-slate-100 text-[13px] font-bold text-slate-700">{T.face.pfp} +</button>}
                 <button type="button" onClick={blank} className="h-9 px-3.5 rounded-full border-2 border-dashed border-slate-300 text-[13px] font-bold text-slate-700 inline-flex items-center gap-1.5"><Emoji e="🤍" size={16} />{T.cv.blank}</button>
                 {look.blank && <button type="button" onClick={() => set({ blank: false, bannerPattern: 'dots', bannerColor: '#cde9f2' })} className="h-9 px-3.5 rounded-full bg-slate-100 text-[13px] font-bold text-slate-700">{T.tabs.banner} +</button>}
               </div>

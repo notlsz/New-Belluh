@@ -21,10 +21,12 @@ const SiteNav: React.FC<{
   const { d } = useI18n();
   const T = useUi(siteUi);
   const [hidden, setHidden] = useState(false);
+  const [atTop, setAtTop] = useState(true);
+  const over = current === 'home' && atTop;
   const [open, setOpen] = useState(false);
   const last = useRef(0);
   useEffect(() => {
-    const on = () => { const y = window.scrollY; setHidden(y > 120 && y > last.current + 2 ? true : y < last.current - 2 || y < 120 ? false : hidden); last.current = y; };
+    const on = () => { const y = window.scrollY; setAtTop(y < 40); setHidden(y > 120 && y > last.current + 2 ? true : y < last.current - 2 || y < 120 ? false : hidden); last.current = y; };
     window.addEventListener('scroll', on, { passive: true });
     return () => window.removeEventListener('scroll', on);
   }, [hidden]);
@@ -36,24 +38,24 @@ const SiteNav: React.FC<{
   const all = [...left, page('careers', T.careers, '/careers'), page('why', T.why, '/about')];
   const Link = ({ p }: { p: { id: SitePage; label: string; path: string } }) => (
     <a href={p.path} onClick={e => { e.preventDefault(); go(p.path); }} aria-current={current === p.id ? 'page' : undefined}
-      className="relative h-10 px-3 inline-flex items-center text-[14px] text-[#1a1a1a] hover:opacity-60 transition-opacity">
+      className="relative h-10 px-3 inline-flex items-center text-[14px] hover:opacity-60 transition-opacity">
       {p.label}
-      {current === p.id && <span aria-hidden className="absolute left-1/2 bottom-1 -translate-x-1/2 w-[5px] h-[5px] rounded-full bg-[#1a1a1a]" />}
+      {current === p.id && <span aria-hidden className="absolute left-1/2 bottom-1 -translate-x-1/2 w-[5px] h-[5px] rounded-full bg-current" />}
     </a>
   );
   const Mark = () => (
     <a href="/" onClick={e => { e.preventDefault(); if (current === 'home') onHome(); else go('/'); }} className="flex items-center gap-1.5" aria-label="Belluh home">
       <DragonflyMark size={28} />
-      <span className="font-serif text-[24px] font-bold tracking-tight text-[#1a1a1a]">Belluh</span>
+      <span className="font-serif text-[24px] font-bold tracking-tight">Belluh</span>
     </a>
   );
 
   return (
     <>
-      <header className="fixed top-0 inset-x-0 z-50 h-[72px] bg-[#fffefd] transition-transform duration-300 ease-out" style={{ transform: hidden && !open ? 'translateY(-100%)' : 'none' }}>
+      <header className={`fixed top-0 inset-x-0 z-50 h-[72px] transition-[transform,background-color,color] duration-300 ease-out ${over ? 'bg-transparent text-white' : 'bg-[#fffefd] text-[#1a1a1a]'}`} style={{ transform: hidden && !open ? 'translateY(-100%)' : 'none' }}>
         <div className="relative h-full max-w-[1440px] mx-auto px-5 md:px-10 grid grid-cols-[1fr_auto_1fr] items-center">
           <div className="flex items-center">
-            <button onClick={() => setOpen(true)} aria-label={T.menu} aria-expanded={open} className="md:hidden -ml-2 w-11 h-11 inline-flex items-center justify-center text-[#1a1a1a]">
+            <button onClick={() => setOpen(true)} aria-label={T.menu} aria-expanded={open} className="md:hidden -ml-2 w-11 h-11 inline-flex items-center justify-center">
               <svg width="26" height="12" viewBox="0 0 26 12" fill="none" aria-hidden="true"><path d="M1 1h24M1 11h24" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
             </button>
             <nav className="hidden md:flex items-center -ml-3" aria-label="Belluh">{left.map(p => <Link key={p.id} p={p} />)}</nav>
@@ -61,8 +63,8 @@ const SiteNav: React.FC<{
           <Mark />
           <div className="flex items-center justify-end gap-1">
             <span className="hidden md:inline-flex"><Link p={all[3]} /></span>
-            <button onClick={onLogin} className="hidden md:inline-flex h-10 px-3 items-center text-[14px] text-[#1a1a1a] hover:opacity-60 transition-opacity">{d.common.logIn}</button>
-            <button onClick={onGetStarted} className="h-10 px-4 md:ml-2 inline-flex items-center whitespace-nowrap rounded-full bg-[#1a1a1a] text-white text-[14px] font-semibold hover:bg-black transition-colors">{d.common.startFree}</button>
+            <button onClick={onLogin} className="hidden md:inline-flex h-10 px-3 items-center text-[14px] hover:opacity-60 transition-opacity">{d.common.logIn}</button>
+            <button onClick={onGetStarted} className={`h-10 px-4 md:ml-2 inline-flex items-center whitespace-nowrap rounded-full text-[14px] font-semibold transition-colors ${over ? 'bg-white text-[#1a1a1a] hover:bg-white/85' : 'bg-[#1a1a1a] text-white hover:bg-black'}`}>{d.common.startFree}</button>
           </div>
         </div>
       </header>

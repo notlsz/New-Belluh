@@ -3,7 +3,8 @@
 // resize and turn; double-tap to remove. x is % of the width so it holds across phone and laptop, y is px from the top.
 import React, { useEffect, useRef, useState } from 'react';
 import { Emoji } from '../lib/emoji3d';
-import type { Layer, NameFont } from '../services/look';
+import type { Layer, NameFont, Shape } from '../services/look';
+import { FaceSprite } from './FaceRecorder';
 
 export const FONT: Record<NameFont, React.CSSProperties> = {
   serif: { fontFamily: 'Merriweather, Georgia, serif' },
@@ -16,7 +17,16 @@ const OUTLINE = 'drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shado
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const path = (pts: [number, number][]) => pts.length ? `M${pts.map(p => p.join(' ')).join(' L')}` : '';
 
-export interface Strings { typeHere: string; bigger: string; smaller: string; turnL: string; turnR: string; front: string; del: string; pill: string }
+export interface Strings { typeHere: string; bigger: string; smaller: string; turnL: string; turnR: string; front: string; del: string; pill: string; dup?: string; opacity?: string; fill?: string }
+
+const SHAPE_PATH: Record<Shape, string> = {
+  rect: 'M4 4h112v112H4z', ellipse: 'M60 4a56 56 0 1 0 0.01 0z', line: 'M6 60h108', arrow: 'M6 60h100M84 38l24 22-24 22',
+  heart: 'M60 108S10 78 10 42a25 25 0 0 1 50-6 25 25 0 0 1 50 6c0 36-50 66-50 66z', star: 'M60 6l15 34 37 3-28 24 9 36-33-20-33 20 9-36L8 43l37-3z',
+};
+export const ShapeSvg: React.FC<{ shape: Shape; fill: string; w?: number; h?: number }> = ({ shape, fill, w = 120, h = 120 }) => {
+  const stroke = shape === 'line' || shape === 'arrow';
+  return <svg viewBox="0 0 120 120" width={w} height={h} preserveAspectRatio="none" className="block overflow-visible"><path d={SHAPE_PATH[shape]} fill={stroke ? 'none' : fill} stroke={stroke ? fill : 'none'} strokeWidth={stroke ? 8 : 0} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" /></svg>;
+};
 
 const FreeCanvas: React.FC<{
   layers: Layer[]; editing: boolean; height: number; pen: { on: boolean; color: string; w: number };
@@ -97,13 +107,16 @@ const FreeCanvas: React.FC<{
           <path key={d.id} d={path(d.pts)} fill="none" stroke={d.c} strokeWidth={d.w} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />)}
       </svg>
       {layers.filter(l => l.k !== 'draw' && (editing || l.k !== 'text' || l.text?.trim())).sort((a, b) => a.z - b.z).map(l => {
-        const ph = l.k === 'photo' ? show(l.photo) : undefined;
+        const ph = l.k === 'photo' || l.k === 'video' ? show(l.photo) : undefined;
         return (
           <div key={l.id} data-layer onPointerDown={down(l)} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onWheel={wheel(l)}
             className={`absolute ${editing && !pen.on ? 'pointer-events-auto cursor-grab' : ''} ${sel === l.id ? 'outline-dashed outline-2 outline-offset-4 outline-slate-900/40 rounded-xl' : ''}`}
-            style={{ left: `${l.x}%`, top: l.y, zIndex: l.z, transform: `translate(-50%, -50%) rotate(${l.r}deg) scale(${l.s})`, touchAction: editing ? 'none' : undefined }}>
+            style={{ left: `${l.x}%`, top: l.y, zIndex: l.z, opacity: l.op ?? 1, transform: `translate(-50%, -50%) rotate(${l.r}deg) scale(${l.s})`, touchAction: editing ? 'none' : undefined }}>
             {l.k === 'emoji' && <span className="block" style={{ filter: OUTLINE }}><Emoji e={l.e!} size={64} /></span>}
             {l.k === 'photo' && (ph ? <img src={ph} alt="" draggable={false} className="w-28 h-28 object-cover rounded-2xl border-[5px] border-white shadow-[0_12px_24px_-10px_rgba(15,23,42,0.55)]" /> : <span className="block w-28 h-28 rounded-2xl bg-white/70" />)}
+            {l.k === 'face' && l.face && (show(l.face.ref) ? <FaceSprite src={show(l.face.ref)!} face={l.face} size={150} style={{ filter: OUTLINE }} /> : <span className="block w-[150px] h-[150px]" />)}
+            {l.k === 'shape' && <ShapeSvg shape={l.shape ?? 'rect'} fill={l.color ?? '#9bbecb'} w={l.sw ?? 120} h={l.sh ?? 120} />}
+            {l.k === 'video' && (ph ? <video src={ph} autoPlay muted loop playsInline className="w-56 rounded-2xl border-[5px] border-white shadow-[0_12px_24px_-10px_rgba(15,23,42,0.55)] pointer-events-none" /> : <span className="block w-56 h-36 rounded-2xl bg-white/70" />)}
             {l.k === 'text' && <span className={`block whitespace-pre text-[28px] leading-tight ${l.bg ? 'px-4 py-1.5 rounded-2xl bg-white shadow-[0_10px_20px_-10px_rgba(15,23,42,0.45)]' : ''}`} style={{ ...FONT[l.font ?? 'script'], color: l.color ?? '#0f172a', textShadow: l.bg ? undefined : '0 2px 10px rgba(255,255,255,.6)' }}>{l.text || S.typeHere}</span>}
           </div>
         );
@@ -120,12 +133,15 @@ const FreeCanvas: React.FC<{
               <div className="flex flex-wrap gap-1">{INK.map(c => <button key={c} type="button" onClick={() => patch(s.id, { color: c })} aria-label={c} className={`w-6 h-6 rounded-full border ${s.color === c ? 'ring-2 ring-slate-900 ring-offset-1' : 'border-slate-200'}`} style={{ background: c }} />)}</div>
             </div>
           )}
+          {s.k === 'shape' && <div className="p-1 flex flex-wrap gap-1 max-w-[260px]">{INK.map(c => <button key={c} type="button" onClick={() => patch(s.id, { color: c })} aria-label={c} className={`w-6 h-6 rounded-full border ${s.color === c ? 'ring-2 ring-slate-900 ring-offset-1' : 'border-slate-200'}`} style={{ background: c }} />)}</div>}
+          <label className="px-2 pt-1 flex items-center gap-2 text-[12px] font-semibold text-slate-500">{S.opacity}<input type="range" min={0.15} max={1} step={0.05} value={s.op ?? 1} onChange={e => patch(s.id, { op: +e.target.value })} className="flex-1 accent-slate-900" /></label>
           <div className="flex items-center justify-center">
             <button type="button" className={btn} aria-label={S.smaller} title={S.smaller} onClick={() => patch(s.id, { s: clamp(s.s / 1.15, 0.3, 6) })}>−</button>
             <button type="button" className={btn} aria-label={S.bigger} title={S.bigger} onClick={() => patch(s.id, { s: clamp(s.s * 1.15, 0.3, 6) })}>+</button>
             <button type="button" className={btn} aria-label={S.turnL} title={S.turnL} onClick={() => patch(s.id, { r: s.r - 15 })}>↺</button>
             <button type="button" className={btn} aria-label={S.turnR} title={S.turnR} onClick={() => patch(s.id, { r: s.r + 15 })}>↻</button>
             <button type="button" className={btn} aria-label={S.front} title={S.front} onClick={() => patch(s.id, { z: top() })}>⇡</button>
+            <button type="button" className={btn} aria-label={S.dup} title={S.dup} onClick={() => { const id = Math.random().toString(36).slice(2, 10); onChange(ls => [...ls, { ...s, id, x: clamp(s.x + 4, 0, 100), y: s.y + 24, z: top() }]); setSel(id); }}>⧉</button>
             <button type="button" className={`${btn} text-[#e5484d]`} aria-label={S.del} title={S.del} onClick={() => { onChange(ls => ls.filter(x => x.id !== s.id)); setSel(null); }}>✕&#xFE0E;</button>
           </div>
         </div>

@@ -12,8 +12,11 @@ export interface NameInk { strokes: [number, number][][]; color: string; w: numb
 export type BlockType = 'music' | 'movie' | 'book' | 'photo' | 'voice' | 'text' | 'link';
 export interface Sticker { id: string; e?: string; photo?: string; x: number; y: number; r: number; s: number }
 /** Anything placed freely on the profile, amo-style: x is % of the width, y is px from the top of the profile */
-export type LayerKind = 'emoji' | 'photo' | 'text' | 'draw';
-export interface Layer { id: string; k: LayerKind; x: number; y: number; r: number; s: number; z: number; e?: string; photo?: string; text?: string; color?: string; font?: NameFont; bg?: boolean; pts?: [number, number][]; w?: number }
+export type LayerKind = 'emoji' | 'photo' | 'text' | 'draw' | 'face' | 'shape' | 'video';
+export type Shape = 'rect' | 'ellipse' | 'line' | 'arrow' | 'heart' | 'star';
+/** A recorded face: a sprite sheet of transparent frames, played forward then back */
+export interface Face { ref: string; n: number; cols: number }
+export interface Layer { id: string; k: LayerKind; x: number; y: number; r: number; s: number; z: number; e?: string; photo?: string; text?: string; color?: string; font?: NameFont; bg?: boolean; pts?: [number, number][]; w?: number; face?: Face; shape?: Shape; sw?: number; sh?: number; op?: number }
 export interface Block { id: string; type: BlockType; w: number; h: number; color: string; data: Record<string, string> }
 export interface Look {
   bannerColor: string; bannerPattern: Pattern; bannerPhoto?: string | null;
@@ -21,6 +24,7 @@ export interface Look {
   effect: Effect; bio: string; stickers: Sticker[]; blocks: Block[];
   layers: Layer[]; extra: number; blank: boolean;
   pfx: ProfileFx; nameInk?: NameInk | null;
+  face?: Face | null; facePfp?: boolean; bare?: boolean;
 }
 export const DEFAULT_LOOK: Look = { bannerColor: '#cde9f2', bannerPattern: 'dots', bannerPhoto: null, bg: '#fdfbfb', bgPhoto: null, accent: '#5e9db3', nameColor: '#0f172a', nameFont: 'serif', effect: 'none', bio: '', stickers: [], blocks: [], layers: [], extra: 0, blank: false, pfx: 'none', nameInk: null };
 

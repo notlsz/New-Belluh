@@ -12,17 +12,30 @@ const APPLY = 'elizabeth@belluh.com';
 const PRINCIPLES = [
   { title: 'Spikes over résumés', body: 'We prioritize life experience over work experience. Skills can be taught, but perspectives are difficult to shape.' },
   { title: 'Reject consensus', body: 'Chase non-obvious secrets, be creative, and hold a unique lens on the world.' },
-  { title: 'Epic missions', body: 'Fellows get grants up to $50K and go on missions nationwide, with a direct path to a full-time role.' },
+  { title: 'Epic missions', body: 'Real problems, real couples, and the room to go solve them, wherever that takes you.' },
+  { title: 'No bureaucracy', body: 'Nobody wins an argument with “because I’m senior.” The best idea wins, whoever has it.' },
 ];
 const SPIKES = ['Top 30 Valorant NA', 'U.S. Boxing Top 3', 'Built a videogame at 12 with 350K+ players', 'Top 100 of 700K in a photography contest', 'Competitive athlete', 'IMO gold', 'Self-taught plumber', 'Ironman 70.3 finisher', 'Florist selling 50+ flower types', 'Philosophy blogger with 30K monthly readers', 'Former YC founders', 'A Thiel fellow', 'A Rhodes scholar', 'A Schwarzman scholar', 'Cycled across continental Europe', '500+ skydives'];
+// What everyone at Belluh gets. Details vary by role and location.
 const PERKS = [
-  { title: 'Grants up to $50K', body: 'Fellows get grants of up to $50K for the work.' },
-  { title: 'A path to full-time', body: 'For top performers, there is a direct path to a full-time role with a $200K salary.' },
-  { title: 'Epic missions, nationwide', body: 'You won’t be stuck behind a desk. Fellows go on missions across the country.' },
-  { title: 'Hybrid', body: 'Work where you do your best work, and meet up when it matters.' },
-  { title: 'A small team', body: 'Your work ships, and couples feel it. There’s nowhere to hide and nothing to wait for.' },
-  { title: 'No hard criteria', body: 'If you have spikes, you’ll know. We care what you’ve done, not where you’ve been.' },
+  { title: 'Hybrid and remote work', body: 'Work where you do your best work, and get together when it matters.' },
+  { title: 'Dating', body: 'We build for love, so we make room for yours. Date nights are on us.' },
+  { title: 'Retirement', body: 'A retirement plan to help you save for later, starting now.' },
+  { title: 'Meals', body: 'Lunch and snacks on us when we’re together.' },
+  { title: 'Health insurance', body: 'Medical, dental and vision coverage for you and your family.' },
+  { title: 'Community service', body: 'Paid time to give back to the causes you care about.' },
+  { title: 'Paid time off', body: 'Time off to rest, travel and be with the people you love.' },
+  { title: 'Commuting', body: 'Help with the cost of getting to and from work.' },
+  { title: 'Parental leave and planning', body: 'Paid leave for new parents, and support for growing your family.' },
+  { title: 'Pets', body: 'Support for the pets who are part of your family.' },
+  { title: 'Wellness', body: 'Support for your body and your mind, from fitness to mental health.' },
+  { title: 'Legal coverage', body: 'Help with life’s legal moments, from a lease to a will.' },
+  { title: 'Professional growth', body: 'A budget to learn, and work that stretches you every week.' },
+  { title: 'Fertility support', body: 'Support for every path to building a family.' },
 ];
+// Only numbers that are true go here
+const TEAM_NUMBERS = [{ big: '0', small: 'times “because I’m senior” has settled an argument here. The best idea wins, whoever has it.' }];
+const FELLOW_NUMBERS = [{ big: '$50K', small: 'in grants for each fellow, at most' }, { big: '$200K', small: 'salary on the full-time path for top performers' }, { big: '3 wks', small: 'how early Belluh spots a couple drifting apart' }];
 const STEPS = [
   { e: '✉️', title: 'Tell us your spikes.', body: `Send an email to ${APPLY} with what makes you uniquely spiked. A few lines and a link or two is plenty.` },
   { e: '📞', title: 'A call to get to know each other.', body: 'A conversation about you, what you want to do, and why Belluh. Bring your questions, it should be a good fit for both of us.' },
@@ -58,6 +71,9 @@ const Careers: React.FC<CareersProps> = (p) => {
             <p>They reject consensus, chase non-obvious secrets, are creative, and hold a unique lens on the world. We prioritize life experience over work experience. Skills can be taught, but perspectives are difficult to shape. We want to see spikes regardless of what you do.</p>
             <p className="font-semibold text-[#1a1a1a]">No hard criteria. If you have spikes, you’ll know.</p>
             <p>We provide grants for fellows up to $50K, sending you on epic missions nationwide. For top performers, there is a direct path to a full-time role with a $200K salary.</p>
+          </div>
+          <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-8">
+            {FELLOW_NUMBERS.map(x => <div key={x.big}><p className="font-serif text-[3.25rem] leading-none tracking-[-0.03em] whitespace-nowrap">{x.big}</p><p className="mt-3 text-[15px] leading-snug text-[#1a1a1a]/75">{x.small}</p></div>)}
           </div>
           <p className="mt-14 mb-4 text-[15px]" style={{ color: BLUE }}>Previously successful collaborators</p>
           <div className="flex flex-wrap gap-2">{SPIKES.map(x => <span key={x} className="px-3.5 py-2 rounded-full bg-white border border-[#1a1a1a]/10 text-[14px]">{x}</span>)}</div>
@@ -102,13 +118,16 @@ const Careers: React.FC<CareersProps> = (p) => {
         </Wrap>
       </Dark>
 
-      {/* The numbers that are true */}
+      {/* By the numbers, laid out like hinge.co: a heading on the left, big figures on the right */}
       <section className="py-20 md:py-28">
-        <Wrap className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-10 md:gap-16 items-start">
-          <Reveal><Eyebrow>By the numbers</Eyebrow><Big className="!text-[2.25rem] md:!text-[2.75rem]">Belluh, plainly</Big></Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-10">
-            {[{ big: '$50K', small: 'in grants for each fellow, at most' }, { big: '$200K', small: 'salary on the full-time path for top performers' }, { big: '3 wks', small: 'how early Belluh spots a couple drifting apart' }].map((x, i) => (
-              <Reveal key={x.big} delay={i * 90}><p className="font-serif text-[4rem] md:text-[4.75rem] leading-none tracking-[-0.03em] whitespace-nowrap">{x.big}</p><p className="mt-4 text-[15px] leading-snug text-[#1a1a1a]/75 max-w-[200px]">{x.small}</p></Reveal>
+        <Wrap className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-10 lg:gap-16 items-start">
+          <Reveal><Eyebrow>How we compare</Eyebrow><Big className="!text-[2.25rem] md:!text-[2.75rem]">Belluh by the numbers</Big></Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-10 gap-y-12">
+            {TEAM_NUMBERS.map((x, i) => (
+              <Reveal key={x.small} delay={i * 90}>
+                <p className="font-serif text-[4.5rem] md:text-[5.5rem] leading-none tracking-[-0.03em] whitespace-nowrap">{x.big}</p>
+                <p className="mt-4 text-[15px] leading-snug text-[#1a1a1a]/75 max-w-[240px]">{x.small}</p>
+              </Reveal>
             ))}
           </div>
         </Wrap>
@@ -130,7 +149,7 @@ const Careers: React.FC<CareersProps> = (p) => {
       {/* What you get, opened one at a time */}
       <Dark>
         <Wrap>
-          <Reveal><Eyebrow dark>Perks</Eyebrow><Big>Do the best work of your life.</Big></Reveal>
+          <Reveal><Eyebrow dark>Perks and benefits</Eyebrow><Big>Do the best work of your life.</Big><p className="mt-4 text-[14px] text-white/60">Benefits vary by role and location.</p></Reveal>
           <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-x-8">
             {PERKS.map((x, i) => (
               <div key={x.title} className="border-t border-white/20">
