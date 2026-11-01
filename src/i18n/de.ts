@@ -166,7 +166,7 @@ const de: Dict = {
     plans: [
       { name: 'Gratis', price: '$0', per: 'für immer', alt: '', blurb: 'Startet heute eure gemeinsame Erinnerung.', cta: 'Gratis starten',
         items: ['Unbegrenzt Einträge, privat oder geteilt', 'Eure gemeinsame Erinnerung, für euch beide aufbewahrt', 'Bella ein paar Mal pro Woche', 'Jede Woche eine Idee für euch zwei'] },
-      { name: 'Duo', price: '$7.77', per: 'pro Monat für euch beide, nicht pro Person', alt: 'oder $88.88 pro Jahr für beide', blurb: 'Belluh komplett, für euch beide.', cta: 'Gratis starten',
+      { name: 'Duo', price: '$29.99', per: 'pro Monat für euch beide, nicht pro Person', alt: 'oder $179.99 pro Jahr für beide', blurb: 'Belluh komplett, für euch beide.', cta: 'Gratis starten',
         items: ['Bella, wann immer du sie brauchst', 'Schreib ihr über {apps}', 'Tisch, Geschenk und Blumen mit einem Tipp bereit', 'Erinnerungen, Kalender und Nachfragen, wie es war'] },
       { name: 'Für Teams', price: 'Auf Anfrage', per: 'Arbeitgeber, Paartherapie, Plattformen', alt: '', blurb: 'Belluh für die Menschen, die dir am Herzen liegen.', cta: 'Kontakt aufnehmen',
         items: ['Ein Beziehungs-Benefit für eure Leute', 'Begleitung zwischen den Sitzungen in der Paartherapie', 'Belluh als Baustein in eurer Plattform', 'Von Grund auf privat: Einträge seht ihr nie'] },
@@ -175,7 +175,7 @@ const de: Dict = {
   gift: {
     title1: 'Ein Geschenk, das', title2: 'in Erinnerung bleibt.',
     sub: 'Jedes Paar, das du gern hast, erlebt gerade Momente, die es vergessen wird: die ersten Monate, den Antrag, den Umzug, die Jahre dazwischen. Schenk ihnen ein Jahr Belluh, und nichts davon geht verloren.',
-    given: 'Geschenke verschenkt, Tendenz steigend', priceLine: 'für beide, ein Jahr', price: '$88.88',
+    given: 'Geschenke verschenkt, Tendenz steigend', priceLine: 'für beide, ein Jahr', price: '$179.99',
     hello: 'Hallo, ich bin Bella. Schenk einem Paar ein Jahr Belluh: ein gemeinsames Tagebuch, Dates, die für sie geplant werden, und kein vergessener Jahrestag mehr. Vier kurze Fragen.',
     who: 'Wer ist das glückliche Paar?', what: 'Schön. Was feiern wir?',
     how: 'Ich habe ihnen ein paar Zeilen geschrieben, sie stehen auf der Karte. Wie soll es ankommen? Eine Karte per Post übernehmen wir.',
@@ -211,7 +211,7 @@ const de: Dict = {
       { q: 'Kann ich Bella schreiben?', a: 'Ja. Verbinde {apps} mit einem Tipp in den Einstellungen und schreib Bella so, wie du in der App mit ihr reden würdest. Dieselbe Bella, dieselbe Erinnerung.' },
       { q: 'Weiss Bella, wie es bei uns läuft?', a: 'Ja. Sie reserviert auf den Seiten, die man bei dir nutzt, kauft in den Läden ein, die du kennst, spricht deine Sprache und kennt die Tage, die Paaren dort wichtig sind.' },
       { q: 'Was passiert mit meinen Daten?', a: 'Deine Einträge werden verschlüsselt gespeichert und verschlüsselt übertragen, und sie werden nie verkauft. Bellas Antworten schreiben die Gemini-Modelle von Google, die deine Einträge dafür verarbeiten.' },
-      { q: 'Ist es gratis?', a: 'Ja. Gemeinsam schreiben, eure gemeinsame Erinnerung und ein paar Chats mit Bella pro Woche sind für immer gratis. Duo kostet $7.77 pro Monat oder $88.88 pro Jahr, ein Preis für euch beide.' },
+      { q: 'Ist es gratis?', a: 'Ja. Gemeinsam schreiben, eure gemeinsame Erinnerung und ein paar Chats mit Bella pro Woche sind für immer gratis. Duo kostet $29.99 pro Monat oder $179.99 pro Jahr, ein Preis für euch beide.' },
       { q: 'Was passiert mit unserer gemeinsamen Erinnerung, wenn wir nicht mehr bezahlen?', a: 'Nichts geht verloren. Jeder Eintrag und alles, was Bella sich merkt, bleibt euch, und im Gratis-Plan ist alles weiterhin da.' },
     ],
   },

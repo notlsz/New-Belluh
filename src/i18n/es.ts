@@ -189,7 +189,7 @@ const es: Dict = {
     plans: [
       { name: 'Gratis', price: '$0', per: 'para siempre', alt: '', blurb: 'Empezad hoy vuestra memoria compartida.', cta: 'Empieza gratis',
         items: ['Entradas ilimitadas, privadas o compartidas', 'Vuestra memoria compartida, guardada para los dos', 'Bella unas cuantas veces por semana', 'Una idea a la semana para probar juntos'] },
-      { name: 'Duo', price: '$7.77', per: 'al mes para los dos, no cada uno', alt: 'o $88.88 al año para los dos', blurb: 'Belluh completo, para los dos.', cta: 'Empieza gratis',
+      { name: 'Duo', price: '$29.99', per: 'al mes para los dos, no cada uno', alt: 'o $179.99 al año para los dos', blurb: 'Belluh completo, para los dos.', cta: 'Empieza gratis',
         items: ['Bella siempre que la necesitéis', 'Escríbele por {apps}', 'Mesas, regalos y flores listos con un toque', 'Recordatorios, calendario y el “¿qué tal fue?”'] },
       { name: 'Para empresas', price: 'Hablemos', per: 'empresas, terapeutas, plataformas', alt: '', blurb: 'Belluh para las personas que cuidas.', cta: 'Contáctanos',
         items: ['Un beneficio de pareja para tu equipo', 'Apoyo entre sesiones de terapia de pareja', 'Belluh integrado en tu plataforma', 'Privado desde el diseño: nunca ves las entradas'] },
@@ -198,7 +198,7 @@ const es: Dict = {
   gift: {
     title1: 'Un regalo que', title2: 'se recuerda.',
     sub: 'Cada pareja que quieres está viviendo momentos que acabará olvidando: los primeros meses, la pedida, la mudanza, los años de en medio. Regálales un año de Belluh y no se les escapará nada.',
-    given: 'regalos hechos, y subiendo', priceLine: 'para los dos, un año', price: '$88.88',
+    given: 'regalos hechos, y subiendo', priceLine: 'para los dos, un año', price: '$179.99',
     hello: 'Hola, soy Bella. Regala a una pareja un año de Belluh: un diario compartido, planes preparados para ellos y todos los aniversarios recordados. Cuatro preguntas rápidas.',
     who: '¿Quién es la pareja afortunada?', what: 'Qué bonito. ¿Qué celebramos?',
     how: 'Les he escrito una nota, va en la tarjeta. ¿Cómo quieres que llegue? La tarjeta por correo corre de nuestra cuenta.',
@@ -234,7 +234,7 @@ const es: Dict = {
       { q: '¿Puedo escribirle a Bella por mensaje?', a: 'Sí. Conecta {apps} en Ajustes con un toque y escríbele a Bella como le hablarías en la app. La misma Bella, la misma memoria.' },
       { q: '¿Bella sabe cómo funcionan las cosas donde vivimos?', a: 'Sí. Reserva en las webs que se usan donde vivís, compra en las tiendas que conocéis, como El Corte Inglés, habla vuestro idioma y sabe qué días cuentan para las parejas de allí, de San Valentín a Sant Jordi.' },
       { q: '¿Qué pasa con mis datos?', a: 'Tus entradas están cifradas en reposo y en tránsito, y nunca se venden. Las respuestas de Bella las escriben los modelos Gemini de Google, que procesan tus entradas para redactarlas.' },
-      { q: '¿Es gratis?', a: 'Sí. Escribir juntos, vuestra memoria compartida y unas cuantas charlas con Bella a la semana son gratis para siempre. Duo cuesta $7.77 al mes o $88.88 al año, un solo precio para los dos.' },
+      { q: '¿Es gratis?', a: 'Sí. Escribir juntos, vuestra memoria compartida y unas cuantas charlas con Bella a la semana son gratis para siempre. Duo cuesta $29.99 al mes o $179.99 al año, un solo precio para los dos.' },
       { q: '¿Qué pasa con nuestra memoria compartida si dejamos de pagar?', a: 'No se pierde nada. Cada entrada y todo lo que Bella recuerda sigue siendo vuestro, y el plan gratis lo conserva todo.' },
     ],
   },
