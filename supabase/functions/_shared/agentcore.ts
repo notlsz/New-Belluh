@@ -20,6 +20,7 @@ import { activityDetail } from './activity.ts';
 import { validateGoal, logProgress, goalLine, type Goal } from './goals.ts';
 import { validateWatch, TICKETMASTER_COUNTRIES } from './watches.ts';
 import { localDateParts } from './occasions.ts';
+import { crisisSignal, crisisInstruction, withCrisisLine, crisisLine, disclosure, needsDisclosure } from './safety.ts';
 import { bookingFromTool, doneLabel, memoryFor, reminderFor, whenText, type BookingDraft } from './bookings.ts';
 import { instacartCart } from './instacart.ts';
 import { callsOn, findPlace, startCall, okToCallNow, whyNot, type CallOutcome } from './vapi.ts';
@@ -59,8 +60,10 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
     ...(mode === 'mediate' ? { mode } : {}), ...(channel !== 'app' ? { channel } : {}), ...(photo ? { photo: photoRef } : {}),
   });
   const created: unknown[] = [userMsg];
+  // Checked before anything else, model or no model: someone who may be in danger always gets the crisis line
+  const crisis = crisisSignal(text);
   if (!(await underLimit(ctx.userId))) {
-    created.push(await addMessage(ctx.userId, 'belluh', "Let's pause for a bit. You've reached this hour's limit for Belluh. Try again soon."));
+    created.push(await addMessage(ctx.userId, 'belluh', crisis ? crisisLine(ctx.country) : "Let's pause for a bit. You've reached this hour's limit for Belluh. Try again soon."));
     return { messages: created };
   }
 
@@ -75,7 +78,7 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   // The photo they just sent, so Belluh can actually look at it
   if (photo) contents[contents.length - 1].parts.unshift({ inlineData: photo });
 
-  const system = (await buildSystem(ctx)) + (channel !== 'app' ? TEXTING : '');
+  const system = (await buildSystem(ctx)) + (channel !== 'app' ? TEXTING : '') + (crisis ? crisisInstruction(ctx.country) : '');
   // Memory changes must come from the person, not from text Belluh is reading (a shared entry, a partner's note)
   const askedToForget = /\b(forget|remove|delete|erase|don'?t remember|stop remembering)\b/i.test(text);
   const saved: string[] = [];
@@ -353,10 +356,18 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
       }
   }
 
-  const final = cleanReply(reply ?? '') || naturalFallback(ran) || "I'm having trouble thinking right now. Try me again in a moment.";
+  let final = cleanReply(reply ?? '') || naturalFallback(ran) || "I'm having trouble thinking right now. Try me again in a moment.";
+  if (crisis) final = withCrisisLine(final, ctx.country);
+  // By text, Bella says she is an AI when a conversation starts and again every three hours
+  let disclosed = false;
+  if (channel !== 'app') {
+    const { data: last } = await db.from('agent_messages').select('created_at').eq('user_id', ctx.userId).eq('role', 'belluh')
+      .contains('meta', { disclosed: true }).order('created_at', { ascending: false }).limit(1).maybeSingle();
+    if (needsDisclosure(last?.created_at)) { final = `${disclosure(ctx.country)} ${final}`; disclosed = true; }
+  }
   const bookings = await saveBookings(ctx, prepared);
   // Every new memory is shown under the reply, so nothing is remembered silently
-  const msg = await addMessage(ctx.userId, 'belluh', final, { ...(saved.length ? { saved } : {}), ...(links.length ? { links: links.slice(0, 7) } : {}), ...(products.length ? { products } : {}), ...(spots.length ? { spots } : {}), ...(shape ? { shape } : {}), ...(bookings.length ? { bookings } : {}) });
+  const msg = await addMessage(ctx.userId, 'belluh', final, { ...(disclosed ? { disclosed: true, channel } : {}), ...(crisis ? { crisis: true } : {}), ...(saved.length ? { saved } : {}), ...(links.length ? { links: links.slice(0, 7) } : {}), ...(products.length ? { products } : {}), ...(spots.length ? { spots } : {}), ...(shape ? { shape } : {}), ...(bookings.length ? { bookings } : {}) });
   if (msg && bookings.length) await db.from('bookings').update({ message_id: msg.id }).in('id', bookings.map(b => b.id));
   created.push(msg);
   return { messages: created };
@@ -530,9 +541,11 @@ export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Pro
   const created: unknown[] = [await usAdd(ctx, ctx.userId, 'user', text)];
   await notify(ctx.partnerId, `${ctx.myName}: ${text}`, { pushOnly: true, title: 'Us', tag: 'us' });
 
+  const crisis = crisisSignal(text);
+  if (crisis) askBelluh = true; // the shared thread never lets that go unanswered
   if (!(askBelluh || /\bbelluh\b/i.test(text))) return res({ messages: created });
   if (!(await underLimit(ctx.userId))) {
-    created.push(await usAdd(ctx, null, 'belluh', "Let's pause for a bit. You've reached this hour's limit for Belluh."));
+    created.push(await usAdd(ctx, null, 'belluh', crisis ? crisisLine(ctx.country) : "Let's pause for a bit. You've reached this hour's limit for Belluh."));
     return res({ messages: created });
   }
 
@@ -542,7 +555,7 @@ export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Pro
   const contents: GeminiContent[] = (recent ?? []).reverse().filter(m => m.role !== 'plan').map(m => (m.role === 'belluh'
     ? { role: 'model', parts: [{ text: m.body }] }
     : { role: 'user', parts: [{ text: `${names[m.author ?? ''] ?? 'Partner'}: ${m.body}` }] }));
-  const system = await buildUsSystem(ctx);
+  const system = (await buildUsSystem(ctx)) + (crisis ? crisisInstruction(ctx.country) : '');
   const usLinks: ActionLink[] = [];
   const ran: string[] = [];
   const reply = await chatWithTools({
@@ -578,7 +591,8 @@ export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Pro
       return { ok: true, note: `The plan card is in the chat. ${ctx.partnerName} picks a time right there. Say so in one short line.` };
     },
   });
-  const final = cleanReply(reply ?? '') || naturalFallback(ran) || "I'm having trouble thinking right now. Try me again in a moment.";
+  let final = cleanReply(reply ?? '') || naturalFallback(ran) || "I'm having trouble thinking right now. Try me again in a moment.";
+  if (crisis) final = withCrisisLine(final, ctx.country);
   created.push(await usAdd(ctx, null, 'belluh', final, usLinks.length ? { links: usLinks.slice(0, 4) } : {}));
   return res({ messages: created });
 }
