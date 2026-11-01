@@ -62,3 +62,12 @@ test('Bella keeps watch, answers in their language, and protects the evening', (
   assert.match(p, /two weeks ahead for anything that ships/);
   assert.match(p, /Rest:/);
 });
+
+test('Love calendar: every country with a region kit has its own love days, and Korea counts Pepero Day', async () => {
+  const { KITS } = await import('../supabase/functions/_shared/region.ts');
+  const { loveDaysSoon } = await import('../supabase/functions/_shared/jarvis.ts');
+  for (const c of Object.keys(KITS)) assert.ok(loveDaysSoon(c, { y: 2026, m: 1, d: 1 }, 366).length > 0, `${c} has no love days`);
+  const kr = loveDaysSoon('KR', { y: 2026, m: 11, d: 1 }, 45);
+  assert.equal(kr[0].local, '빼빼로데이');
+  assert.equal(kr[0].on.d, 11);
+});
