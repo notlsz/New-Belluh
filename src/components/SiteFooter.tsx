@@ -7,6 +7,7 @@ import { useI18n, useUi, LANGS, type Lang } from '../i18n';
 import siteUi from '../i18n/ui/site';
 import footerUi from '../i18n/ui/footerLinks';
 import LangPicker from './LangPicker';
+import FooterBubble from './FooterBubble';
 import { go as goTo } from '../lib/go';
 
 // The site footer, shared by the landing page, Careers and Our Why. Section links scroll on the landing page and
@@ -29,10 +30,7 @@ const SiteFooter: React.FC<{
       <div className="max-w-7xl mx-auto px-6 pt-16 md:pt-24 pb-10">
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-[minmax(0,1.5fr)_repeat(4,minmax(0,1fr))] gap-x-8 gap-y-12">
               <div className="col-span-2 md:col-span-4 lg:col-span-1 lg:pr-6">
-                  <button onClick={onTop} className="flex items-center gap-2.5" aria-label={F.home}>
-                      <BelluhOrb size={30} />
-                      <span className="font-serif text-2xl font-bold tracking-tight text-[#9bbecb]">Belluh</span>
-                  </button>
+                  <FooterBubble label={F.home} onHome={onTop} />
                   <p className="mt-6 max-w-sm font-serif text-2xl md:text-[1.75rem] leading-snug tracking-tight text-slate-800">{t.line1} <span className="italic text-[#e58fc9]">{t.line2}</span></p>
                   <button onClick={onGetStarted} className="mt-7 inline-flex h-11 items-center gap-2 rounded-full bg-slate-900 px-5 text-sm font-bold text-white transition-colors hover:bg-black">
                       {d.common.startFree} <ArrowRight size={15} />

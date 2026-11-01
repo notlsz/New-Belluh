@@ -9,6 +9,7 @@ import DragonflyMark from '../../components/DragonflyMark';
 import { useI18n, useUi, LANGS, type Lang } from '../../i18n';
 import siteUi from '../../i18n/ui/site';
 import footerUi from '../../i18n/ui/footerLinks';
+import FooterBubble from '../../components/FooterBubble';
 import LangPicker from '../../components/LangPicker';
 import { go } from '../../lib/go';
 
@@ -52,9 +53,7 @@ const Footer: React.FC<{ hiring: { eyebrow: string; line: string; cta: string; t
       </Wrap>
       <Wrap className="pt-16 md:pt-24 pb-12">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))] gap-x-8 md:gap-x-12 gap-y-12">
-          <a href="/" onClick={e => { e.preventDefault(); go('/'); }} className="col-span-2 md:col-span-3 lg:col-span-1 self-start justify-self-start inline-flex items-center gap-1.5 h-7" aria-label={F.home}>
-            <DragonflyMark size={26} /><span className="font-serif text-[26px] leading-none font-semibold tracking-tight">Belluh</span>
-          </a>
+          <div className="col-span-2 md:col-span-3 lg:col-span-1 self-start justify-self-start"><FooterBubble dark label={F.home} /></div>
           {cols.map(c => (
             <div key={c.title} className="min-w-0">
               <p className="mb-5 text-[14px] leading-5 text-white/55">{c.title}</p>
