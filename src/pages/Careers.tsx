@@ -12,7 +12,8 @@ interface CareersProps extends PageProps { onBack?: () => void; onGoToAbout?: ()
 
 const APPLY = 'elizabeth@belluh.com';
 // Only numbers that are true go here; the captions are in the table, in the same order
-const TEAM_NUMBERS = [{ big: '0', sup: '' }, { big: '8', sup: '' }, { big: '350K', sup: '+*' }];
+// Only numbers that are true. Survey results (like hinge.co's) go here once the team has taken one.
+const TEAM_NUMBERS = [{ big: '0', sup: '' }, { big: '8', sup: '' }];
 const STEP_EMOJI = ['✉️', '📞', '🚀', '🤝'];
 // Teams and roles by stable id; their names and blurbs are in the table under teams and roles
 const ROLES: { team: TeamId; roles: RoleId[] }[] = [{ team: 'growth', roles: ['fellow'] }];
@@ -108,7 +109,6 @@ const Careers: React.FC<CareersProps> = (p) => {
               </Reveal>
             ))}
           </div>
-          <p className="lg:col-start-2 -mt-4 text-[12px] leading-snug text-[#1a1a1a]/55 max-w-[260px]">{C.numbers.footnote}</p>
         </Wrap>
       </section>
 

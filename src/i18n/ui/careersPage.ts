@@ -18,7 +18,7 @@ const en = {
     eyebrow: 'How we compare',
     title: 'Belluh by the numbers',
     captions: [
-      'arguments settled by “because I’m senior.” The best idea wins, whoever has it.',
+      'bureaucracy. No “because I’m senior.” The best idea wins, whoever has it.',
       'languages Belluh already speaks to couples in, from Japanese to Portuguese.',
       'players on a game one of our collaborators built at 12. Spikes, not résumés.',
     ],
@@ -97,7 +97,7 @@ const pt: typeof en = {
     eyebrow: 'Como nos comparamos',
     title: 'Belluh em números',
     captions: [
-      'discussões resolvidas com “porque eu sou sênior”. Vence a melhor ideia, venha de quem vier.',
+      'burocracia. Nada de “porque eu sou sênior”. Vence a melhor ideia, venha de quem vier.',
       'idiomas em que Belluh já conversa com casais, do japonês ao português.',
       'jogadores em um game que um dos nossos colaboradores criou aos 12 anos. Fora da curva, não currículo.',
     ],
@@ -176,7 +176,7 @@ const es: typeof en = {
     eyebrow: 'Cómo nos comparamos',
     title: 'Belluh en cifras',
     captions: [
-      'discusiones zanjadas con un «porque soy senior». Gana la mejor idea, venga de quien venga.',
+      'burocracia. Nada de «porque soy senior». Gana la mejor idea, venga de quien venga.',
       'idiomas en los que Belluh ya habla con parejas, del japonés al portugués.',
       'jugadores en un videojuego que uno de nuestros colaboradores creó con 12 años. Lo excepcional, no el currículum.',
     ],
@@ -257,7 +257,7 @@ const careersPage: UiTable<typeof en> = {
       eyebrow: 'ほかとの違い',
       title: '数字で見るBelluh',
       captions: [
-        '「先輩だから」で決着した議論の数。誰の案であれ、いちばん良いアイデアが勝ちます。',
+        'お役所仕事。「先輩だから」は通用しません。誰の案であれ、いちばん良いアイデアが勝ちます。',
         'Belluhがすでにカップルと話せる言語の数。日本語からポルトガル語まで。',
         '仲間のひとりが12歳でつくったゲームのプレイヤー数。経歴ではなく、突き抜けた個性です。',
       ],
@@ -335,7 +335,7 @@ const careersPage: UiTable<typeof en> = {
       eyebrow: '我们有何不同',
       title: '数说 Belluh',
       captions: [
-        '场争论是靠“因为我资历深”解决的。最好的想法胜出,不管它来自谁。',
+        '官僚作风。没有“因为我资历深”。最好的想法胜出，不管它来自谁。',
         '种语言,Belluh 已经在用它们和情侣对话,从日语到葡萄牙语。',
         '名玩家,玩过我们一位合作者 12 岁时做的游戏。看特长,不看简历。',
       ],
@@ -413,7 +413,7 @@ const careersPage: UiTable<typeof en> = {
       eyebrow: 'Ce qui nous distingue',
       title: 'Belluh en chiffres',
       captions: [
-        'débat tranché par « parce que je suis senior ». La meilleure idée l’emporte, peu importe de qui elle vient.',
+        'bureaucratie. Pas de « parce que je suis senior ». La meilleure idée l’emporte, peu importe d’où elle vient.',
         'langues dans lesquelles Belluh parle déjà aux couples, du japonais au portugais.',
         'joueurs sur un jeu créé à 12 ans par l’un de nos collaborateurs. Le hors-norme, pas le CV.',
       ],
@@ -491,7 +491,7 @@ const careersPage: UiTable<typeof en> = {
       eyebrow: 'Im Vergleich',
       title: 'Belluh in Zahlen',
       captions: [
-        'Diskussionen, die mit „weil ich Senior bin“ entschieden wurden. Die beste Idee gewinnt, egal von wem.',
+        'Bürokratie. Kein „weil ich Senior bin“. Die beste Idee gewinnt, egal von wem.',
         'Sprachen, in denen Belluh schon mit Paaren spricht, von Japanisch bis Portugiesisch.',
         'Spieler bei einem Game, das einer unserer Mitstreiter mit 12 gebaut hat. Ausnahmetalent statt Lebenslauf.',
       ],
@@ -569,7 +569,7 @@ const careersPage: UiTable<typeof en> = {
       eyebrow: 'Come ci distinguiamo',
       title: 'Belluh in numeri',
       captions: [
-        'discussioni chiuse con “perché sono più senior”. Vince l’idea migliore, di chiunque sia.',
+        'burocrazia. Niente “perché sono più senior”. Vince l’idea migliore, di chiunque sia.',
         'lingue in cui Belluh parla già alle coppie, dal giapponese al portoghese.',
         'giocatori di un videogioco creato a 12 anni da uno dei nostri collaboratori. Talento, non curriculum.',
       ],
@@ -681,7 +681,7 @@ const careersPage: UiTable<typeof en> = {
     how: { ...pt.how, body: 'As melhores equipas são feitas de pessoas extraordinárias em alguma coisa, seja ela qual for. Veja o que isso significa no dia a dia.' },
     numbers: { ...pt.numbers,
       captions: [
-        'discussões resolvidas com “porque sou sénior”. Ganha a melhor ideia, venha de quem vier.',
+        'burocracia. Nada de “porque sou sénior”. Ganha a melhor ideia, venha de quem vier.',
         'idiomas em que a Belluh já fala com casais, do japonês ao português.',
         'jogadores num videojogo que um dos nossos colaboradores criou aos 12 anos. Fora da curva, não currículo.',
       ],
