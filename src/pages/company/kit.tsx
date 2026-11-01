@@ -139,12 +139,12 @@ export const Numbered: React.FC<{ items: { title: string; body: string }[]; dark
   </div>
 );
 
-// A grid of short ideas
+// A grid of short ideas, each under a hairline
 export const Lined: React.FC<{ items: { title: string; body: string; link?: { label: string; href?: string; onClick?: () => void } }[]; dark?: boolean }> = ({ items, dark }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-12">
     {items.map((it, i) => (
       <Reveal key={it.title} delay={(i % 3) * 80}>
-        <div>
+        <div className={`pt-6 border-t ${dark ? 'border-white/20' : 'border-[#1a1a1a]/15'}`}>
           <h3 className={`text-[17px] font-semibold ${dark ? 'text-white' : ''}`}>{it.title}</h3>
           <p className={`mt-4 text-[15px] leading-[1.6] ${dark ? 'text-white/75' : 'text-[#1a1a1a]/75'}`}>{it.body}</p>
           {it.link && (it.link.href
