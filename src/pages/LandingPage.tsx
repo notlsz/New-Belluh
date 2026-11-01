@@ -249,7 +249,7 @@ function GiftSection() {
 
         <div className="mt-14 md:mt-16 grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-16 items-center">
           <div className="relative rounded-[2rem] bg-white border border-white shadow-[0_40px_100px_-40px_rgba(15,23,42,0.35)] overflow-hidden">
-            <div className="flex items-center justify-between px-6 md:px-7 pt-5 pb-4 border-b border-slate-100">
+            <div className="flex items-center justify-between px-6 md:px-7 pt-5 pb-4">
               <span className="inline-flex items-center gap-2.5"><BelluhOrb size={22} /><span className="font-serif text-[17px] text-slate-900">Bella</span></span>
               <span className="text-sm text-slate-500"><span className="font-semibold text-slate-900">{g.price}</span> {g.priceLine}</span>
             </div>
@@ -279,7 +279,7 @@ function GiftSection() {
                 </div>
               )}
             </div>
-            <div className="px-5 md:px-7 pb-5 pt-4 border-t border-slate-100">{reply}</div>
+            <div className="px-5 md:px-7 pb-5 pt-4">{reply}</div>
           </div>
 
           <div className="order-first lg:order-none">

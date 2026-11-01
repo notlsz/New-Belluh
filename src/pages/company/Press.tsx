@@ -24,7 +24,7 @@ const outline = 'inline-flex h-11 items-center gap-2 px-5 rounded-full border bo
 
 const Block: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <Reveal>
-    <section className="pt-6 border-t border-[#1a1a1a]/15">
+    <section>
       <h2 className="font-serif text-[1.75rem] md:text-[2.1rem] leading-[1.15] tracking-[-0.01em]">{title}</h2>
       <div className="mt-6">{children}</div>
     </section>

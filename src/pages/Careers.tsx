@@ -131,7 +131,7 @@ const Careers: React.FC<CareersProps> = (p) => {
           <Reveal><Eyebrow dark>{C.perks.eyebrow}</Eyebrow><Big>{C.perks.title}</Big><p className="mt-4 text-[14px] text-white/60">{C.perks.note}</p></Reveal>
           <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-x-8">
             {C.perks.items.map((x, i) => (
-              <div key={x.title} className="border-t border-white/20">
+              <div key={x.title}>
                 <button onClick={() => setPerk(perk === i ? null : i)} aria-expanded={perk === i} className="w-full h-16 flex items-center justify-between text-left text-[17px] font-semibold">
                   {x.title}<span className={`text-2xl font-light transition-transform duration-300 ${perk === i ? 'rotate-45' : ''}`} aria-hidden>+</span>
                 </button>
@@ -176,7 +176,7 @@ const Careers: React.FC<CareersProps> = (p) => {
               <div><h3 className="font-serif text-[2rem] tracking-tight">{C.teams[r.team].name}<sup className="ml-1 text-[12px] font-sans" style={{ color: BLUE }}>({r.roles.length})</sup></h3><p className="mt-3 text-[15px] text-[#1a1a1a]/75 max-w-[260px]">{C.teams[r.team].about}</p></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
                 {r.roles.map(id => ({ id, ...C.roles[id] })).map(x => (
-                  <button key={x.id} onClick={() => open(true)} className="group text-left border-t border-[#1a1a1a]/15 pt-4 pb-8 flex items-start justify-between gap-4">
+                  <button key={x.id} onClick={() => open(true)} className="group text-left pt-4 pb-8 flex items-start justify-between gap-4">
                     <span><span className="block text-[17px] group-hover:underline underline-offset-4">{x.title}</span><span className="block mt-1 text-[13px]" style={{ color: BLUE }}>{x.where}</span></span>
                     <span className="text-xl transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden>↗</span>
                   </button>

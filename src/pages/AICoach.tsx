@@ -587,7 +587,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
              </div>
              <p className="text-sm text-slate-500 mb-5">{T.memoryNote}</p>
              {memories.length === 0 && <p className="text-sm text-slate-400 italic">{T.memoryEmpty}</p>}
-             <ul className="divide-y divide-slate-100">
+             <ul className="space-y-1">
                {memories.map(m => (
                  <li key={m.id} className="flex items-start justify-between gap-3 py-3">
                    <p className="font-serif text-[15px] text-slate-800 leading-relaxed">{m.fact}</p>

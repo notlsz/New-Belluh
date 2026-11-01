@@ -357,7 +357,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                             ))}
                             {circles.some(c => c.status === CircleStatus.Archived) && (
                                 <>
-                                    <div className="text-[12px] font-semibold text-slate-400 px-3 py-2 mt-2 border-t border-slate-50">{T.pastChapters}</div>
+                                    <div className="text-[12px] font-semibold text-slate-400 px-3 py-2 mt-2">{T.pastChapters}</div>
                                     {circles.filter(c => c.status === CircleStatus.Archived).map(c => (
                                         <button key={c.id} className="w-full p-3 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors flex items-center gap-3 text-left group grayscale opacity-80" onClick={() => { onCircleChange(c.id); setIsCircleMenuOpen(false); }}>
                                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold bg-slate-100 text-slate-400 border border-slate-200">
@@ -369,7 +369,7 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                                 </>
                             )}
                             {/* Constellation Option */}
-                            <div className="text-[12px] font-semibold text-slate-400 px-3 py-2 mt-2 border-t border-slate-50">{T.universal}</div>
+                            <div className="text-[12px] font-semibold text-slate-400 px-3 py-2 mt-2">{T.universal}</div>
                             <button className="w-full p-3 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors flex items-center gap-3 text-left group" onClick={() => { onCircleChange('constellation'); setIsCircleMenuOpen(false); }}>
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${isConstellation ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-white border border-slate-200'}`}>
                                     <Star size={14} className={isConstellation ? "fill-current" : ""} />

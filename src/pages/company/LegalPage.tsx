@@ -58,12 +58,12 @@ const Table: React.FC<{ head: string[]; rows: React.ReactNode[][] }> = ({ head, 
   <div className="mt-6 -mx-5 px-5 md:mx-0 md:px-0 overflow-x-auto">
     <table className="w-full min-w-[480px] md:min-w-0 text-left border-collapse">
       <thead>
-        <tr className="border-b border-[#1a1a1a]/25">{head.map(h => <th key={h} scope="col" className="py-3 pr-6 last:pr-0 align-bottom text-[14px] leading-[1.4] font-semibold">{h}</th>)}</tr>
+        <tr>{head.map(h => <th key={h} scope="col" className="py-3 px-3 first:pl-4 last:pr-4 align-bottom text-[14px] leading-[1.4] font-semibold">{h}</th>)}</tr>
       </thead>
       <tbody>
         {rows.map((r, i) => (
-          <tr key={i} className="border-b border-[#1a1a1a]/10 align-top">
-            {r.map((c, j) => <td key={j} className={`py-4 pr-6 last:pr-0 text-[15px] leading-[1.6] ${j === 0 ? 'font-medium w-[32%]' : 'text-[#1a1a1a]/85'}`}>{c}</td>)}
+          <tr key={i} className={`align-top ${i % 2 === 0 ? 'bg-[#1a1a1a]/[0.035]' : ''}`}>
+            {r.map((c, j) => <td key={j} className={`py-4 px-3 first:pl-4 last:pr-4 text-[15px] leading-[1.6] ${j === 0 ? 'font-medium w-[32%]' : 'text-[#1a1a1a]/85'}`}>{c}</td>)}
           </tr>
         ))}
       </tbody>

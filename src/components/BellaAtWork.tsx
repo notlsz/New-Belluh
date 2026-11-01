@@ -107,7 +107,7 @@ const BellaAtWork: React.FC = () => {
 
         <div className="min-w-0 lg:col-span-7" role="tabpanel" aria-label={s.city}>
           <div className="rounded-[2rem] bg-white border border-slate-100 shadow-[0_30px_80px_-30px_rgba(63,116,134,0.35)] overflow-hidden">
-            <div className="flex items-center gap-2.5 px-4 sm:px-6 h-16 border-b border-slate-100">
+            <div className="flex items-center gap-2.5 px-4 sm:px-6 h-16">
               <BelluhOrb size={24} />
               <span className="font-serif text-[17px] text-slate-900">Bella</span>
               <span className="hidden sm:inline text-sm text-slate-400">{f(t_.withIn, { name: s.couple[0], city: s.city })}</span>

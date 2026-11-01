@@ -48,7 +48,7 @@ const Footer: React.FC<{ hiring: { eyebrow: string; line: string; cta: string; t
   ];
   return (
     <footer className="text-white" style={{ background: INK }}>
-      <Wrap className="pt-20 md:pt-28 pb-16 md:pb-20 border-b border-white/15">
+      <Wrap className="pt-20 md:pt-28 pb-4 md:pb-6">
         <Reveal><Eyebrow dark>{hiring.eyebrow}</Eyebrow><Big>{hiring.line}</Big><div className="mt-8"><Pill light onClick={() => go(hiring.to)}>{hiring.cta}</Pill></div></Reveal>
       </Wrap>
       <Wrap className="pt-16 md:pt-24 pb-12">
@@ -139,12 +139,12 @@ export const Numbered: React.FC<{ items: { title: string; body: string }[]; dark
   </div>
 );
 
-// A grid of short ideas, each under a hairline
+// A grid of short ideas
 export const Lined: React.FC<{ items: { title: string; body: string; link?: { label: string; href?: string; onClick?: () => void } }[]; dark?: boolean }> = ({ items, dark }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-12">
     {items.map((it, i) => (
       <Reveal key={it.title} delay={(i % 3) * 80}>
-        <div className={`pt-6 border-t ${dark ? 'border-white/20' : 'border-[#1a1a1a]/15'}`}>
+        <div>
           <h3 className={`text-[17px] font-semibold ${dark ? 'text-white' : ''}`}>{it.title}</h3>
           <p className={`mt-4 text-[15px] leading-[1.6] ${dark ? 'text-white/75' : 'text-[#1a1a1a]/75'}`}>{it.body}</p>
           {it.link && (it.link.href

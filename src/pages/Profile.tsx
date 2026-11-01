@@ -923,7 +923,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                   ) : (
                       <div className="space-y-6">
                           <button onClick={handleCopyInviteLink} className="w-full bg-belluh-50 text-belluh-600 border border-belluh-200 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-belluh-100 transition-all"><LinkIcon size={16} /><span>{T.copyInviteLink}</span></button>
-                          <div className="relative"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div><div className="relative flex justify-center text-xs"><span className="bg-white px-2 text-slate-400 font-medium">{T.orViaEmail}</span></div></div>
+                          <p className="text-center text-xs text-slate-400 font-medium">{T.orViaEmail}</p>
                           <form onSubmit={handleInviteSubmit} className="space-y-4">
                               <input type="email" required value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder={T.emailPlaceholder} className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-belluh-200" />
                               {inviteStatus === 'not-found' && <p className="text-rose-500 text-xs font-bold px-1">{T.userNotFound}</p>}
