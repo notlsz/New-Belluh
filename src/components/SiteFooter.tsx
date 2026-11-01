@@ -4,6 +4,7 @@ import BelluhOrb from './BelluhOrb';
 import { belluh } from '../lib/belluhPresence';
 import { useI18n, useUi, LANGS, type Lang } from '../i18n';
 import siteUi from '../i18n/ui/site';
+import LangPicker from './LangPicker';
 import { go as goTo } from '../lib/go';
 
 // The site footer, shared by the landing page, Careers and Our Why. Section links scroll on the landing page and
@@ -70,12 +71,7 @@ const SiteFooter: React.FC<{
           </div>
       </div>
       <div className="max-w-7xl mx-auto px-6 pb-10 -mt-4">
-          <label className="inline-flex items-center gap-2.5 text-sm text-slate-500">
-              <span>{t.language}</span>
-              <select value={lang} onChange={e => setLang(e.target.value as Lang)} className="h-10 rounded-full border border-slate-200 bg-white px-4 text-sm text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#9bbecb]">
-                  {LANGS.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-              </select>
-          </label>
+          <LangPicker label={t.language} />
       </div>
   </footer>
   );

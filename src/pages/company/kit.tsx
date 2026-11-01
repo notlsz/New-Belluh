@@ -7,6 +7,7 @@ import SiteNav, { type SitePage } from '../../components/SiteNav';
 import DragonflyMark from '../../components/DragonflyMark';
 import { useI18n, useUi, LANGS, type Lang } from '../../i18n';
 import siteUi from '../../i18n/ui/site';
+import LangPicker from '../../components/LangPicker';
 import { go } from '../../lib/go';
 
 export const INK = '#1a1a1a', PAPER = '#fffefd', BLUE = '#3f7486';
@@ -59,13 +60,7 @@ const Footer: React.FC<{ hiring: { eyebrow: string; line: string; cta: string; t
         </div>
         <div className="mt-20 flex flex-wrap items-center gap-x-8 gap-y-4 text-[13px] text-white/55">
           <span>© 2026 Belluh</span>
-          <label className="inline-flex items-center gap-2 text-white">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden><circle cx="12" cy="12" r="9.5" /><path d="M2.5 12h19M12 2.5c3 3.2 3 15.8 0 19M12 2.5c-3 3.2-3 15.8 0 19" /></svg>
-            <span className="sr-only">{t.language}</span>
-            <select value={lang} onChange={e => setLang(e.target.value as Lang)} className="bg-transparent text-[13px] font-semibold text-white focus:outline-none cursor-pointer">
-              {LANGS.map(l => <option key={l.id} value={l.id} className="text-[#1a1a1a]">{l.name}</option>)}
-            </select>
-          </label>
+          <LangPicker dark label={t.language} />
         </div>
       </Wrap>
     </footer>
