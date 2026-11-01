@@ -43,7 +43,7 @@ const Footer: React.FC<{ hiring: { eyebrow: string; line: string; cta: string; t
   const cols: { title: string; links: [string, () => void][] }[] = [
     { title: F.index, links: [[S.mission, () => go('/mission')], [S.impact, () => go('/impact')], [S.research, () => go('/research')], [S.careers, () => go('/careers')], [F.newsroom, () => go('/newsroom')], [F.stories, () => go('/stories')], [S.why, () => go('/about')], [F.contact, () => go('/contact')]] },
     { title: F.resources, links: [[F.safetyTips, () => go('/safety-tips')], [n.faq, () => go('/faq')], [F.press, () => go('/press')], [F.howItWorks, () => go('/how-belluh-works')], [F.nfaq, () => go('/nfaq')]] },
-    { title: t.legal, links: [[F.security, () => go('/security')], [t.terms, () => onShowLegal('tos')], [t.privacyPolicy, () => onShowLegal('privacy')], [F.cookies, () => go('/cookies')], [F.healthData, () => go('/consumer-health-data')], [F.privacyChoices, () => openPrivacyCenter()], [F.accessibility, () => go('/accessibility')]] },
+    { title: t.legal, links: [[F.security, () => go('/security')], [t.terms, () => go('/terms')], [t.privacyPolicy, () => go('/privacy')], [F.cookies, () => go('/cookies')], [F.healthData, () => go('/consumer-health-data')], [F.privacyChoices, () => openPrivacyCenter()], [F.accessibility, () => go('/accessibility')]] },
   ];
   return (
     <footer className="text-white" style={{ background: INK }}>

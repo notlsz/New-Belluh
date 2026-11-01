@@ -1,6 +1,6 @@
 // The pages behind the footer, one for each resource and policy a company like Belluh owes the people who use it:
-// newsroom, your stories, contact, safety, FAQ, trust and safety, press, how Belluh works, the not-so-frequent
-// questions, security, cookies, consumer health data, your privacy choices, accessibility. All in Belluh's own words,
+// newsroom, your stories, contact, safety, how Belluh works, the not-so-frequent questions, your privacy choices,
+// accessibility. Security, cookies and consumer health data have their own legal pages (LegalPage.tsx). All in Belluh's own words,
 // and only what is true of Belluh today. Policies point to the Privacy Policy and Terms, which govern.
 import React from 'react';
 import { useI18n, useUi } from '../../i18n';
@@ -23,14 +23,8 @@ const SHAPE: Record<Slug, Shape> = {
   stories: { cta: { mail: HELLO, subject: 'story' } },
   contact: { links: { 0: [{ mail: HELLO, subject: 'help', addr: true }], 1: [{ mail: PRIVACY, subject: 'privacy', addr: true }], 2: [{ to: '/press' }, { to: '/impact' }, { to: '/careers' }] } },
   'safety-tips': {},
-  faq: {},
-  'trust-and-safety': { links: { 3: [{ mail: HELLO, subject: 'report' }, { to: '/safety-tips' }] } },
-  press: { links: { 1: [{ href: '/dragonfly.png' }, { href: '/icon-512.png' }], 2: [{ mail: HELLO, subject: 'press', addr: true }] } },
   'how-belluh-works': { links: { 3: [{ to: '/research' }] } },
   nfaq: {},
-  security: { updated: true, links: { 3: [{ mail: HELLO, subject: 'security' }] } },
-  cookies: { updated: true },
-  'consumer-health-data': { updated: true, links: { 3: [{ mail: PRIVACY, subject: 'healthData', addr: true }] } },
   'privacy-choices': { updated: true, links: { 1: [{ mail: PRIVACY, subject: 'data' }], 2: [{ mail: PRIVACY, subject: 'optOut' }] } },
   accessibility: { updated: true, links: { 2: [{ mail: HELLO, subject: 'accessibility' }] } },
 };
@@ -53,9 +47,7 @@ const ResourcePage: React.FC<PageProps & { slug: string }> = ({ slug, ...p }) =>
     let n = 0;
     return (shape.links?.[i] ?? []).map(tg => ({ label: tg.addr && tg.mail ? tg.mail : x.links?.[n++] ?? '', to: tg.to, href: href(tg) }));
   };
-  const parts = key === 'faq'
-    ? d.faq.items.map(x => ({ h: x.q, p: [x.a], links: [] as Link[] }))
-    : doc.parts.map((x, i) => ({ ...x, h: x.h && shape.dates?.[i] ? f(x.h, { date: month(shape.dates[i], x.h.startsWith('{date}')) }) : x.h, links: linksOf(x, i) }));
+  const parts = doc.parts.map((x, i) => ({ ...x, h: x.h && shape.dates?.[i] ? f(x.h, { date: month(shape.dates[i], x.h.startsWith('{date}')) }) : x.h, links: linksOf(x, i) }));
   const cta = doc.cta && shape.cta ? { label: doc.cta, to: shape.cta.to, href: href(shape.cta) } : null;
   // "The {privacy} and {terms} govern", with each name a button, in the reader's word order
   const closing = P.closing.split(/(\{privacy\}|\{terms\})/).map((bit, i) =>

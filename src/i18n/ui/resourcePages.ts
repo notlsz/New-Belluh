@@ -1,20 +1,20 @@
 // The words on the pages behind the footer (src/pages/company/Resources.tsx): newsroom, stories, contact, safety,
-// FAQ, trust and safety, press, how Belluh works, NFAQ, security, cookies, consumer health data, privacy choices and
-// accessibility. Routes, email addresses and files stay in the page; only the words live here. Each part's `links`
+// how Belluh works, NFAQ, privacy choices and accessibility. Security, cookies and consumer health data are legal pages
+// now (src/pages/company/LegalPage.tsx, words in legalPages.ts). Routes, email addresses and files stay in the page; only the words live here. Each part's `links`
 // holds the labels of its links that aren't an email address, in order. Policy pages are translated faithfully: no
 // claim added or removed. {date} is filled with a date written the reader's way.
 import type { UiTable } from '../ui';
 
 export type PartT = { h?: string; p?: string[]; list?: string[]; links?: string[] };
 export type DocT = { eyebrow: string; title: string; lede: string; parts: PartT[]; cta?: string };
-export type Slug = 'newsroom' | 'stories' | 'contact' | 'safety-tips' | 'faq' | 'trust-and-safety' | 'press' | 'how-belluh-works' | 'nfaq' | 'security' | 'cookies' | 'consumer-health-data' | 'privacy-choices' | 'accessibility';
-type Subjects = { story: string; help: string; privacy: string; report: string; press: string; security: string; healthData: string; data: string; optOut: string; accessibility: string };
+export type Slug = 'newsroom' | 'stories' | 'contact' | 'safety-tips' | 'how-belluh-works' | 'nfaq' | 'privacy-choices' | 'accessibility';
+type Subjects = { story: string; help: string; privacy: string; data: string; optOut: string; accessibility: string };
 type T = { updated: string; closing: string; subjects: Subjects; docs: Record<Slug, DocT> };
 
 const en: T = {
   updated: 'Last updated {date}',
   closing: 'This page explains how things work in plain words. The {privacy} and {terms} govern.',
-  subjects: { story: 'Our Belluh story', help: 'Help', privacy: 'Privacy request', report: 'Report', press: 'Press', security: 'Security report', healthData: 'Consumer health data request', data: 'Data request', optOut: 'Opt-out request', accessibility: 'Accessibility' },
+  subjects: { story: 'Our Belluh story', help: 'Help', privacy: 'Privacy request', data: 'Data request', optOut: 'Opt-out request', accessibility: 'Accessibility' },
   docs: {
     newsroom: {
       eyebrow: 'Newsroom', title: 'What’s new at Belluh.', lede: 'Product news and announcements, newest first. For interviews and press questions, see Press resources.',
@@ -50,24 +50,6 @@ const en: T = {
         { h: 'Get help now', p: ['If you are in danger, call your local emergency number. In the U.S., call 911.', 'National Domestic Violence Hotline (U.S.): call 1-800-799-7233 or text START to 88788. It is free and confidential, any time.', '988 Suicide & Crisis Lifeline (U.S.): call or text 988.', 'Outside the U.S., your local emergency number and local support services can help.'] },
       ],
     },
-    faq: { eyebrow: 'FAQ', title: 'Questions, answered.', lede: 'The questions couples ask us most.', parts: [] },
-    'trust-and-safety': {
-      eyebrow: 'Trust & Safety', title: 'Built to be trusted with your love story.', lede: 'Your journal holds the most personal things you will ever write down. Here is how we look after it, and how we keep Belluh kind.',
-      parts: [
-        { h: 'Private by default', p: ['Every entry is shared or private, your call. Your partner never sees your private entries, and neither does Bella when she talks with them.'] },
-        { h: 'You choose what goes public', p: ['Guides are private until you decide otherwise: you can keep a guide to yourselves, share it with friends by link, or post it for every couple. You can change your mind any time.'] },
-        { h: 'Keeping the community kind', p: ['Guides posted for everyone must be about real places and written in good faith. No hate, harassment, sexual content, scams or other people’s private information.'] },
-        { h: 'Report something', p: ['If you see a guide or anything else on Belluh that breaks these rules, or someone is using Belluh to hurt you, tell us. We read every report.'], links: ['Report to Belluh', 'Safety tips and help'] },
-      ],
-    },
-    press: {
-      eyebrow: 'Press resources', title: 'Writing about Belluh?', lede: 'Everything you need, and a person to talk to.',
-      parts: [
-        { h: 'About Belluh', p: ['Belluh is a shared AI journal for couples. Bella, its AI, remembers what matters to you both, plans dates your partner can accept with one tap, and reminds you before the days that count, so busy couples stay close. Belluh is free to start and available in eight languages.'] },
-        { h: 'Brand', p: ['Name: Belluh, always with a capital B. The AI is Bella.', 'Colors: Belluh blue #9BBECB and Belluh pink #F0ADDD.'], links: ['Download the mark (PNG)', 'Download the app icon (PNG)'] },
-        { h: 'Press contact' },
-      ],
-    },
     'how-belluh-works': {
       eyebrow: 'How Belluh works', title: 'How Bella helps you stay close.', lede: 'No magic, no mystery. Here is what Bella looks at, and what she does with it.',
       parts: [
@@ -81,36 +63,10 @@ const en: T = {
       eyebrow: 'NFAQ', title: 'Not-so frequently asked questions.', lede: 'Things nobody asks, answered anyway.',
       parts: [
         { h: 'Why is the logo a dragonfly?', p: ['Dragonflies are light, quick, and turn up when the day is warm. That’s the feeling we want Belluh to leave behind.'] },
-        { h: 'Who is Bella?', p: ['Belluh’s AI. She remembers what you’d forget, plans what you’d put off, and never takes sides.'] },
+        { h: 'Who is Bella?', p: ['Bella is Belluh’s AI. She remembers what you’d forget, plans what you’d put off, and never takes sides. Her name comes from a very special person.', 'Fun fact: “Belluh” is a playful twist on the sounds of the word “bella”.'] },
         { h: 'Can Bella settle who’s right?', p: ['No. She never takes sides. She might suggest dinner, though.'] },
         { h: 'Does Belluh work if we live in different time zones?', p: ['Yes. Belluh keeps each of your time zones, so reminders land at the right hour for both of you.'] },
         { h: 'What’s the most romantic thing Belluh can do?', p: ['Remember something your partner said once, months ago, at exactly the right moment.'] },
-      ],
-    },
-    security: {
-      eyebrow: 'Security', title: 'How we protect your data.', lede: 'Security at Belluh, in plain words.',
-      parts: [
-        { h: 'Who can see what', p: ['Database rules decide who can read each piece of data: your journal is readable only by the people in your circle, and private entries only by you. These rules run on the server, not just in the app.'] },
-        { h: 'Photos and voice notes', p: ['Your photos and voice notes are kept in private storage. The app shows them using links that expire shortly after they are made, so a copied link stops working.'] },
-        { h: 'In transit and at rest', p: ['Belluh is served only over HTTPS. Passwords are handled by our authentication provider and are never stored in plain text. Payments are handled by third-party payment processors; we do not store full card numbers.'] },
-        { h: 'Report a vulnerability', p: ['If you believe you’ve found a security issue, please email us before sharing it publicly, with steps to reproduce it. We will respond, keep you updated, and credit you if you’d like.'], links: ['Report a security issue'] },
-      ],
-    },
-    cookies: {
-      eyebrow: 'Cookie policy', title: 'Cookies and similar storage.', lede: 'What Belluh stores in your browser, and why.',
-      parts: [
-        { h: 'What we store', list: ['Sign-in: keeps you signed in on this device.', 'Your settings: things like your language, time zone and whether the sidebar is open.', 'Things in progress: an invite you followed, or a question you started before signing in, so it’s still there after you sign in.'] },
-        { h: 'Why', p: ['These are needed for Belluh to work, or to remember your choices. The Privacy Policy explains everything else we collect, including usage and analytics data, and how we use it.'] },
-        { h: 'Your choices', p: ['You can clear site data in your browser settings at any time. If you do, you’ll be signed out and your on-device settings will reset.'] },
-      ],
-    },
-    'consumer-health-data': {
-      eyebrow: 'Consumer health data privacy policy', title: 'Health information you choose to share.', lede: 'Some U.S. states, such as Washington, give you specific rights over consumer health data. This page explains how that applies to Belluh.',
-      parts: [
-        { h: 'What this covers', p: ['Belluh is not a medical service. But what you write in your journal, how you feel, how you’re sleeping, a doctor’s visit you mention, could include information about your health. This page covers that information.'] },
-        { h: 'How we use it', p: ['Only to run Belluh for you: to keep your journal, and for Bella to help you as described in the Privacy Policy. Private entries stay private, including from your partner.'] },
-        { h: 'Your rights', list: ['Know what health information we have about you.', 'Get a copy of it.', 'Have it deleted.', 'Withdraw your consent to our using it.'] },
-        { h: 'How to ask', p: ['Email us. We will confirm it’s you, and respond within the time the law requires.'] },
       ],
     },
     'privacy-choices': {
@@ -135,7 +91,7 @@ const en: T = {
 const ja: T = {
   updated: '最終更新日：{date}',
   closing: 'このページは、しくみをわかりやすい言葉で説明したものです。正式な内容は{privacy}と{terms}に定めています。',
-  subjects: { story: 'わたしたちのBelluhストーリー', help: 'ヘルプ', privacy: 'プライバシーに関するリクエスト', report: '報告', press: '取材のお問い合わせ', security: 'セキュリティの報告', healthData: '消費者健康データに関するリクエスト', data: 'データに関するリクエスト', optOut: 'オプトアウトのリクエスト', accessibility: 'アクセシビリティ' },
+  subjects: { story: 'わたしたちのBelluhストーリー', help: 'ヘルプ', privacy: 'プライバシーに関するリクエスト', data: 'データに関するリクエスト', optOut: 'オプトアウトのリクエスト', accessibility: 'アクセシビリティ' },
   docs: {
     newsroom: {
       eyebrow: 'ニュース', title: 'Belluhの最新情報。', lede: 'プロダクトのニュースとお知らせを、新しい順に。取材やメディアからのご質問は、プレス向け情報をご覧ください。',
@@ -171,24 +127,6 @@ const ja: T = {
         { h: '今すぐ助けが必要なとき', p: ['危険を感じたら、お住まいの地域の緊急通報番号に電話してください（日本では警察は110番、救急は119番）。米国では911番です。', '全米DVホットライン（米国）：1-800-799-7233に電話するか、88788にSTARTとテキストを送信。24時間無料で、秘密は守られます。', '988 自殺・危機ライフライン（米国）：988に電話またはテキスト。', '米国外では、お住まいの地域の緊急通報番号や地元の支援窓口が力になってくれます。'] },
       ],
     },
-    faq: { eyebrow: 'よくある質問', title: 'よくある質問に、お答えします。', lede: 'カップルからいちばんよく寄せられる質問です。', parts: [] },
-    'trust-and-safety': {
-      eyebrow: '信頼と安全', title: 'ふたりのラブストーリーを、安心して預けられるように。', lede: 'ジャーナルには、あなたがこれまでに書き留めるなかでいちばん個人的なことが残ります。それをどう守り、Belluhをやさしい場所に保っているかをお伝えします。',
-      parts: [
-        { h: '最初から非公開', p: ['どの投稿も、共有するか非公開にするかはあなたが決められます。非公開の投稿は、パートナーにも、パートナーと話すときのBellaにも見えません。'] },
-        { h: '公開するかどうかは、あなたが決める', p: ['ガイドは、あなたが決めるまで非公開です。ふたりだけのものにする、リンクで友だちに共有する、すべてのカップルに公開する、から選べます。あとからいつでも変えられます。'] },
-        { h: 'やさしいコミュニティのために', p: ['みんなに公開するガイドは、実在する場所について、誠実に書かれたものに限ります。ヘイト、嫌がらせ、性的なコンテンツ、詐欺、他人の個人情報は禁止です。'] },
-        { h: '報告する', p: ['ルールに反するガイドなどをBelluhで見つけたとき、または誰かがBelluhを使ってあなたを傷つけているときは、お知らせください。報告はすべて読んでいます。'], links: ['Belluhに報告する', '安全のためのヒントと相談先'] },
-      ],
-    },
-    press: {
-      eyebrow: 'プレス向け情報', title: 'Belluhについて書いてくださる方へ。', lede: '必要な情報はここにそろっています。担当者にも直接ご相談いただけます。',
-      parts: [
-        { h: 'Belluhについて', p: ['Belluhは、カップルのためのAI共有ジャーナルです。AIのBellaが、ふたりにとって大切なことを覚え、パートナーがワンタップで受けられるデートを計画し、大事な日の前にリマインドしてくれます。忙しいカップルも、近くにいられるように。Belluhは無料で始められ、8言語に対応しています。'] },
-        { h: 'ブランド', p: ['名称：Belluh（Bは常に大文字）。AIの名前はBellaです。', 'カラー：Belluhブルー #9BBECB、Belluhピンク #F0ADDD。'], links: ['ロゴマークをダウンロード（PNG）', 'アプリアイコンをダウンロード（PNG）'] },
-        { h: 'プレスのお問い合わせ' },
-      ],
-    },
     'how-belluh-works': {
       eyebrow: 'Belluhのしくみ', title: 'Bellaが、ふたりの距離を近づけるしくみ。', lede: '魔法も、秘密もありません。Bellaが何を見て、それをどう使うのかをご説明します。',
       parts: [
@@ -202,36 +140,10 @@ const ja: T = {
       eyebrow: 'めったにない質問', title: 'めったに聞かれない質問。', lede: '誰も聞かないけれど、答えておきます。',
       parts: [
         { h: 'ロゴはなぜトンボなの？', p: ['トンボは軽やかで、すばしこくて、あたたかい日に姿を見せます。Belluhが残したいのは、そんな気持ちです。'] },
-        { h: 'Bellaって誰？', p: ['BelluhのAIです。あなたが忘れそうなことを覚えていて、後回しにしそうなことを計画してくれて、どちらの味方にもつきません。'] },
+        { h: 'Bellaって誰？', p: ['BellaはBelluhのAIです。あなたが忘れそうなことを覚えていて、後回しにしそうなことを計画してくれて、どちらの味方にもつきません。名前は、ある特別な人に由来しています。', 'ちなみに「Belluh」という名前は、「bella」という言葉の響きを遊び心たっぷりにアレンジしたものです。'] },
         { h: 'どっちが正しいか、Bellaに決めてもらえる？', p: ['いいえ。Bellaはどちらの味方にもつきません。ただ、晩ごはんを提案してくれるかもしれません。'] },
         { h: '住んでいるタイムゾーンが違っても使える？', p: ['はい。Belluhはそれぞれのタイムゾーンを覚えているので、リマインダーはふたりにとってちょうどいい時間に届きます。'] },
         { h: 'Belluhにできる、いちばんロマンチックなことは？', p: ['何か月も前にパートナーが一度だけ口にしたことを、ここぞというタイミングで思い出させること。'] },
-      ],
-    },
-    security: {
-      eyebrow: 'セキュリティ', title: 'データの守り方。', lede: 'Belluhのセキュリティを、わかりやすい言葉で。',
-      parts: [
-        { h: '誰が何を見られるか', p: ['データベースのルールが、どのデータを誰が読めるかを決めています。ジャーナルを読めるのはサークルのメンバーだけ、非公開の投稿を読めるのはあなただけです。これらのルールはアプリの中だけでなく、サーバー上で動いています。'] },
-        { h: '写真とボイスメモ', p: ['写真とボイスメモは非公開のストレージに保管されます。アプリでは作成後まもなく期限が切れるリンクを使って表示するため、コピーしたリンクはやがて使えなくなります。'] },
-        { h: '通信中と保存時', p: ['BelluhはHTTPSでのみ提供されています。パスワードは認証プロバイダーが管理し、平文で保存されることはありません。決済は第三者の決済代行業者が処理し、カード番号の全桁を当社が保存することはありません。'] },
-        { h: '脆弱性の報告', p: ['セキュリティ上の問題を見つけたと思われる場合は、公表する前に、再現手順を添えてメールでお知らせください。当社は返信し、対応状況をお伝えし、ご希望があればお名前をクレジットします。'], links: ['セキュリティの問題を報告する'] },
-      ],
-    },
-    cookies: {
-      eyebrow: 'Cookieポリシー', title: 'Cookieと類似のストレージ。', lede: 'Belluhがブラウザに何を保存し、なぜ保存するのか。',
-      parts: [
-        { h: '保存するもの', list: ['ログイン情報：この端末でログインしたままにします。', '設定：言語、タイムゾーン、サイドバーを開いているかどうかなど。', '途中の操作：たどってきた招待や、ログイン前に書き始めた質問など。ログインしたあとも残るようにします。'] },
-        { h: '理由', p: ['これらは、Belluhが動作するため、またはあなたの選択を覚えておくために必要です。利用状況や分析のデータを含め、当社が収集するそのほかの情報とその使い方は、プライバシーポリシーで説明しています。'] },
-        { h: 'あなたの選択', p: ['サイトのデータは、ブラウザの設定からいつでも消去できます。消去するとログアウトされ、端末上の設定はリセットされます。'] },
-      ],
-    },
-    'consumer-health-data': {
-      eyebrow: '消費者健康データ・プライバシーポリシー', title: 'あなたが共有を選んだ健康に関する情報。', lede: 'ワシントン州など米国の一部の州では、消費者健康データについて特定の権利が認められています。このページでは、それがBelluhにどう当てはまるかを説明します。',
-      parts: [
-        { h: '対象となる情報', p: ['Belluhは医療サービスではありません。ただ、ジャーナルに書く内容、たとえば気分や睡眠の様子、触れた通院のことなどに、健康に関する情報が含まれる可能性があります。このページはそうした情報を対象としています。'] },
-        { h: '使い方', p: ['あなたのためにBelluhを運営する目的にのみ使います。ジャーナルを保管すること、そしてプライバシーポリシーに記載のとおりBellaがあなたを手助けすることです。非公開の投稿は、パートナーに対しても非公開のままです。'] },
-        { h: 'あなたの権利', list: ['当社が保有するあなたの健康に関する情報を知ること。', 'その写しを受け取ること。', '削除してもらうこと。', '当社による利用への同意を撤回すること。'] },
-        { h: '請求の方法', p: ['メールでご連絡ください。ご本人であることを確認したうえで、法律で定められた期間内に対応します。'] },
       ],
     },
     'privacy-choices': {
@@ -256,7 +168,7 @@ const ja: T = {
 const fr: T = {
   updated: 'Dernière mise à jour : {date}',
   closing: 'Cette page explique simplement comment les choses fonctionnent. Ce sont la {privacy} et les {terms} qui font foi.',
-  subjects: { story: 'Notre histoire avec Belluh', help: 'Aide', privacy: 'Demande relative à la vie privée', report: 'Signalement', press: 'Presse', security: 'Signalement de sécurité', healthData: 'Demande relative aux données de santé', data: 'Demande relative aux données', optOut: 'Demande d’opposition', accessibility: 'Accessibilité' },
+  subjects: { story: 'Notre histoire avec Belluh', help: 'Aide', privacy: 'Demande relative à la vie privée', data: 'Demande relative aux données', optOut: 'Demande d’opposition', accessibility: 'Accessibilité' },
   docs: {
     newsroom: {
       eyebrow: 'Actualités', title: 'Les nouveautés de Belluh.', lede: 'Annonces et nouveautés produit, des plus récentes aux plus anciennes. Pour une interview ou une question de presse, consulte l’Espace presse.',
@@ -292,24 +204,6 @@ const fr: T = {
         { h: 'Obtenir de l’aide maintenant', p: ['Si tu es en danger, appelle le numéro d’urgence de ton pays (en Europe, le 112). Aux États-Unis, appelle le 911.', 'National Domestic Violence Hotline (États-Unis) : appelle le 1-800-799-7233 ou envoie START par SMS au 88788. Gratuit et confidentiel, à toute heure.', '988 Suicide & Crisis Lifeline (États-Unis) : appelle ou envoie un SMS au 988.', 'Hors des États-Unis, le numéro d’urgence de ton pays et les services d’aide locaux peuvent t’aider.'] },
       ],
     },
-    faq: { eyebrow: 'FAQ', title: 'Vos questions, nos réponses.', lede: 'Les questions que les couples nous posent le plus.', parts: [] },
-    'trust-and-safety': {
-      eyebrow: 'Confiance et sécurité', title: 'Conçu pour qu’on puisse lui confier votre histoire d’amour.', lede: 'Ton journal contient les choses les plus personnelles que tu écriras jamais. Voici comment nous en prenons soin, et comment nous gardons Belluh bienveillant.',
-      parts: [
-        { h: 'Privé par défaut', p: ['Chaque entrée est partagée ou privée, c’est toi qui choisis. Ton ou ta partenaire ne voit jamais tes entrées privées, et Bella non plus quand elle lui parle.'] },
-        { h: 'Tu choisis ce qui devient public', p: ['Les guides restent privés tant que tu n’en décides pas autrement : tu peux garder un guide pour vous deux, le partager avec des amis par lien, ou le publier pour tous les couples. Tu peux changer d’avis à tout moment.'] },
-        { h: 'Une communauté bienveillante', p: ['Les guides publiés pour tous doivent porter sur des lieux réels et être écrits de bonne foi. Pas de haine, de harcèlement, de contenu sexuel, d’arnaques ni d’informations privées sur d’autres personnes.'] },
-        { h: 'Signaler un problème', p: ['Si tu vois un guide ou autre chose sur Belluh qui enfreint ces règles, ou si quelqu’un utilise Belluh pour te faire du mal, dis-le-nous. Nous lisons chaque signalement.'], links: ['Signaler à Belluh', 'Conseils de sécurité et aide'] },
-      ],
-    },
-    press: {
-      eyebrow: 'Espace presse', title: 'Vous écrivez sur Belluh ?', lede: 'Tout ce qu’il vous faut, et une personne à qui parler.',
-      parts: [
-        { h: 'À propos de Belluh', p: ['Belluh est un journal partagé pour les couples, porté par l’IA. Bella, son IA, retient ce qui compte pour vous deux, planifie des rendez-vous que l’autre peut accepter d’un geste, et vous rappelle les jours importants à l’avance, pour que les couples très occupés restent proches. Belluh est gratuit pour commencer et disponible en huit langues.'] },
-        { h: 'Marque', p: ['Nom : Belluh, toujours avec un B majuscule. L’IA s’appelle Bella.', 'Couleurs : bleu Belluh #9BBECB et rose Belluh #F0ADDD.'], links: ['Télécharger le logo (PNG)', 'Télécharger l’icône de l’app (PNG)'] },
-        { h: 'Contact presse' },
-      ],
-    },
     'how-belluh-works': {
       eyebrow: 'Comment ça marche', title: 'Comment Bella vous aide à rester proches.', lede: 'Pas de magie, pas de mystère. Voici ce que Bella regarde, et ce qu’elle en fait.',
       parts: [
@@ -323,36 +217,10 @@ const fr: T = {
       eyebrow: 'Questions insolites', title: 'Les questions qu’on ne pose pas souvent.', lede: 'Personne ne les pose, on y répond quand même.',
       parts: [
         { h: 'Pourquoi une libellule comme logo ?', p: ['Les libellules sont légères, vives, et apparaissent quand il fait beau. C’est le sentiment qu’on veut que Belluh laisse derrière lui.'] },
-        { h: 'Qui est Bella ?', p: ['L’IA de Belluh. Elle se souvient de ce que tu oublierais, planifie ce que tu remettrais à plus tard, et ne prend jamais parti.'] },
+        { h: 'Qui est Bella ?', p: ['Bella, c’est l’IA de Belluh. Elle se souvient de ce que tu oublierais, planifie ce que tu remettrais à plus tard, et ne prend jamais parti. Son prénom vient d’une personne très spéciale.', 'Le saviez-vous ? « Belluh » est un clin d’œil espiègle aux sonorités du mot « bella ».'] },
         { h: 'Bella peut-elle dire qui a raison ?', p: ['Non. Elle ne prend jamais parti. Elle pourrait par contre vous proposer un dîner.'] },
         { h: 'Belluh fonctionne-t-il si on vit sur des fuseaux horaires différents ?', p: ['Oui. Belluh garde le fuseau horaire de chacun, pour que les rappels arrivent à la bonne heure pour vous deux.'] },
         { h: 'Quelle est la chose la plus romantique que Belluh puisse faire ?', p: ['Se souvenir d’une chose que ton ou ta partenaire a dite une seule fois, il y a des mois, au moment parfait.'] },
-      ],
-    },
-    security: {
-      eyebrow: 'Sécurité', title: 'Comment nous protégeons tes données.', lede: 'La sécurité chez Belluh, en termes simples.',
-      parts: [
-        { h: 'Qui peut voir quoi', p: ['Des règles de base de données déterminent qui peut lire chaque donnée : ton journal n’est lisible que par les membres de ton cercle, et les entrées privées uniquement par toi. Ces règles s’appliquent sur le serveur, pas seulement dans l’app.'] },
-        { h: 'Photos et notes vocales', p: ['Tes photos et notes vocales sont conservées dans un stockage privé. L’app les affiche à l’aide de liens qui expirent peu après leur création, si bien qu’un lien copié cesse de fonctionner.'] },
-        { h: 'En transit et au repos', p: ['Belluh est servi uniquement en HTTPS. Les mots de passe sont gérés par notre fournisseur d’authentification et ne sont jamais stockés en clair. Les paiements sont traités par des prestataires de paiement tiers ; nous ne stockons pas les numéros de carte complets.'] },
-        { h: 'Signaler une vulnérabilité', p: ['Si tu penses avoir trouvé une faille de sécurité, écris-nous avant de la rendre publique, avec les étapes pour la reproduire. Nous te répondrons, te tiendrons informé et te citerons si tu le souhaites.'], links: ['Signaler un problème de sécurité'] },
-      ],
-    },
-    cookies: {
-      eyebrow: 'Cookies', title: 'Cookies et stockage similaire.', lede: 'Ce que Belluh enregistre dans ton navigateur, et pourquoi.',
-      parts: [
-        { h: 'Ce que nous enregistrons', list: ['Connexion : te garde connecté sur cet appareil.', 'Tes réglages : par exemple ta langue, ton fuseau horaire et l’ouverture ou non de la barre latérale.', 'Ce qui est en cours : une invitation que tu as suivie, ou une question commencée avant de te connecter, pour la retrouver une fois connecté.'] },
-        { h: 'Pourquoi', p: ['Ces éléments sont nécessaires au fonctionnement de Belluh, ou pour mémoriser tes choix. La Politique de confidentialité explique tout ce que nous collectons d’autre, y compris les données d’utilisation et d’analyse, et l’usage que nous en faisons.'] },
-        { h: 'Tes choix', p: ['Tu peux effacer les données du site dans les réglages de ton navigateur à tout moment. Dans ce cas, tu seras déconnecté et tes réglages sur l’appareil seront réinitialisés.'] },
-      ],
-    },
-    'consumer-health-data': {
-      eyebrow: 'Politique de confidentialité des données de santé des consommateurs', title: 'Les informations de santé que tu choisis de partager.', lede: 'Certains États américains, comme l’État de Washington, t’accordent des droits spécifiques sur les données de santé des consommateurs. Cette page explique comment cela s’applique à Belluh.',
-      parts: [
-        { h: 'Ce qui est concerné', p: ['Belluh n’est pas un service médical. Mais ce que tu écris dans ton journal, ce que tu ressens, comment tu dors, une visite chez le médecin que tu mentionnes, peut contenir des informations sur ta santé. Cette page couvre ces informations.'] },
-        { h: 'Comment nous les utilisons', p: ['Uniquement pour faire fonctionner Belluh pour toi : conserver ton journal, et permettre à Bella de t’aider comme le décrit la Politique de confidentialité. Les entrées privées restent privées, y compris vis-à-vis de ton ou ta partenaire.'] },
-        { h: 'Tes droits', list: ['Savoir quelles informations de santé nous détenons sur toi.', 'En obtenir une copie.', 'Les faire supprimer.', 'Retirer ton consentement à leur utilisation par nous.'] },
-        { h: 'Comment faire une demande', p: ['Écris-nous. Nous vérifierons qu’il s’agit bien de toi et répondrons dans le délai prévu par la loi.'] },
       ],
     },
     'privacy-choices': {
@@ -377,7 +245,7 @@ const fr: T = {
 const it: T = {
   updated: 'Ultimo aggiornamento: {date}',
   closing: 'Questa pagina spiega in parole semplici come funzionano le cose. Fanno fede l’{privacy} e i {terms}.',
-  subjects: { story: 'La nostra storia con Belluh', help: 'Aiuto', privacy: 'Richiesta sulla privacy', report: 'Segnalazione', press: 'Stampa', security: 'Segnalazione di sicurezza', healthData: 'Richiesta sui dati sanitari dei consumatori', data: 'Richiesta sui dati', optOut: 'Richiesta di opposizione', accessibility: 'Accessibilità' },
+  subjects: { story: 'La nostra storia con Belluh', help: 'Aiuto', privacy: 'Richiesta sulla privacy', data: 'Richiesta sui dati', optOut: 'Richiesta di opposizione', accessibility: 'Accessibilità' },
   docs: {
     newsroom: {
       eyebrow: 'Notizie', title: 'Le novità di Belluh.', lede: 'Novità di prodotto e annunci, dal più recente. Per interviste e domande della stampa, vai all’Area stampa.',
@@ -413,24 +281,6 @@ const it: T = {
         { h: 'Chiedi aiuto ora', p: ['Se sei in pericolo, chiama il numero di emergenza del tuo paese (in Italia e in Europa, il 112). Negli Stati Uniti, chiama il 911.', 'National Domestic Violence Hotline (Stati Uniti): chiama l’1-800-799-7233 o invia START via SMS all’88788. È gratuita e riservata, a qualsiasi ora.', '988 Suicide & Crisis Lifeline (Stati Uniti): chiama o invia un SMS al 988.', 'Fuori dagli Stati Uniti, il numero di emergenza del tuo paese e i servizi di supporto locali possono aiutarti.'] },
       ],
     },
-    faq: { eyebrow: 'FAQ', title: 'Domande e risposte.', lede: 'Le domande che le coppie ci fanno più spesso.', parts: [] },
-    'trust-and-safety': {
-      eyebrow: 'Fiducia e sicurezza', title: 'Fatto per custodire la vostra storia d’amore.', lede: 'Il tuo diario contiene le cose più personali che scriverai mai. Ecco come ce ne prendiamo cura, e come manteniamo Belluh un posto gentile.',
-      parts: [
-        { h: 'Privato per impostazione', p: ['Ogni pagina è condivisa o privata, decidi tu. Il tuo partner non vede mai le tue pagine private, e nemmeno Bella quando parla con lui o con lei.'] },
-        { h: 'Scegli tu cosa rendere pubblico', p: ['Le guide restano private finché non decidi diversamente: puoi tenere una guida per voi due, condividerla con gli amici tramite link o pubblicarla per tutte le coppie. Puoi cambiare idea quando vuoi.'] },
-        { h: 'Una comunità gentile', p: ['Le guide pubblicate per tutti devono riguardare luoghi reali ed essere scritte in buona fede. Niente odio, molestie, contenuti sessuali, truffe o informazioni private di altre persone.'] },
-        { h: 'Segnala qualcosa', p: ['Se vedi una guida o qualsiasi altra cosa su Belluh che viola queste regole, o se qualcuno usa Belluh per farti del male, diccelo. Leggiamo ogni segnalazione.'], links: ['Segnala a Belluh', 'Consigli di sicurezza e aiuto'] },
-      ],
-    },
-    press: {
-      eyebrow: 'Area stampa', title: 'Scrivi di Belluh?', lede: 'Tutto quello che ti serve, e una persona con cui parlare.',
-      parts: [
-        { h: 'Chi è Belluh', p: ['Belluh è un diario condiviso per coppie, con l’AI. Bella, la sua AI, ricorda ciò che conta per entrambi, organizza appuntamenti che il partner può accettare con un tocco e ricorda in anticipo i giorni importanti, così anche le coppie più impegnate restano vicine. Belluh si inizia gratis ed è disponibile in otto lingue.'] },
-        { h: 'Marchio', p: ['Nome: Belluh, sempre con la B maiuscola. L’AI si chiama Bella.', 'Colori: blu Belluh #9BBECB e rosa Belluh #F0ADDD.'], links: ['Scarica il logo (PNG)', 'Scarica l’icona dell’app (PNG)'] },
-        { h: 'Contatto stampa' },
-      ],
-    },
     'how-belluh-works': {
       eyebrow: 'Come funziona Belluh', title: 'Come Bella vi aiuta a restare vicini.', lede: 'Niente magia, niente misteri. Ecco cosa guarda Bella, e cosa ne fa.',
       parts: [
@@ -444,36 +294,10 @@ const it: T = {
       eyebrow: 'Domande insolite', title: 'Domande non così frequenti.', lede: 'Cose che nessuno chiede, con risposta comunque.',
       parts: [
         { h: 'Perché il logo è una libellula?', p: ['Le libellule sono leggere, veloci e arrivano quando la giornata è calda. È la sensazione che vogliamo lasci Belluh.'] },
-        { h: 'Chi è Bella?', p: ['L’AI di Belluh. Ricorda quello che dimenticheresti, organizza quello che rimanderesti e non prende mai le parti di nessuno.'] },
+        { h: 'Chi è Bella?', p: ['Bella è l’AI di Belluh. Ricorda quello che dimenticheresti, organizza quello che rimanderesti e non prende mai le parti di nessuno. Il suo nome viene da una persona molto speciale.', 'Curiosità: “Belluh” gioca con i suoni della parola “bella”, con un tocco scherzoso.'] },
         { h: 'Bella può dire chi ha ragione?', p: ['No. Non prende mai le parti di nessuno. Però potrebbe proporvi una cena.'] },
         { h: 'Belluh funziona se viviamo in fusi orari diversi?', p: ['Sì. Belluh tiene conto del fuso orario di ciascuno, così i promemoria arrivano all’ora giusta per entrambi.'] },
         { h: 'Qual è la cosa più romantica che Belluh può fare?', p: ['Ricordare qualcosa che il tuo partner ha detto una volta, mesi fa, esattamente nel momento giusto.'] },
-      ],
-    },
-    security: {
-      eyebrow: 'Sicurezza', title: 'Come proteggiamo i tuoi dati.', lede: 'La sicurezza di Belluh, in parole semplici.',
-      parts: [
-        { h: 'Chi può vedere cosa', p: ['Le regole del database stabiliscono chi può leggere ciascun dato: il tuo diario può essere letto solo dalle persone della tua cerchia, e le pagine private solo da te. Queste regole vengono applicate sul server, non solo nell’app.'] },
-        { h: 'Foto e note vocali', p: ['Le tue foto e note vocali sono conservate in uno spazio di archiviazione privato. L’app le mostra tramite link che scadono poco dopo essere stati creati, quindi un link copiato smette di funzionare.'] },
-        { h: 'In transito e a riposo', p: ['Belluh è servito solo tramite HTTPS. Le password sono gestite dal nostro fornitore di autenticazione e non vengono mai salvate in chiaro. I pagamenti sono gestiti da processori di pagamento terzi; non conserviamo i numeri completi delle carte.'] },
-        { h: 'Segnala una vulnerabilità', p: ['Se pensi di aver trovato un problema di sicurezza, scrivici prima di renderlo pubblico, indicando i passaggi per riprodurlo. Ti risponderemo, ti terremo aggiornato e, se vuoi, ti citeremo.'], links: ['Segnala un problema di sicurezza'] },
-      ],
-    },
-    cookies: {
-      eyebrow: 'Cookie policy', title: 'Cookie e archiviazione simile.', lede: 'Cosa salva Belluh nel tuo browser, e perché.',
-      parts: [
-        { h: 'Cosa salviamo', list: ['Accesso: ti mantiene connesso su questo dispositivo.', 'Le tue impostazioni: ad esempio lingua, fuso orario e se la barra laterale è aperta.', 'Attività in corso: un invito che hai seguito, o una domanda iniziata prima di accedere, così la ritrovi dopo l’accesso.'] },
-        { h: 'Perché', p: ['Servono al funzionamento di Belluh o a ricordare le tue scelte. L’Informativa sulla privacy spiega tutto il resto che raccogliamo, compresi i dati di utilizzo e di analisi, e come li usiamo.'] },
-        { h: 'Le tue scelte', p: ['Puoi cancellare i dati del sito dalle impostazioni del browser in qualsiasi momento. Se lo fai, verrai disconnesso e le impostazioni sul dispositivo verranno azzerate.'] },
-      ],
-    },
-    'consumer-health-data': {
-      eyebrow: 'Informativa sulla privacy dei dati sanitari dei consumatori', title: 'Le informazioni sulla salute che scegli di condividere.', lede: 'Alcuni stati degli USA, come Washington, ti riconoscono diritti specifici sui dati sanitari dei consumatori. Questa pagina spiega come si applicano a Belluh.',
-      parts: [
-        { h: 'Cosa riguarda', p: ['Belluh non è un servizio medico. Ma quello che scrivi nel diario, come ti senti, come dormi, una visita medica che menzioni, potrebbe includere informazioni sulla tua salute. Questa pagina riguarda quelle informazioni.'] },
-        { h: 'Come le usiamo', p: ['Solo per far funzionare Belluh per te: per conservare il tuo diario e perché Bella possa aiutarti come descritto nell’Informativa sulla privacy. Le pagine private restano private, anche per il tuo partner.'] },
-        { h: 'I tuoi diritti', list: ['Sapere quali informazioni sulla salute abbiamo su di te.', 'Riceverne una copia.', 'Farle cancellare.', 'Revocare il consenso al loro utilizzo da parte nostra.'] },
-        { h: 'Come fare richiesta', p: ['Scrivici un’email. Verificheremo che sia tu e risponderemo entro i tempi previsti dalla legge.'] },
       ],
     },
     'privacy-choices': {
@@ -498,7 +322,7 @@ const it: T = {
 const pt: T = {
   updated: 'Última atualização: {date}',
   closing: 'Esta página explica em palavras simples como as coisas funcionam. Prevalecem a {privacy} e os {terms}.',
-  subjects: { story: 'Nossa história com o Belluh', help: 'Ajuda', privacy: 'Solicitação de privacidade', report: 'Denúncia', press: 'Imprensa', security: 'Relato de segurança', healthData: 'Solicitação sobre dados de saúde do consumidor', data: 'Solicitação de dados', optOut: 'Solicitação de opt-out', accessibility: 'Acessibilidade' },
+  subjects: { story: 'Nossa história com o Belluh', help: 'Ajuda', privacy: 'Solicitação de privacidade', data: 'Solicitação de dados', optOut: 'Solicitação de opt-out', accessibility: 'Acessibilidade' },
   docs: {
     newsroom: {
       eyebrow: 'Novidades', title: 'O que há de novo no Belluh.', lede: 'Novidades do produto e anúncios, dos mais recentes aos mais antigos. Para entrevistas e perguntas da imprensa, veja a página de Imprensa.',
@@ -534,24 +358,6 @@ const pt: T = {
         { h: 'Peça ajuda agora', p: ['Se você estiver em perigo, ligue para o número de emergência do seu país (no Brasil, 190 para a polícia; ligue 180 para a Central de Atendimento à Mulher). Nos EUA, ligue 911.', 'National Domestic Violence Hotline (EUA): ligue 1-800-799-7233 ou envie START por SMS para 88788. É gratuita e confidencial, a qualquer hora.', '988 Suicide & Crisis Lifeline (EUA): ligue ou envie SMS para 988.', 'Fora dos EUA, o número de emergência do seu país e os serviços de apoio locais podem ajudar.'] },
       ],
     },
-    faq: { eyebrow: 'Perguntas frequentes', title: 'Perguntas, respondidas.', lede: 'As perguntas que os casais mais nos fazem.', parts: [] },
-    'trust-and-safety': {
-      eyebrow: 'Confiança e segurança', title: 'Feito para guardar a história de amor de vocês.', lede: 'Seu diário guarda as coisas mais pessoais que você vai escrever na vida. Veja como cuidamos dele, e como mantemos o Belluh um lugar gentil.',
-      parts: [
-        { h: 'Privado por padrão', p: ['Cada registro é compartilhado ou privado, você escolhe. Seu par nunca vê seus registros privados, e a Bella também não, quando conversa com ele ou ela.'] },
-        { h: 'Você escolhe o que fica público', p: ['Os guias são privados até você decidir o contrário: você pode guardar um guia só para vocês, compartilhar com amigos por link ou publicar para todos os casais. Dá para mudar de ideia a qualquer momento.'] },
-        { h: 'Uma comunidade gentil', p: ['Guias publicados para todos precisam ser sobre lugares reais e escritos de boa-fé. Nada de ódio, assédio, conteúdo sexual, golpes ou informações privadas de outras pessoas.'] },
-        { h: 'Denuncie', p: ['Se você vir um guia ou qualquer outra coisa no Belluh que quebre essas regras, ou se alguém estiver usando o Belluh para machucar você, conte para a gente. Lemos todas as denúncias.'], links: ['Denunciar ao Belluh', 'Dicas de segurança e ajuda'] },
-      ],
-    },
-    press: {
-      eyebrow: 'Imprensa', title: 'Escrevendo sobre o Belluh?', lede: 'Tudo o que você precisa, e uma pessoa para conversar.',
-      parts: [
-        { h: 'Sobre o Belluh', p: ['O Belluh é um diário compartilhado com IA para casais. A Bella, sua IA, lembra o que importa para vocês dois, planeja encontros que o par pode aceitar com um toque e avisa antes das datas que contam, para que casais ocupados continuem próximos. O Belluh é gratuito para começar e está disponível em oito idiomas.'] },
-        { h: 'Marca', p: ['Nome: Belluh, sempre com B maiúsculo. A IA se chama Bella.', 'Cores: azul Belluh #9BBECB e rosa Belluh #F0ADDD.'], links: ['Baixar o logo (PNG)', 'Baixar o ícone do app (PNG)'] },
-        { h: 'Contato para imprensa' },
-      ],
-    },
     'how-belluh-works': {
       eyebrow: 'Como o Belluh funciona', title: 'Como a Bella ajuda vocês a ficarem próximos.', lede: 'Sem mágica, sem mistério. Veja o que a Bella olha, e o que ela faz com isso.',
       parts: [
@@ -565,36 +371,10 @@ const pt: T = {
       eyebrow: 'Perguntas inusitadas', title: 'Perguntas nem tão frequentes.', lede: 'Coisas que ninguém pergunta, respondidas mesmo assim.',
       parts: [
         { h: 'Por que o logo é uma libélula?', p: ['Libélulas são leves, rápidas e aparecem quando o dia está quente. É essa a sensação que queremos que o Belluh deixe.'] },
-        { h: 'Quem é a Bella?', p: ['A IA do Belluh. Ela lembra o que você esqueceria, planeja o que você deixaria para depois e nunca toma partido.'] },
+        { h: 'Quem é a Bella?', p: ['A Bella é a IA do Belluh. Ela lembra o que você esqueceria, planeja o que você deixaria para depois e nunca toma partido. O nome dela vem de uma pessoa muito especial.', 'Curiosidade: “Belluh” é uma brincadeira com os sons da palavra “bella”.'] },
         { h: 'A Bella pode decidir quem tem razão?', p: ['Não. Ela nunca toma partido. Mas pode sugerir um jantar.'] },
         { h: 'O Belluh funciona se a gente mora em fusos horários diferentes?', p: ['Sim. O Belluh guarda o fuso horário de cada um, então os lembretes chegam na hora certa para os dois.'] },
         { h: 'Qual é a coisa mais romântica que o Belluh pode fazer?', p: ['Lembrar de algo que seu par disse uma única vez, meses atrás, exatamente na hora certa.'] },
-      ],
-    },
-    security: {
-      eyebrow: 'Segurança', title: 'Como protegemos seus dados.', lede: 'A segurança no Belluh, em palavras simples.',
-      parts: [
-        { h: 'Quem pode ver o quê', p: ['Regras do banco de dados definem quem pode ler cada dado: seu diário só pode ser lido pelas pessoas do seu círculo, e os registros privados só por você. Essas regras rodam no servidor, não apenas no app.'] },
-        { h: 'Fotos e mensagens de voz', p: ['Suas fotos e mensagens de voz ficam em um armazenamento privado. O app as exibe usando links que expiram pouco depois de criados, então um link copiado para de funcionar.'] },
-        { h: 'Em trânsito e em repouso', p: ['O Belluh é servido apenas por HTTPS. As senhas são gerenciadas pelo nosso provedor de autenticação e nunca são armazenadas em texto simples. Os pagamentos são processados por processadores de pagamento terceirizados; não armazenamos números completos de cartão.'] },
-        { h: 'Relate uma vulnerabilidade', p: ['Se você acredita ter encontrado um problema de segurança, envie um e-mail para a gente antes de divulgá-lo publicamente, com os passos para reproduzi-lo. Vamos responder, manter você atualizado e dar o crédito a você, se quiser.'], links: ['Relatar um problema de segurança'] },
-      ],
-    },
-    cookies: {
-      eyebrow: 'Política de cookies', title: 'Cookies e armazenamento semelhante.', lede: 'O que o Belluh guarda no seu navegador, e por quê.',
-      parts: [
-        { h: 'O que guardamos', list: ['Login: mantém você conectado neste dispositivo.', 'Suas configurações: coisas como seu idioma, fuso horário e se a barra lateral está aberta.', 'Coisas em andamento: um convite que você seguiu, ou uma pergunta que começou antes de entrar, para que continue lá depois que você entrar.'] },
-        { h: 'Por quê', p: ['Eles são necessários para o Belluh funcionar ou para lembrar suas escolhas. A Política de Privacidade explica tudo o mais que coletamos, incluindo dados de uso e de análise, e como os usamos.'] },
-        { h: 'Suas escolhas', p: ['Você pode limpar os dados do site nas configurações do navegador a qualquer momento. Se fizer isso, você será desconectado e as configurações do dispositivo serão redefinidas.'] },
-      ],
-    },
-    'consumer-health-data': {
-      eyebrow: 'Política de privacidade de dados de saúde do consumidor', title: 'Informações de saúde que você escolhe compartilhar.', lede: 'Alguns estados dos EUA, como Washington, dão a você direitos específicos sobre dados de saúde do consumidor. Esta página explica como isso se aplica ao Belluh.',
-      parts: [
-        { h: 'O que isto abrange', p: ['O Belluh não é um serviço médico. Mas o que você escreve no diário, como se sente, como está dormindo, uma consulta médica que menciona, pode incluir informações sobre sua saúde. Esta página trata dessas informações.'] },
-        { h: 'Como as usamos', p: ['Apenas para operar o Belluh para você: para guardar seu diário e para que a Bella ajude você como descrito na Política de Privacidade. Os registros privados continuam privados, inclusive para seu par.'] },
-        { h: 'Seus direitos', list: ['Saber quais informações de saúde temos sobre você.', 'Obter uma cópia delas.', 'Pedir que sejam excluídas.', 'Retirar seu consentimento para que as usemos.'] },
-        { h: 'Como pedir', p: ['Envie um e-mail para a gente. Vamos confirmar que é você e responder dentro do prazo que a lei exige.'] },
       ],
     },
     'privacy-choices': {
@@ -619,7 +399,7 @@ const pt: T = {
 const zh: T = {
   updated: '最后更新：{date}',
   closing: '本页用通俗的语言说明各项功能如何运作。具体以{privacy}和{terms}为准。',
-  subjects: { story: '我们的 Belluh 故事', help: '求助', privacy: '隐私请求', report: '举报', press: '媒体咨询', security: '安全问题报告', healthData: '消费者健康数据请求', data: '数据请求', optOut: '选择退出请求', accessibility: '无障碍' },
+  subjects: { story: '我们的 Belluh 故事', help: '求助', privacy: '隐私请求', data: '数据请求', optOut: '选择退出请求', accessibility: '无障碍' },
   docs: {
     newsroom: {
       eyebrow: '新闻中心', title: 'Belluh 的最新动态。', lede: '产品新闻和公告，按时间从新到旧排列。采访和媒体问题，请查看媒体资源。',
@@ -655,24 +435,6 @@ const zh: T = {
         { h: '立即求助', p: ['如果你身处危险，请拨打当地的紧急电话（在中国大陆，报警请拨 110，急救请拨 120）。在美国，请拨打 911。', '美国全国家庭暴力热线（美国）：拨打 1-800-799-7233，或发送短信 START 到 88788。全天候免费且保密。', '988 自杀与危机生命线（美国）：拨打或发短信至 988。', '在美国以外，当地的紧急电话和当地的支持服务可以帮助你。'] },
       ],
     },
-    faq: { eyebrow: '常见问题', title: '你问，我们答。', lede: '情侣们问得最多的问题。', parts: [] },
-    'trust-and-safety': {
-      eyebrow: '信任与安全', title: '值得托付你们爱情故事的地方。', lede: '你的日记里，装着你这辈子写下的最私人的东西。这里说说我们如何守护它，又如何让 Belluh 保持友善。',
-      parts: [
-        { h: '默认私密', p: ['每条日记是共享还是私密，由你决定。你的另一半永远看不到你的私密日记，Bella 和对方聊天时也看不到。'] },
-        { h: '公开什么，由你决定', p: ['攻略在你决定之前都是私密的：你可以只留给你们两个人，通过链接分享给朋友，或发布给所有情侣。你随时可以改变主意。'] },
-        { h: '让社区保持友善', p: ['公开发布的攻略必须关于真实的地点，并且出于善意撰写。禁止仇恨、骚扰、色情内容、诈骗或他人的隐私信息。'] },
-        { h: '举报', p: ['如果你在 Belluh 上看到违反这些规则的攻略或其他内容，或者有人利用 Belluh 伤害你，请告诉我们。每一条举报我们都会看。'], links: ['向 Belluh 举报', '安全提示与求助'] },
-      ],
-    },
-    press: {
-      eyebrow: '媒体资源', title: '要写 Belluh？', lede: '你需要的都在这里，还有专人可以联系。',
-      parts: [
-        { h: '关于 Belluh', p: ['Belluh 是一款面向情侣的 AI 共享日记。它的 AI Bella 会记住对你们两人重要的事，安排另一半一键就能接受的约会，并在重要日子到来前提醒你，让忙碌的情侣也能保持亲密。Belluh 可免费开始使用，支持八种语言。'] },
-        { h: '品牌', p: ['名称：Belluh，B 始终大写。AI 的名字是 Bella。', '品牌色：Belluh 蓝 #9BBECB，Belluh 粉 #F0ADDD。'], links: ['下载标志（PNG）', '下载应用图标（PNG）'] },
-        { h: '媒体联系' },
-      ],
-    },
     'how-belluh-works': {
       eyebrow: 'Belluh 如何运作', title: 'Bella 如何帮你们保持亲密。', lede: '没有魔法，也没有秘密。这里说明 Bella 会看什么，以及她用这些做什么。',
       parts: [
@@ -686,36 +448,10 @@ const zh: T = {
       eyebrow: '冷门问题', title: '不太常见的问题。', lede: '没人问过，我们也答了。',
       parts: [
         { h: '为什么标志是一只蜻蜓？', p: ['蜻蜓轻盈、灵巧，总在天气暖和的时候出现。这就是我们希望 Belluh 留给你的感觉。'] },
-        { h: 'Bella 是谁？', p: ['Belluh 的 AI。她记得你会忘的事，安排你会拖的事，而且从不偏袒任何一方。'] },
+        { h: 'Bella 是谁？', p: ['Bella 是 Belluh 的 AI。她记得你会忘的事，安排你会拖的事，而且从不偏袒任何一方。她的名字来自一个非常特别的人。', '冷知识：“Belluh”这个名字，是把“bella”一词的发音俏皮地变了个调。'] },
         { h: 'Bella 能评评谁对谁错吗？', p: ['不能。她从不偏袒任何一方。不过，她可能会建议你们一起去吃顿饭。'] },
         { h: '我们在不同时区，Belluh 还能用吗？', p: ['能。Belluh 会分别记住你们各自的时区，提醒会在对你们两人都合适的时间送达。'] },
         { h: 'Belluh 能做的最浪漫的事是什么？', p: ['在恰好的时刻，想起你的另一半几个月前只说过一次的话。'] },
-      ],
-    },
-    security: {
-      eyebrow: '数据安全', title: '我们如何保护你的数据。', lede: '用通俗的话讲 Belluh 的安全。',
-      parts: [
-        { h: '谁能看到什么', p: ['数据库规则决定每一条数据谁可以读取：你的日记只有你圈子里的人能读，私密日记只有你自己能读。这些规则在服务器上运行，而不只是在应用里。'] },
-        { h: '照片和语音', p: ['你的照片和语音保存在私有存储中。应用通过生成后不久就会失效的链接来显示它们，所以复制出去的链接会失效。'] },
-        { h: '传输中与存储时', p: ['Belluh 仅通过 HTTPS 提供服务。密码由我们的身份验证服务商处理，绝不会以明文存储。付款由第三方支付处理商处理；我们不存储完整的卡号。'] },
-        { h: '报告漏洞', p: ['如果你认为发现了安全问题，请在公开之前先发邮件告诉我们，并附上复现步骤。我们会回复你、随时告知进展，如果你愿意，还会公开致谢。'], links: ['报告安全问题'] },
-      ],
-    },
-    cookies: {
-      eyebrow: 'Cookie 政策', title: 'Cookie 及类似存储。', lede: 'Belluh 在你的浏览器里存储了什么，以及为什么。',
-      parts: [
-        { h: '我们存储的内容', list: ['登录：让你在这台设备上保持登录。', '你的设置：比如语言、时区，以及侧边栏是否展开。', '进行中的内容：你点开的邀请，或登录前开始写的问题，登录后依然还在。'] },
-        { h: '原因', p: ['这些是 Belluh 正常运行或记住你的选择所必需的。我们收集的其他所有信息，包括使用和分析数据，以及我们如何使用它们，请见隐私政策。'] },
-        { h: '你的选择', p: ['你可以随时在浏览器设置中清除网站数据。清除后，你会退出登录，设备上的设置也会重置。'] },
-      ],
-    },
-    'consumer-health-data': {
-      eyebrow: '消费者健康数据隐私政策', title: '你选择分享的健康信息。', lede: '美国的一些州（例如华盛顿州）赋予你关于消费者健康数据的特定权利。本页说明这些规定如何适用于 Belluh。',
-      parts: [
-        { h: '适用范围', p: ['Belluh 不是医疗服务。但你在日记里写的内容，比如你的感受、睡眠情况、你提到的一次看病，可能包含与你健康有关的信息。本页适用于这类信息。'] },
-        { h: '我们如何使用', p: ['仅用于为你提供 Belluh 服务：保存你的日记，以及让 Bella 按隐私政策所述的方式帮助你。私密日记始终私密，对你的另一半也是如此。'] },
-        { h: '你的权利', list: ['了解我们持有哪些关于你的健康信息。', '获取一份副本。', '要求删除。', '撤回你对我们使用这些信息的同意。'] },
-        { h: '如何提出请求', p: ['给我们发邮件。我们会确认是你本人，并在法律规定的期限内答复。'] },
       ],
     },
     'privacy-choices': {
@@ -740,7 +476,7 @@ const zh: T = {
 const de: T = {
   updated: 'Zuletzt aktualisiert: {date}',
   closing: 'Diese Seite erklärt in einfachen Worten, wie alles funktioniert. Maßgeblich sind die {privacy} und die {terms}.',
-  subjects: { story: 'Unsere Belluh-Geschichte', help: 'Hilfe', privacy: 'Datenschutzanfrage', report: 'Meldung', press: 'Presse', security: 'Sicherheitsmeldung', healthData: 'Anfrage zu Gesundheitsdaten von Verbrauchern', data: 'Datenanfrage', optOut: 'Widerspruch', accessibility: 'Barrierefreiheit' },
+  subjects: { story: 'Unsere Belluh-Geschichte', help: 'Hilfe', privacy: 'Datenschutzanfrage', data: 'Datenanfrage', optOut: 'Widerspruch', accessibility: 'Barrierefreiheit' },
   docs: {
     newsroom: {
       eyebrow: 'Neuigkeiten', title: 'Was es Neues bei Belluh gibt.', lede: 'Produktneuheiten und Ankündigungen, die neuesten zuerst. Für Interviews und Presseanfragen schau unter Presse.',
@@ -776,24 +512,6 @@ const de: T = {
         { h: 'Jetzt Hilfe holen', p: ['Wenn du in Gefahr bist, ruf den Notruf deines Landes an (in Deutschland, Österreich und der Schweiz die 112). In den USA wähl die 911.', 'National Domestic Violence Hotline (USA): Ruf 1-800-799-7233 an oder schick START per SMS an 88788. Kostenlos und vertraulich, rund um die Uhr.', '988 Suicide & Crisis Lifeline (USA): Ruf die 988 an oder schreib eine SMS an 988.', 'Außerhalb der USA helfen dir der Notruf deines Landes und Hilfsangebote vor Ort.'] },
       ],
     },
-    faq: { eyebrow: 'FAQ', title: 'Fragen und Antworten.', lede: 'Die Fragen, die Paare uns am häufigsten stellen.', parts: [] },
-    'trust-and-safety': {
-      eyebrow: 'Vertrauen & Sicherheit', title: 'Gebaut, damit ihr ihm eure Liebesgeschichte anvertrauen könnt.', lede: 'In deinem Tagebuch steht das Persönlichste, was du je aufschreiben wirst. So passen wir darauf auf, und so halten wir Belluh freundlich.',
-      parts: [
-        { h: 'Standardmäßig privat', p: ['Jeder Eintrag ist geteilt oder privat, du entscheidest. Dein Partner oder deine Partnerin sieht deine privaten Einträge nie, und Bella auch nicht, wenn sie mit ihm oder ihr spricht.'] },
-        { h: 'Du entscheidest, was öffentlich wird', p: ['Guides sind privat, bis du es anders entscheidest: Du kannst einen Guide für euch behalten, ihn per Link mit Freunden teilen oder für alle Paare veröffentlichen. Du kannst es dir jederzeit anders überlegen.'] },
-        { h: 'Damit die Community freundlich bleibt', p: ['Guides, die für alle veröffentlicht werden, müssen von echten Orten handeln und in gutem Glauben geschrieben sein. Kein Hass, keine Belästigung, keine sexuellen Inhalte, keine Betrugsmaschen und keine privaten Informationen über andere.'] },
-        { h: 'Etwas melden', p: ['Wenn du einen Guide oder etwas anderes auf Belluh siehst, das gegen diese Regeln verstößt, oder wenn jemand Belluh nutzt, um dir zu schaden, sag es uns. Wir lesen jede Meldung.'], links: ['An Belluh melden', 'Sicherheitstipps und Hilfe'] },
-      ],
-    },
-    press: {
-      eyebrow: 'Presse', title: 'Du schreibst über Belluh?', lede: 'Alles, was du brauchst, und ein Mensch zum Reden.',
-      parts: [
-        { h: 'Über Belluh', p: ['Belluh ist ein gemeinsames KI-Tagebuch für Paare. Bella, die KI von Belluh, merkt sich, was euch beiden wichtig ist, plant Dates, die der Partner mit einem Tippen annehmen kann, und erinnert vor den Tagen, die zählen, damit auch vielbeschäftigte Paare einander nah bleiben. Belluh ist zum Start kostenlos und in acht Sprachen verfügbar.'] },
-        { h: 'Marke', p: ['Name: Belluh, immer mit großem B. Die KI heißt Bella.', 'Farben: Belluh-Blau #9BBECB und Belluh-Rosa #F0ADDD.'], links: ['Logo herunterladen (PNG)', 'App-Icon herunterladen (PNG)'] },
-        { h: 'Pressekontakt' },
-      ],
-    },
     'how-belluh-works': {
       eyebrow: 'So funktioniert Belluh', title: 'Wie Bella euch hilft, nah zu bleiben.', lede: 'Keine Magie, kein Geheimnis. Hier steht, was Bella sich ansieht und was sie damit macht.',
       parts: [
@@ -807,36 +525,10 @@ const de: T = {
       eyebrow: 'Seltene Fragen', title: 'Nicht so häufig gestellte Fragen.', lede: 'Was niemand fragt, trotzdem beantwortet.',
       parts: [
         { h: 'Warum ist das Logo eine Libelle?', p: ['Libellen sind leicht, schnell und tauchen auf, wenn der Tag warm ist. Genau dieses Gefühl soll Belluh hinterlassen.'] },
-        { h: 'Wer ist Bella?', p: ['Die KI von Belluh. Sie merkt sich, was du vergessen würdest, plant, was du aufschieben würdest, und ergreift nie Partei.'] },
+        { h: 'Wer ist Bella?', p: ['Bella ist die KI von Belluh. Sie merkt sich, was du vergessen würdest, plant, was du aufschieben würdest, und ergreift nie Partei. Ihr Name geht auf einen ganz besonderen Menschen zurück.', 'Fun Fact: „Belluh“ ist ein verspieltes Wortspiel mit dem Klang des Wortes „bella“.'] },
         { h: 'Kann Bella entscheiden, wer recht hat?', p: ['Nein. Sie ergreift nie Partei. Ein Abendessen schlägt sie vielleicht aber vor.'] },
         { h: 'Funktioniert Belluh, wenn wir in verschiedenen Zeitzonen leben?', p: ['Ja. Belluh kennt die Zeitzone von jedem von euch, damit Erinnerungen für euch beide zur richtigen Stunde ankommen.'] },
         { h: 'Was ist das Romantischste, was Belluh tun kann?', p: ['Sich an etwas erinnern, das dein Partner vor Monaten ein einziges Mal gesagt hat, genau im richtigen Moment.'] },
-      ],
-    },
-    security: {
-      eyebrow: 'Sicherheit', title: 'Wie wir deine Daten schützen.', lede: 'Sicherheit bei Belluh, in einfachen Worten.',
-      parts: [
-        { h: 'Wer was sehen kann', p: ['Datenbankregeln legen fest, wer welche Daten lesen darf: Dein Tagebuch können nur die Menschen in deinem Kreis lesen, private Einträge nur du. Diese Regeln greifen auf dem Server, nicht nur in der App.'] },
-        { h: 'Fotos und Sprachnachrichten', p: ['Deine Fotos und Sprachnachrichten liegen in privatem Speicher. Die App zeigt sie über Links an, die kurz nach ihrer Erstellung ablaufen, sodass ein kopierter Link nicht mehr funktioniert.'] },
-        { h: 'Bei der Übertragung und gespeichert', p: ['Belluh wird nur über HTTPS ausgeliefert. Passwörter verwaltet unser Authentifizierungsanbieter, und sie werden nie im Klartext gespeichert. Zahlungen werden von externen Zahlungsdienstleistern abgewickelt; wir speichern keine vollständigen Kartennummern.'] },
-        { h: 'Eine Sicherheitslücke melden', p: ['Wenn du glaubst, ein Sicherheitsproblem gefunden zu haben, schreib uns bitte eine E-Mail, bevor du es öffentlich machst, mit den Schritten, um es nachzustellen. Wir antworten, halten dich auf dem Laufenden und nennen dich auf Wunsch namentlich.'], links: ['Sicherheitsproblem melden'] },
-      ],
-    },
-    cookies: {
-      eyebrow: 'Cookie-Richtlinie', title: 'Cookies und ähnliche Speicher.', lede: 'Was Belluh in deinem Browser speichert, und warum.',
-      parts: [
-        { h: 'Was wir speichern', list: ['Anmeldung: Hält dich auf diesem Gerät angemeldet.', 'Deine Einstellungen: etwa deine Sprache, deine Zeitzone und ob die Seitenleiste offen ist.', 'Angefangenes: eine Einladung, der du gefolgt bist, oder eine Frage, die du vor der Anmeldung begonnen hast, damit sie nach der Anmeldung noch da ist.'] },
-        { h: 'Warum', p: ['Sie sind nötig, damit Belluh funktioniert oder sich deine Entscheidungen merkt. Die Datenschutzerklärung erklärt alles andere, was wir erheben, einschließlich Nutzungs- und Analysedaten, und wie wir es verwenden.'] },
-        { h: 'Deine Wahl', p: ['Du kannst Websitedaten jederzeit in deinen Browsereinstellungen löschen. Dann wirst du abgemeldet, und deine Einstellungen auf dem Gerät werden zurückgesetzt.'] },
-      ],
-    },
-    'consumer-health-data': {
-      eyebrow: 'Datenschutzrichtlinie für Gesundheitsdaten von Verbrauchern', title: 'Gesundheitsinformationen, die du teilen möchtest.', lede: 'Einige US-Bundesstaaten, etwa Washington, geben dir besondere Rechte an Gesundheitsdaten von Verbrauchern. Diese Seite erklärt, wie das für Belluh gilt.',
-      parts: [
-        { h: 'Worum es geht', p: ['Belluh ist kein medizinischer Dienst. Aber was du in dein Tagebuch schreibst, wie du dich fühlst, wie du schläfst, ein Arztbesuch, den du erwähnst, kann Informationen über deine Gesundheit enthalten. Diese Seite betrifft solche Informationen.'] },
-        { h: 'Wie wir sie verwenden', p: ['Nur, um Belluh für dich zu betreiben: um dein Tagebuch zu speichern und damit Bella dir hilft, wie in der Datenschutzerklärung beschrieben. Private Einträge bleiben privat, auch gegenüber deinem Partner oder deiner Partnerin.'] },
-        { h: 'Deine Rechte', list: ['Erfahren, welche Gesundheitsinformationen wir über dich haben.', 'Eine Kopie davon erhalten.', 'Sie löschen lassen.', 'Deine Einwilligung in unsere Nutzung widerrufen.'] },
-        { h: 'So stellst du eine Anfrage', p: ['Schreib uns eine E-Mail. Wir bestätigen, dass du es bist, und antworten innerhalb der gesetzlich vorgeschriebenen Frist.'] },
       ],
     },
     'privacy-choices': {
@@ -861,7 +553,7 @@ const de: T = {
 const es: T = {
   updated: 'Última actualización: {date}',
   closing: 'Esta página explica con palabras sencillas cómo funcionan las cosas. Prevalecen la {privacy} y las {terms}.',
-  subjects: { story: 'Nuestra historia con Belluh', help: 'Ayuda', privacy: 'Solicitud de privacidad', report: 'Denuncia', press: 'Prensa', security: 'Informe de seguridad', healthData: 'Solicitud sobre datos de salud del consumidor', data: 'Solicitud de datos', optOut: 'Solicitud de exclusión', accessibility: 'Accesibilidad' },
+  subjects: { story: 'Nuestra historia con Belluh', help: 'Ayuda', privacy: 'Solicitud de privacidad', data: 'Solicitud de datos', optOut: 'Solicitud de exclusión', accessibility: 'Accesibilidad' },
   docs: {
     newsroom: {
       eyebrow: 'Noticias', title: 'Novedades de Belluh.', lede: 'Noticias del producto y anuncios, de lo más reciente a lo más antiguo. Para entrevistas y preguntas de prensa, consulta la sección de Prensa.',
@@ -897,24 +589,6 @@ const es: T = {
         { h: 'Pide ayuda ya', p: ['Si estás en peligro, llama al número de emergencias de tu país (en España y en toda Europa, el 112; en España también puedes llamar al 016, que no deja rastro en la factura). En EE. UU., llama al 911.', 'National Domestic Violence Hotline (EE. UU.): llama al 1-800-799-7233 o envía START por SMS al 88788. Es gratuita y confidencial, a cualquier hora.', '988 Suicide & Crisis Lifeline (EE. UU.): llama o envía un SMS al 988.', 'Fuera de EE. UU., el número de emergencias de tu país y los servicios de apoyo locales pueden ayudarte.'] },
       ],
     },
-    faq: { eyebrow: 'Preguntas frecuentes', title: 'Preguntas, respondidas.', lede: 'Las preguntas que más nos hacen las parejas.', parts: [] },
-    'trust-and-safety': {
-      eyebrow: 'Confianza y seguridad', title: 'Hecho para que le confíes vuestra historia de amor.', lede: 'Tu diario guarda las cosas más personales que vas a escribir nunca. Así lo cuidamos, y así mantenemos Belluh como un lugar amable.',
-      parts: [
-        { h: 'Privado por defecto', p: ['Cada entrada es compartida o privada, tú decides. Tu pareja nunca ve tus entradas privadas, y Bella tampoco cuando habla con ella.'] },
-        { h: 'Tú eliges qué se hace público', p: ['Las guías son privadas hasta que decidas lo contrario: puedes guardar una guía para vosotros, compartirla con amigos mediante un enlace o publicarla para todas las parejas. Puedes cambiar de opinión cuando quieras.'] },
-        { h: 'Una comunidad amable', p: ['Las guías publicadas para todos deben tratar sobre lugares reales y estar escritas de buena fe. Nada de odio, acoso, contenido sexual, estafas ni información privada de otras personas.'] },
-        { h: 'Denunciar algo', p: ['Si ves una guía o cualquier otra cosa en Belluh que incumpla estas normas, o alguien está usando Belluh para hacerte daño, cuéntanoslo. Leemos todas las denuncias.'], links: ['Denunciar a Belluh', 'Consejos de seguridad y ayuda'] },
-      ],
-    },
-    press: {
-      eyebrow: 'Prensa', title: '¿Escribes sobre Belluh?', lede: 'Todo lo que necesitas, y una persona con quien hablar.',
-      parts: [
-        { h: 'Sobre Belluh', p: ['Belluh es un diario compartido con IA para parejas. Bella, su IA, recuerda lo que os importa a los dos, organiza citas que tu pareja puede aceptar con un toque y te avisa antes de los días que cuentan, para que las parejas ocupadas sigan cerca. Belluh es gratis para empezar y está disponible en ocho idiomas.'] },
-        { h: 'Marca', p: ['Nombre: Belluh, siempre con B mayúscula. La IA se llama Bella.', 'Colores: azul Belluh #9BBECB y rosa Belluh #F0ADDD.'], links: ['Descargar el logotipo (PNG)', 'Descargar el icono de la app (PNG)'] },
-        { h: 'Contacto de prensa' },
-      ],
-    },
     'how-belluh-works': {
       eyebrow: 'Cómo funciona Belluh', title: 'Cómo Bella os ayuda a seguir cerca.', lede: 'Sin magia ni misterio. Esto es lo que mira Bella y lo que hace con ello.',
       parts: [
@@ -928,36 +602,10 @@ const es: T = {
       eyebrow: 'Preguntas insólitas', title: 'Preguntas no tan frecuentes.', lede: 'Cosas que nadie pregunta, respondidas igualmente.',
       parts: [
         { h: '¿Por qué el logo es una libélula?', p: ['Las libélulas son ligeras, rápidas y aparecen cuando el día es cálido. Esa es la sensación que queremos que deje Belluh.'] },
-        { h: '¿Quién es Bella?', p: ['La IA de Belluh. Recuerda lo que tú olvidarías, planea lo que tú dejarías para luego y nunca toma partido.'] },
+        { h: '¿Quién es Bella?', p: ['Bella es la IA de Belluh. Recuerda lo que tú olvidarías, planea lo que tú dejarías para luego y nunca toma partido. Su nombre viene de una persona muy especial.', 'Dato curioso: «Belluh» es un guiño juguetón a cómo suena la palabra «bella».'] },
         { h: '¿Puede Bella decidir quién tiene razón?', p: ['No. Nunca toma partido. Aunque quizá os proponga ir a cenar.'] },
         { h: '¿Funciona Belluh si vivimos en zonas horarias distintas?', p: ['Sí. Belluh guarda la zona horaria de cada uno, para que los recordatorios lleguen a la hora adecuada para los dos.'] },
         { h: '¿Qué es lo más romántico que puede hacer Belluh?', p: ['Recordar algo que tu pareja dijo una sola vez, hace meses, justo en el momento adecuado.'] },
-      ],
-    },
-    security: {
-      eyebrow: 'Seguridad', title: 'Cómo protegemos tus datos.', lede: 'La seguridad en Belluh, con palabras sencillas.',
-      parts: [
-        { h: 'Quién puede ver qué', p: ['Las reglas de la base de datos deciden quién puede leer cada dato: tu diario solo pueden leerlo las personas de tu círculo, y las entradas privadas solo tú. Estas reglas se aplican en el servidor, no solo en la app.'] },
-        { h: 'Fotos y notas de voz', p: ['Tus fotos y notas de voz se guardan en un almacenamiento privado. La app las muestra mediante enlaces que caducan poco después de crearse, así que un enlace copiado deja de funcionar.'] },
-        { h: 'En tránsito y en reposo', p: ['Belluh se sirve solo a través de HTTPS. Las contraseñas las gestiona nuestro proveedor de autenticación y nunca se guardan en texto plano. Los pagos los gestionan procesadores de pago externos; no guardamos números de tarjeta completos.'] },
-        { h: 'Informar de una vulnerabilidad', p: ['Si crees que has encontrado un problema de seguridad, escríbenos antes de hacerlo público, con los pasos para reproducirlo. Te responderemos, te mantendremos al tanto y te daremos el reconocimiento si lo deseas.'], links: ['Informar de un problema de seguridad'] },
-      ],
-    },
-    cookies: {
-      eyebrow: 'Política de cookies', title: 'Cookies y almacenamiento similar.', lede: 'Qué guarda Belluh en tu navegador, y por qué.',
-      parts: [
-        { h: 'Qué guardamos', list: ['Inicio de sesión: mantiene tu sesión iniciada en este dispositivo.', 'Tus ajustes: cosas como tu idioma, tu zona horaria y si la barra lateral está abierta.', 'Lo que tienes a medias: una invitación que seguiste, o una pregunta que empezaste antes de iniciar sesión, para que siga ahí después de iniciarla.'] },
-        { h: 'Por qué', p: ['Son necesarias para que Belluh funcione o para recordar tus elecciones. La Política de privacidad explica todo lo demás que recopilamos, incluidos los datos de uso y analítica, y cómo lo usamos.'] },
-        { h: 'Tus opciones', p: ['Puedes borrar los datos del sitio desde los ajustes de tu navegador en cualquier momento. Si lo haces, se cerrará tu sesión y se restablecerán los ajustes de tu dispositivo.'] },
-      ],
-    },
-    'consumer-health-data': {
-      eyebrow: 'Política de privacidad de datos de salud del consumidor', title: 'La información de salud que eliges compartir.', lede: 'Algunos estados de EE. UU., como Washington, te otorgan derechos específicos sobre los datos de salud del consumidor. Esta página explica cómo se aplica a Belluh.',
-      parts: [
-        { h: 'Qué abarca', p: ['Belluh no es un servicio médico. Pero lo que escribes en tu diario, cómo te sientes, cómo duermes, una visita al médico que mencionas, puede incluir información sobre tu salud. Esta página trata de esa información.'] },
-        { h: 'Cómo la usamos', p: ['Solo para hacer funcionar Belluh para ti: para guardar tu diario y para que Bella te ayude como se describe en la Política de privacidad. Las entradas privadas siguen siendo privadas, también para tu pareja.'] },
-        { h: 'Tus derechos', list: ['Saber qué información de salud tenemos sobre ti.', 'Obtener una copia.', 'Pedir que se elimine.', 'Retirar tu consentimiento para que la usemos.'] },
-        { h: 'Cómo solicitarlo', p: ['Escríbenos un correo. Confirmaremos que eres tú y responderemos dentro del plazo que exige la ley.'] },
       ],
     },
     'privacy-choices': {
@@ -988,11 +636,6 @@ const t: UiTable<T> = {
     docs: {
       ...es.docs,
       newsroom: { ...es.docs.newsroom, parts: es.docs.newsroom.parts.map((x, i) => i === 3 ? { ...x, h: '{date}: su mapa del amor' } : x) },
-      'trust-and-safety': {
-        ...es.docs['trust-and-safety'], title: 'Hecho para que le confíes su historia de amor.',
-        parts: es.docs['trust-and-safety'].parts.map((x, i) => i === 1 ? { ...x, p: ['Las guías son privadas hasta que decidas lo contrario: puedes guardar una guía solo para ustedes, compartirla con amigos mediante un enlace o publicarla para todas las parejas. Puedes cambiar de opinión cuando quieras.'] } : x),
-      },
-      press: { ...es.docs.press, parts: es.docs.press.parts.map((x, i) => i === 0 ? { ...x, p: ['Belluh es un diario compartido con IA para parejas. Bella, su IA, recuerda lo que les importa a los dos, organiza citas que tu pareja puede aceptar con un toque y te avisa antes de los días que cuentan, para que las parejas ocupadas sigan cerca. Belluh es gratis para empezar y está disponible en ocho idiomas.'] } : x) },
       'how-belluh-works': {
         ...es.docs['how-belluh-works'], title: 'Cómo Bella los ayuda a seguir cerca.',
         parts: es.docs['how-belluh-works'].parts.map((x, i) => i === 1 ? { ...x, list: ['Recuerda los detalles, como su café de siempre o el restaurante de su tercera cita.', 'Te avisa antes de cumpleaños y aniversarios.', 'Propone planes y citas que tu pareja puede aceptar con un toque.', 'Cada domingo te da una idea sobre ustedes y una pequeña cosa para probar juntos.'] } : x),
