@@ -2,11 +2,13 @@
 // big serif statements with a small colored label above them, photos that run off the edge of the screen, numbered
 // ideas in rows, near-black bands for the things we believe, hand-drawn arrows and swashes in Belluh blue, and a
 // share bar and a hiring line at the end of every page.
+import { openPrivacyCenter } from '../../lib/consent';
 import React, { useEffect, useRef, useState } from 'react';
 import SiteNav, { type SitePage } from '../../components/SiteNav';
 import DragonflyMark from '../../components/DragonflyMark';
 import { useI18n, useUi, LANGS, type Lang } from '../../i18n';
 import siteUi from '../../i18n/ui/site';
+import footerUi from '../../i18n/ui/footerLinks';
 import LangPicker from '../../components/LangPicker';
 import { go } from '../../lib/go';
 
@@ -21,24 +23,27 @@ const TYPE = `.co main, .co footer { font-family: 'DM Sans', system-ui, sans-ser
 export const Shell: React.FC<PageProps & { current?: SitePage; title: string; children: React.ReactNode; hiring?: { eyebrow: string; line: string; cta: string; to: string } }> = ({ current, title, children, onGetStarted, onLogin, onShowLegal, hiring }) => {
   useEffect(() => { const before = document.title; document.title = `${title} | Belluh`; return () => { document.title = before; }; }, [title]);
   useEffect(() => { if (document.getElementById('co-fonts')) return; const l = document.createElement('link'); l.id = 'co-fonts'; l.rel = 'stylesheet'; l.href = FONTS; document.head.appendChild(l); }, []);
+  const F = useUi(footerUi);
   return (
     <div className="co min-h-screen text-[#1a1a1a] overflow-x-clip" style={{ background: PAPER }}>
       <style>{TYPE}</style>
       <SiteNav current={current} onHome={() => go('/')} onLogin={onLogin} onGetStarted={onGetStarted} />
       <main className="pt-[72px]">{children}</main>
-      <Footer hiring={hiring ?? { eyebrow: 'Our job openings', line: 'Want to build this with us?', cta: 'We’re hiring', to: '/careers' }} onShowLegal={onShowLegal} />
+      <Footer hiring={hiring ?? { eyebrow: F.hiringEyebrow, line: F.hiringLine, cta: F.hiringCta, to: '/careers' }} onShowLegal={onShowLegal} />
     </div>
   );
 };
 
-// The end of every company page, on one dark ground like hinge.co: the hiring line, a hairline, then the index
+// The end of every company page, on one dark ground like hinge.co: the hiring line, a hairline, then the index.
+// Phones: the mark on its own row, then two link columns. Tablets: three equal link columns. Desktop: a wider column
+// for the mark and three equal link columns, wide enough that a long label (German, French) wraps at most once.
 const Footer: React.FC<{ hiring: { eyebrow: string; line: string; cta: string; to: string }; onShowLegal: PageProps['onShowLegal'] }> = ({ hiring, onShowLegal }) => {
-  const { d, lang, setLang } = useI18n();
-  const S = useUi(siteUi), n = d.nav, t = d.footer;
-    const cols: { title: string; links: [string, () => void][] }[] = [
-    { title: 'Index', links: [[S.mission, () => go('/mission')], [S.impact, () => go('/impact')], [S.research, () => go('/research')], [S.careers, () => go('/careers')], ['Newsroom', () => go('/newsroom')], ['Success stories', () => go('/stories')], [S.why, () => go('/about')], ['Contact', () => go('/contact')]] },
-    { title: 'Resources', links: [['Safety tips', () => go('/safety-tips')], [n.faq, () => go('/faq')], ['Trust & Safety', () => go('/trust-and-safety')], ['Press resources', () => go('/press')], ['How Belluh works', () => go('/how-belluh-works')], ['NFAQ', () => go('/nfaq')]] },
-    { title: t.legal, links: [['Security', () => go('/security')], [t.terms, () => onShowLegal('tos')], [t.privacyPolicy, () => onShowLegal('privacy')], ['Cookie policy', () => go('/cookies')], ['Consumer health data', () => go('/consumer-health-data')], ['Your privacy choices', () => go('/privacy-choices')], ['Accessibility', () => go('/accessibility')]] },
+  const { d, f } = useI18n();
+  const S = useUi(siteUi), F = useUi(footerUi), n = d.nav, t = d.footer;
+  const cols: { title: string; links: [string, () => void][] }[] = [
+    { title: F.index, links: [[S.mission, () => go('/mission')], [S.impact, () => go('/impact')], [S.research, () => go('/research')], [S.careers, () => go('/careers')], [F.newsroom, () => go('/newsroom')], [F.stories, () => go('/stories')], [S.why, () => go('/about')], [F.contact, () => go('/contact')]] },
+    { title: F.resources, links: [[F.safetyTips, () => go('/safety-tips')], [n.faq, () => go('/faq')], [F.press, () => go('/press')], [F.howItWorks, () => go('/how-belluh-works')], [F.nfaq, () => go('/nfaq')]] },
+    { title: t.legal, links: [[F.security, () => go('/security')], [t.terms, () => go('/terms')], [t.privacyPolicy, () => go('/privacy')], [F.cookies, () => go('/cookies')], [F.healthData, () => go('/consumer-health-data')], [F.privacyChoices, () => openPrivacyCenter()], [F.accessibility, () => go('/accessibility')]] },
   ];
   return (
     <footer className="text-white" style={{ background: INK }}>
@@ -46,19 +51,19 @@ const Footer: React.FC<{ hiring: { eyebrow: string; line: string; cta: string; t
         <Reveal><Eyebrow dark>{hiring.eyebrow}</Eyebrow><Big>{hiring.line}</Big><div className="mt-8"><Pill light onClick={() => go(hiring.to)}>{hiring.cta}</Pill></div></Reveal>
       </Wrap>
       <Wrap className="pt-16 md:pt-24 pb-12">
-        <div className="grid grid-cols-2 md:grid-cols-[1fr_auto_auto_auto] gap-x-10 md:gap-x-20 gap-y-12">
-          <a href="/" onClick={e => { e.preventDefault(); go('/'); }} className="col-span-2 md:col-span-1 self-start inline-flex items-center gap-1.5" aria-label="Belluh home">
-            <DragonflyMark size={26} /><span className="font-serif text-[26px] font-semibold tracking-tight">Belluh</span>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))] gap-x-8 md:gap-x-12 gap-y-12">
+          <a href="/" onClick={e => { e.preventDefault(); go('/'); }} className="col-span-2 md:col-span-3 lg:col-span-1 self-start justify-self-start inline-flex items-center gap-1.5 h-7" aria-label={F.home}>
+            <DragonflyMark size={26} /><span className="font-serif text-[26px] leading-none font-semibold tracking-tight">Belluh</span>
           </a>
           {cols.map(c => (
-            <div key={c.title}>
-              <p className="mb-4 text-[14px] text-white/55">{c.title}</p>
-              <ul className="space-y-3">{c.links.map(([label, on]) => <li key={label}><button onClick={on} className="text-[15px] font-medium hover:opacity-60 transition-opacity text-left">{label}</button></li>)}</ul>
+            <div key={c.title} className="min-w-0">
+              <p className="mb-5 text-[14px] leading-5 text-white/55">{c.title}</p>
+              <ul className="space-y-3">{c.links.map(([label, on]) => <li key={label}><button onClick={on} className="block w-full text-left text-[15px] leading-[1.35] font-medium break-words hover:opacity-60 transition-opacity">{label}</button></li>)}</ul>
             </div>
           ))}
         </div>
         <div className="mt-20 flex flex-wrap items-center gap-x-8 gap-y-4 text-[13px] text-white/55">
-          <span>© 2026 Belluh</span>
+          <span>{f(F.copyright, { year: 2026 })}</span>
           <LangPicker dark label={t.language} />
         </div>
       </Wrap>
@@ -161,22 +166,23 @@ export const Pill: React.FC<{ children: React.ReactNode; onClick?: () => void; h
 
 // Share this page, the way hinge.co ends theirs
 export const ShareBar: React.FC<{ text: string }> = ({ text }) => {
+  const F = useUi(footerUi);
   const [copied, setCopied] = useState(false);
   const url = typeof window !== 'undefined' ? window.location.href : 'https://belluh.com';
   const btn = 'w-11 h-11 rounded-full inline-flex items-center justify-center hover:bg-[#1a1a1a]/5 transition-colors';
   return (
     <div className="flex flex-wrap items-center justify-center gap-2 px-5 py-14">
-      <span className="mr-2 md:mr-3 text-[17px] font-semibold">Share this page:</span>
-      <a className={btn} aria-label="Share on X" target="_blank" rel="noopener noreferrer" href={`https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`}>
+      <span className="mr-2 md:mr-3 text-[17px] font-semibold">{F.share}</span>
+      <a className={btn} aria-label={F.shareX} target="_blank" rel="noopener noreferrer" href={`https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`}>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M18.9 2H22l-7.6 8.7L23 22h-6.8l-5.3-6.9L4.8 22H1.7l8.1-9.3L1 2h7l4.8 6.3L18.9 2zm-1.2 18h1.9L6.4 3.9H4.4L17.7 20z" /></svg>
       </a>
-      <a className={btn} aria-label="Share on Facebook" target="_blank" rel="noopener noreferrer" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}>
+      <a className={btn} aria-label={F.shareFacebook} target="_blank" rel="noopener noreferrer" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}>
         <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7.1V12h3V9.4c0-3 1.8-4.7 4.5-4.7 1.3 0 2.7.2 2.7.2v2.9h-1.5c-1.5 0-2 .9-2 1.9V12h3.4l-.5 3.5h-2.9v8.4A12 12 0 0 0 24 12z" /></svg>
       </a>
-      <button className={btn} aria-label="Copy link" onClick={async () => { try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* the address bar has it */ } }}>
+      <button className={btn} aria-label={F.copyLink} onClick={async () => { try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* the address bar has it */ } }}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" /><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" /></svg>
       </button>
-      <span role="status" className={`text-[14px] transition-opacity ${copied ? 'opacity-100' : 'opacity-0'}`}>Link copied!</span>
+      <span role="status" className={`text-[14px] transition-opacity ${copied ? 'opacity-100' : 'opacity-0'}`}>{F.copied}</span>
     </div>
   );
 };

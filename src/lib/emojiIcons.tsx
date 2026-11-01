@@ -26,6 +26,7 @@ const make = (emoji: string, glyph = false) => {
 
 // Pictures
 export const Activity = make('📈');
+export const SlidersHorizontal = make('🎚️');
 export const AlertCircle = make('⚠️');
 export const Archive = make('🗄️');
 export const Ban = make('🚫');

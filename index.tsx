@@ -3,6 +3,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './src/App';
 import { I18nProvider } from './src/i18n';
+const PrivacyCenter = React.lazy(() => import('./src/components/PrivacyCenter'));
+const ConsentBanner = React.lazy(() => import('./src/components/ConsentBanner'));
 
 // Anything that crashes in someone's browser is recorded (message and where, never journal text)
 window.addEventListener('error', e => { trackEvent('client_error', { message: String(e.message).slice(0, 300), where: `${e.filename}:${e.lineno}:${e.colno}`, stack: String((e as any).error?.stack ?? '').slice(0, 1200) }); });
@@ -40,6 +42,7 @@ root.render(
     <Boundary>
       <I18nProvider>
         <App />
+        <React.Suspense fallback={null}><PrivacyCenter /><ConsentBanner /></React.Suspense>
       </I18nProvider>
     </Boundary>
   </React.StrictMode>

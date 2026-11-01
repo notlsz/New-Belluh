@@ -20,6 +20,7 @@ import { generateRelationshipReceipt } from '../services/geminiService';
 import { THEMES } from '../constants';
 import WhatsAppDates from '../components/WhatsAppDates';
 import CalendarSync from '../components/CalendarSync';
+import YourData from '../components/YourData';
 import NotificationsToggle from '../components/NotificationsToggle';
 import { parseFactDate, ymdString } from '../../supabase/functions/_shared/facts';
 
@@ -799,6 +800,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                   <WhatsAppDates onShowToast={onShowToast} />
                   <NotificationsToggle onShowToast={onShowToast} />
                   <CalendarSync onShowToast={onShowToast} />
+                  <YourData />
                   
                   {/* Theme Selector */}
                   <div className="mb-8">

@@ -10,8 +10,8 @@ interface LegalModalProps {
   onClose: () => void;
 }
 
-type Block = { kind: 'p' | 'item'; text: string } | { kind: 'sub'; num: string; title: string } | { kind: 'table'; rows: string[] };
-type Section = { num: string; title: string; id: string; blocks: Block[] };
+export type Block = { kind: 'p' | 'item'; text: string } | { kind: 'sub'; num: string; title: string } | { kind: 'table'; rows: string[] };
+export type Section = { num: string; title: string; id: string; blocks: Block[] };
 
 const ACRONYMS = new Set(['AI', 'U.S.', 'CCPA', 'CPRA', 'GDPR', 'EU', 'UK', 'COPPA', 'IP', 'SMS', 'API']);
 /** "AI-GENERATED INSIGHTS AND DISCLAIMERS" becomes "AI-generated insights and disclaimers". */
@@ -28,8 +28,8 @@ function sentenceCase(s: string): string {
   return words.join(' ');
 }
 
-/** Turns the plain legal text into numbered sections, subsections, paragraphs, list lines and tables. */
-function parse(text: string): { effective: string | null; sections: Section[]; intro: Block[] } {
+/** Turns the plain legal text into numbered sections, subsections, paragraphs, list lines and tables. Also used by the legal pages. */
+export function parse(text: string): { effective: string | null; sections: Section[]; intro: Block[] } {
   const lines = text.split('\n').map(l => l.trim());
   let effective: string | null = null;
   const sections: Section[] = [];
