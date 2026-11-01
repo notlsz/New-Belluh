@@ -82,7 +82,7 @@ const Acquisition: React.FC = () => {
                 </div>
             </div>
             
-            <div className="mt-32 max-w-[700px] w-full mx-auto border-t border-slate-200 pt-8 flex items-center justify-between text-xs font-mono text-slate-400">
+            <div className="mt-32 max-w-[700px] w-full mx-auto pt-8 flex items-center justify-between text-xs font-mono text-slate-400">
                 <span>© 2026 BELLUH</span>
                 <a href="/" className="hover:text-[#111] transition-colors">RETURN HOME →</a>
             </div>

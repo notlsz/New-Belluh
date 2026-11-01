@@ -71,7 +71,7 @@ const GuidePage: React.FC<{ slug: string }> = ({ slug }) => {
             ))}
           </div>
         </div>
-        <div className="shrink-0 p-4 border-t border-slate-100">
+        <div className="shrink-0 p-4">
           <a href="/signup" className="h-12 w-full rounded-full bg-[#5e9db3] hover:bg-[#4f8ea4] text-white font-bold inline-flex items-center justify-center gap-2"><Emoji e="💞" size={20} />{T.makeYours}</a>
         </div>
       </div>

@@ -36,7 +36,7 @@ const TextingDemo: React.FC = () => {
             <div className="relative rounded-[2.4rem] bg-white overflow-hidden h-[660px] flex flex-col">
               <div className="absolute left-1/2 top-2.5 -translate-x-1/2 w-[110px] h-[30px] rounded-full bg-black z-10" aria-hidden />
               {/* Header: the contact */}
-              <div className="pt-12 pb-3 flex flex-col items-center border-b border-slate-100 bg-[#f8f8fa]">
+              <div className="pt-12 pb-3 flex flex-col items-center bg-[#f8f8fa]">
                 <span className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center"><DragonflyMark size={30} /></span>
                 <p className="mt-1.5 text-[12px] font-semibold text-slate-900">{T.contact}</p>
                 <p className="text-[10px] text-slate-400">{T.status}</p>

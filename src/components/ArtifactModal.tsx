@@ -227,7 +227,7 @@ const ArtifactModal: React.FC<ArtifactModalProps> = ({ type, onClose, entries, c
                              </div>
                              
                              {/* Footer Area */}
-                             <div className="mt-20 pt-10 border-t border-slate-100 flex items-center justify-between opacity-60">
+                             <div className="mt-20 pt-10 flex items-center justify-between opacity-60">
                                  <div className="flex items-center gap-2">
                                      <Sparkles size={14} className="text-[#f0addd]" />
                                      <span className="text-[13px] font-semibold text-slate-400">{T.prediction}</span>

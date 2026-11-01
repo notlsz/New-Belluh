@@ -207,7 +207,7 @@ const WhatsAppDates: React.FC<{ onShowToast: (m: string, t: 'success' | 'error' 
         )}
 
         {!compact && sorted.length > 0 && (
-          <ul className="mt-4 divide-y divide-slate-100">
+          <ul className="mt-4 space-y-1">
             {sorted.map(({ o, days }) => (
               <li key={o.id} className="flex items-center justify-between gap-4 py-3">
                 <div className="min-w-0">

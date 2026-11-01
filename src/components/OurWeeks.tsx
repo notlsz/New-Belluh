@@ -52,7 +52,7 @@ const OurWeeks: React.FC<{ onClose: () => void; partnerName?: string | null }> =
   return (
     <div className="fixed inset-0 z-[80] bg-slate-900/40 backdrop-blur-sm flex items-end md:items-center justify-center" onClick={onClose}>
       <div className="bg-white w-full md:max-w-lg rounded-t-[2rem] md:rounded-[2rem] max-h-[88vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="sticky top-0 bg-white/95 backdrop-blur px-6 pt-6 pb-4 flex items-start justify-between border-b border-slate-50">
+        <div className="sticky top-0 bg-white/95 backdrop-blur px-6 pt-6 pb-4 flex items-start justify-between">
           <div>
             <p className="text-[12px] font-semibold text-belluh-500">Bella</p>
             <h2 className="font-serif text-2xl text-slate-900 mt-1">{T.ourWeeks}</h2>

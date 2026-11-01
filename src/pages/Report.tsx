@@ -18,7 +18,7 @@ const Report: React.FC = () => {
                     <h1 className="text-4xl md:text-[52px] font-medium tracking-tight mb-8 leading-[1.1] font-sans">
                         {T.title}
                     </h1>
-                    <div className="flex flex-col md:flex-row md:items-center text-sm font-sans text-slate-600 gap-4 md:gap-12 pb-8 border-b border-slate-200">
+                    <div className="flex flex-col md:flex-row md:items-center text-sm font-sans text-slate-600 gap-4 md:gap-12 pb-8">
                         <div>
                             <span className="block text-slate-400 mb-1">{T.authors}</span>
                             <span className="text-slate-900">{T.authorsValue}</span>
@@ -51,7 +51,7 @@ const Report: React.FC = () => {
                         <div className="my-12 font-sans overflow-x-auto">
                             <table className="w-full text-left text-[15px]">
                                 <thead>
-                                    <tr className="border-y-2 border-slate-900">
+                                    <tr>
                                         <th className="py-3 px-2 font-medium text-slate-900 w-24">{T.rank}</th>
                                         <th className="py-3 px-2 font-medium text-slate-900">{T.institution}</th>
                                         <th className="py-3 px-2 font-medium text-slate-900 text-right">{T.confidence}</th>
@@ -67,7 +67,7 @@ const Report: React.FC = () => {
                                         { rank: 6, name: "Brown University", score: "0.81" },
                                         { rank: 7, name: "Dartmouth College", score: "0.78" },
                                     ].map((item, idx) => (
-                                        <tr key={item.rank} className={`border-b border-slate-200 ${idx === 6 ? 'border-b-2 border-b-slate-900' : ''}`}>
+                                        <tr key={item.rank} className={idx % 2 === 0 ? 'bg-slate-50' : ''}>
                                             <td className="py-3 px-2 text-slate-500 tabular-nums">{item.rank}</td>
                                             <td className="py-3 px-2 text-slate-900">{item.name}</td>
                                             <td className="py-3 px-2 text-slate-900 text-right tabular-nums">{dec(Number(item.score), 2)}</td>
@@ -88,7 +88,7 @@ const Report: React.FC = () => {
                         <div className="my-12 font-sans overflow-x-auto">
                             <table className="w-full text-left text-[15px]">
                                 <thead>
-                                    <tr className="border-y-2 border-slate-900">
+                                    <tr>
                                         <th className="py-3 px-2 font-medium text-slate-900 w-24">{T.rank}</th>
                                         <th className="py-3 px-2 font-medium text-slate-900">{T.institution}</th>
                                         <th className="py-3 px-2 font-medium text-slate-900 text-right">{T.representation}</th>
@@ -107,7 +107,7 @@ const Report: React.FC = () => {
                                         { rank: 9, name: "University of California, Santa Barbara", stat: "2.3%" },
                                         { rank: 10, name: "San Diego State University", stat: "2.1%" },
                                     ].map((item, idx) => (
-                                        <tr key={item.rank} className={`border-b border-slate-200 ${idx === 9 ? 'border-b-2 border-b-slate-900' : ''}`}>
+                                        <tr key={item.rank} className={idx % 2 === 0 ? 'bg-slate-50' : ''}>
                                             <td className="py-3 px-2 text-slate-500 tabular-nums">{item.rank}</td>
                                             <td className="py-3 px-2 text-slate-900">{item.name}</td>
                                             <td className="py-3 px-2 text-slate-900 text-right tabular-nums">{pct(parseFloat(item.stat))}</td>
@@ -131,7 +131,7 @@ const Report: React.FC = () => {
                 </div>
             </div>
             
-            <div className="mt-32 max-w-[800px] w-full mx-auto border-t border-slate-200 pt-8 flex items-center justify-between text-xs font-sans text-slate-500">
+            <div className="mt-32 max-w-[800px] w-full mx-auto pt-8 flex items-center justify-between text-xs font-sans text-slate-500">
                 <span>{f(T.rights, { year: 2026 })}</span>
                 <a href="/" className="hover:text-[#111] transition-colors">{T.returnHome}</a>
             </div>
