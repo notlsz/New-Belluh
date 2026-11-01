@@ -228,25 +228,25 @@ export function normalizeExtracted(raw: unknown): ExtractedOccasion[] {
 // ---------- Replies ----------
 
 export const HELP_TEXT =
-  "I'm Bella, the same Bella as in the Belluh app. Text me like you'd talk to me there: what's on your mind, a date to remember " +
+  "I'm Bella, Belluh's AI, the same Bella as in the Belluh app. Text me like you'd talk to me there: what's on your mind, a date to remember " +
   "(\"Maya's birthday is May 12\"), or \"plan a dinner with Maya this week\". Notes and plans from your partner come here too.\n\n" +
   'Ask me to remind you of something ("remind me to call his mom Sunday at 5") and I will. ' +
   'LIST shows your dates. FORGET <name> removes one. STOP pauses my messages, START turns them back on.';
 
 export const NOT_LINKED_TEXT =
-  "Hi, I'm Bella. To save dates here, open Belluh, go to Me → Settings, and tap Connect WhatsApp. It opens WhatsApp with the code ready to send.";
+  "Hi, I'm Bella, Belluh's AI. To save dates here, open Belluh, go to Me → Settings, and tap Connect WhatsApp. It opens WhatsApp with the code ready to send.";
 
 export const NOT_LINKED_TELEGRAM_TEXT =
-  "Hi, I'm Bella. To connect, open Belluh, go to Me → Settings, and tap Connect Telegram. It brings you back here, already linked.";
+  "Hi, I'm Bella, Belluh's AI. To connect, open Belluh, go to Me → Settings, and tap Connect Telegram. It brings you back here, already linked.";
 
 export const NOT_LINKED_LINE_TEXT =
-  "Hi, I'm Bella. To connect, open Belluh, go to Me → Settings, and tap Connect LINE. It brings you back here with a code ready to send.";
+  "Hi, I'm Bella, Belluh's AI. To connect, open Belluh, go to Me → Settings, and tap Connect LINE. It brings you back here with a code ready to send.";
 
 export const NOT_LINKED_IMESSAGE_TEXT =
-  "Hi, I'm Bella. To text me here, open Belluh, go to Me → Settings, and tap Connect iMessage. It opens Messages with the code ready to send.";
+  "Hi, I'm Bella, Belluh's AI. To text me here, open Belluh, go to Me → Settings, and tap Connect iMessage. It opens Messages with the code ready to send.";
 
 export const NOT_LINKED_SMS_TEXT =
-  "Hi, I'm Bella. To save dates by text, open Belluh, go to Me → Settings, and tap Connect by text. It opens Messages with the code ready to send.";
+  "Hi, I'm Bella, Belluh's AI. To save dates by text, open Belluh, go to Me → Settings, and tap Connect by text. It opens Messages with the code ready to send.";
 
 export const NO_DATE_TEXT =
   "I didn't find a date in that. Try something like \"Maya's birthday is May 12\" or \"our anniversary is June 3\".\n\n" +
