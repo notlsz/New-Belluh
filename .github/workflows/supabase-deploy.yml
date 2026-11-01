@@ -165,6 +165,8 @@ jobs:
           supabase functions deploy belluh-push --project-ref "$PROJECT_REF" --no-verify-jwt
           supabase functions deploy belluh-nudges --project-ref "$PROJECT_REF" --no-verify-jwt
           supabase functions deploy belluh-gift --project-ref "$PROJECT_REF" --no-verify-jwt
+          # Deleting an account: only for the signed-in person, so Supabase checks their sign-in before it runs
+          supabase functions deploy delete-account --project-ref "$PROJECT_REF"
 
       - name: Belluh calls restaurants (Vapi)
         if: steps.setup.outputs.ready == 'true'

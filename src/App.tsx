@@ -8,6 +8,7 @@ const MissionPage = React.lazy(() => import('./pages/company/Mission'));
 const ImpactPage = React.lazy(() => import('./pages/company/Impact'));
 const ResearchPage = React.lazy(() => import('./pages/company/Research'));
 import { canStore } from './lib/consent';
+import { identify } from './lib/trackers';
 import { go } from './lib/go';
 const ResourcePage = React.lazy(() => import('./pages/company/Resources'));
 // The footer's resource and policy pages, at belluh.com/<slug>
@@ -745,6 +746,7 @@ const App: React.FC = () => {
 
         stage = 'done';
         setIsAuthenticated(true);
+        identify(sessionUser.id);
         trackEvent('load_done', { attempt, entries: mappedEntries.length });
       } catch (err: any) {
           console.error("Failed to load user data", err);

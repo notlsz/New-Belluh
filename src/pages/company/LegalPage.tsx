@@ -24,7 +24,7 @@ const AUTH_KEY = (() => { try { return `sb-${new URL(supabaseUrl).hostname.split
 const STORED: string[][] = [
   [AUTH_KEY, 'pending_invite_id', 'belluh_pending_ask'],
   ['belluh_lang', 'belluh_tz', 'belluh_sidebar', 'belluh_space', 'belluh_settings', 'belluh_places', 'belluh_shape', 'belluh_dismissed', 'belluh_denied', 'belluh_seen_at', 'belluh_onboarded', 'belluh_mark_ripple'],
-  ['belluh_cta'],
+  ['belluh_cta', '_ga', '_ga_<id>', 'mp_<token>_mixpanel'],
   [],
 ];
 

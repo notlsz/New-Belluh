@@ -1,5 +1,5 @@
 export const PRIVACY_POLICY_TEXT = `BELLUH AI - PRIVACY POLICY
-Effective Date: December 9, 2025
+Effective Date: November 1, 2026
 
 1. INTRODUCTION
 Belluh AI ("we," "us," "our," or "Company") respects your privacy. This Privacy Policy explains how we collect, use, disclose, and protect your personal information when you use our relationship journaling platform and services ("Service").
@@ -12,7 +12,7 @@ Name, email address, phone number (optional);
 Username and password (encrypted);
 Profile photo;
 Date of birth; and
-Payment information (processed securely by third-party payment processors; we do not store full credit card numbers).
+Payment information, if you buy a subscription (handled by the payment processor; we never store full card numbers).
 
 Relationship Content:
 Journal entries (text, voice recordings, photos, videos);
@@ -40,10 +40,9 @@ AI interaction history (questions asked, insights viewed); and
 Performance and error logs.
 
 2.3 Information from Third Parties
-Authentication providers (Google, Apple Sign-In) - basic profile information;
-Payment processors (Stripe, PayPal) - transaction data;
-Analytics services (Google Analytics, Mixpanel) - aggregated usage data; and
-Social media platforms (if you connect accounts) - profile information.
+Authentication providers (Google, Apple Sign-In) - basic profile information, if you sign in with them;
+Messaging apps you connect (WhatsApp, LINE, Telegram, SMS, iMessage) - your phone number or account handle and the messages you send to Bella there; and
+Analytics services (Google Analytics, Mixpanel) - usage data about how the Service is used, only if you allow "Improving Belluh" in the Privacy Preference Center.
 
 3. HOW WE USE YOUR INFORMATION
 3.1 To Provide and Improve the Service
@@ -54,34 +53,15 @@ Process payments: Handle subscriptions and billing;
 Provide customer support: Respond to inquiries and troubleshoot issues; and
 Send service communications: Account updates, security alerts, feature announcements.
 
-3.2 To Train and Improve Our Proprietary AI Models
-CRITICAL DISCLOSURE:
-We use your journal entries, relationship data, and interaction patterns to train, develop, and improve our proprietary emotional intelligence algorithms and AI models.
-AI Training is ENABLED by default for all consumer accounts (Free and Premium plans).
-Specifically, we:
-Analyze your User Content to identify emotional patterns, relationship dynamics, and behavioral insights;
-Train machine learning models on anonymized and aggregated relationship data to improve AI response quality, accuracy, and empathy;
-Develop new features based on common relationship challenges and user needs identified in the data;
-Refine our emotional intelligence algorithms to provide more accurate, empathetic, and helpful insights;
-Create benchmark datasets for research and development of relationship AI technology; and
-Improve safety systems to detect and prevent abuse, harassment, and harmful content.
-
-How to Opt Out:
-Go to Settings → Privacy → "Do not train on my content" and toggle OFF.
-Opting out applies to new content only; previously collected data may remain in existing training datasets and models.
-Opting out does not affect your ability to use the Service.
-
-Data Processing for AI Training:
-Your data is anonymized and aggregated before being used for model training;
-Individual identifiers (names, specific locations, unique identifying details) are removed or generalized using industry-standard techniques;
-We use automated filtering and obfuscation to remove sensitive information;
-Perfect anonymization cannot be guaranteed; there is a theoretical risk of re-identification; and
-Anonymized data may be retained indefinitely, even after account deletion.
+3.2 How AI Is Used
+Bella, Belluh's AI, reads what you choose to write in Belluh so she can remember details, plan with you and answer your questions;
+Your content is sent to an AI provider (see Section 4.3) only to produce Bella's answer to you;
+Belluh does not train AI models on your journal content, voice notes or photos; and
+If we ever want to use your content to train or improve AI models, we will ask for your permission first, and you can say no.
 
 3.3 For Research and Development
-Conduct research on relationship patterns, emotional well-being, and intimacy dynamics;
-Publish research findings using anonymized, aggregated data (no individual identification); and
-Share anonymized datasets with academic or commercial research partners.
+Improve the Service using usage data, error logs and feedback; and
+Publish general statistics about how couples use Belluh, only in aggregated form that cannot identify you or your partner.
 
 3.4 For Business Operations
 Detect and prevent fraud, abuse, and security threats;
@@ -90,10 +70,10 @@ Comply with legal obligations and respond to lawful requests;
 Protect our rights, property, and safety; and
 Facilitate business transactions (mergers, acquisitions, asset sales).
 
-3.5 For Marketing (With Your Consent)
-Send promotional emails about new features and offers (you can opt out);
-Display personalized ads (if applicable); and
-Conduct surveys and gather feedback.
+3.5 For Updates (With Your Consent)
+Send you news about new features, only if you agree (you can unsubscribe at any time); and
+Ask for feedback or surveys, which you can ignore.
+Belluh does not show ads and does not use your information for advertising.
 
 4. HOW WE SHARE YOUR INFORMATION
 4.1 With Your Partner (Shared Circles)
@@ -105,22 +85,24 @@ AI-generated analysis of the relationship.
 Important: Your partner can view, download, and potentially retain this data even if you later terminate the Circle or delete your account. We cannot control what your partner does with shared data.
 
 4.2 With Service Providers
-We share data with trusted third-party vendors who help us operate the Service:
-Cloud hosting providers (AWS, Google Cloud) - data storage and processing;
-AI/ML infrastructure (OpenAI, Anthropic, Google AI) - AI processing;
-Payment processors (Stripe) - payment processing (PCI-DSS compliant);
-Analytics services (Google Analytics, Mixpanel) - usage analytics;
-Email services (SendGrid, Mailchimp) - transactional and marketing emails; and
-Customer support tools (Zendesk, Intercom) - support ticket management.
-These providers are contractually obligated to protect your data and use it only for providing services to us. They cannot use your data for their own purposes.
+We share data with vendors who help us run the Service, only as needed for what they do for us:
+Supabase (on Amazon Web Services) - database, sign-in and private file storage;
+Vercel - website hosting and delivery;
+Google - Gemini AI processing, and Google Places to find a restaurant's phone number when you ask Bella to call one;
+Backup AI providers (Groq, Cerebras, OpenRouter) - used only when Gemini cannot answer;
+Google Analytics and Mixpanel - usage analytics, only if you allow "Improving Belluh";
+Messaging providers you choose to connect (Meta for WhatsApp, Twilio for SMS, LINE, Telegram, Linq for iMessage) - delivering messages between you and Bella;
+Vapi - placing a phone call you ask Bella to make;
+Ticketmaster and Instacart - only when you ask Bella about tickets or groceries; and
+Search and map services (OpenFreeMap, Photon, Open Library, Wikipedia, TVmaze) - they receive only the place, book or title you search for.
+These providers may use your data only to provide their service to us.
 
 4.3 Third-Party AI Services
 Important Disclosure:
-Your journal content may be sent to third-party AI providers (OpenAI, Anthropic, Google AI) for processing and generating insights;
+To answer you, Bella sends the relevant parts of your content to Google's Gemini API, or to a backup AI provider (Groq, Cerebras or OpenRouter) when Gemini cannot answer;
 These providers have their own privacy policies and data practices;
-We use enterprise agreements with enhanced privacy protections where available; and
-Third-party AI providers are contractually prohibited from using your data to train their public models, but you should verify their privacy policies independently.
-We do not share your personal identifiers with third-party AI services when possible.
+We use their paid developer services, under terms that do not allow them to use your content to train their models; and
+We do not send your name, email or account details with your content when we can avoid it.
 
 4.4 For Legal Reasons
 We may disclose your information if required by law or in response to:
@@ -136,13 +118,8 @@ We will notify you of legal requests unless prohibited by law.
 If Belluh AI is acquired, merged, or sells assets, your information may be transferred to the new owner. You will be notified via email and/or prominent notice on our Service of any change in ownership or use of your personal information.
 
 4.6 Aggregated and Anonymized Data
-We may share or sell anonymized, aggregated data that cannot reasonably identify you with:
-Research institutions and universities;
-Commercial partners and third-party companies;
-Investors and business partners; or
-The public (e.g., in research publications, whitepapers, or blog posts).
-Example: "75% of couples using Belluh AI report improved communication after 30 days."
-This aggregated data may include insights derived from your content but does not contain information that identifies you personally.
+We may publish general statistics about how couples use Belluh (for example, in research or blog posts) only in aggregated form that cannot reasonably identify you or your partner.
+We do not sell your personal information, and we do not sell aggregated or anonymized data derived from your content.
 
 4.7 With Your Consent
 We may share your information with third parties if you explicitly consent (e.g., integrations with other apps, third-party features).
@@ -155,17 +132,14 @@ Needed to provide the Service; or
 Required for legitimate business purposes (analytics, fraud prevention, legal compliance).
 
 5.2 Account Deletion
-When you delete your account:
-Personal identifiers (name, email, profile photos, identifiable content) are deleted within 90 days;
-Anonymized and aggregated data derived from your content may be retained indefinitely for AI training, research, and model improvement;
-Backup systems may retain copies for up to 180 days for disaster recovery;
-Legal or regulatory requirements may mandate longer retention; and
-Shared Circle data: We cannot delete content your partner has separately saved, exported, or retained.
+When you delete your account in Settings → Your data → Delete my account:
+Your account, journal entries, photos, voice notes, profile and other personal data are deleted right away;
+Backup systems may keep copies for up to 30 days for disaster recovery, after which they are removed;
+Legal or regulatory requirements may require longer retention of specific records; and
+Shared Circle data: we cannot delete content your partner has separately saved or exported.
 
-5.3 Opt-Out of AI Training Before Deletion
-If you opt out of AI training before deleting your account, your content will not be used in new training runs.
-Your data may remain in already-trained models and datasets created before opt-out.
-We will stop using your content for future model training runs.
+5.3 Content Used by AI
+Belluh does not train AI models on your content, so nothing you wrote remains in a model after you delete your account.
 
 5.4 Legal Holds
 Data subject to legal holds, investigations, or disputes will be retained until the matter is resolved, regardless of account deletion.
@@ -197,10 +171,8 @@ In the event of a data breach that affects your personal information, we will no
 7. YOUR PRIVACY RIGHTS
 7.1 Access and Portability
 You can:
-Access your personal information through account settings;
-Request a copy of your data in a portable format (JSON/CSV); or
-Export your journal entries, photos, and relationship data.
-How to request: Email privacy@belluh.com with "Data Access Request" in the subject line. Include your name and email address for verification.
+Download a copy of your data at any time in Settings → Your data → Download my data (JSON format); or
+Email privacy@belluh.com with "Data Access Request" in the subject line, and include your name and email address for verification.
 Response time: Within 30 days of verified request.
 
 7.2 Correction and Update
@@ -209,24 +181,24 @@ For corrections not available in settings, email privacy@belluh.com.
 
 7.3 Deletion
 You can delete your account through:
-Account settings → Delete Account; or
-Email support@belluh.com with "Account Deletion Request".
-Important: Deletion does not remove anonymized or aggregated data used for AI training (see Section 5.2).
+Settings → Your data → Delete my account; or
+Email privacy@belluh.com with "Account Deletion Request".
 
-7.4 Opt-Out of AI Training
-Go to Settings → Privacy → "Do not train on my content" and toggle OFF.
-This prevents new content from being used for training, but does not remove data already in existing models.
+7.4 Your Privacy Choices
+Open "Your privacy choices" at the bottom of any page on belluh.com to manage:
+Your preferences: whether Belluh remembers settings like language and layout in your browser;
+Improving Belluh: whether usage analytics (Belluh's own records, Google Analytics and Mixpanel) are on; and
+Sale or sharing of personal information: Belluh does not sell or share personal information, and this setting records your opt-out.
+We honor the Global Privacy Control (GPC) browser signal as a valid opt-out.
 
-7.5 Opt-Out of Marketing
-You can unsubscribe from promotional emails by:
-Clicking "Unsubscribe" in any marketing email; or
-Adjusting preferences in Settings → Notifications.
-You will still receive transactional emails (account notifications, security alerts, billing).
+7.5 Opt-Out of Updates
+You can unsubscribe from feature updates by clicking "Unsubscribe" in any update email.
+You will still receive messages about your account and security.
 
 7.6 Additional Rights (Location-Specific)
 California Residents (CCPA/CPRA):
 Right to know what personal information is collected;
-Right to deletion (with exceptions for anonymized data);
+Right to deletion;
 Right to opt-out of "sales" or "sharing" of personal information;
 Right to correct inaccurate personal information;
 Right to limit use of sensitive personal information; and
@@ -257,24 +229,23 @@ Adequacy decisions where applicable; and
 Data Processing Agreements with vendors.
 
 10. COOKIES AND TRACKING TECHNOLOGIES
-We use cookies, pixels, local storage, and similar technologies to:
-Authenticate users and maintain sessions;
-Remember preferences and settings;
-Analyze usage and improve the Service;
-Deliver personalized content; and
-Measure ad performance (if applicable).
+We use cookies, local storage and similar technologies to:
+Keep you signed in and keep the Service secure;
+Remember your preferences and settings, if you allow it; and
+Understand how the Service is used, if you allow it.
 
 Types of Cookies:
-Essential: Required for service functionality (login, security) (Session/1 year, No opt-out);
-Analytics: Track usage patterns (Google Analytics, Mixpanel) (1-2 years, Yes);
-Functional: Remember preferences (theme, language) (1 year, Yes); and
-Marketing: Personalize ads and track conversions (1-2 years, Yes).
+Essential: Required for sign-in and security (for as long as you stay signed in, No opt-out);
+Preferences: Remember language, time zone and layout (until you clear them, Yes);
+Analytics: Belluh's own usage records, Google Analytics and Mixpanel, only if you allow "Improving Belluh" (up to 2 years, Yes); and
+Advertising: Not used.
 
 Your Choices:
-Most browsers allow you to block or delete cookies through settings;
-Opt out of Google Analytics: tools.google.com/dlpage/gaoptout;
-Do Not Track: We honor DNT signals where technically feasible.
-Note: Disabling essential cookies may limit functionality.
+Use "Your privacy choices" at the bottom of any page on belluh.com, or Settings in the app;
+In the European Economic Area, the United Kingdom and Switzerland, analytics stay off until you allow them;
+We honor the Global Privacy Control (GPC) signal; and
+Most browsers also let you block or delete cookies.
+See our Cookie Policy at belluh.com/cookies for the full list.
 
 11. CHANGES TO THIS PRIVACY POLICY
 We may update this Privacy Policy from time to time. Changes will be posted with a new "Effective Date".
@@ -289,13 +260,13 @@ We will provide 30 days' notice before material changes take effect.
 For privacy questions, concerns, or requests:
 Email: privacy@belluh.com
 Data Protection Officer: dpo@belluh.com
-Support: support@belluh.com
+Support: privacy@belluh.com
 Response Time: We aim to respond to privacy requests within 30 days (may extend to 60 days for complex requests).
 
 13. STATE-SPECIFIC DISCLOSURES
 13.1 California Residents (CCPA/CPRA)
 Categories of Personal Information Collected (Last 12 Months):
-Identifiers (Name, email, IP, device ID): Collected (Yes), Sold/Shared (No*)
+Identifiers (Name, email, IP, device ID): Collected (Yes), Sold/Shared (No)
 Personal records (Phone, payment info): Collected (Yes), Sold/Shared (No)
 Protected classifications (Age, gender): Collected (Yes), Sold/Shared (No)
 Commercial information (Purchases): Collected (Yes), Sold/Shared (No)
@@ -303,13 +274,13 @@ Biometric information (Voice recordings): Collected (Yes), Sold/Shared (No)
 Internet activity (Usage patterns): Collected (Yes), Sold/Shared (No)
 Geolocation (City/state): Collected (Yes), Sold/Shared (No)
 Sensory data (Photos, audio): Collected (Yes), Sold/Shared (No)
-Inferences (Relationship patterns): Collected (Yes), Sold/Shared (No*)
+Inferences (Relationship patterns): Collected (Yes), Sold/Shared (No)
 
-*Anonymized, aggregated data may be shared with third parties for research or commercial purposes, which may constitute a "sale" or "share" under CCPA.
+We do not sell or share personal information, as those terms are defined under the CCPA/CPRA, and have not done so in the last 12 months.
 
 Your California Privacy Rights:
 Right to Know: Request details about personal information collected, used, disclosed, or sold in the last 12 months;
-Right to Delete: Request deletion of personal information (with exceptions for anonymized data, legal compliance, fraud prevention);
+Right to Delete: Request deletion of personal information (with exceptions for legal compliance and fraud prevention);
 Right to Opt-Out: Opt-out of the "sale" or "sharing" of personal information;
 Right to Correct: Request correction of inaccurate personal information;
 Right to Limit: Limit use of sensitive personal information (journal content, biometric data); and
@@ -328,8 +299,7 @@ Proof of their identity; and
 Your contact information for verification.
 
 Do Not Sell or Share My Personal Information:
-To opt out of the "sale" or "sharing" of anonymized data for research or commercial purposes:
-Email privacy@belluh.com with "Do Not Sell My Information".
+Belluh does not sell or share personal information. You can still record your opt-out at any time in "Your privacy choices" at the bottom of any page on belluh.com, and we honor the Global Privacy Control (GPC) signal.
 
 Shine the Light Law (California Civil Code § 1798.83):
 California residents may request information about disclosures of personal information to third parties for direct marketing purposes. Contact privacy@belluh.com with "Shine the Light Request."

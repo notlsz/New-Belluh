@@ -1,9 +1,11 @@
 
 import { supabase } from '../lib/supabaseClient';
 import { canStore } from '../lib/consent';
+import { sendEvent } from '../lib/trackers';
 
 export const trackEvent = async (eventName: string, properties: object = {}) => {
     if (!canStore('usage')) return;
+    sendEvent(eventName, properties as Record<string, unknown>);
     try {
         const { data: { session } } = await supabase.auth.getSession();
         // Allow anonymous tracking if needed, but for now stick to authenticated users for quality data
