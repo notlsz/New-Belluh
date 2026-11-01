@@ -13,12 +13,13 @@ import { useUi } from '../i18n';
 import studioUi from '../i18n/ui/studio';
 import { Emoji, emojiSrc } from '../lib/emoji3d';
 import DragBento, { type BentoItem } from './DragBento';
+import MediaBlock from './MediaBlocks';
 import FreeCanvas, { FONT, INK } from './FreeCanvas';
 import FaceRecorder, { FaceSprite } from './FaceRecorder';
 import { ShapeSvg } from './FreeCanvas';
 import { Decoration, ProfileEffect, InkName, NamePad, DECOS, PFX, FX_CSS, isDeco } from './ProfileFx';
 import { uploadPrivate, resolveMedia, isPrivateRef } from '../services/media';
-import { loadLook, saveLook, musicEmbed, findBooks, findMovies, DEFAULT_LOOK, type Look, type Block, type BlockType, type Effect, type Pattern, type NameFont, type Layer } from '../services/look';
+import { loadLook, saveLook, musicEmbed, DEFAULT_LOOK, type Look, type Block, type BlockType, type Effect, type Pattern, type NameFont, type Layer } from '../services/look';
 
 const SWATCHES = ['#fdfbfb', '#fde7f3', '#ffd6e7', '#fff1d6', '#ffe48f', '#e3f5dc', '#c9f0b4', '#cde9f2', '#9bbecb', '#dccbff', '#ede7fb', '#ffd6a8', '#f6b3cc', '#5e9db3', '#4f5ff0', '#0f172a'];
 const BLOCK_COLORS = ['#ffffff', '#fde7f3', '#e1f1f7', '#fff1d6', '#ede7fb', '#e3f5dc', '#ffe4d6', '#0f172a'];
@@ -97,7 +98,7 @@ const ProfileStudio: React.FC<{ userId: string; name: string; avatar: string; su
 
   const set = (p: Partial<Look>) => setLook(l => ({ ...l, ...p }));
   const setBlock = (id: string, p: Partial<Block>) => setLook(l => ({ ...l, blocks: l.blocks.map(b => b.id === id ? { ...b, ...p, data: { ...b.data, ...(p.data ?? {}) } } : b) }));
-  const addBlock = (type: BlockType) => setLook(l => ({ ...l, blocks: [...l.blocks, { id: uid(), type, w: type === 'music' || type === 'text' || type === 'voice' || type === 'movie' ? 4 : 2, h: type === 'photo' || type === 'book' || type === 'movie' ? 2 : 1, color: '#ffffff', data: {} }] }));
+  const addBlock = (type: BlockType) => setLook(l => ({ ...l, blocks: [...l.blocks, { id: uid(), type, w: type === 'text' || type === 'voice' ? 4 : type === 'music' || type === 'movie' || type === 'book' ? 3 : 2, h: type === 'photo' || type === 'book' || type === 'movie' || type === 'music' ? 2 : 1, color: '#ffffff', data: {} }] }));
   const upload = async (file: File, kind: 'photos' | 'voice' = 'photos') => {
     const ext = (file.name.split('.').pop() || (kind === 'voice' ? 'webm' : 'jpg')).toLowerCase();
     const ref = await uploadPrivate(kind, file, ext, file.type || (kind === 'voice' ? 'audio/webm' : 'image/jpeg'));
@@ -121,19 +122,17 @@ const ProfileStudio: React.FC<{ userId: string; name: string; avatar: string; su
   const blockBody = (b: Block) => {
     const dark = b.color === '#0f172a', ink = dark ? 'text-white' : 'text-slate-900', sub = dark ? 'text-white/70' : 'text-slate-500';
     const label = (e: string) => <p className={`text-[12px] font-bold uppercase tracking-wide ${sub} inline-flex items-center gap-1.5`}><Emoji e={e} size={16} />{T.blocks[b.type]}</p>;
-    if (b.type === 'music') {
-      const emb = musicEmbed(b.data.url || '');
-      return (
-        <div className="h-full flex flex-col gap-2">
-          {label('🎧')}
-          {editing && <div className="space-y-1.5"><Field value={b.data.url ?? ''} onChange={e => setBlock(b.id, { data: { url: e.target.value } })} placeholder={T.musicPh} />{!emb && <div className="grid grid-cols-2 gap-1.5"><Field value={b.data.title ?? ''} onChange={e => setBlock(b.id, { data: { title: e.target.value.slice(0, 80) } })} placeholder={T.songPh} /><Field value={b.data.artist ?? ''} onChange={e => setBlock(b.id, { data: { artist: e.target.value.slice(0, 80) } })} placeholder={T.artistPh} /></div>}</div>}
-          {emb ? <iframe title={T.blocks.music} src={emb.src} height={Math.min(emb.h, 232)} className="w-full rounded-xl border-0" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" />
-            : (b.data.title || b.data.artist) && <div className="mt-auto"><p className={`font-serif text-xl leading-snug ${ink}`}>{b.data.title}</p><p className={`text-sm font-semibold ${sub}`}>{b.data.artist}</p></div>}
-        </div>
-      );
+    if (b.type === 'music' && b.data.url && !b.data.title && musicEmbed(b.data.url)) {
+      const emb = musicEmbed(b.data.url)!;
+      return <div className="h-full flex flex-col gap-2">{label('🎧')}<iframe title={T.blocks.music} src={emb.src} height={Math.min(emb.h, 232)} className="w-full rounded-xl border-0" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" /></div>;
     }
-    if (b.type === 'movie') return <MovieBlock b={b} editing={editing} ink={ink} sub={sub} label={label('🍿')} placeholder={T.fx.moviePh} onPick={d => setBlock(b.id, { data: d })} />;
-    if (b.type === 'book') return <BookBlock b={b} editing={editing} ink={ink} sub={sub} label={label('📚')} placeholder={T.bookPh} onPick={d => setBlock(b.id, { data: d })} />;
+    if (b.type === 'music' || b.type === 'movie' || b.type === 'book') {
+      const kind = b.type;
+      return <MediaBlock kind={kind} data={b.data} editing={editing} dark={dark} S={T.media}
+        label={label(kind === 'music' ? '🎧' : kind === 'movie' ? '🍿' : '📚')}
+        placeholder={kind === 'music' ? T.media.songPh : kind === 'movie' ? T.fx.moviePh : T.bookPh}
+        set={d => setBlock(b.id, { data: d })} />;
+    }
     if (b.type === 'photo') {
       const src = show(b.data.ref);
       return (
@@ -329,41 +328,7 @@ const ProfileStudio: React.FC<{ userId: string; name: string; avatar: string; su
   );
 };
 
-const BookBlock: React.FC<{ b: Block; editing: boolean; ink: string; sub: string; label: React.ReactNode; placeholder: string; onPick: (d: Record<string, string>) => void }> = ({ b, editing, ink, sub, label, placeholder, onPick }) => {
-  const [q, setQ] = useState('');
-  const [res, setRes] = useState<{ title: string; author: string; cover: string | null }[]>([]);
-  useEffect(() => { if (q.length < 2) { setRes([]); return; } const t = setTimeout(() => findBooks(q).then(setRes), 350); return () => clearTimeout(t); }, [q]);
-  return (
-    <div className="h-full flex flex-col gap-2">
-      {label}
-      {editing && <div className="relative"><input value={q} onChange={e => setQ(e.target.value)} placeholder={placeholder} className="w-full h-10 rounded-xl bg-white/85 px-3 text-[14px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9bbecb]" />
-        {res.length > 0 && <div className="absolute z-20 inset-x-0 top-11 rounded-xl bg-white shadow-lg border border-slate-100 max-h-56 overflow-y-auto">{res.map((r, i) => <button key={i} type="button" onClick={() => { onPick({ title: r.title, author: r.author, cover: r.cover ?? '' }); setQ(''); setRes([]); }} className="w-full flex items-center gap-2.5 p-2 text-left hover:bg-slate-50">{r.cover ? <img src={r.cover} alt="" className="w-8 h-11 object-cover rounded" /> : <span className="w-8 h-11 rounded bg-slate-100" />}<span className="min-w-0"><span className="block text-[13px] font-bold text-slate-900 truncate">{r.title}</span><span className="block text-[12px] text-slate-500 truncate">{r.author}</span></span></button>)}</div>}
-      </div>}
-      {b.data.title && <div className="flex-1 flex items-end gap-3 min-h-0">
-        {b.data.cover && <img src={b.data.cover} alt="" className="h-full max-h-40 w-auto rounded-lg shadow-[0_10px_20px_-10px_rgba(15,23,42,0.6)] object-cover" />}
-        <div className="min-w-0"><p className={`font-serif text-lg leading-snug ${ink}`}>{b.data.title}</p><p className={`text-sm font-semibold ${sub}`}>{b.data.author}</p></div>
-      </div>}
-    </div>
-  );
-};
 
-const MovieBlock: React.FC<{ b: Block; editing: boolean; ink: string; sub: string; label: React.ReactNode; placeholder: string; onPick: (d: Record<string, string>) => void }> = ({ b, editing, ink, sub, label, placeholder, onPick }) => {
-  const [q, setQ] = useState('');
-  const [res, setRes] = useState<{ title: string; year: string; kind: string; poster: string | null }[]>([]);
-  useEffect(() => { if (q.length < 2) { setRes([]); return; } const t = setTimeout(() => findMovies(q).then(setRes), 350); return () => clearTimeout(t); }, [q]);
-  return (
-    <div className="h-full flex flex-col gap-2">
-      {label}
-      {editing && <div className="relative"><input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && q.trim() && !res.length) { onPick({ title: q.trim(), year: '', poster: '' }); setQ(''); } }} placeholder={placeholder} className="w-full h-10 rounded-xl bg-white/85 px-3 text-[14px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9bbecb]" />
-        {res.length > 0 && <div className="absolute z-20 inset-x-0 top-11 rounded-xl bg-white shadow-lg border border-slate-100 max-h-64 overflow-y-auto">{res.map((r, i) => <button key={i} type="button" onClick={() => { onPick({ title: r.title, year: r.year, poster: r.poster ?? '' }); setQ(''); setRes([]); }} className="w-full flex items-center gap-2.5 p-2 text-left hover:bg-slate-50">{r.poster ? <img src={r.poster} alt="" className="w-8 h-12 object-cover rounded" /> : <span className="w-8 h-12 rounded bg-slate-100" />}<span className="min-w-0"><span className="block text-[13px] font-bold text-slate-900 truncate">{r.title}</span><span className="block text-[12px] text-slate-500 truncate">{r.year}</span></span></button>)}</div>}
-      </div>}
-      {b.data.title && <div className="flex-1 flex items-end gap-3 min-h-0">
-        {b.data.poster && <img src={b.data.poster} alt="" className="h-full max-h-44 w-auto rounded-lg shadow-[0_10px_20px_-10px_rgba(15,23,42,0.6)] object-cover" />}
-        <div className="min-w-0"><p className={`font-serif text-lg leading-snug ${ink}`}>{b.data.title}</p>{b.data.year && <p className={`text-sm font-semibold ${sub}`}>{b.data.year}</p>}</div>
-      </div>}
-    </div>
-  );
-};
 
 const VoiceBlock: React.FC<{ b: Block; editing: boolean; label: React.ReactNode; src?: string; T: any; onRef: (blob: Blob) => void }> = ({ editing, label, src, T, onRef }) => {
   const [rec, setRec] = useState<MediaRecorder | null>(null);

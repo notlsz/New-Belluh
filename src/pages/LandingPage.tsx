@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Lock, Menu, Sparkles, Activity, TrendingUp, Fingerprint, X, ChevronDown, Heart, MessageCircle, CalendarCheck, Plus, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Receipt } from './About';
+import TextingDemo from '../components/TextingDemo';
 import { rememberCta } from '../services/analytics';
 import { supabaseUrl } from '../lib/supabaseClient';
 import BelluhOrb from '../components/BelluhOrb';
@@ -539,6 +540,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       </section>
 
       <BellaAtWork />
+
+      <TextingDemo />
 
       {/* Real app screens */}
       <section id="inside" className="relative z-10 px-6 pb-28 scroll-mt-24">

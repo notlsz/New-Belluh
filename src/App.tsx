@@ -316,6 +316,21 @@ const App: React.FC = () => {
     else if (authView === 'report' && !path.startsWith('/report')) window.history.pushState({}, '', '/report');
     else if (authView === 'auth' && !isAuthenticated && path !== '/login' && path !== '/signup') window.history.pushState({}, '', authMode === 'login' ? '/login' : '/signup');
   }, [authView]);
+  // Before signing in, photos on the site can't be dragged out, saved, copied or opened on their own
+  useEffect(() => {
+    if (isAuthenticated) return;
+    const style = document.createElement('style'); style.id = 'guard-img';
+    style.textContent = 'img, picture, video { -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } img { pointer-events: none; }';
+    document.head.appendChild(style);
+    const isMedia = (t: EventTarget | null) => { const el = t as HTMLElement | null; if (!el?.closest) return false; if (el.closest('img, picture, video, svg image')) return true; const bg = getComputedStyle(el).backgroundImage; return !!bg && bg !== 'none' && bg.includes('url('); };
+    const stop = (e: Event) => { if (isMedia(e.target)) e.preventDefault(); };
+    // The photo itself ignores the pointer, so a right-click lands on what's under it; block the menu on anything holding a photo
+    const overPhoto = (x: number, y: number) => [...document.querySelectorAll('img, video')].some(el => { const r = el.getBoundingClientRect(); return r.width > 0 && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; });
+    const menu = (e: MouseEvent) => { if (overPhoto(e.clientX, e.clientY) || document.elementsFromPoint(e.clientX, e.clientY).some(n => isMedia(n))) e.preventDefault(); };
+    const copy = (e: ClipboardEvent) => { const sel = window.getSelection(); if (sel && !sel.isCollapsed) { const frag = sel.getRangeAt(0).cloneContents(); if (frag.querySelector('img')) e.preventDefault(); } };
+    document.addEventListener('contextmenu', menu, true); document.addEventListener('dragstart', stop, true); document.addEventListener('copy', copy, true);
+    return () => { style.remove(); document.removeEventListener('contextmenu', menu, true); document.removeEventListener('dragstart', stop, true); document.removeEventListener('copy', copy, true); };
+  }, [isAuthenticated]);
   // Once signed in, the address no longer says /login
   useEffect(() => {
     if (isAuthenticated && (window.location.pathname === '/login' || window.location.pathname === '/signup')) window.history.replaceState({}, '', '/');
