@@ -13,7 +13,6 @@ const en = {
     { title: 'Reject consensus', body: 'Chase non-obvious secrets, be creative, and hold a unique lens on the world.' },
     { title: 'Epic missions', body: 'Real problems, real couples, and the room to go solve them, wherever that takes you.' },
     { title: 'No bureaucracy', body: 'Nobody wins an argument with “because I’m senior.” The best idea wins, whoever has it.' },
-    { title: 'Move like it matters', body: 'Sometimes it really is life and death, and the people who should help have their hands tied by bureaucracy. We move fast, patch the gaps that always open between systems, and deliver better service for less.' },
   ],
   numbers: {
     eyebrow: 'How we compare',
@@ -93,7 +92,6 @@ const pt: typeof en = {
     { title: 'Rejeite o consenso', body: 'Vá atrás de segredos nada óbvios, seja criativo e tenha um olhar único sobre o mundo.' },
     { title: 'Missões épicas', body: 'Problemas reais, casais reais e espaço para ir resolvê-los, aonde quer que isso leve você.' },
     { title: 'Zero burocracia', body: 'Ninguém ganha uma discussão com “porque eu sou sênior”. Vence a melhor ideia, venha de quem vier.' },
-    { title: 'Rápido, porque importa', body: 'Às vezes é mesmo questão de vida ou morte, e quem deveria ajudar está de mãos atadas pela burocracia. A gente age rápido, tapa as brechas que sempre se abrem entre os sistemas e entrega um serviço melhor por menos.' },
   ],
   numbers: {
     eyebrow: 'Como nos comparamos',
@@ -173,7 +171,6 @@ const es: typeof en = {
     { title: 'Rechaza el consenso', body: 'Persigue secretos nada obvios, sé creativo y mira el mundo con una lente propia.' },
     { title: 'Misiones épicas', body: 'Problemas reales, parejas reales y margen para ir a resolverlos, te lleven donde te lleven.' },
     { title: 'Cero burocracia', body: 'Nadie gana una discusión con un «porque soy senior». Gana la mejor idea, venga de quien venga.' },
-    { title: 'Rápido, porque importa', body: 'A veces es literalmente cuestión de vida o muerte, y quienes deberían ayudar tienen las manos atadas por la burocracia. Nos movemos rápido, tapamos los huecos que siempre se abren entre sistemas y damos un servicio mejor por menos.' },
   ],
   numbers: {
     eyebrow: 'Cómo nos comparamos',
@@ -255,7 +252,6 @@ const careersPage: UiTable<typeof en> = {
       { title: '常識を疑う', body: 'まだ誰も気づいていない真実を追いかけ、創造的に。世界を自分だけのレンズで見てください。' },
       { title: '壮大なミッション', body: '本物の課題、本物のカップル。そして、どこへでも解決しに行ける自由。' },
       { title: '肩書きは関係ない', body: '「先輩だから」で議論に勝つ人はいません。誰の案であれ、いちばん良いアイデアが勝ちます。' },
-      { title: '本気だから、速く', body: 'ときには、本当に命にかかわることがあります。それなのに、助けるべき人たちはお役所仕事で身動きがとれない。私たちはすばやく動き、仕組みと仕組みのあいだに必ず生まれるすき間を埋め、もっと良いサービスをもっと安く届けます。' },
     ],
     numbers: {
       eyebrow: 'ほかとの違い',
@@ -334,7 +330,6 @@ const careersPage: UiTable<typeof en> = {
       { title: '拒绝共识', body: '追寻不显而易见的秘密,保持创造力,用独一无二的视角看世界。' },
       { title: '史诗级任务', body: '真实的问题,真实的情侣,还有放手去解决的空间,无论它带你去哪里。' },
       { title: '没有官僚', body: '没人能靠“因为我资历深”赢下争论。最好的想法胜出,不管它来自谁。' },
-      { title: '快,因为要紧', body: '有时候真的人命关天,而本该出手相助的人却被官僚流程捆住了手脚。我们行动迅速,补上系统之间总会出现的缝隙,用更低的成本提供更好的服务。' },
     ],
     numbers: {
       eyebrow: '我们有何不同',
@@ -413,7 +408,6 @@ const careersPage: UiTable<typeof en> = {
       { title: 'Refuser le consensus', body: 'Traquer les secrets que personne ne voit, être créatif et porter un regard unique sur le monde.' },
       { title: 'Des missions épiques', body: 'De vrais problèmes, de vrais couples, et la liberté d’aller les résoudre, où que cela vous mène.' },
       { title: 'Zéro bureaucratie', body: 'Personne ne gagne un débat avec « parce que je suis senior ». La meilleure idée l’emporte, peu importe de qui elle vient.' },
-      { title: 'Agir vite, parce que ça compte', body: 'Parfois, c’est vraiment une question de vie ou de mort, et ceux qui devraient aider ont les mains liées par la bureaucratie. Nous avançons vite, nous comblons les failles qui s’ouvrent toujours entre les systèmes, et nous offrons un meilleur service pour moins cher.' },
     ],
     numbers: {
       eyebrow: 'Ce qui nous distingue',
@@ -492,7 +486,6 @@ const careersPage: UiTable<typeof en> = {
       { title: 'Gegen den Konsens', body: 'Jag nicht offensichtlichen Geheimnissen nach, sei kreativ und schau mit einem ganz eigenen Blick auf die Welt.' },
       { title: 'Epische Missionen', body: 'Echte Probleme, echte Paare und der Freiraum, sie zu lösen, wohin dich das auch führt.' },
       { title: 'Keine Bürokratie', body: 'Niemand gewinnt eine Diskussion mit „weil ich Senior bin“. Die beste Idee gewinnt, egal von wem.' },
-      { title: 'Tempo, weil es zählt', body: 'Manchmal geht es wirklich um Leben und Tod, und denen, die helfen sollten, bindet die Bürokratie die Hände. Wir sind schnell, schließen die Lücken, die sich zwischen Systemen immer auftun, und liefern besseren Service für weniger Geld.' },
     ],
     numbers: {
       eyebrow: 'Im Vergleich',
@@ -571,7 +564,6 @@ const careersPage: UiTable<typeof en> = {
       { title: 'Rifiuta il consenso', body: 'Insegui segreti non ovvi, sii creativo e guarda il mondo con occhi tutti tuoi.' },
       { title: 'Missioni epiche', body: 'Problemi veri, coppie vere e lo spazio per andare a risolverli, ovunque ti portino.' },
       { title: 'Niente burocrazia', body: 'Nessuno vince una discussione con “perché sono più senior”. Vince l’idea migliore, di chiunque sia.' },
-      { title: 'Veloci, perché conta', body: 'A volte è davvero questione di vita o di morte, e chi dovrebbe aiutare ha le mani legate dalla burocrazia. Ci muoviamo in fretta, chiudiamo le falle che si aprono sempre tra un sistema e l’altro e offriamo un servizio migliore a un costo minore.' },
     ],
     numbers: {
       eyebrow: 'Come ci distinguiamo',
