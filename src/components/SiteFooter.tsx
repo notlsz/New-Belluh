@@ -23,8 +23,8 @@ const SiteFooter: React.FC<{
   return (
   <footer className="relative z-10 overflow-hidden bg-[#F8FAFB]">
       <div className="max-w-7xl mx-auto px-6 pt-16 md:pt-24 pb-10">
-          <div className="grid grid-cols-2 md:grid-cols-12 gap-x-8 gap-y-12">
-              <div className="col-span-2 md:col-span-5">
+          <div className="grid grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-x-8 gap-y-12">
+              <div className="col-span-2 md:col-span-1">
                   <button onClick={onTop} className="flex items-center gap-2.5" aria-label="Belluh home">
                       <BelluhOrb size={30} />
                       <span className="font-serif text-2xl font-bold tracking-tight text-[#9bbecb]">Belluh</span>
@@ -37,9 +37,10 @@ const SiteFooter: React.FC<{
               {[
                   { title: t.product, links: [[n.meet, () => onSection('at-work')], [n.inside, () => onSection('inside')], [n.stories, () => onSection('stories')], [n.pricing, () => onSection('pricing')], [n.faq, () => onSection('faq')]] },
                   { title: t.company, links: [[S.mission, () => goTo('/mission')], [S.impact, () => goTo('/impact')], [S.research, () => goTo('/research')], [n.why, onGoToAbout], [n.careers, onGoToCareers], [d.common.logIn, onLogin]] },
-                  { title: t.legal, links: [[t.terms, () => onShowLegal('tos')], [t.privacyPolicy, () => onShowLegal('privacy')]] },
+                  { title: 'Resources', links: [['Newsroom', () => goTo('/newsroom')], ['Success stories', () => goTo('/stories')], ['Safety tips', () => goTo('/safety-tips')], ['Trust & Safety', () => goTo('/trust-and-safety')], ['Press resources', () => goTo('/press')], ['How Belluh works', () => goTo('/how-belluh-works')], ['NFAQ', () => goTo('/nfaq')], ['Contact', () => goTo('/contact')]] },
+                  { title: t.legal, links: [['Security', () => goTo('/security')], [t.terms, () => onShowLegal('tos')], [t.privacyPolicy, () => onShowLegal('privacy')], ['Cookie policy', () => goTo('/cookies')], ['Consumer health data', () => goTo('/consumer-health-data')], ['Your privacy choices', () => goTo('/privacy-choices')], ['Accessibility', () => goTo('/accessibility')]] },
               ].map(col => (
-                  <div key={col.title} className="md:col-span-2 last:md:col-span-3">
+                  <div key={col.title}>
                       <p className="mb-5 text-sm font-bold text-slate-900">{col.title}</p>
                       <ul className="space-y-3.5">
                           {col.links.map(([label, go]) => (

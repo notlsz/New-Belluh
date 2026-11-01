@@ -7,6 +7,10 @@ const GuidePage = React.lazy(() => import('./pages/GuidePage'));
 const MissionPage = React.lazy(() => import('./pages/company/Mission'));
 const ImpactPage = React.lazy(() => import('./pages/company/Impact'));
 const ResearchPage = React.lazy(() => import('./pages/company/Research'));
+const ResourcePage = React.lazy(() => import('./pages/company/Resources'));
+// The footer's resource and policy pages, at belluh.com/<slug>
+const RESOURCES = ['newsroom', 'stories', 'contact', 'safety-tips', 'faq', 'trust-and-safety', 'press', 'how-belluh-works', 'nfaq', 'security', 'cookies', 'consumer-health-data', 'privacy-choices', 'accessibility'];
+const resourceAt = (path: string) => RESOURCES.find(r => path === `/${r}`) ?? null;
 const guideSlug = window.location.pathname.match(/^\/g\/([a-z0-9]{6,32})\/?$/i)?.[1] ?? null;
 import TabBar from './components/TabBar';
 import Journal from './pages/Journal';
@@ -100,7 +104,7 @@ const App: React.FC = () => {
   }, [sidebarCollapsed]);
   const [isOnboarding, setIsOnboarding] = useState(false);
   
-  // View State for Unauthenticated Users ('landing' | 'auth' | 'about' | 'careers' | 'acquisition' | 'report' | 'mission' | 'impact' | 'research')
+  // View State for Unauthenticated Users ('landing' | 'auth' | 'about' | 'careers' | 'acquisition' | 'report' | 'mission' | 'impact' | 'research' | 'resource')
   const getInitialAuthView = () => {
     const path = window.location.pathname;
     if (path.startsWith('/report')) return 'report';
@@ -109,17 +113,19 @@ const App: React.FC = () => {
     if (path === '/mission') return 'mission';
     if (path === '/impact') return 'impact';
     if (path === '/research') return 'research';
+    if (resourceAt(path)) return 'resource';
     if (path === '/about') return 'about';
     if (path === '/login' || path === '/signup') return 'auth';
     return 'landing';
   };
-  const [authView, setAuthView] = useState<'landing' | 'auth' | 'about' | 'careers' | 'acquisition' | 'report' | 'mission' | 'impact' | 'research'>(getInitialAuthView());
+  const [authView, setAuthView] = useState<'landing' | 'auth' | 'about' | 'careers' | 'acquisition' | 'report' | 'mission' | 'impact' | 'research' | 'resource'>(getInitialAuthView());
   const [recovering, setRecovering] = useState(false);
+  const [resource, setResource] = useState<string | null>(resourceAt(window.location.pathname));
   const [newPassword, setNewPassword] = useState('');
   const [authMode, setAuthMode] = useState<'login' | 'signup'>(window.location.pathname === '/login' ? 'login' : 'signup');
   // Where Log in / Start free was pressed, so Back on the login page returns there
-  const lastPublicView = useRef<'landing' | 'about' | 'careers' | 'mission' | 'impact' | 'research'>('landing');
-  useEffect(() => { if (authView !== 'auth' && authView !== 'acquisition' && authView !== 'report') lastPublicView.current = authView; }, [authView]);
+  const lastPublicView = useRef<'landing' | 'about' | 'careers' | 'mission' | 'impact' | 'research' | 'resource'>('landing');
+  useEffect(() => { if (authView !== 'auth' && authView !== 'acquisition' && authView !== 'report' && authView !== 'resource') lastPublicView.current = authView; }, [authView]);
   
   // App State
   // A notification opens Home with Belluh's panel up (?tab=belluh), then the address is tidied
@@ -265,6 +271,7 @@ const App: React.FC = () => {
       if (path.startsWith('/we-have-been-acquired')) setAuthView('acquisition');
       else if (path.startsWith('/careers')) setAuthView('careers');
       else if (path === '/mission' || path === '/impact' || path === '/research') setAuthView(path.slice(1) as 'mission');
+      else if (resourceAt(path)) { setResource(resourceAt(path)); setAuthView('resource'); }
       else if (path === '/about') setAuthView('about');
       else if (path === '/login' || path === '/signup') { setAuthMode(path === '/login' ? 'login' : 'signup'); setAuthView('auth'); }
       else setAuthView('landing');
@@ -280,6 +287,7 @@ const App: React.FC = () => {
     else if (authView === 'about' && path !== '/about') window.history.pushState({}, '', '/about');
     else if (authView === 'careers' && !path.startsWith('/careers')) window.history.pushState({}, '', '/careers');
     else if ((authView === 'mission' || authView === 'impact' || authView === 'research') && path !== `/${authView}`) window.history.pushState({}, '', `/${authView}`);
+    else if (authView === 'resource') { /* the address already names the page */ }
     else if (authView === 'acquisition' && !path.startsWith('/we-have-been-acquired')) window.history.pushState({}, '', '/we-have-been-acquired');
     else if (authView === 'report' && !path.startsWith('/report')) window.history.pushState({}, '', '/report');
     else if (authView === 'auth' && !isAuthenticated && path !== '/login' && path !== '/signup') window.history.pushState({}, '', authMode === 'login' ? '/login' : '/signup');
@@ -1145,6 +1153,16 @@ const App: React.FC = () => {
   if (showAdmin && isUserAdmin) return <AdminMetrics onBack={() => setShowAdmin(false)} />;
 
   // The company pages are for everyone, signed in or not
+  if (authView === 'resource' && resource) {
+      return (
+        <>
+          <React.Suspense fallback={<div className="min-h-screen bg-[#fffefd]" />}>
+            <ResourcePage key={resource} slug={resource} onGetStarted={() => { setAuthMode('signup'); setAuthView('auth'); }} onLogin={() => { setAuthMode('login'); setAuthView('auth'); }} onShowLegal={(type) => setLegalModalOpen(type)} />
+          </React.Suspense>
+          {legalModalOpen && <LegalModal type={legalModalOpen} onClose={() => setLegalModalOpen(null)} />}
+        </>
+      );
+  }
   if (authView === 'mission' || authView === 'impact' || authView === 'research') {
       const Page = { mission: MissionPage, impact: ImpactPage, research: ResearchPage }[authView];
       return (
