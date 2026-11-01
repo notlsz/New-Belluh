@@ -41,12 +41,12 @@ const en: T = {
     ],
     sections: [
       { h: 'What are cookies?', items: ['Cookies are small text files a website saves in your browser so it can recognize your device on a later visit. They can keep you signed in, remember your settings, or help a site understand how it is used.'] },
-      { h: 'First-party and third-party cookies', items: ['First-party cookies are set by the site you are visiting, here belluh.com. Third-party cookies are set by a different company, often to follow people from site to site for advertising.', 'Everything Belluh stores is first party. Belluh does not use third-party advertising or tracking cookies.'] },
+      { h: 'First-party and third-party cookies', items: ['First-party cookies are set by the site you are visiting, here belluh.com. Third-party cookies are set by a different company, often to follow people from site to site for advertising.', 'Belluh’s own storage is first party. If you allow “Improving Belluh”, Google Analytics and Mixpanel also store identifiers on your device to count visits; they are set on belluh.com and are not used for advertising. Belluh does not use advertising cookies.'] },
       { h: 'Session and persistent cookies', items: ['Session cookies disappear when you close your browser. Persistent cookies stay until they expire or you delete them, which is how a site remembers you between visits.'] },
       {
         h: 'Other technologies',
         items: [
-          'Belluh uses your browser’s local storage rather than cookies. Local storage works much like a cookie, but it is not sent to our servers with every request: it stays on your device until it is cleared. Session storage is the same, except that it is cleared when you close the tab. In this policy, “cookies” means all of these.',
+          'For its own storage, Belluh uses your browser’s local storage rather than cookies. Local storage works much like a cookie, but it is not sent to our servers with every request: it stays on your device until it is cleared. Session storage is the same, except that it is cleared when you close the tab. In this policy, “cookies” means all of these.',
           { note: 'Some parts of Belluh load content from other services, such as fonts and map images. Those services receive the standard information that comes with any web request, like your IP address, so they can deliver it.' },
         ],
       },
@@ -57,7 +57,7 @@ const en: T = {
           { table: { head: ['Category', 'What it does on Belluh'], rows: [
             ['Strictly necessary', 'Keeps you signed in and your session secure on this device. Also remembers an invite you followed or a question you started before signing in, so it is waiting for you afterwards. Belluh cannot work without these.'],
             ['Preferences', 'Remembers your language, your time zone and your layout, such as whether the sidebar is open and which space you used last. Also your settings on this device, whether places are on for your love map, and small things like cards you dismissed, so Belluh opens the way you left it.'],
-            ['Measurement', 'Remembers which button on our site brought you in, for up to 7 days, so we can count it once you sign in. Activity is recorded only while you are signed in, in Belluh’s own database, never by third-party analytics tools.'],
+            ['Measurement', 'Remembers which button on our site brought you in, for up to 7 days. With your permission (“Improving Belluh”), Belluh records which features you use in its own database while you are signed in, and Google Analytics (_ga, _ga_<id>, up to 2 years) and Mixpanel (mp_<token>_mixpanel) count visits and feature use. Off until you allow it in the EEA, UK and Switzerland, and off when your browser sends Global Privacy Control.'],
             ['Advertising', 'Not used. Belluh has no advertising cookies and no ad trackers.'],
           ] } },
         ],
@@ -190,12 +190,12 @@ const ja: T = {
     ],
     sections: [
       { h: 'Cookieとは', items: ['Cookieは、ウェブサイトがブラウザに保存する小さなテキストファイルです。次に訪れたときに端末を見分けるために使われます。ログインしたままにしたり、設定を覚えたり、サイトの使われ方を把握したりできます。'] },
-      { h: 'ファーストパーティCookieとサードパーティCookie', items: ['ファーストパーティCookieは、いま訪れているサイト（ここではbelluh.com）が設定するものです。サードパーティCookieは別の会社が設定するもので、広告のためにサイトをまたいで人を追跡する目的でよく使われます。', 'Belluhが保存するものはすべてファーストパーティです。サードパーティの広告用Cookieや追跡用Cookieは使っていません。'] },
+      { h: 'ファーストパーティCookieとサードパーティCookie', items: ['ファーストパーティCookieは、いま訪れているサイト（ここではbelluh.com）が設定するものです。サードパーティCookieは別の会社が設定するもので、広告のためにサイトをまたいで人を追跡する目的でよく使われます。', 'Belluh自身が保存するものはファーストパーティです。「Belluhをよくするために」を許可した場合は、Google AnalyticsとMixpanelも訪問数を数えるための識別子を端末に保存します。これらはbelluh.comに設定され、広告には使われません。Belluhは広告用Cookieを使っていません。'] },
       { h: 'セッションCookieと永続Cookie', items: ['セッションCookieは、ブラウザを閉じると消えます。永続Cookieは期限が切れるか削除されるまで残り、サイトが訪問のたびにあなたを覚えていられるのはこのためです。'] },
       {
         h: 'そのほかの技術',
         items: [
-          'BelluhはCookieではなく、ブラウザのローカルストレージを使っています。ローカルストレージはCookieとよく似ていますが、リクエストのたびにサーバーへ送られることはなく、消去されるまで端末の中に残ります。セッションストレージも同じしくみで、タブを閉じると消去されます。このポリシーでいう「Cookie」は、これらすべてを指します。',
+          'Belluh自身の保存には、Cookieではなくブラウザのローカルストレージを使っています。ローカルストレージはCookieとよく似ていますが、リクエストのたびにサーバーへ送られることはなく、消去されるまで端末の中に残ります。セッションストレージも同じしくみで、タブを閉じると消去されます。このポリシーでいう「Cookie」は、これらすべてを指します。',
           { note: 'Belluhの一部では、フォントや地図の画像などをほかのサービスから読み込んでいます。これらのサービスは、表示のために、IPアドレスなどどのウェブリクエストにも含まれる標準的な情報を受け取ります。' },
         ],
       },
@@ -206,7 +206,7 @@ const ja: T = {
           { table: { head: ['カテゴリー', 'Belluhでの役割'], rows: [
             ['必須', 'この端末でログインしたままにし、セッションを安全に保ちます。ログイン前にたどった招待や書き始めた質問も覚えておき、ログイン後にそのまま続けられるようにします。これがないとBelluhは動きません。'],
             ['設定', '言語、タイムゾーン、サイドバーを開いているかや最後に使ったスペースなどのレイアウトを覚えます。この端末での設定、ラブマップの場所がオンかどうか、閉じたカードなどの細かなことも覚えて、前回のままBelluhを開けるようにします。'],
-            ['計測', 'どのボタンからBelluhに来たかを最長7日間覚えておき、ログインしたときに一度だけ数えます。利用状況の記録はログイン中のみ、Belluh自身のデータベースに残り、サードパーティの分析ツールは使いません。'],
+            ['計測', 'どのボタンからBelluhに来たかを最長7日間覚えておきます。許可した場合（「Belluhをよくするために」）、ログイン中に使った機能をBelluh自身のデータベースに記録し、Google Analytics（_ga、_ga_<id>、最長2年）とMixpanel（mp_<token>_mixpanel）が訪問数と機能の利用を数えます。EEA、英国、スイスでは許可するまでオフで、ブラウザがGlobal Privacy Controlを送信している場合もオフになります。'],
             ['広告', '使っていません。Belluhには広告用Cookieも広告トラッカーもありません。'],
           ] } },
         ],
@@ -339,12 +339,12 @@ const fr: T = {
     ],
     sections: [
       { h: 'Qu’est-ce qu’un cookie ?', items: ['Un cookie est un petit fichier texte qu’un site enregistre dans votre navigateur pour reconnaître votre appareil lors d’une prochaine visite. Il peut vous garder connecté, retenir vos réglages ou aider un site à comprendre comment il est utilisé.'] },
-      { h: 'Cookies internes et cookies tiers', items: ['Les cookies internes sont déposés par le site que vous visitez, ici belluh.com. Les cookies tiers sont déposés par une autre entreprise, souvent pour suivre les internautes d’un site à l’autre à des fins publicitaires.', 'Tout ce que Belluh enregistre est interne. Belluh n’utilise aucun cookie tiers de publicité ou de suivi.'] },
+      { h: 'Cookies internes et cookies tiers', items: ['Les cookies internes sont déposés par le site que vous visitez, ici belluh.com. Les cookies tiers sont déposés par une autre entreprise, souvent pour suivre les internautes d’un site à l’autre à des fins publicitaires.', 'Ce que Belluh enregistre lui-même est interne. Si vous autorisez « Améliorer Belluh », Google Analytics et Mixpanel enregistrent aussi des identifiants sur votre appareil pour compter les visites ; ils sont déposés sur belluh.com et ne servent pas à la publicité. Belluh n’utilise aucun cookie publicitaire.'] },
       { h: 'Cookies de session et cookies persistants', items: ['Les cookies de session disparaissent quand vous fermez votre navigateur. Les cookies persistants restent jusqu’à leur expiration ou leur suppression : c’est ainsi qu’un site se souvient de vous d’une visite à l’autre.'] },
       {
         h: 'Autres technologies',
         items: [
-          'Belluh utilise le stockage local de votre navigateur plutôt que des cookies. Le stockage local fonctionne à peu près comme un cookie, mais il n’est pas envoyé à nos serveurs à chaque requête : il reste sur votre appareil jusqu’à ce qu’il soit effacé. Le stockage de session fonctionne de la même façon, mais il s’efface à la fermeture de l’onglet. Dans cette politique, « cookies » désigne l’ensemble de ces technologies.',
+          'Pour son propre stockage, Belluh utilise le stockage local de votre navigateur plutôt que des cookies. Le stockage local fonctionne à peu près comme un cookie, mais il n’est pas envoyé à nos serveurs à chaque requête : il reste sur votre appareil jusqu’à ce qu’il soit effacé. Le stockage de session fonctionne de la même façon, mais il s’efface à la fermeture de l’onglet. Dans cette politique, « cookies » désigne l’ensemble de ces technologies.',
           { note: 'Certaines parties de Belluh chargent du contenu depuis d’autres services, comme des polices de caractères et des images de cartes. Ces services reçoivent les informations standard qui accompagnent toute requête web, comme votre adresse IP, afin de pouvoir le fournir.' },
         ],
       },
@@ -355,7 +355,7 @@ const fr: T = {
           { table: { head: ['Catégorie', 'Son rôle sur Belluh'], rows: [
             ['Strictement nécessaires', 'Vous garde connecté et protège votre session sur cet appareil. Retient aussi une invitation que vous avez suivie ou une question commencée avant de vous connecter, pour la retrouver ensuite. Belluh ne peut pas fonctionner sans elles.'],
             ['Préférences', 'Retient votre langue, votre fuseau horaire et votre mise en page, par exemple si la barre latérale est ouverte et quel espace vous avez utilisé en dernier. Aussi vos réglages sur cet appareil, si les lieux sont activés pour votre carte de l’amour, et de petites choses comme les cartes que vous avez fermées, pour que Belluh s’ouvre comme vous l’avez laissé.'],
-            ['Mesure', 'Retient quel bouton de notre site vous a amené, pendant 7 jours au plus, pour le compter une fois que vous êtes connecté. L’activité n’est enregistrée que lorsque vous êtes connecté, dans la propre base de données de Belluh, jamais par des outils d’analyse tiers.'],
+            ['Mesure', 'Retient quel bouton de notre site vous a amené, pendant 7 jours au plus. Avec votre accord (« Améliorer Belluh »), Belluh enregistre les fonctions que vous utilisez dans sa propre base de données lorsque vous êtes connecté, et Google Analytics (_ga, _ga_<id>, 2 ans au plus) et Mixpanel (mp_<token>_mixpanel) comptent les visites et l’utilisation des fonctions. Désactivé tant que vous ne l’avez pas autorisé dans l’EEE, au Royaume-Uni et en Suisse, et désactivé lorsque votre navigateur envoie Global Privacy Control.'],
             ['Publicité', 'Non utilisés. Belluh n’a ni cookies publicitaires ni traceurs publicitaires.'],
           ] } },
         ],
@@ -488,12 +488,12 @@ const it: T = {
     ],
     sections: [
       { h: 'Cosa sono i cookie?', items: ['I cookie sono piccoli file di testo che un sito salva nel browser per riconoscere il tuo dispositivo alla visita successiva. Possono mantenerti connesso, ricordare le tue impostazioni o aiutare un sito a capire come viene usato.'] },
-      { h: 'Cookie di prima parte e di terze parti', items: ['I cookie di prima parte sono impostati dal sito che stai visitando, in questo caso belluh.com. Quelli di terze parti sono impostati da un’altra azienda, spesso per seguire le persone da un sito all’altro a fini pubblicitari.', 'Tutto ciò che Belluh salva è di prima parte. Belluh non usa cookie pubblicitari o di tracciamento di terze parti.'] },
+      { h: 'Cookie di prima parte e di terze parti', items: ['I cookie di prima parte sono impostati dal sito che stai visitando, in questo caso belluh.com. Quelli di terze parti sono impostati da un’altra azienda, spesso per seguire le persone da un sito all’altro a fini pubblicitari.', 'Ciò che Belluh salva da sé è di prima parte. Se consenti “Migliorare Belluh”, anche Google Analytics e Mixpanel salvano degli identificatori sul tuo dispositivo per contare le visite; sono impostati su belluh.com e non vengono usati per la pubblicità. Belluh non usa cookie pubblicitari.'] },
       { h: 'Cookie di sessione e persistenti', items: ['I cookie di sessione spariscono quando chiudi il browser. Quelli persistenti restano finché non scadono o non li elimini: è così che un sito si ricorda di te tra una visita e l’altra.'] },
       {
         h: 'Altre tecnologie',
         items: [
-          'Belluh usa la memoria locale del browser invece dei cookie. La memoria locale funziona più o meno come un cookie, ma non viene inviata ai nostri server a ogni richiesta: resta sul tuo dispositivo finché non viene cancellata. La memoria di sessione è uguale, ma si cancella quando chiudi la scheda. In questa policy, “cookie” indica tutte queste tecnologie.',
+          'Per i propri dati, Belluh usa la memoria locale del browser invece dei cookie. La memoria locale funziona più o meno come un cookie, ma non viene inviata ai nostri server a ogni richiesta: resta sul tuo dispositivo finché non viene cancellata. La memoria di sessione è uguale, ma si cancella quando chiudi la scheda. In questa policy, “cookie” indica tutte queste tecnologie.',
           { note: 'Alcune parti di Belluh caricano contenuti da altri servizi, come font e immagini delle mappe. Questi servizi ricevono le informazioni standard che accompagnano ogni richiesta web, come il tuo indirizzo IP, per poterli fornire.' },
         ],
       },
@@ -504,7 +504,7 @@ const it: T = {
           { table: { head: ['Categoria', 'A cosa serve su Belluh'], rows: [
             ['Strettamente necessari', 'Ti mantengono connesso e proteggono la tua sessione su questo dispositivo. Ricordano anche un invito che hai seguito o una domanda iniziata prima di accedere, così la ritrovi dopo. Senza questi Belluh non funziona.'],
             ['Preferenze', 'Ricordano la tua lingua, il tuo fuso orario e il tuo layout, per esempio se la barra laterale è aperta e quale spazio hai usato per ultimo. Anche le tue impostazioni su questo dispositivo, se i luoghi sono attivi per la vostra mappa dell’amore e piccole cose come le schede che hai chiuso, così Belluh si apre come l’hai lasciato.'],
-            ['Misurazione', 'Ricorda quale pulsante del nostro sito ti ha portato qui, per massimo 7 giorni, così possiamo contarlo quando accedi. L’attività viene registrata solo mentre hai effettuato l’accesso, nel database di Belluh, mai da strumenti di analisi di terze parti.'],
+            ['Misurazione', 'Ricorda quale pulsante del nostro sito ti ha portato qui, per massimo 7 giorni. Con il tuo consenso (“Migliorare Belluh”), Belluh registra quali funzioni usi nel proprio database mentre hai effettuato l’accesso, e Google Analytics (_ga, _ga_<id>, fino a 2 anni) e Mixpanel (mp_<token>_mixpanel) contano le visite e l’uso delle funzioni. Disattivato finché non lo consenti nel SEE, nel Regno Unito e in Svizzera, e disattivato quando il tuo browser invia Global Privacy Control.'],
             ['Pubblicità', 'Non usati. Belluh non ha cookie pubblicitari né tracker pubblicitari.'],
           ] } },
         ],
@@ -637,12 +637,12 @@ const pt: T = {
     ],
     sections: [
       { h: 'O que são cookies?', items: ['Cookies são pequenos arquivos de texto que um site salva no seu navegador para reconhecer o seu dispositivo numa próxima visita. Eles podem manter você conectado, lembrar as suas configurações ou ajudar um site a entender como é usado.'] },
-      { h: 'Cookies próprios e de terceiros', items: ['Cookies próprios são definidos pelo site que você está visitando, aqui o belluh.com. Cookies de terceiros são definidos por outra empresa, muitas vezes para seguir as pessoas de site em site para fins de publicidade.', 'Tudo o que o Belluh salva é próprio. O Belluh não usa cookies de publicidade nem de rastreamento de terceiros.'] },
+      { h: 'Cookies próprios e de terceiros', items: ['Cookies próprios são definidos pelo site que você está visitando, aqui o belluh.com. Cookies de terceiros são definidos por outra empresa, muitas vezes para seguir as pessoas de site em site para fins de publicidade.', 'Tudo o que o próprio Belluh salva é próprio. Se você permitir “Melhorar a Belluh”, o Google Analytics e o Mixpanel também salvam identificadores no seu dispositivo para contar visitas; eles são definidos no belluh.com e não são usados para publicidade. O Belluh não usa cookies de publicidade.'] },
       { h: 'Cookies de sessão e persistentes', items: ['Cookies de sessão somem quando você fecha o navegador. Cookies persistentes ficam até expirarem ou serem apagados, e é assim que um site se lembra de você entre uma visita e outra.'] },
       {
         h: 'Outras tecnologias',
         items: [
-          'O Belluh usa o armazenamento local do navegador em vez de cookies. O armazenamento local funciona quase como um cookie, mas não é enviado aos nossos servidores a cada solicitação: fica no seu dispositivo até ser apagado. O armazenamento de sessão é igual, só que é apagado quando você fecha a aba. Nesta política, “cookies” quer dizer todos eles.',
+          'Para os próprios dados, o Belluh usa o armazenamento local do navegador em vez de cookies. O armazenamento local funciona quase como um cookie, mas não é enviado aos nossos servidores a cada solicitação: fica no seu dispositivo até ser apagado. O armazenamento de sessão é igual, só que é apagado quando você fecha a aba. Nesta política, “cookies” quer dizer todos eles.',
           { note: 'Algumas partes do Belluh carregam conteúdo de outros serviços, como fontes e imagens de mapas. Esses serviços recebem as informações padrão de qualquer solicitação na web, como o seu endereço IP, para poder entregá-lo.' },
         ],
       },
@@ -653,7 +653,7 @@ const pt: T = {
           { table: { head: ['Categoria', 'O que faz no Belluh'], rows: [
             ['Estritamente necessários', 'Mantêm você conectado e a sua sessão segura neste dispositivo. Também lembram um convite que você seguiu ou uma pergunta que começou antes de entrar, para que esteja lá depois. O Belluh não funciona sem eles.'],
             ['Preferências', 'Lembram o seu idioma, o seu fuso horário e o seu layout, como se a barra lateral está aberta e qual espaço você usou por último. Também as suas configurações neste dispositivo, se os lugares estão ativados no seu mapa do amor e pequenas coisas, como cartões que você dispensou, para o Belluh abrir do jeito que você deixou.'],
-            ['Medição', 'Lembra qual botão do nosso site trouxe você até aqui, por até 7 dias, para contarmos quando você entrar. A atividade só é registrada enquanto você está conectado, no próprio banco de dados do Belluh, nunca por ferramentas de análise de terceiros.'],
+            ['Medição', 'Lembra qual botão do nosso site trouxe você até aqui, por até 7 dias. Com a sua permissão (“Melhorar a Belluh”), o Belluh registra no próprio banco de dados quais recursos você usa enquanto está conectado, e o Google Analytics (_ga, _ga_<id>, por até 2 anos) e o Mixpanel (mp_<token>_mixpanel) contam visitas e o uso dos recursos. Fica desativado até você permitir no EEE, no Reino Unido e na Suíça, e desativado quando o seu navegador envia o Global Privacy Control.'],
             ['Publicidade', 'Não usados. O Belluh não tem cookies de publicidade nem rastreadores de anúncios.'],
           ] } },
         ],
@@ -786,12 +786,12 @@ const zh: T = {
     ],
     sections: [
       { h: '什么是 Cookie？', items: ['Cookie 是网站保存在浏览器中的小型文本文件，用来在你下次访问时识别你的设备。它可以让你保持登录、记住你的设置，或帮助网站了解自己被如何使用。'] },
-      { h: '第一方 Cookie 与第三方 Cookie', items: ['第一方 Cookie 由你正在访问的网站设置，这里指 belluh.com。第三方 Cookie 由其他公司设置，常用于跨网站追踪用户以投放广告。', 'Belluh 存储的一切都是第一方的。Belluh 不使用任何第三方广告或追踪 Cookie。'] },
+      { h: '第一方 Cookie 与第三方 Cookie', items: ['第一方 Cookie 由你正在访问的网站设置，这里指 belluh.com。第三方 Cookie 由其他公司设置，常用于跨网站追踪用户以投放广告。', 'Belluh 自己存储的内容都是第一方的。如果你允许“让 Belluh 更好”，Google Analytics 和 Mixpanel 也会在你的设备上存储标识符，用来统计访问量；它们设置在 belluh.com 上，不用于广告。Belluh 不使用广告 Cookie。'] },
       { h: '会话 Cookie 与持久 Cookie', items: ['会话 Cookie 在你关闭浏览器时消失。持久 Cookie 会一直保留，直到过期或被删除，网站正是靠它在多次访问之间记住你。'] },
       {
         h: '其他技术',
         items: [
-          'Belluh 使用浏览器的本地存储，而不是 Cookie。本地存储的作用和 Cookie 很像，但不会在每次请求时发送到我们的服务器：它留在你的设备上，直到被清除。会话存储也一样，只是在你关闭标签页时就会被清除。本政策中所说的“Cookie”涵盖以上所有技术。',
+          'Belluh 自身使用浏览器的本地存储，而不是 Cookie。本地存储的作用和 Cookie 很像，但不会在每次请求时发送到我们的服务器：它留在你的设备上，直到被清除。会话存储也一样，只是在你关闭标签页时就会被清除。本政策中所说的“Cookie”涵盖以上所有技术。',
           { note: 'Belluh 的部分页面会从其他服务加载内容，例如字体和地图图片。这些服务会收到任何网络请求都会附带的标准信息，例如你的 IP 地址，以便提供这些内容。' },
         ],
       },
@@ -802,7 +802,7 @@ const zh: T = {
           { table: { head: ['类别', '在 Belluh 中的作用'], rows: [
             ['必要', '让你在这台设备上保持登录，并保障会话安全。还会记住你在登录前点开的邀请或开始提的问题，登录后它们还在。没有这些，Belluh 无法运行。'],
             ['偏好', '记住你的语言、时区和布局，比如侧边栏是否展开、上次用的是哪个空间。还有你在这台设备上的设置、恋爱地图是否开启了地点，以及你关掉的卡片等小事，让 Belluh 每次打开都是你离开时的样子。'],
-            ['统计', '记住你是通过我们网站上的哪个按钮进来的，最长保留 7 天，以便你登录后计入一次。活动记录仅在你登录时保存在 Belluh 自己的数据库中，从不使用第三方分析工具。'],
+            ['统计', '记住你是通过我们网站上的哪个按钮进来的，最长保留 7 天。经你允许（“让 Belluh 更好”）后，Belluh 会在你登录期间把你用了哪些功能记录在自己的数据库中，Google Analytics（_ga、_ga_<id>，最长 2 年）和 Mixpanel（mp_<token>_mixpanel）会统计访问量和功能使用情况。在欧洲经济区、英国和瑞士，你允许之前默认关闭；浏览器发送 Global Privacy Control 时也会关闭。'],
             ['广告', '不使用。Belluh 没有广告 Cookie，也没有广告追踪器。'],
           ] } },
         ],
@@ -935,12 +935,12 @@ const de: T = {
     ],
     sections: [
       { h: 'Was sind Cookies?', items: ['Cookies sind kleine Textdateien, die eine Website in deinem Browser speichert, um dein Gerät beim nächsten Besuch wiederzuerkennen. Sie können dich angemeldet halten, deine Einstellungen speichern oder einer Website zeigen, wie sie genutzt wird.'] },
-      { h: 'Erstanbieter- und Drittanbieter-Cookies', items: ['Erstanbieter-Cookies setzt die Website, die du gerade besuchst, hier belluh.com. Drittanbieter-Cookies setzt ein anderes Unternehmen, oft um Menschen für Werbung von Website zu Website zu verfolgen.', 'Alles, was Belluh speichert, stammt von Belluh selbst. Belluh verwendet keine Werbe- oder Tracking-Cookies von Drittanbietern.'] },
+      { h: 'Erstanbieter- und Drittanbieter-Cookies', items: ['Erstanbieter-Cookies setzt die Website, die du gerade besuchst, hier belluh.com. Drittanbieter-Cookies setzt ein anderes Unternehmen, oft um Menschen für Werbung von Website zu Website zu verfolgen.', 'Was Belluh selbst speichert, sind Erstanbieter-Daten. Wenn du „Belluh verbessern“ erlaubst, speichern auch Google Analytics und Mixpanel Kennungen auf deinem Gerät, um Besuche zu zählen. Sie werden auf belluh.com gesetzt und nicht für Werbung genutzt. Belluh verwendet keine Werbe-Cookies.'] },
       { h: 'Sitzungs- und dauerhafte Cookies', items: ['Sitzungs-Cookies verschwinden, wenn du den Browser schliesst. Dauerhafte Cookies bleiben, bis sie ablaufen oder du sie löschst. So erinnert sich eine Website von Besuch zu Besuch an dich.'] },
       {
         h: 'Andere Technologien',
         items: [
-          'Belluh nutzt statt Cookies den lokalen Speicher deines Browsers. Der lokale Speicher funktioniert ähnlich wie ein Cookie, wird aber nicht bei jeder Anfrage an unsere Server geschickt: Er bleibt auf deinem Gerät, bis er gelöscht wird. Der Sitzungsspeicher funktioniert genauso, wird aber gelöscht, wenn du den Tab schliesst. In dieser Richtlinie meint „Cookies“ all das.',
+          'Für die eigenen Daten nutzt Belluh statt Cookies den lokalen Speicher deines Browsers. Der lokale Speicher funktioniert ähnlich wie ein Cookie, wird aber nicht bei jeder Anfrage an unsere Server geschickt: Er bleibt auf deinem Gerät, bis er gelöscht wird. Der Sitzungsspeicher funktioniert genauso, wird aber gelöscht, wenn du den Tab schliesst. In dieser Richtlinie meint „Cookies“ all das.',
           { note: 'Manche Teile von Belluh laden Inhalte von anderen Diensten, etwa Schriften und Kartenbilder. Diese Dienste erhalten die Standardangaben, die jede Webanfrage mitbringt, zum Beispiel deine IP-Adresse, damit sie die Inhalte ausliefern können.' },
         ],
       },
@@ -951,7 +951,7 @@ const de: T = {
           { table: { head: ['Kategorie', 'Was sie bei Belluh tut'], rows: [
             ['Unbedingt erforderlich', 'Hält dich auf diesem Gerät angemeldet und deine Sitzung sicher. Merkt sich auch eine Einladung, der du gefolgt bist, oder eine Frage, die du vor dem Anmelden begonnen hast, damit sie danach auf dich wartet. Ohne sie funktioniert Belluh nicht.'],
             ['Präferenzen', 'Merkt sich deine Sprache, deine Zeitzone und dein Layout, etwa ob die Seitenleiste offen ist und welchen Bereich du zuletzt genutzt hast. Ausserdem deine Einstellungen auf diesem Gerät, ob Orte für eure Liebeskarte aktiviert sind, und Kleinigkeiten wie Karten, die du geschlossen hast, damit Belluh so aufgeht, wie du es verlassen hast.'],
-            ['Messung', 'Merkt sich bis zu 7 Tage lang, über welchen Button unserer Website du gekommen bist, damit wir ihn nach dem Anmelden zählen können. Aktivität wird nur erfasst, während du angemeldet bist, in Belluhs eigener Datenbank, nie durch Analysetools von Drittanbietern.'],
+            ['Messung', 'Merkt sich bis zu 7 Tage lang, über welchen Button unserer Website du gekommen bist. Mit deiner Erlaubnis („Belluh verbessern“) erfasst Belluh in seiner eigenen Datenbank, welche Funktionen du nutzt, während du angemeldet bist, und Google Analytics (_ga, _ga_<id>, bis zu 2 Jahre) und Mixpanel (mp_<token>_mixpanel) zählen Besuche und die Nutzung von Funktionen. Im EWR, im Vereinigten Königreich und in der Schweiz aus, bis du es erlaubst, und aus, wenn dein Browser Global Privacy Control sendet.'],
             ['Werbung', 'Nicht verwendet. Belluh hat keine Werbe-Cookies und keine Werbetracker.'],
           ] } },
         ],
@@ -1084,12 +1084,12 @@ const es: T = {
     ],
     sections: [
       { h: '¿Qué son las cookies?', items: ['Las cookies son pequeños archivos de texto que un sitio web guarda en tu navegador para reconocer tu dispositivo en una próxima visita. Pueden mantener tu sesión iniciada, recordar tus ajustes o ayudar a un sitio a entender cómo se usa.'] },
-      { h: 'Cookies propias y de terceros', items: ['Las cookies propias las pone el sitio que estás visitando, en este caso belluh.com. Las de terceros las pone otra empresa, a menudo para seguir a las personas de un sitio a otro con fines publicitarios.', 'Todo lo que guarda Belluh es propio. Belluh no usa cookies publicitarias ni de seguimiento de terceros.'] },
+      { h: 'Cookies propias y de terceros', items: ['Las cookies propias las pone el sitio que estás visitando, en este caso belluh.com. Las de terceros las pone otra empresa, a menudo para seguir a las personas de un sitio a otro con fines publicitarios.', 'Lo que guarda Belluh por sí mismo es propio. Si permites «Mejorar Belluh», Google Analytics y Mixpanel también guardan identificadores en tu dispositivo para contar las visitas; se establecen en belluh.com y no se usan para publicidad. Belluh no usa cookies publicitarias.'] },
       { h: 'Cookies de sesión y persistentes', items: ['Las cookies de sesión desaparecen al cerrar el navegador. Las persistentes se quedan hasta que caducan o las borras, y así es como un sitio te recuerda de una visita a otra.'] },
       {
         h: 'Otras tecnologías',
         items: [
-          'Belluh usa el almacenamiento local de tu navegador en lugar de cookies. El almacenamiento local funciona casi como una cookie, pero no se envía a nuestros servidores con cada solicitud: se queda en tu dispositivo hasta que se borra. El almacenamiento de sesión es igual, salvo que se borra al cerrar la pestaña. En esta política, «cookies» se refiere a todo esto.',
+          'Para sus propios datos, Belluh usa el almacenamiento local de tu navegador en lugar de cookies. El almacenamiento local funciona casi como una cookie, pero no se envía a nuestros servidores con cada solicitud: se queda en tu dispositivo hasta que se borra. El almacenamiento de sesión es igual, salvo que se borra al cerrar la pestaña. En esta política, «cookies» se refiere a todo esto.',
           { note: 'Algunas partes de Belluh cargan contenido de otros servicios, como tipografías e imágenes de mapas. Esos servicios reciben la información estándar que acompaña a cualquier solicitud web, como tu dirección IP, para poder entregarlo.' },
         ],
       },
@@ -1100,7 +1100,7 @@ const es: T = {
           { table: { head: ['Categoría', 'Qué hace en Belluh'], rows: [
             ['Estrictamente necesarias', 'Mantienen tu sesión iniciada y segura en este dispositivo. También recuerdan una invitación que seguiste o una pregunta que empezaste antes de iniciar sesión, para que te espere después. Belluh no funciona sin ellas.'],
             ['Preferencias', 'Recuerdan tu idioma, tu zona horaria y tu diseño, como si la barra lateral está abierta y qué espacio usaste por última vez. También tus ajustes en este dispositivo, si los lugares están activados en vuestro mapa del amor y pequeñas cosas como las tarjetas que cerraste, para que Belluh se abra como lo dejaste.'],
-            ['Medición', 'Recuerda qué botón de nuestro sitio te trajo, durante un máximo de 7 días, para contarlo cuando inicies sesión. La actividad solo se registra mientras tienes la sesión iniciada, en la propia base de datos de Belluh, nunca con herramientas de análisis de terceros.'],
+            ['Medición', 'Recuerda qué botón de nuestro sitio te trajo, durante un máximo de 7 días. Con tu permiso («Mejorar Belluh»), Belluh registra en su propia base de datos qué funciones usas mientras tienes la sesión iniciada, y Google Analytics (_ga, _ga_<id>, hasta 2 años) y Mixpanel (mp_<token>_mixpanel) cuentan las visitas y el uso de funciones. Desactivado hasta que lo permitas en el EEE, el Reino Unido y Suiza, y desactivado cuando tu navegador envía Global Privacy Control.'],
             ['Publicidad', 'No se usan. Belluh no tiene cookies publicitarias ni rastreadores de anuncios.'],
           ] } },
         ],
@@ -1227,7 +1227,7 @@ const esMX: Partial<T> = {
     sections: es.cookies.sections.map((s, i) => i !== 4 ? s : { ...s, items: [s.items[0], { table: { head: ['Categoría', 'Qué hace en Belluh'], rows: [
       ['Estrictamente necesarias', 'Mantienen tu sesión iniciada y segura en este dispositivo. También recuerdan una invitación que seguiste o una pregunta que empezaste antes de iniciar sesión, para que te espere después. Belluh no funciona sin ellas.'],
       ['Preferencias', 'Recuerdan tu idioma, tu zona horaria y tu diseño, como si la barra lateral está abierta y qué espacio usaste por última vez. También tus ajustes en este dispositivo, si los lugares están activados en su mapa del amor y pequeñas cosas como las tarjetas que cerraste, para que Belluh se abra como lo dejaste.'],
-      ['Medición', 'Recuerda qué botón de nuestro sitio te trajo, durante un máximo de 7 días, para contarlo cuando inicies sesión. La actividad solo se registra mientras tienes la sesión iniciada, en la propia base de datos de Belluh, nunca con herramientas de análisis de terceros.'],
+      ['Medición', 'Recuerda qué botón de nuestro sitio te trajo, durante un máximo de 7 días. Con tu permiso («Mejorar Belluh»), Belluh registra en su propia base de datos qué funciones usas mientras tienes la sesión iniciada, y Google Analytics (_ga, _ga_<id>, hasta 2 años) y Mixpanel (mp_<token>_mixpanel) cuentan las visitas y el uso de funciones. Desactivado hasta que lo permitas en el EEE, el Reino Unido y Suiza, y desactivado cuando tu navegador envía Global Privacy Control.'],
       ['Publicidad', 'No se usan. Belluh no tiene cookies publicitarias ni rastreadores de anuncios.'],
     ] } }] }),
   },

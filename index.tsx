@@ -3,6 +3,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './src/App';
 import { I18nProvider } from './src/i18n';
+import { startTrackers } from './src/lib/trackers';
+startTrackers();
 const PrivacyCenter = React.lazy(() => import('./src/components/PrivacyCenter'));
 const ConsentBanner = React.lazy(() => import('./src/components/ConsentBanner'));
 
