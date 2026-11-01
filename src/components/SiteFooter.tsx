@@ -1,3 +1,4 @@
+import { openPrivacyCenter } from '../lib/consent';
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import BelluhOrb from './BelluhOrb';
@@ -41,7 +42,7 @@ const SiteFooter: React.FC<{
                   { title: t.product, links: [[n.meet, () => onSection('at-work')], [n.inside, () => onSection('inside')], [n.stories, () => onSection('stories')], [n.pricing, () => onSection('pricing')], [n.faq, () => onSection('faq')]] },
                   { title: t.company, links: [[S.mission, () => goTo('/mission')], [S.impact, () => goTo('/impact')], [S.research, () => goTo('/research')], [n.why, onGoToAbout], [n.careers, onGoToCareers], [d.common.logIn, onLogin]] },
                   { title: F.resources, links: [[F.newsroom, () => goTo('/newsroom')], [F.stories, () => goTo('/stories')], [F.safetyTips, () => goTo('/safety-tips')], [F.press, () => goTo('/press')], [F.howItWorks, () => goTo('/how-belluh-works')], [F.nfaq, () => goTo('/nfaq')], [F.contact, () => goTo('/contact')]] },
-                  { title: t.legal, links: [[F.security, () => goTo('/security')], [t.terms, () => onShowLegal('tos')], [t.privacyPolicy, () => onShowLegal('privacy')], [F.cookies, () => goTo('/cookies')], [F.healthData, () => goTo('/consumer-health-data')], [F.privacyChoices, () => goTo('/privacy-choices')], [F.accessibility, () => goTo('/accessibility')]] },
+                  { title: t.legal, links: [[F.security, () => goTo('/security')], [t.terms, () => onShowLegal('tos')], [t.privacyPolicy, () => onShowLegal('privacy')], [F.cookies, () => goTo('/cookies')], [F.healthData, () => goTo('/consumer-health-data')], [F.privacyChoices, () => openPrivacyCenter()], [F.accessibility, () => goTo('/accessibility')]] },
               ].map(col => (
                   <div key={col.title} className="min-w-0">
                       <p className="mb-5 text-sm leading-5 font-bold text-slate-900">{col.title}</p>

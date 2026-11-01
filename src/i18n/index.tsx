@@ -6,6 +6,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import en, { type Dict } from './en';
 import { detect, localeTag, dictFor, fill, TEXT_APPS, type Lang, type Country } from './core';
 import { pickUi, type UiTable } from './ui';
+import { canStore } from '../lib/consent';
 
 export { LANGS, detect, localeTag, dictFor, fill, localQuestion } from './core';
 export type { Lang, Country } from './core';
@@ -41,7 +42,8 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
       f: fill,
       date: (x, o) => { try { return x.toLocaleDateString(tag, o); } catch { return x.toLocaleDateString('en-US', o); } },
       num: n => { try { return n.toLocaleString(tag); } catch { return String(n); } },
-      setLang: (l) => { try { localStorage.setItem(STORE, l); } catch { /* storage off */ } setState(s => ({ ...s, lang: l })); },
+      // Remembered on this device only if they allow preference storage (Privacy choices)
+      setLang: (l) => { if (canStore('preferences')) { try { localStorage.setItem(STORE, l); } catch { /* storage off */ } } setState(s => ({ ...s, lang: l })); },
     };
   }, [lang, country]);
   useEffect(() => {

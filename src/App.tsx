@@ -7,6 +7,7 @@ const GuidePage = React.lazy(() => import('./pages/GuidePage'));
 const MissionPage = React.lazy(() => import('./pages/company/Mission'));
 const ImpactPage = React.lazy(() => import('./pages/company/Impact'));
 const ResearchPage = React.lazy(() => import('./pages/company/Research'));
+import { canStore } from './lib/consent';
 const ResourcePage = React.lazy(() => import('./pages/company/Resources'));
 // The footer's resource and policy pages, at belluh.com/<slug>
 const RESOURCES = ['newsroom', 'stories', 'contact', 'safety-tips', 'faq', 'trust-and-safety', 'press', 'how-belluh-works', 'nfaq', 'security', 'cookies', 'consumer-health-data', 'privacy-choices', 'accessibility'];
@@ -107,7 +108,7 @@ const App: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => { try { return localStorage.getItem('belluh_sidebar') === 'collapsed'; } catch { return false; } });
   useEffect(() => {
     document.documentElement.style.setProperty('--sidebar-w', sidebarCollapsed ? '5rem' : '16rem');
-    try { localStorage.setItem('belluh_sidebar', sidebarCollapsed ? 'collapsed' : 'open'); } catch { /* storage off */ }
+    try { if (canStore('preferences')) localStorage.setItem('belluh_sidebar', sidebarCollapsed ? 'collapsed' : 'open'); } catch { /* storage off */ }
   }, [sidebarCollapsed]);
   const [isOnboarding, setIsOnboarding] = useState(false);
   
@@ -883,7 +884,7 @@ const App: React.FC = () => {
       if (updates.settings) {
           setUser(prev => {
               const settings = { ...prev.settings, ...updates.settings };
-              try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* storage blocked */ }
+              try { if (canStore('preferences')) localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* storage blocked */ }
               return { ...prev, settings };
           });
           return;
