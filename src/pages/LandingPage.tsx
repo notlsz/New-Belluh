@@ -19,9 +19,8 @@ import understood from '../i18n/ui/understood';
 import AskMoments, { PENDING_ASK } from '../components/AskMoments';
 
 
-// Priced from what a couple costs to run, not from what the market will bear: AI for both partners, texting, the odd
-// restaurant call and hosting come to roughly $1.80 a month for an active couple and $3.60 for a heavy one. $7.77
-// covers the heavy couple with about 80% left over after payment fees, and an average couple at well over that.
+// Priced in line with Hinge+ ($29.99 a month), but for the couple, not each person: one Duo covers both partners.
+// Running a couple costs roughly $1.80 a month (active) to $3.60 (heavy): AI for both, texting, the odd restaurant call, hosting.
 /**
  * Give a couple a year of Duo. The gift is a paper envelope, lined in the occasion's colour, with the card standing half
  * out of it and filling in as you type. Giving slides the card in, closes the flap and addresses the front. Set

@@ -193,7 +193,7 @@ const en = {
     plans: [
       { name: 'Free', price: '$0', per: 'for good', alt: '', blurb: 'Start your shared memory today.', cta: 'Start free',
         items: ['Unlimited entries, private or shared', 'Your shared memory, kept for both of you', 'Bella a few times a week', 'Weekly thing to try together'] },
-      { name: 'Duo', price: '$7.77', per: 'a month for both of you, not each', alt: 'or $88.88 a year for both', blurb: 'Belluh, all in, for both of you.', cta: 'Start free',
+      { name: 'Duo', price: '$29.99', per: 'a month for both of you, not each', alt: 'or $179.99 a year for both', blurb: 'Belluh, all in, for both of you.', cta: 'Start free',
         items: ['Bella whenever you want her', 'Text her on {apps}', 'Tables, gifts and flowers ready in a tap', 'Reminders, calendar, how-was-it follow ups'] },
       { name: 'For teams', price: 'Talk to us', per: 'employers, therapists, platforms', alt: '', blurb: 'Belluh for the people you care for.', cta: 'Get in touch',
         items: ['A relationship benefit for your people', 'Between-sessions support for couples therapy', 'Belluh as a layer inside your platform', 'Private by design: you never see entries'] },
@@ -202,7 +202,7 @@ const en = {
   gift: {
     title1: 'A gift worth', title2: 'remembering.',
     sub: "Every couple you love is living moments they'll forget: the first months, the proposal, the move, the years in between. Give them a year of Belluh, and none of it slips away.",
-    given: 'gifts given, and counting', priceLine: 'for both, one year', price: '$88.88',
+    given: 'gifts given, and counting', priceLine: 'for both, one year', price: '$179.99',
     hello: "Hi, I'm Bella. Give a couple a year of Belluh: one journal they share, dates planned for them, and every anniversary remembered. Four quick questions.",
     who: "Who's the lucky couple?", what: 'Lovely. What are we celebrating?',
     how: 'I wrote them a note, it’s on the card. How should it arrive? A card in the mail is on us.',
@@ -238,7 +238,7 @@ const en = {
       { q: 'Can I text Bella?', a: 'Yes. Connect {apps} in Settings with one tap and text Bella like you’d talk to her in the app. Same Bella, same memory.' },
       { q: 'Does Bella know how things work where we live?', a: 'Yes. She books on the sites people use where you live, shops the stores you know, speaks your language, and knows the days that matter to couples there.' },
       { q: 'What happens to my data?', a: "Your entries are encrypted in storage and in transit, and never sold. Bella's replies are written by Google's Gemini models, which process your entries to write them." },
-      { q: 'Is it free?', a: 'Yes. Writing together, your shared memory and a few chats with Bella a week are free for good. Duo is $7.77 a month or $88.88 a year, one price for the two of you.' },
+      { q: 'Is it free?', a: 'Yes. Writing together, your shared memory and a few chats with Bella a week are free for good. Duo is $29.99 a month or $179.99 a year, one price for the two of you.' },
       { q: 'What happens to our shared memory if we stop paying?', a: 'Nothing is lost. Every entry and everything Bella remembers stays yours, and the free plan keeps all of it.' },
     ],
   },

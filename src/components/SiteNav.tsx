@@ -63,7 +63,6 @@ const SiteNav: React.FC<{
           <Mark />
           <div className="flex items-center justify-end gap-1">
             <span className="hidden md:inline-flex"><Link p={all[3]} /></span>
-            <button onClick={onLogin} className="hidden md:inline-flex h-10 px-3 items-center text-[14px] hover:opacity-60 transition-opacity">{d.common.logIn}</button>
             <button onClick={onGetStarted} className={`h-10 px-3 sm:px-4 md:ml-2 inline-flex items-center whitespace-nowrap rounded-full text-[13px] sm:text-[14px] font-semibold transition-colors ${over ? 'bg-white text-[#1a1a1a] hover:bg-white/85' : 'bg-[#1a1a1a] text-white hover:bg-black'}`}>{d.common.startFree}</button>
           </div>
         </div>
