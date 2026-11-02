@@ -369,7 +369,7 @@ const INTEGRATIONS = [
 ];
 
 // Universities get one row and companies the other
-const isUniversity = (domain: string) => /\.(edu|ac\.uk|ca)$/.test(domain);
+const isUniversity = (domain: string) => /\.(edu|ac\.uk|ca|edu\.cn|hku\.hk|ethz\.ch)$/.test(domain);
 type Org = { name: string; domain: string; logo?: string };
 
 // Real logos only (grey until you hover), served from belluh.com so they always load. Never text.
