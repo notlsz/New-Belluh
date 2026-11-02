@@ -22,7 +22,6 @@ const en = {
       { name: 'Firsts', insight: 'The first photo of you two, and where it was taken.', facts: [{ k: 'first date', v: 'Mar 14, 2019' }, { k: 'first trip', v: 'Napa' }, { k: 'first home', v: 'Apt 4B' }] },
       { name: 'Rhythm', insight: 'Every other Saturday is yours.', facts: [{ k: 'date nights', v: '2 a month' }, { k: 'longest streak', v: '7 weeks' }, { k: 'last one', v: '12 days ago' }] },
     ],
-    note: 'Example couple.',
   },
   gaps: {
     title: 'Fill the gaps between dates.',
@@ -81,7 +80,6 @@ const es = {
         { name: 'Primeras veces', insight: 'Vuestra primera foto juntos, y dónde se hizo.', facts: [{ k: 'primera cita', v: '14 de marzo de 2019' }, { k: 'primer viaje', v: 'Granada' }, { k: 'primera casa', v: 'un piso en Lavapiés' }] },
         { name: 'Ritmo', insight: 'Un sábado sí y otro no, solo para vosotros.', facts: [{ k: 'citas', v: '2 al mes' }, { k: 'racha más larga', v: '7 semanas' }, { k: 'la última', v: 'hace 12 días' }] },
       ],
-      note: 'Pareja de ejemplo.',
     },
     gaps: {
       title: 'Llenar los huecos entre citas.',
@@ -140,7 +138,6 @@ const pt = {
         { name: 'Primeiras vezes', insight: 'A primeira foto de vocês dois, e onde foi tirada.', facts: [{ k: 'primeiro encontro', v: '14 de março de 2019' }, { k: 'primeira viagem', v: 'Paraty' }, { k: 'primeira casa', v: 'Ap. 42, Pinheiros' }] },
         { name: 'Ritmo', insight: 'Um sábado sim, outro não, só de vocês.', facts: [{ k: 'encontros', v: '2 por mês' }, { k: 'maior sequência', v: '7 semanas' }, { k: 'o último', v: 'há 12 dias' }] },
       ],
-      note: 'Casal de exemplo.',
     },
     gaps: {
       title: 'Preencha o espaço entre um encontro e outro.',
@@ -201,7 +198,6 @@ const t: UiTable<typeof en> = {
         { name: 'はじめて', insight: 'ふたりの最初の写真と、それを撮った場所。', facts: [{ k: '初デート', v: '2019年3月14日' }, { k: '初旅行', v: '箱根' }, { k: '初めての部屋', v: '中目黒の1K' }] },
         { name: 'リズム', insight: '2週に1度の土曜は、ふたりの日。', facts: [{ k: 'デート', v: '月2回' }, { k: '最長連続', v: '7週' }, { k: '前回', v: '12日前' }] },
       ],
-      note: 'サンプルのカップルによる例です。',
     },
     gaps: {
       title: 'デートとデートのあいだを、埋める。',
@@ -259,7 +255,6 @@ const t: UiTable<typeof en> = {
         { name: 'Premières fois', insight: 'Votre première photo à deux, et où elle a été prise.', facts: [{ k: 'premier rendez-vous', v: '14 mars 2019' }, { k: 'premier voyage', v: 'Étretat' }, { k: 'premier appart', v: 'rue Oberkampf' }] },
         { name: 'Rythme', insight: 'Un samedi sur deux, rien que vous deux.', facts: [{ k: 'soirées à deux', v: '2 par mois' }, { k: 'plus longue série', v: '7 semaines' }, { k: 'la dernière', v: 'il y a 12 jours' }] },
       ],
-      note: 'Couple fictif, pour l’exemple.',
     },
     gaps: {
       title: 'Remplir les blancs entre deux rendez-vous.',
@@ -317,7 +312,6 @@ const t: UiTable<typeof en> = {
         { name: 'Prime volte', insight: 'La vostra prima foto insieme, e dove è stata scattata.', facts: [{ k: 'primo appuntamento', v: '14 marzo 2019' }, { k: 'primo viaggio', v: 'Cinque Terre' }, { k: 'prima casa', v: 'via Tortona' }] },
         { name: 'Ritmo', insight: 'Un sabato sì e uno no, solo per voi.', facts: [{ k: 'serate a due', v: '2 al mese' }, { k: 'serie più lunga', v: '7 settimane' }, { k: 'l’ultima', v: '12 giorni fa' }] },
       ],
-      note: 'Coppia di esempio.',
     },
     gaps: {
       title: 'Riempire i vuoti tra un appuntamento e l’altro.',
@@ -376,7 +370,6 @@ const t: UiTable<typeof en> = {
         { name: '第一次', insight: '你们的第一张合照，以及拍下它的地方。', facts: [{ k: '第一次约会', v: '2019 年 3 月 14 日' }, { k: '第一次旅行', v: '杭州' }, { k: '第一个家', v: '静安的小公寓' }] },
         { name: '节奏', insight: '每隔一个周六，是你们俩的约会日。', facts: [{ k: '约会', v: '每月 2 次' }, { k: '最长连续', v: '7 周' }, { k: '上一次', v: '12 天前' }] },
       ],
-      note: '示例情侣。',
     },
     gaps: {
       title: '填满两次约会之间的空白。',
@@ -434,7 +427,6 @@ const t: UiTable<typeof en> = {
         { name: 'Erste Male', insight: 'Euer erstes gemeinsames Foto, und wo es entstand.', facts: [{ k: 'erstes Date', v: '14. März 2019' }, { k: 'erste Reise', v: 'Hamburg' }, { k: 'erste Wohnung', v: 'Kreuzberg, 3. OG' }] },
         { name: 'Rhythmus', insight: 'Jeder zweite Samstag gehört euch.', facts: [{ k: 'Date-Abende', v: '2 pro Monat' }, { k: 'längste Serie', v: '7 Wochen' }, { k: 'zuletzt', v: 'vor 12 Tagen' }] },
       ],
-      note: 'Beispielpaar.',
     },
     gaps: {
       title: 'Die Lücken zwischen den Dates füllen.',
@@ -493,7 +485,6 @@ const t: UiTable<typeof en> = {
         { name: '처음', insight: '두 사람의 첫 사진, 그리고 그곳.', facts: [{ k: '첫 데이트', v: '2019년 3월 14일' }, { k: '첫 여행', v: '강릉' }, { k: '첫 집', v: '망원동 원룸' }] },
         { name: '리듬', insight: '격주 토요일은 두 사람의 날.', facts: [{ k: '데이트', v: '한 달에 2번' }, { k: '최장 연속', v: '7주' }, { k: '지난번', v: '12일 전' }] },
       ],
-      note: '샘플 커플 예시예요.',
     },
     gaps: {
       title: '데이트와 데이트 사이를 채워요.',
