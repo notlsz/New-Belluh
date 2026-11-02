@@ -11,7 +11,7 @@ import { canStore } from '../lib/consent';
 export { LANGS, detect, localeTag, dictFor, fill, localQuestion } from './core';
 export type { Lang, Country } from './core';
 
-const DICT_IDS: Lang[] = ['en', 'ja', 'fr', 'it', 'pt', 'zh', 'de', 'es'];
+const DICT_IDS: Lang[] = ['en', 'ja', 'fr', 'it', 'pt', 'zh', 'de', 'es', 'ko'];
 
 interface I18n {
   lang: Lang; country: Country; tag: string; d: Dict; textApps: string;

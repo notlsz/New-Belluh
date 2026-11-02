@@ -36,7 +36,7 @@ const en = {
     // Getting started (Journal, TabBar, i18n)
     firstEntry: { q: 'How do I write my first entry?', a: 'Tap {capture}, write a few lines, and choose whether it’s shared with your partner or private to you. You can add a photo or record a voice note too. Your entries live in {story}, where you can edit or delete them any time.' },
     tabs: { q: 'What are {story}, {map}, {capture}, Bella and {me}?', a: '{story} is your journal. {map} pins your memories where they happened. {capture} is where you write something new. Bella is where you ask Belluh’s AI for help; once your partner joins, it becomes {us}, a thread for the two of you and Bella. {me} is your profile, your dates and your settings.' },
-    language: { q: 'Can I use Belluh in my language?', a: 'Yes. Belluh is available in eight languages and picks yours from your browser. To change it, use the Language menu at the bottom of belluh.com. Your choice is remembered on this device.' },
+    language: { q: 'Can I use Belluh in my language?', a: 'Yes. Belluh is available in nine languages and picks yours from your browser. To change it, use the Language menu at the bottom of belluh.com. Your choice is remembered on this device.' },
     // Your partner and circles (Profile, UsThread)
     invite: { q: 'How do I invite my partner?', a: 'Open {me} and tap {invite}. Copy the invite link and send it however you like; each link works once, for 14 days. If your partner already has a Belluh account, you can invite them by email instead.' },
     circles: { q: 'What are circles?', a: 'A circle is a shared space for the people in it. Make one for your couple, your family, your friends or anything else, and give it a name. All your circles also come together in one timeline.' },
@@ -106,7 +106,7 @@ const t: UiTable<typeof en> = {
     a: {
       firstEntry: { q: 'はじめての記録はどう書けばいい？', a: '「{capture}」をタップして数行書き、パートナーと共有するか、自分だけの非公開にするかを選びます。写真を添えたり、ボイスメモを録音したりもできます。記録は「{story}」に並び、いつでも編集や削除ができます。' },
       tabs: { q: '「{story}」「{map}」「{capture}」「Bella」「{me}」とは？', a: '「{story}」はふたりのジャーナルです。「{map}」は思い出をその場所にピンで残します。「{capture}」は新しく書く場所。BellaはBelluhのAIに相談する場所で、パートナーが参加すると「{us}」になり、ふたりとBellaのスレッドになります。「{me}」はプロフィール、記念日、設定です。' },
-      language: { q: '日本語で使えますか？', a: 'はい。Belluhは8言語に対応していて、ブラウザの設定から言語を選びます。変更するには、belluh.comのいちばん下にある言語メニューを使ってください。選んだ言語はこの端末に保存されます。' },
+      language: { q: '日本語で使えますか？', a: 'はい。Belluhは9言語に対応していて、ブラウザの設定から言語を選びます。変更するには、belluh.comのいちばん下にある言語メニューを使ってください。選んだ言語はこの端末に保存されます。' },
       invite: { q: 'パートナーを招待するには？', a: '「{me}」を開いて「{invite}」をタップします。招待リンクをコピーして、好きな方法で送ってください。リンクは1回だけ、14日間有効です。パートナーがすでにBelluhのアカウントを持っている場合は、メールで招待することもできます。' },
       circles: { q: 'サークルとは？', a: 'サークルは、そこにいる人たちのための共有スペースです。カップル、家族、友だち、そのほか何のためにでもつくれて、名前をつけられます。すべてのサークルは、ひとつのタイムラインでまとめて見ることもできます。' },
       archive: { q: 'サークルをアーカイブするとどうなる？', a: 'アーカイブしたサークルは閲覧専用になります。中身はすべて残りますが、新しく追加はできません。「{manage}」からいつでも元に戻せます。' },
@@ -166,7 +166,7 @@ const t: UiTable<typeof en> = {
     a: {
       firstEntry: { q: 'Comment écrire ma première entrée ?', a: 'Touche {capture}, écris quelques lignes et choisis si c’est partagé avec ta moitié ou privé. Tu peux aussi ajouter une photo ou enregistrer un mémo vocal. Tes entrées vivent dans {story}, où tu peux les modifier ou les supprimer à tout moment.' },
       tabs: { q: 'Que sont {story}, {map}, {capture}, Bella et {me} ?', a: '{story}, c’est votre journal. {map} épingle vos souvenirs là où ils ont eu lieu. {capture} sert à écrire quelque chose de nouveau. Bella, c’est là que tu demandes de l’aide à l’IA de Belluh ; quand ta moitié vous rejoint, l’onglet devient {us}, un fil pour vous deux et Bella. {me}, c’est ton profil, vos dates et tes réglages.' },
-      language: { q: 'Puis-je utiliser Belluh en français ?', a: 'Oui. Belluh est disponible en huit langues et choisit la tienne d’après ton navigateur. Pour la changer, utilise le menu Langue en bas de belluh.com. Ton choix est mémorisé sur cet appareil.' },
+      language: { q: 'Puis-je utiliser Belluh en français ?', a: 'Oui. Belluh est disponible en neuf langues et choisit la tienne d’après ton navigateur. Pour la changer, utilise le menu Langue en bas de belluh.com. Ton choix est mémorisé sur cet appareil.' },
       invite: { q: 'Comment inviter ma moitié ?', a: 'Ouvre {me} et touche {invite}. Copie le lien d’invitation et envoie-le comme tu veux ; chaque lien fonctionne une fois, pendant 14 jours. Si ta moitié a déjà un compte Belluh, tu peux aussi l’inviter par e-mail.' },
       circles: { q: 'Que sont les cercles ?', a: 'Un cercle est un espace partagé pour les personnes qui en font partie. Crée-en un pour ton couple, ta famille, tes amis ou autre chose, et donne-lui un nom. Tous tes cercles se retrouvent aussi dans une seule chronologie.' },
       archive: { q: 'Que se passe-t-il si j’archive un cercle ?', a: 'Un cercle archivé passe en lecture seule : tout ce qu’il contient reste, mais on ne peut plus rien ajouter. Tu peux le restaurer à tout moment depuis {manage}.' },
@@ -226,7 +226,7 @@ const t: UiTable<typeof en> = {
     a: {
       firstEntry: { q: 'Come scrivo il mio primo ricordo?', a: 'Tocca {capture}, scrivi qualche riga e scegli se condividerlo con il partner o tenerlo privato. Puoi anche aggiungere una foto o registrare un memo vocale. I tuoi ricordi stanno in {story}, dove puoi modificarli o eliminarli quando vuoi.' },
       tabs: { q: 'Cosa sono {story}, {map}, {capture}, Bella e {me}?', a: '{story} è il vostro diario. {map} appunta i ricordi dove sono successi. {capture} è dove scrivi qualcosa di nuovo. Bella è dove chiedi aiuto all’AI di Belluh; quando il partner si unisce diventa {us}, una chat per voi due e Bella. {me} è il tuo profilo, le vostre date e le impostazioni.' },
-      language: { q: 'Posso usare Belluh in italiano?', a: 'Sì. Belluh è disponibile in otto lingue e sceglie la tua dal browser. Per cambiarla, usa il menu Lingua in fondo a belluh.com. La scelta resta salvata su questo dispositivo.' },
+      language: { q: 'Posso usare Belluh in italiano?', a: 'Sì. Belluh è disponibile in nove lingue e sceglie la tua dal browser. Per cambiarla, usa il menu Lingua in fondo a belluh.com. La scelta resta salvata su questo dispositivo.' },
       invite: { q: 'Come invito il mio partner?', a: 'Apri {me} e tocca {invite}. Copia il link d’invito e mandalo come preferisci; ogni link funziona una volta, per 14 giorni. Se il partner ha già un account Belluh, puoi invitarlo anche via email.' },
       circles: { q: 'Cosa sono le cerchie?', a: 'Una cerchia è uno spazio condiviso per le persone che ne fanno parte. Creane una per la coppia, la famiglia, gli amici o qualsiasi altra cosa, e dalle un nome. Tutte le tue cerchie si ritrovano anche in un’unica cronologia.' },
       archive: { q: 'Cosa succede se archivio una cerchia?', a: 'Una cerchia archiviata diventa di sola lettura: tutto resta, ma non si può aggiungere niente di nuovo. Puoi ripristinarla quando vuoi da {manage}.' },
@@ -286,7 +286,7 @@ const t: UiTable<typeof en> = {
     a: {
       firstEntry: { q: 'Como escrevo meu primeiro registro?', a: 'Toque em {capture}, escreva algumas linhas e escolha se é compartilhado com seu par ou privado. Você também pode adicionar uma foto ou gravar uma nota de voz. Seus registros ficam em {story}, onde dá para editar ou apagar quando quiser.' },
       tabs: { q: 'O que são {story}, {map}, {capture}, Bella e {me}?', a: '{story} é o diário de vocês. {map} marca as memórias onde elas aconteceram. {capture} é onde você escreve algo novo. Bella é onde você pede ajuda à IA do Belluh; quando seu par entra, a aba vira {us}, uma conversa para vocês dois e a Bella. {me} é o seu perfil, as datas de vocês e as configurações.' },
-      language: { q: 'Posso usar o Belluh em português?', a: 'Sim. O Belluh está disponível em oito idiomas e escolhe o seu pelo navegador. Para trocar, use o menu Idioma no fim da página belluh.com. Sua escolha fica salva neste dispositivo.' },
+      language: { q: 'Posso usar o Belluh em português?', a: 'Sim. O Belluh está disponível em nove idiomas e escolhe o seu pelo navegador. Para trocar, use o menu Idioma no fim da página belluh.com. Sua escolha fica salva neste dispositivo.' },
       invite: { q: 'Como convido meu par?', a: 'Abra {me} e toque em {invite}. Copie o link de convite e envie como preferir; cada link funciona uma vez, por 14 dias. Se seu par já tiver uma conta no Belluh, você também pode convidar por e-mail.' },
       circles: { q: 'O que são círculos?', a: 'Um círculo é um espaço compartilhado para as pessoas que fazem parte dele. Crie um para o casal, a família, os amigos ou qualquer outra coisa, e dê um nome a ele. Todos os seus círculos também aparecem juntos numa única linha do tempo.' },
       archive: { q: 'O que acontece quando arquivo um círculo?', a: 'Um círculo arquivado fica só para leitura: tudo continua lá, mas nada novo pode ser adicionado. Você pode restaurá-lo quando quiser em {manage}.' },
@@ -346,7 +346,7 @@ const t: UiTable<typeof en> = {
     a: {
       firstEntry: { q: '怎么写第一篇日记？', a: '点击“{capture}”，写几句话，然后选择是和另一半共享，还是只有自己可见。你也可以添加照片或录一段语音。日记都在“{story}”里，随时可以编辑或删除。' },
       tabs: { q: '“{story}”“{map}”“{capture}”“Bella”和“{me}”分别是什么？', a: '“{story}”是你们的日记。“{map}”把回忆标在它们发生的地方。“{capture}”用来写新的内容。Bella 是你向 Belluh 的 AI 求助的地方；另一半加入后，它会变成“{us}”，你们两人和 Bella 的对话。“{me}”是你的个人主页、纪念日和设置。' },
-      language: { q: '可以用中文使用 Belluh 吗？', a: '可以。Belluh 支持八种语言，会根据你的浏览器自动选择。想更换，请使用 belluh.com 页面底部的语言菜单。你的选择会保存在这台设备上。' },
+      language: { q: '可以用中文使用 Belluh 吗？', a: '可以。Belluh 支持九种语言，会根据你的浏览器自动选择。想更换，请使用 belluh.com 页面底部的语言菜单。你的选择会保存在这台设备上。' },
       invite: { q: '怎么邀请另一半？', a: '打开“{me}”，点击“{invite}”。复制邀请链接，用你喜欢的方式发给对方；每个链接只能用一次，14 天内有效。如果对方已经有 Belluh 账户，也可以用邮箱邀请。' },
       circles: { q: '什么是圈子？', a: '圈子是给其中的人共享的空间。可以为你们的二人世界、家人、朋友或其他任何关系创建一个，并给它起个名字。所有圈子也会汇总在同一条时间线里。' },
       archive: { q: '归档圈子后会怎样？', a: '归档的圈子会变成只读：里面的内容都会保留，但不能再添加新内容。你可以随时在“{manage}”中恢复它。' },
@@ -406,7 +406,7 @@ const t: UiTable<typeof en> = {
     a: {
       firstEntry: { q: 'Wie schreibe ich meinen ersten Eintrag?', a: 'Tippe auf {capture}, schreib ein paar Zeilen und wähle, ob er mit deinem Partner geteilt oder privat ist. Du kannst auch ein Foto hinzufügen oder eine Sprachnachricht aufnehmen. Deine Einträge findest du in {story}, wo du sie jederzeit bearbeiten oder löschen kannst.' },
       tabs: { q: 'Was sind {story}, {map}, {capture}, Bella und {me}?', a: '{story} ist euer Tagebuch. {map} pinnt eure Erinnerungen dorthin, wo sie passiert sind. In {capture} schreibst du etwas Neues. Bei Bella bittest du die KI von Belluh um Hilfe; sobald dein Partner dabei ist, wird daraus {us}, ein Chat für euch beide und Bella. {me} ist dein Profil mit euren Daten und deinen Einstellungen.' },
-      language: { q: 'Kann ich Belluh auf Deutsch nutzen?', a: 'Ja. Belluh gibt es in acht Sprachen, und es wählt deine anhand deines Browsers. Zum Ändern nutze das Sprachmenü ganz unten auf belluh.com. Deine Wahl wird auf diesem Gerät gespeichert.' },
+      language: { q: 'Kann ich Belluh auf Deutsch nutzen?', a: 'Ja. Belluh gibt es in neun Sprachen, und es wählt deine anhand deines Browsers. Zum Ändern nutze das Sprachmenü ganz unten auf belluh.com. Deine Wahl wird auf diesem Gerät gespeichert.' },
       invite: { q: 'Wie lade ich meinen Partner ein?', a: 'Öffne {me} und tippe auf {invite}. Kopiere den Einladungslink und schick ihn, wie du magst; jeder Link funktioniert einmal, 14 Tage lang. Hat dein Partner schon ein Belluh-Konto, kannst du ihn auch per E-Mail einladen.' },
       circles: { q: 'Was sind Kreise?', a: 'Ein Kreis ist ein gemeinsamer Ort für die Menschen darin. Erstelle einen für euch als Paar, deine Familie, deine Freunde oder alles andere, und gib ihm einen Namen. Alle deine Kreise kommen außerdem in einer Zeitleiste zusammen.' },
       archive: { q: 'Was passiert, wenn ich einen Kreis archiviere?', a: 'Ein archivierter Kreis ist nur noch lesbar: Alles darin bleibt, aber es kann nichts Neues hinzukommen. Du kannst ihn jederzeit unter {manage} wiederherstellen.' },
@@ -466,7 +466,7 @@ const t: UiTable<typeof en> = {
     a: {
       firstEntry: { q: '¿Cómo escribo mi primera entrada?', a: 'Toca {capture}, escribe unas líneas y elige si la compartes con tu pareja o es privada. También puedes añadir una foto o grabar una nota de voz. Tus entradas viven en {story}, donde puedes editarlas o borrarlas cuando quieras.' },
       tabs: { q: '¿Qué son {story}, {map}, {capture}, Bella y {me}?', a: '{story} es vuestro diario. {map} coloca vuestros recuerdos donde ocurrieron. {capture} es donde escribes algo nuevo. Bella es donde pides ayuda a la IA de Belluh; cuando tu pareja se une, se convierte en {us}, una conversación para los dos y Bella. {me} es tu perfil, vuestras fechas y tus ajustes.' },
-      language: { q: '¿Puedo usar Belluh en español?', a: 'Sí. Belluh está disponible en ocho idiomas y elige el tuyo según tu navegador. Para cambiarlo, usa el menú Idioma al final de belluh.com. Tu elección se guarda en este dispositivo.' },
+      language: { q: '¿Puedo usar Belluh en español?', a: 'Sí. Belluh está disponible en nueve idiomas y elige el tuyo según tu navegador. Para cambiarlo, usa el menú Idioma al final de belluh.com. Tu elección se guarda en este dispositivo.' },
       invite: { q: '¿Cómo invito a mi pareja?', a: 'Abre {me} y toca {invite}. Copia el enlace de invitación y envíalo como quieras; cada enlace funciona una vez, durante 14 días. Si tu pareja ya tiene cuenta en Belluh, también puedes invitarla por correo.' },
       circles: { q: '¿Qué son los círculos?', a: 'Un círculo es un espacio compartido para las personas que forman parte de él. Crea uno para tu pareja, tu familia, tus amigos o lo que quieras, y ponle nombre. Todos tus círculos se reúnen también en una sola cronología.' },
       archive: { q: '¿Qué pasa si archivo un círculo?', a: 'Un círculo archivado pasa a ser de solo lectura: todo lo que hay dentro se queda, pero no se puede añadir nada nuevo. Puedes restaurarlo cuando quieras desde {manage}.' },
@@ -493,6 +493,126 @@ const t: UiTable<typeof en> = {
       guidesPrivacy: { q: '¿Mis guías son públicas?', a: 'Solo si tú lo eliges. Las guías son privadas hasta que decidas lo contrario: guárdala para vosotros dos, compártela con amigos por enlace o publícala para todas las parejas. Puedes cambiar de idea cuando quieras.' },
       report: { q: '¿Cómo denuncio algo?', a: 'Si ves una guía o cualquier otra cosa en Belluh que incumple nuestras normas, o alguien está usando Belluh para hacerte daño, cuéntanoslo desde nuestra página de contacto. Leemos todas las denuncias.' },
       logout: { q: '¿Cómo cierro sesión?', a: 'Abre {me}, baja hasta {account} y toca {logout}.' },
+    },
+  },
+  ko: {
+    docTitle: '고객센터',
+    heroTitle: '무엇을 도와드릴까요?',
+    searchPh: '궁금한 내용을 검색하세요',
+    searchLabel: '고객센터 검색',
+    clear: '검색어 지우기',
+    home: '고객센터',
+    topics: '주제별로 보기',
+    articles: '도움말 {n}개',
+    articleOne: '도움말 1개',
+    results: '“{q}” 검색 결과',
+    noResults: '“{q}”에 맞는 도움말이 없어요. 다른 단어로 찾아보거나 문의해 주세요.',
+    promoted: '자주 찾는 도움말',
+    backTo: '{name}(으)로 돌아가기',
+    more: '{name} 더 보기',
+    stillTitle: '아직 해결되지 않았나요?',
+    stillBody: '무슨 일인지 메시지로 알려 주세요.',
+    contact: '문의하기',
+    cats: {
+      start: { title: '시작하기', blurb: '첫 글 쓰기, 탭 구성, 언어 설정.' },
+      partner: { title: '연인과 서클', blurb: '초대, 서클, 그리고 {us} 대화방.' },
+      bella: { title: '벨라', blurb: '벨라가 하는 일, 먼저 묻는 경우, 문자로 대화하기.' },
+      plans: { title: '계획과 기념일', blurb: '함께 계획하기, 기념일, 캘린더와 목표.' },
+      map: { title: '지도와 가이드', blurb: '사랑의 지도, 직접 만들고 공유하는 가이드.' },
+      profile: { title: '내 프로필', blurb: '페이지 꾸미기, 색상, 알림.' },
+      privacy: { title: '개인정보와 안전', blurb: '비공개 글, 내 데이터, 신고하기.' },
+      account: { title: '계정과 결제', blurb: '요금제, 가격, 로그아웃.' },
+    },
+    a: {
+      firstEntry: {
+        q: '첫 글은 어떻게 쓰나요?',
+        a: '{capture}를 탭하고 몇 줄 쓴 다음, 연인과 공유할지 나만 볼지 골라 주세요. 사진을 넣거나 음성 메모를 녹음할 수도 있어요. 쓴 글은 {story}에 모이고, 언제든 수정하거나 삭제할 수 있어요.',
+      },
+      tabs: {
+        q: '{story}, {map}, {capture}, 벨라, {me}는 각각 뭔가요?',
+        a: '{story}는 다이어리예요. {map}은 추억을 그 일이 있었던 곳에 핀으로 꽂아 둬요. {capture}에서는 새 글을 써요. 벨라에서는 Belluh의 AI에게 도움을 요청해요. 연인이 들어오면 두 사람과 벨라가 함께하는 대화방 {us}로 바뀌어요. {me}는 프로필, 기념일, 설정이 있는 곳이에요.',
+      },
+      language: {
+        q: 'Belluh를 한국어로 쓸 수 있나요?',
+        a: '네. Belluh는 9개 언어를 지원하고, 브라우저 설정에 맞춰 언어를 골라요. 바꾸려면 belluh.com 맨 아래의 언어 메뉴를 이용하세요. 선택한 언어는 이 기기에 저장돼요.',
+      },
+      invite: {
+        q: '연인은 어떻게 초대하나요?',
+        a: '{me}를 열고 {invite}를 탭하세요. 초대 링크를 복사해 편한 방법으로 보내면 돼요. 링크는 14일 동안 한 번만 쓸 수 있어요. 연인이 이미 Belluh 계정이 있다면 이메일로 초대할 수도 있어요.',
+      },
+      circles: {
+        q: '서클이 뭔가요?',
+        a: '서클은 그 안의 사람들이 함께 쓰는 공간이에요. 커플, 가족, 친구 등 원하는 대로 만들고 이름을 붙여 보세요. 모든 서클은 하나의 타임라인에서도 모아 볼 수 있어요.',
+      },
+      archive: { q: '서클을 보관하면 어떻게 되나요?', a: '보관한 서클은 읽기 전용이 돼요. 안에 있던 건 모두 그대로 남지만, 새로 추가할 수는 없어요. {manage}에서 언제든 복원할 수 있어요.' },
+      usThread: {
+        q: '{us} 대화방이 뭔가요?',
+        a: '나, 연인, 벨라가 함께 계획하고 정하는 곳이에요. 여기서 벨라는 두 사람이 공유한 것만 알고, 누구의 비공개 글도 보지 않아요. 벨라를 끄면 연인에게만 메시지를 보낼 수 있어요.',
+      },
+      asksFirst: {
+        q: '벨라가 나한테 묻지 않고 뭔가를 하기도 하나요?',
+        a: '아니요. 벨라는 항상 먼저 물어봐요. 연인에게 무언가를 보내기 전, 결제하기 전, 식당이나 여행을 예약하기 전, 대신 가게에 전화하기 전에요.',
+      },
+      reachOut: {
+        q: '벨라가 연락하는 빈도를 정할 수 있나요?',
+        a: '네. {quiet}는 요청한 것만 알려 줘요. 리마인더와 지켜보는 항목 소식이요. {normal}은 생일이나 계획에 신경 써야 할 때 한마디를 더해요. {more}는 {normal}의 모든 알림을 일주일 먼저 보내요.',
+      },
+      textSetup: {
+        q: '문자 연결은 어떻게 하나요?',
+        a: '{me}에서 {textBella} 아래의 연결을 탭하고, 열리는 메시지를 보내세요. 메시지에는 30분 동안 유효한 코드가 들어 있어요. 연결되면 날짜든 계획이든 벨라에게 문자로 보내고, 기념일 목록이 궁금할 땐 언제든 LIST라고 보내세요. 연결은 언제든 끊을 수 있어요.',
+      },
+      forget: { q: '벨라에게 무언가를 잊어 달라고 할 수 있나요?', a: '네. 무엇을 잊을지 말하면 잊어요. 벨라는 내가 직접 말한 것만 잊거나 바꿔요.' },
+      planTogether: {
+        q: '데이트를 함께 계획하는 건 어떻게 하나요?',
+        a: '{us} 대화방에서 “이번 주 데이트 계획 세워 줘”처럼 물어보세요. 벨라가 시간을 제안하고, 연인이 하나를 고르면 두 사람의 계획이 돼요.',
+      },
+      yourDates: {
+        q: '우리 기념일은 어떻게 추가하나요?',
+        a: '{me}에서 {addDates}를 탭하거나, 이미 추가했다면 {edit}을 탭하세요. 사귄 날, 처음 만난 날, 첫 데이트, 첫 키스, 생일 중 아는 것만 채우면 돼요. 벨라가 100일부터 매년 기념일까지 함께 날짜를 세고, 큰 날 전에 미리 알려 줘요.',
+      },
+      calendar: {
+        q: '우리 계획을 내 캘린더에서 볼 수 있나요?',
+        a: '네. {me}에서 {calendarAdd}를 탭하고 Google, Apple, Outlook 캘린더에서 한 번만 구독하세요. 새 계획과 기념일이 알아서 들어가요. 링크는 나만 쓰는 비공개 링크예요. 실수로 공유했다면 새 링크를 만들면 이전 링크는 작동하지 않아요.',
+      },
+      weekly: { q: '주간 돌아보기가 뭔가요?', a: '매주 일요일, 벨라가 그 주에 공유한 글에서 인사이트 하나와 함께 해 볼 작은 것 하나를 건네요. 좋은 순간이 그냥 지나가지 않도록요.' },
+      goals: {
+        q: '함께 목표를 세울 수 있나요?',
+        a: '네. 매주 데이트하기, 함께 무언가를 위해 저축하기, 데이트와 선물 예산 정하기, 휴대폰 없는 저녁 보내기 같은 목표를 시작해 보세요. 티켓이나 가격을 지켜봐 달라고 벨라에게 부탁하면, 나오는 순간 바로 알려 줘요.',
+      },
+      loveMap: { q: '사랑의 지도가 뭔가요?', a: '장소와 함께 저장한 추억은 모두 그 일이 있었던 곳에 핀으로 꽂혀요. 우리 동네 골목까지 확대하거나, 행성까지 축소해 보세요.' },
+      makeGuide: {
+        q: '가이드는 어떻게 만드나요?',
+        a: '{map}에서 {guides}를 열고 {newGuide}를 탭하세요. 이름을 붙이고 종류(여행, 맛집, 바, 나라, 기타)를 고른 다음, 검색해서 장소나 나라를 추가하세요. 가이드를 열어 두면 그 장소들이 지도의 핀으로 보여요.',
+      },
+      shareGuide: {
+        q: '내 가이드는 누가 볼 수 있나요?',
+        a: '가이드마다 직접 정해요. {visUs}: 두 사람만 볼 수 있어요. {visLink}: 친구가 링크로 열 수 있고, 어디에도 노출되지 않아요. {visPublic}: 커뮤니티에 공개돼요. 언제든 바꿀 수 있어요.',
+      },
+      community: { q: '다른 커플의 가이드도 볼 수 있나요?', a: '네. 전체 공개된 가이드는 {map}의 {community}에 보여요. 하나를 열면 장소들을 볼 수 있어요.' },
+      customize: {
+        q: '프로필은 어떻게 꾸미나요?',
+        a: '{me}를 열고 {customize}를 탭하세요. 색상, 배너, 효과, 스티커를 바꾸거나, 캔버스 어디든 그리고 올려 보세요. 바꾸는 즉시 저장돼서 저장 버튼이 따로 없어요.',
+      },
+      blocks: {
+        q: '프로필에는 무엇을 넣을 수 있나요?',
+        a: '음악(Spotify와 Apple Music 링크는 바로 재생돼요), 영화와 드라마, 책, 사진, 음성 메모, 글, 링크. 연인은 내가 꾸민 나를 보게 돼요.',
+      },
+      littleThings: {
+        q: '연인에 대한 사소한 것들은 어디에 적어 두나요?',
+        a: '{me}에서 기념일 옆의 {edit}을 탭하고, 좋아하는 음식, 우리 노래, 사랑의 언어, 좋아하는 꽃, 커피 주문 같은 타일을 추가하거나 직접 만들어 보세요. 타일 크기는 작게, 보통, 크게 고를 수 있고, 끌어서 순서를 바꿀 수 있어요.',
+      },
+      theme: { q: 'Belluh의 색을 바꿀 수 있나요?', a: '네. {me}에서 {appearance}를 열고 페이지, 사이드 패널, 메뉴의 색을 골라 보세요.' },
+      notifications: {
+        q: '알림은 어떻게 켜나요?',
+        a: '{me}에서 이 기기 알림을 켜면, 연인이 계획이나 메시지를 보낼 때, 일요일과 수요일, 그리고 기념일 전에 알려 드려요. 아이폰에서는 먼저 Belluh를 홈 화면에 추가하세요(공유, 홈 화면에 추가). 알림이 차단되어 있다면 브라우저의 사이트 설정에서 허용해 주세요.',
+      },
+      sharedOrPrivate: { q: '글을 비공개로 하려면 어떻게 하나요?', a: '글을 쓸 때 공유 대신 비공개를 고르세요. 비공개 글은 나만 볼 수 있고, 벨라도 절대 연인에게 보여 주지 않아요.' },
+      guidesPrivacy: {
+        q: '내 가이드는 공개되나요?',
+        a: '직접 고를 때만요. 가이드는 따로 정하기 전까지 비공개예요. 두 사람만 보거나, 친구에게 링크로 공유하거나, 모든 커플에게 공개할 수 있어요. 언제든 마음을 바꿀 수 있어요.',
+      },
+      report: { q: '신고는 어떻게 하나요?', a: '규칙을 어기는 가이드나 콘텐츠를 보았거나, 누군가 Belluh로 나를 해치려 한다면 문의 페이지로 알려 주세요. 모든 신고를 직접 읽어요.' },
+      logout: { q: '로그아웃은 어떻게 하나요?', a: '{me}를 열고 {account}까지 내려가서 {logout}을 탭하세요.' },
     },
   },
   'es-MX': {

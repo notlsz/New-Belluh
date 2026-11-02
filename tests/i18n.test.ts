@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { detect, localeTag, dictFor, fill, localQuestion } from '../src/i18n/core.ts';
 import en from '../src/i18n/en.ts';
 
-const LANGS = ['ja', 'fr', 'it', 'pt', 'zh', 'de', 'es'] as const;
+const LANGS = ['ja', 'fr', 'it', 'pt', 'zh', 'de', 'es', 'ko'] as const;
 
 test('Detects the reader: language first, then where they are', () => {
   assert.deepEqual(detect(['ja-JP', 'en'], 'Asia/Tokyo'), { lang: 'ja', country: 'JP' });
@@ -18,8 +18,11 @@ test('Detects the reader: language first, then where they are', () => {
   assert.deepEqual(detect(['en-AU'], 'Australia/Sydney'), { lang: 'en', country: 'AU' });
   assert.deepEqual(detect(['en-US'], 'America/Chicago'), { lang: 'en', country: 'US' });
   assert.equal(detect(['zh-TW', 'en'], 'Asia/Taipei').lang, 'en', 'traditional Chinese readers are not shown simplified');
-  assert.equal(detect(['ko-KR'], 'Asia/Tokyo').lang, 'ja', 'a language Belluh lacks falls to the country');
-  assert.equal(detect(['ko-KR'], 'Asia/Seoul').lang, 'en', 'nowhere we speak: English');
+  assert.deepEqual(detect(['ko-KR'], 'Asia/Seoul'), { lang: 'ko', country: 'KR' });
+  assert.deepEqual(detect(['ko'], 'America/Los_Angeles'), { lang: 'ko', country: 'US' }, 'Korean in LA reads Korean');
+  assert.deepEqual(detect(['en-US'], 'Asia/Seoul'), { lang: 'en', country: 'KR' }, 'the language they chose wins over where they are');
+  assert.equal(detect(['vi-VN'], 'Asia/Seoul').lang, 'ko', 'a language Belluh lacks falls to the country');
+  assert.equal(detect(['vi-VN'], 'Asia/Ho_Chi_Minh').lang, 'en', 'nowhere we speak: English');
   assert.deepEqual(detect(['es-419'], 'America/Bogota'), { lang: 'es', country: 'OTHER' }, 'Spanish anywhere reads Spanish');
 });
 
@@ -28,9 +31,12 @@ test('Local formats: dates and numbers the way they are written there', () => {
   assert.equal(localeTag('de', 'CH'), 'de-CH');
   assert.equal(localeTag('fr', 'CA'), 'fr-CA');
   assert.equal(localeTag('ja', 'OTHER'), 'ja-JP');
+  assert.equal(localeTag('ko', 'KR'), 'ko-KR');
+  assert.equal(localeTag('ko', 'OTHER'), 'ko-KR');
   const d = new Date(2026, 9, 30);
   assert.match(d.toLocaleDateString(localeTag('en', 'GB'), { day: 'numeric', month: 'long' }), /^30 October$/);
   assert.match(d.toLocaleDateString(localeTag('en', 'US'), { day: 'numeric', month: 'long' }), /^October 30$/);
+  assert.match(d.toLocaleDateString(localeTag('ko', 'KR'), { day: 'numeric', month: 'long' }), /^10월 30일$/);
 });
 
 test('British, Australian and Canadian spelling', () => {

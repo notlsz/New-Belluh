@@ -5,7 +5,7 @@ import path from 'node:path';
 import { pickUi } from '../src/i18n/ui.ts';
 
 const DIR = path.join(import.meta.dirname, '../src/i18n/ui');
-const LANGS = ['ja', 'fr', 'it', 'pt', 'zh', 'de', 'es'] as const;
+const LANGS = ['ja', 'fr', 'it', 'pt', 'zh', 'de', 'es', 'ko'] as const;
 const walk = (o: any, p = ''): [string, string][] => typeof o === 'string' ? [[p, o]] : Array.isArray(o) ? o.flatMap((x, i) => walk(x, `${p}[${i}]`)) : o && typeof o === 'object' ? Object.entries(o).flatMap(([k, v]) => walk(v, p ? `${p}.${k}` : k)) : [];
 const holes = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort().join(',');
 

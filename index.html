@@ -130,6 +130,13 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
+      /* Korean: Inter and Merriweather have no Hangul, so name the Korean fonts each system has (Apple, Windows, Android
+         and Linux) instead of leaving it to the browser, break lines between words as Korean is set, and never slant
+         Hangul into a fake italic */
+      html:lang(ko) body, html:lang(ko) .font-sans { font-family: Inter, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', 'Noto Sans CJK KR', -apple-system, BlinkMacSystemFont, sans-serif; }
+      html:lang(ko) .font-serif { font-family: Merriweather, AppleMyungjo, 'Noto Serif KR', 'Noto Serif CJK KR', 'Apple SD Gothic Neo', 'Malgun Gothic', serif; }
+      html:lang(ko) body { word-break: keep-all; overflow-wrap: break-word; }
+      html:lang(ko) .italic, html:lang(ko) em, html:lang(ko) i { font-style: normal; }
       /* Ensure inputs don't have default ugly outlines */
       input:focus, textarea:focus {
         outline: none;

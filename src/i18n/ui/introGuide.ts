@@ -68,6 +68,18 @@ const introGuide = {
     next: 'Siguiente',
     letsGo: '¡Vamos!',
   },
+  ko: {
+    progress: '{total}단계 중 {n}단계',
+    story: { title: '우리의 이야기', desc: '두 사람이 남긴 글, 메모, 사진이 모두 여기 모여요. 최신순으로요.', where: '홈' },
+    write: { title: '몇 줄만 써 보세요', desc: '더하기 버튼을 눌러 써 보세요. 나만 보기로 혼자 간직하거나, 연인과 공유할 수 있어요. 하루 1분이면 충분해요.', where: '더하기 버튼' },
+    ask: {
+      title: '벨라에게 물어보기',
+      desc: '홈 화면 입력창에서 무엇이든 물어보세요. 벨라가 데이트를 계획하고, 사소한 것까지 기억하고, 원하는 모습으로 변신해요.',
+      where: '홈의 벨라에게 물어보기',
+    },
+    next: '다음',
+    letsGo: '시작하기',
+  },
   'es-MX': {
     story: { title: 'Su historia', desc: 'Cada entrada, nota y foto que guardan los dos vive aquí, de la más reciente a la más antigua.', where: 'Inicio' },
     letsGo: '¡Va!',

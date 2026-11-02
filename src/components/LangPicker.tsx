@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useI18n, LANGS, type Lang } from '../i18n';
 
-const FLAG: Record<Lang, string> = { en: 'us', ja: 'jp', fr: 'fr', it: 'it', pt: 'br', es: 'es', zh: 'cn', de: 'de' };
+const FLAG: Record<Lang, string> = { en: 'us', ja: 'jp', fr: 'fr', it: 'it', pt: 'br', es: 'es', zh: 'cn', de: 'de', ko: 'kr' };
 const flagFor = (lang: Lang, country?: string) =>
   lang === 'es' && country === 'MX' ? 'mx' : lang === 'pt' && country === 'PT' ? 'pt' : lang === 'en' && country === 'GB' ? 'gb' : FLAG[lang];
 const Flag: React.FC<{ code: string }> = ({ code }) => <img src={`/flags/${code}.svg`} alt="" loading="lazy" className="w-[22px] h-[15px] rounded-[3px] object-cover shadow-[0_0_0_1px_rgba(0,0,0,0.08)]" />;

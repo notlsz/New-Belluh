@@ -95,6 +95,29 @@ const science: UiTable<typeof en> = {
     missionSub: 'Bella erinnert sich und plant, damit eure Zeit euch gehört, nicht einer App.',
   },
   es,
+  ko: {
+    title: '관계 과학을 바탕으로.',
+    sub: '수십 년의 연구가 말해요. 사랑은 작고 평범한 순간에서 오래 간다고. 벨라는 그 순간들을 중심으로 만들어졌고, 물어보면 연구도 보여 줘요.',
+    findings: [
+      {
+        title: '작은 신호에 반응하기',
+        body: '일상 속 관심의 신호에 서로 반응하는 커플은 더 행복하고, 다툴 때도 더 다정해요.',
+        source: 'Driver & Gottman, Family Process, 2004',
+      },
+      {
+        title: '좋은 소식을 함께 기뻐하기',
+        body: '연인이 좋은 일을 말할 때의 반응이, 나쁜 일을 대할 때보다 두 사람의 친밀감을 더 잘 예측해요.',
+        source: 'Gable et al., Journal of Personality and Social Psychology, 2004',
+      },
+      {
+        title: '함께 새로운 것 해 보기',
+        body: '둘이서 새롭고 설레는 일을 하면, 오래된 커플도 관계 만족도가 올라가요.',
+        source: 'Aron et al., Journal of Personality and Social Psychology, 2000',
+      },
+    ],
+    missionLine: '휴대폰을 내려놓고, 서로에게 돌아가도록.',
+    missionSub: '기억하고 계획하는 일은 벨라가 할게요. 두 사람의 시간은 앱이 아니라 서로에게 쓰세요.',
+  },
   'es-MX': {
     findings: [
       es.findings[0],
