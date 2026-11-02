@@ -158,7 +158,6 @@ export const RollLearns: React.FC = () => {
                   </div>
                 ))}
               </dl>
-              <p className="mt-3 text-xs text-slate-400">{T.learns.note}</p>
             </div>
           </div>
         </div>
