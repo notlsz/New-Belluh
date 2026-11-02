@@ -1,4 +1,4 @@
-// Our Heartprint (Rollup Passport, for a couple): a short page of what each person's photos say about their taste,
+// Our Locket (Rollup Passport, for a couple): a short page of what each person's photos say about their taste,
 // approved line by line by them. Only that approved text is stored (memory_passports); each section is shared with the
 // partner and with Bella separately. Pure, so the app, Bella's context (agentdb) and the tests share the same rules.
 

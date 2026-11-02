@@ -1,4 +1,4 @@
-// Our Heartprint in the database: only the approved text and the sharing choices (memory_passports, owner only),
+// Our Locket in the database: only the approved text and the sharing choices (memory_passports, owner only),
 // the partner's shared sections (partner_passport(), which notes the read in their Activity), and Activity itself.
 // The photos behind each line stay in this browser (localStorage), keyed by line text, never sent.
 import { supabase } from '../lib/supabaseClient';

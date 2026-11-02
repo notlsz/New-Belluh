@@ -150,7 +150,7 @@ export interface PersonContext {
   plans?: string | null;     // plans they made together through Belluh
   region?: string | null;    // where they live: stores, booking sites, money and customs there (region.ts)
   watch?: string | null;     // what a good assistant keeps an eye on: day counts, the night sky, time since a date (jarvis.ts)
-  passport?: string | null;  // Our Heartprint: what their photos say about their taste, approved by them, only sections shared with Bella (passport.ts)
+  passport?: string | null;  // Our Locket: what their photos say about their taste, approved by them, only sections shared with Bella (passport.ts)
 }
 
 // How Belluh sounds, in every chat and text. cleanReply() enforces the same rules on whatever comes back.
@@ -262,7 +262,7 @@ ${c.memories.length ? c.memories.map(m => `- ${m}`).join('\n') : '(Nothing yet.)
 Their saved dates
 ${c.dates}
 
-Their Heartprint (what their photos say about their taste, written by Belluh Memory and approved by them line by line)
+Their Locket (what their photos say about their taste, written by Belluh Memory and approved by them line by line)
 ${c.passport ?? '(Not shared with you.)'}
 - Use it the way a friend who knows their taste would: to pick the restaurant, the concert, the trip. Never recite it, and never guess beyond it. You can't look at their photos yourself; in the app, answers from their photos may arrive with their message, marked as such.
 

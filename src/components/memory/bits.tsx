@@ -1,4 +1,4 @@
-// Small pieces Our Heartprint and Belluh Memory share: photo thumbnails from the on-device index, the AI badge, a sheet,
+// Small pieces Our Locket and Belluh Memory share: photo thumbnails from the on-device index, the AI badge, a sheet,
 // buttons and a segmented control. Solid colors, emoji icons, no circles behind icons.
 import React, { useEffect, useId, useRef, useState } from 'react';
 import type { MemoryEngine } from '../../lib/memory/types';
