@@ -20,6 +20,25 @@ test('Country: what they told Bella, else their time zone, else the US', () => {
   assert.equal(countryCode('south korea'), 'KR');
   assert.equal(countryCode('gb'), 'GB');
   assert.equal(countryCode('Narnia'), null);
+  assert.equal(countryOfTimeZone('Europe/Amsterdam'), 'NL');
+  assert.equal(countryOfTimeZone('America/Argentina/Buenos_Aires'), 'AR');
+  assert.equal(countryOfTimeZone('Pacific/Auckland'), 'NZ');
+  assert.equal(countryOfTimeZone('Asia/Riyadh'), 'SA');
+  assert.equal(countryCode('Bogotá'), 'CO');
+  assert.equal(countryCode('Türkiye'), 'TR');
+  assert.equal(countryCode('se'), 'SE');
+});
+
+test('Second wave: local stores, the right days and no public gestures where that could expose a couple', async () => {
+  const { loveDaysSoon } = await import('../supabase/functions/_shared/jarvis.ts');
+  assert.match(regionLinks('buy', { item: 'fiets' }, 'NL')![0].url, /bol\.com\/nl\/nl\/s\/\?searchtext=fiets/);
+  assert.match(regionLinks('buy', { item: 'perfume' }, 'AR')![0].url, /listado\.mercadolibre\.com\.ar\/perfume$/);
+  assert.match(regionLinks('food', { what: 'kebab' }, 'TR')![0].label, /Yemeksepeti/);
+  const co = loveDaysSoon('CO', { y: 2026, m: 9, d: 1 }, 45).find(x => x.name === 'Amor y Amistad')!;
+  assert.deepEqual(co.on, { y: 2026, m: 9, d: 19 }, 'third Saturday of September');
+  assert.equal(loveDaysSoon('CZ', { y: 2026, m: 4, d: 25 }, 10)[0].name, 'První máj');
+  assert.match(regionBrief('FI', null, null), /Friend's Day/);
+  for (const c of ['SA', 'EG', 'MY', 'ID', 'KZ']) assert.match(KITS[c].culture, /could expose them/, c);
 });
 
 test('Every country kit is complete: stores people there use, money, customs', () => {
