@@ -1,5 +1,5 @@
 export const PRIVACY_POLICY_TEXT = `BELLUH AI - PRIVACY POLICY
-Effective Date: November 1, 2026
+Effective Date: November 2, 2026
 
 1. INTRODUCTION
 Belluh AI ("we," "us," "our," or "Company") respects your privacy. This Privacy Policy explains how we collect, use, disclose, and protect your personal information when you use our relationship journaling platform and services ("Service").
@@ -44,6 +44,15 @@ Authentication providers (Google, Apple Sign-In) - basic profile information, if
 Messaging apps you connect (WhatsApp, LINE, Telegram, SMS, iMessage) - your phone number or account handle and the messages you send to Bella there; and
 Analytics services (Google Analytics, Mixpanel) - usage data about how the Service is used, only if you allow "Improving Belluh" in the Privacy Preference Center.
 
+2.4 Belluh Memory (Your Photos, On Your Device)
+Memory is optional. When you turn it on, Belluh reads the photos and videos you pick on your own device and builds a search index there (dates, places, labels, text read from images and, only if you agree, groups of faces). Your photos, the index and the photos' device identifiers stay on your device and are never uploaded;
+Search runs entirely on your device and sends nothing;
+Answers and your Passport: when you ask your photos a question or make your Passport, and only after you allow it on a separate permission screen, Belluh sends your question (or the Passport's list of fields) and the text your device derived from your photos for that request (such as dates, place names, labels and text read from images) to Belluh's server and to Google's Gemini API to produce the answer. Belluh does not store or log your question, that text or the answer; it keeps only counts of requests and model tokens, to apply rate limits and a monthly budget;
+Places: if you turn on "Name places", your device sends the approximately 1 km area (0.01 degree) where photos were taken to Belluh's server to find the names of venues and cities. Turn it off and only your country and nearest city are worked out on your device;
+Faces: if you agree to "Group faces", faces are grouped on your device only. This is biometric information; it never leaves your device and is deleted when you delete the index or reset Memory;
+Your Passport: Belluh stores only the words you approve and save (for example, "Ramen at Ichiran, 6 times"), never photos or their identifiers, together with your choices of which sections your partner and Bella may see. Your partner sees only the sections you share with them; Bella sees only the sections you share with her, including when you text her; and each time either of them reads your Passport, it is noted in your Activity; and
+Memory never answers questions or fills fields about health, religion, sexuality, ethnicity or race, politics or children, and leaves out photos it recognizes as IDs, payment cards, passwords, health information or nudity.
+
 3. HOW WE USE YOUR INFORMATION
 3.1 To Provide and Improve the Service
 Deliver core features: Process journal entries, generate AI insights, create relationship summaries;
@@ -58,6 +67,7 @@ Bella, Belluh's AI, reads what you choose to write in Belluh so she can remember
 Your content is sent to an AI provider (see Section 4.3) only to produce Bella's answer to you;
 Belluh does not train AI models on your journal content, voice notes or photos; and
 If we ever want to use your content to train or improve AI models, we will ask for your permission first, and you can say no.
+Answers that Belluh Memory writes from your photos are marked as written by AI.
 
 3.3 For Research and Development
 Improve the Service using usage data, error logs and feedback; and
@@ -103,6 +113,7 @@ To answer you, Bella sends the relevant parts of your content to Google's Gemini
 These providers have their own privacy policies and data practices;
 We use their paid developer services, under terms that do not allow them to use your content to train their models; and
 We do not send your name, email or account details with your content when we can avoid it.
+Belluh Memory uses Google's Gemini API only (no backup providers), and sends it only the text described in Section 2.4, never your photos.
 
 4.4 For Legal Reasons
 We may disclose your information if required by law or in response to:
@@ -141,7 +152,10 @@ Shared Circle data: we cannot delete content your partner has separately saved o
 5.3 Content Used by AI
 Belluh does not train AI models on your content, so nothing you wrote remains in a model after you delete your account.
 
-5.4 Legal Holds
+5.4 Belluh Memory
+Nothing Memory sends to answer a question or fill your Passport is kept after the answer. On your device, in Memory settings, you can delete the index (everything Memory learned, keeping the downloaded models), reset Memory (everything Memory keeps on your device, models included), turn off AI answers from your photos (Belluh then stops sending anything for answers), and delete your saved Passport and its Activity from Belluh. Turning off AI answers is also in "Your privacy choices". Clearing your browser's site data deletes the index too. Deleting your account deletes your saved Passport and Activity.
+
+5.5 Legal Holds
 Data subject to legal holds, investigations, or disputes will be retained until the matter is resolved, regardless of account deletion.
 
 6. DATA SECURITY
@@ -189,6 +203,7 @@ Open "Your privacy choices" at the bottom of any page on belluh.com to manage:
 Your preferences: whether Belluh remembers settings like language and layout in your browser;
 Improving Belluh: whether usage analytics (Belluh's own records, Google Analytics and Mixpanel) are on; and
 Sale or sharing of personal information: Belluh does not sell or share personal information, and this setting records your opt-out.
+Memory: whether AI answers from your photos are on (see Section 2.4);
 We honor the Global Privacy Control (GPC) browser signal as a valid opt-out.
 
 7.5 Opt-Out of Updates
@@ -217,6 +232,7 @@ To exercise your rights: Email privacy@belluh.com with your request and proof of
 
 8. CHILDREN'S PRIVACY
 Belluh AI is not intended for users under 18 years old.
+Belluh Memory is never offered to anyone under 18, and it must not be used to answer questions about children.
 We do not knowingly collect personal information from children under 18. If we discover that a child under 18 has provided personal information, we will delete it immediately.
 Parents/Guardians: If you believe your child has provided information to us, contact privacy@belluh.com immediately.
 

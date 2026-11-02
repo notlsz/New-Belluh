@@ -2,7 +2,7 @@
 // Deploy with: supabase functions deploy belluh-agent   (JWT verification ON: only signed-in users can call it)
 //
 // POST body: { action: 'history' }
-//            { action: 'chat', message: string, mode?: 'chat' | 'mediate' }
+//            { action: 'chat', message: string, mode?: 'chat' | 'mediate', memory?: { question, answer } }   (memory: answered on the phone by Belluh Memory)
 //            { action: 'react', entry_id: string }
 //            { action: 'send_note', draft_id: string, text?: string }
 //            { action: 'discard_note', draft_id: string }
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
       case 'checkin': return out(await checkin(ctx, String(body.action_id ?? ''), String(body.status ?? '')));
       case 'plan_respond': return out(await planRespond(ctx, String(body.plan_id ?? ''), body.option_id ? String(body.option_id) : null, String(body.note ?? '')));
       case 'plan_cancel': return out(await planCancel(ctx, String(body.plan_id ?? '')));
-      case 'chat': return json(await chat(ctx, String(body.message ?? ''), body.mode === 'mediate' ? 'mediate' : 'chat', 'app', typeof body.photo === 'string' ? body.photo : null));
+      case 'chat': return json(await chat(ctx, String(body.message ?? ''), body.mode === 'mediate' ? 'mediate' : 'chat', 'app', typeof body.photo === 'string' ? body.photo : null, body.memory ?? null));
       case 'react': return json(await react(ctx, String(body.entry_id ?? '')));
       case 'offer_respond': return out(await offerRespond(ctx, String(body.message_id ?? ''), body.accept === true));
       case 'booking': return out(await bookingDone(ctx, String(body.booking_id ?? ''), body.done !== false));

@@ -6,6 +6,7 @@ import { useUi } from '../i18n';
 import strings from '../i18n/ui/privacyCenter';
 import { getConsent, setConsent, honorsGpc, loadFromAccount, openPrivacyCenter, PRIVACY_CENTER_EVENT, type Choices } from '../lib/consent';
 import { go } from '../lib/go';
+import { getMemoryConsent, setMemoryConsent } from '../lib/memory/consent';
 
 export { openPrivacyCenter };
 
@@ -21,7 +22,7 @@ export const Switch: React.FC<{ on: boolean; onChange?: (v: boolean) => void; la
   </button>
 );
 
-type RowId = 'necessary' | 'preferences' | 'usage' | 'sale';
+type RowId = 'necessary' | 'preferences' | 'usage' | 'sale' | 'memory';
 
 interface Props {
   /** Show the Privacy Policy your own way; without it the center opens the policy itself. */
@@ -40,10 +41,12 @@ const PrivacyCenter: React.FC<Props> = ({ onShowPolicy }) => {
   const [draft, setDraft] = useState<Choices>(() => { const c = getConsent(); return { preferences: c.preferences, usage: c.usage, saleOptOut: c.saleOptOut }; });
   const [expanded, setExpanded] = useState<RowId | null>(null);
   const [saved, setSaved] = useState(false);
+  // Belluh Memory's AI answers: asked on their own screen the first time, turned off here too (stops every call)
+  const [memoryAi, setMemoryAi] = useState(() => getMemoryConsent().ai);
   const gpc = honorsGpc();
   const closeBtn = useRef<HTMLButtonElement>(null);
 
-  const sync = () => { const c = getConsent(); setDraft({ preferences: c.preferences, usage: c.usage, saleOptOut: c.saleOptOut }); };
+  const sync = () => { const c = getConsent(); setDraft({ preferences: c.preferences, usage: c.usage, saleOptOut: c.saleOptOut }); setMemoryAi(getMemoryConsent().ai); };
 
   useEffect(() => {
     const show = () => { sync(); setSaved(false); setExpanded(null); setOpen(true); loadFromAccount().then(c => { if (c) sync(); }); };
@@ -61,8 +64,10 @@ const PrivacyCenter: React.FC<Props> = ({ onShowPolicy }) => {
     return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey); };
   }, [open]);
 
-  const save = (choices: Choices) => {
+  const save = (choices: Choices, memory = memoryAi) => {
     setConsent(choices, 'center');
+    if (memory !== getMemoryConsent().ai) setMemoryConsent({ ai: memory });
+    setMemoryAi(memory);
     setDraft({ ...choices, saleOptOut: gpc ? true : choices.saleOptOut });
     setSaved(true);
     setTimeout(() => setOpen(false), 700);
@@ -79,6 +84,7 @@ const PrivacyCenter: React.FC<Props> = ({ onShowPolicy }) => {
     { id: 'usage', title: T.usageTitle, body: T.usageBody, right: <Switch on={draft.usage} label={T.usageTitle} onChange={v => setDraft(d => ({ ...d, usage: v }))} /> },
     { id: 'sale', title: T.saleTitle, body: T.saleBody, note: gpc ? T.gpc : undefined,
       right: <Switch on={!draft.saleOptOut} label={T.saleTitle} disabled={gpc} onChange={v => setDraft(d => ({ ...d, saleOptOut: !v }))} /> },
+    { id: 'memory', title: T.memoryTitle, body: T.memoryBody, right: <Switch on={memoryAi} label={T.memoryTitle} onChange={setMemoryAi} /> },
   ];
 
   return (
@@ -129,7 +135,7 @@ const PrivacyCenter: React.FC<Props> = ({ onShowPolicy }) => {
         </div>
 
         <div className="px-6 pt-3 pb-6 flex items-center gap-3">
-          <button type="button" onClick={() => save({ preferences: false, usage: false, saleOptOut: true })}
+          <button type="button" onClick={() => save({ preferences: false, usage: false, saleOptOut: true }, false)}
             className="flex-1 h-12 rounded-full border border-slate-300 text-slate-900 font-semibold hover:bg-slate-50 transition-colors">
             {T.rejectAll}
           </button>

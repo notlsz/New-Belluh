@@ -12,6 +12,7 @@ import { serverKey } from './keys.ts';
 import { countryOf, partnerCountryOf, regionBrief } from './region.ts';
 import { goalLine, type Goal } from './goals.ts';
 import { milestones, skyBlock, noveltyLine, loveCalendar, type DatedOccasion } from './jarvis.ts';
+import { bellaPassportBlock, bellaSections, cleanPassport, type StoredPassport } from './passport.ts';
 
 export const db: SupabaseClient = createClient(Deno.env.get('SUPABASE_URL')!, serverKey(), {
   auth: { persistSession: false },
@@ -89,7 +90,7 @@ export async function buildSystem(ctx: Ctx): Promise<string> {
   const { data: occ } = await db.from('occasions').select('label, month, day, year, repeats_yearly, mentioned_at, source').eq('user_id', ctx.userId);
   const wk = await weekAction(ctx).catch(() => ({ action: null, checkins: [] }));
   const words: Record<string, string> = { done: 'did it', not_yet: 'not yet', skipped: 'skipped' };
-  const [notes, pastWeeks, plans] = await Promise.all([recentNotes(ctx), earlierWeeks(ctx, names, wk.action?.id ?? null), couplePlans(ctx)]);
+  const [notes, pastWeeks, plans, passport] = await Promise.all([recentNotes(ctx), earlierWeeks(ctx, names, wk.action?.id ?? null), couplePlans(ctx), passportFor(ctx)]);
   const weekdayName = new Intl.DateTimeFormat('en-US', { timeZone: ctx.timezone, weekday: 'long' }).format(new Date());
   const weekly = wk.action
     ? `"${wk.action.action}"` + (wk.checkins.length ? ` (${wk.checkins.map(c => `${names[c.user_id] ?? 'Partner'}: ${words[c.status]}`).join(', ')})` : ' (no check-ins yet)')
@@ -121,7 +122,32 @@ export async function buildSystem(ctx: Ctx): Promise<string> {
     pastWeeks: weeksBlock(pastWeeks),
     region: regionBrief(ctx.country, ctx.partnerCountry, ctx.partnerName),
     watch,
+    passport,
   });
+}
+
+/**
+ * Our Passport for Bella: the person's sections they share with her, and their partner's that the partner shares with
+ * both of them and Bella. Approved text only (memory_passports); photos never reach the server. Each use is noted in
+ * the owner's Activity, at most once an hour. The same block serves the app and texting: only the device can look at
+ * photos, so texting Bella knows what the Passport says and nothing more.
+ */
+export async function passportFor(ctx: Ctx): Promise<string | null> {
+  const ids = ctx.partnerId ? [ctx.userId, ctx.partnerId] : [ctx.userId];
+  const { data, error } = await db.from('memory_passports').select('user_id, title, sections, share_partner, share_bella').in('user_id', ids);
+  if (error || !data?.length) return null;
+  const mine = data.find(r => r.user_id === ctx.userId), theirs = ctx.partnerId ? data.find(r => r.user_id === ctx.partnerId) : null;
+  const a: StoredPassport | null = mine ? cleanPassport(mine) : null, b: StoredPassport | null = theirs ? cleanPassport(theirs) : null;
+  const block = bellaPassportBlock(a, b, ctx.myName, ctx.partnerName);
+  if (!block) return null;
+  const since = new Date(Date.now() - 3600_000).toISOString();
+  for (const [owner, p, both] of [[ctx.userId, a, false], [ctx.partnerId, b, true]] as const) {
+    const sections = bellaSections(p, both);
+    if (!owner || !sections.length) continue;
+    const { data: recent } = await db.from('passport_activity').select('id').eq('owner_id', owner).eq('actor', 'bella').gte('created_at', since).limit(1);
+    if (!recent?.length) await db.from('passport_activity').insert({ owner_id: owner, actor: 'bella', sections });
+  }
+  return block;
 }
 
 /** Belluh's context for the couple's shared thread: only what both of them can see. */
