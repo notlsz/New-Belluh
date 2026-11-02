@@ -95,7 +95,7 @@ export const RollSteps: React.FC = () => {
 // What each category shows: an emoji beside its name, and the picture on the card
 const LEARN_LOOK: { e: string; snap: Snap }[] = [
   { e: '✈️', snap: P('78th-trip') },
-  { e: '🍜', snap: E('🍜', '#fde7d9') },
+  { e: '🍜', snap: E('🍜', '#fde7d9') }, // the spot you keep going back to
   { e: '📍', snap: P('first-kiss', '40% center') },
   { e: '💞', snap: P('first-date', '62% center') },
   { e: '🗓️', snap: P('30th-anniversary') },
