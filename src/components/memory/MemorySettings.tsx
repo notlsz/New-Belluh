@@ -1,5 +1,5 @@
 // Memory settings: the index on this device, AI answers on or off (stops every call when off), places, text and faces,
-// delete the index, reset Memory, delete the saved Passport. Each delete asks once more.
+// delete the index, reset Memory, delete the saved Heartprint. Each delete asks once more.
 import React, { useState } from 'react';
 import { useUi } from '../../i18n';
 import strings from '../../i18n/ui/passport';
@@ -68,7 +68,7 @@ const MemorySettings: React.FC<Props> = ({ engine, state, onClose, onDeletePassp
       )}
       {engine && danger('index', '🗑️', S.deleteIndex, S.deleteIndexBody, () => engine.deleteIndex())}
       {engine && danger('reset', '🔄', S.reset, S.resetBody, () => engine.reset())}
-      {danger('passport', '📘', S.deletePassport, S.deletePassportBody, onDeletePassport)}
+      {danger('passport', '💗', S.deletePassport, S.deletePassportBody, onDeletePassport)}
     </Sheet>
   );
 };

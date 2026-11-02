@@ -1,4 +1,4 @@
-// Our Passport: Rollup Passport for a couple. Tabs: You (your page, filled by profile() from your photos, every line
+// Our Heartprint (first called Our Passport): Rollup Passport for a couple. Tabs: You (your page, filled by profile() from your photos, every line
 // editable or removable, the photos behind each line), Us (both approved passports, only what each shares), Timeline
 // (trips and months, read on this device), Sharing (partner and Bella per section, a file, a text for ChatGPT or
 // Claude, a QR code) and Activity (when Bella or your partner used it). Above them: Ask your photos and Search.
@@ -135,12 +135,12 @@ const Passport: React.FC<Props> = ({ userName, partnerName, hasPartner, store: s
   };
   const [copied, setCopied] = useState(false);
   const copy = async () => { if (!stored) return; try { await navigator.clipboard.writeText(forAssistant(stored, userName, labels)); setCopied(true); setTimeout(() => setCopied(false), 1600); } catch { /* clipboard blocked */ } };
-  const qr = useMemo(() => { const m = qrMatrix(`${typeof location !== 'undefined' ? location.origin : 'https://belluh.com'}/passport`); return m ? qrPath(m) : null; }, []);
+  const qr = useMemo(() => { const m = qrMatrix(`${typeof location !== 'undefined' ? location.origin : 'https://belluh.com'}/heartprint`); return m ? qrPath(m) : null; }, []);
 
   const hasLines = !!draft && SECTION_KEYS.some(k => draft.sections[k].length);
   const memoryOn = engine !== undefined && !!engine && !!state && state.type !== 'notStarted';
 
-  // ---------- the Passport card ----------
+  // ---------- the Heartprint card ----------
   const passportCard = draft && (hasLines || draft.title) && (
     <article className={`${card} overflow-hidden`}>
       <div className="bg-[#9bbecb] px-6 pt-6 pb-5 sm:px-8">
@@ -257,8 +257,8 @@ const Passport: React.FC<Props> = ({ userName, partnerName, hasPartner, store: s
           <h3 className="flex items-center gap-2 font-serif text-lg text-slate-900"><Emoji e="📤" size={22} />{T.sharing.anywhere}</h3>
           <p className="text-sm text-slate-500 leading-relaxed mt-1 flex-1">{T.sharing.anywhereBody}</p>
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <button type="button" className={btnSoft} onClick={() => download('belluh-passport.md', 'text/markdown', toMarkdown(stored, userName, labels))}>{T.sharing.markdown}</button>
-            <button type="button" className={btnSoft} onClick={() => download('belluh-passport.json', 'application/json', toJson(stored, userName))}>{T.sharing.json}</button>
+            <button type="button" className={btnSoft} onClick={() => download('belluh-heartprint.md', 'text/markdown', toMarkdown(stored, userName, labels))}>{T.sharing.markdown}</button>
+            <button type="button" className={btnSoft} onClick={() => download('belluh-heartprint.json', 'application/json', toJson(stored, userName))}>{T.sharing.json}</button>
           </div>
         </div>
         <div className={`${card} p-5 sm:p-6 flex flex-col`}>

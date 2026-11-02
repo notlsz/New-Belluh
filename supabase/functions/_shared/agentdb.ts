@@ -127,10 +127,10 @@ export async function buildSystem(ctx: Ctx): Promise<string> {
 }
 
 /**
- * Our Passport for Bella: the person's sections they share with her, and their partner's that the partner shares with
+ * Our Heartprint for Bella: the person's sections they share with her, and their partner's that the partner shares with
  * both of them and Bella. Approved text only (memory_passports); photos never reach the server. Each use is noted in
  * the owner's Activity, at most once an hour. The same block serves the app and texting: only the device can look at
- * photos, so texting Bella knows what the Passport says and nothing more.
+ * photos, so texting Bella knows what the Heartprint says and nothing more.
  */
 export async function passportFor(ctx: Ctx): Promise<string | null> {
   const ids = ctx.partnerId ? [ctx.userId, ctx.partnerId] : [ctx.userId];

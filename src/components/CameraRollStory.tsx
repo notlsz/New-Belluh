@@ -17,6 +17,7 @@ const reducedMotion = () => { try { return window.matchMedia('(prefers-reduced-m
 
 type Snap = { src?: string; e?: string; bg?: string; pos?: string };
 const P = (name: string, pos = 'center'): Snap => ({ src: `/milestones/${name}.webp`, pos });
+const M = (name: string, pos = 'center'): Snap => ({ src: `/moments/${name}.webp`, pos });
 const E = (e: string, bg: string): Snap => ({ e, bg });
 
 /** One camera-roll picture: a real photo, or a solid tile with a 3D emoji standing in for one. */
@@ -49,17 +50,17 @@ function useScrollStep(count: number) {
 type Spot = { s: Snap; m: [number, number, number] | null; d: [number, number, number]; r: number; blur?: number };
 const SCATTER: Spot[] = [
   { s: P('first-date', '60% center'), m: [3, 0, 92], d: [2, 2, 150], r: -6 },
-  { s: E('🏖️', '#fde7d9'), m: [39, 3, 62], d: [22, 6, 86], r: 4, blur: 1 },
-  { s: E('⛰️', '#e3f0f4'), m: [30, 15, 50], d: [38, 1, 70], r: -3, blur: 2.5 },
+  { s: M('sun-on-the-rocks', 'center 85%'), m: [39, 3, 62], d: [22, 6, 86], r: 4, blur: 1 },
+  { s: M('river-walk'), m: [30, 15, 50], d: [38, 1, 70], r: -3, blur: 2.5 },
   { s: P('78th-trip'), m: [67, 0, 96], d: [53, 5, 124], r: 5 },
-  { s: E('🌅', '#fbe3f2'), m: [79, 16, 58], d: [73, 10, 98], r: -4, blur: 1.5 },
+  { s: M('paris-seine'), m: [79, 16, 58], d: [73, 10, 98], r: -4, blur: 1.5 },
   { s: P('just-married'), m: null, d: [86, 30, 138], r: 6 },
-  { s: E('☕', '#eef3e6'), m: null, d: [63, 37, 76], r: -6, blur: 2.5 },
+  { s: M('couch-hug'), m: null, d: [63, 37, 76], r: -6, blur: 2.5 },
   { s: P('first-kiss', '40% center'), m: [4, 80, 88], d: [67, 56, 132], r: -3 },
-  { s: E('🐶', '#fff1c9'), m: null, d: [86, 72, 92], r: 5 },
+  { s: M('neon-kiss'), m: null, d: [86, 72, 92], r: 5 },
   { s: P('30th-anniversary'), m: [66, 79, 100], d: [50, 80, 116], r: 4, blur: 1 },
   { s: E('🍜', '#fde7d9'), m: [38, 86, 62], d: [30, 84, 88], r: -5 },
-  { s: E('💐', '#ece6f7'), m: null, d: [4, 86, 96], r: 3, blur: 2.5 },
+  { s: M('bus-ride'), m: null, d: [4, 86, 96], r: 3, blur: 2.5 },
 ];
 
 export const RollSteps: React.FC = () => {
@@ -94,11 +95,11 @@ export const RollSteps: React.FC = () => {
 
 // What each category shows: an emoji beside its name, and the picture on the card
 const LEARN_LOOK: { e: string; snap: Snap }[] = [
-  { e: '✈️', snap: P('78th-trip') },
+  { e: '✈️', snap: M('paris-seine') },
   { e: '🍜', snap: E('🍜', '#fde7d9') }, // the spot you keep going back to
-  { e: '📍', snap: P('first-kiss', '40% center') },
+  { e: '📍', snap: M('couch-hug') },
   { e: '💞', snap: P('first-date', '62% center') },
-  { e: '🗓️', snap: P('30th-anniversary') },
+  { e: '🗓️', snap: M('bus-ride') },
 ];
 
 export const RollLearns: React.FC = () => {
@@ -167,7 +168,7 @@ export const RollLearns: React.FC = () => {
 };
 
 // The thumbnails on the phone in airplane mode
-const GRID: Snap[] = [P('first-date', '60% center'), E('🏖️', '#fde7d9'), P('78th-trip'), E('🍜', '#fde7d9'), P('first-kiss', '40% center'), E('🌅', '#fbe3f2'), P('30th-anniversary'), E('🐶', '#fff1c9'), P('just-married'), E('⛰️', '#e3f0f4'), P('first-baby'), E('💐', '#ece6f7')];
+const GRID: Snap[] = [P('first-date', '60% center'), M('sun-on-the-rocks', 'center 85%'), P('78th-trip'), E('🍜', '#fde7d9'), M('curtain-kiss'), M('paris-seine'), P('30th-anniversary'), M('couch-kiss'), M('rainy-campus'), M('neon-kiss'), P('first-kiss', '40% center'), M('river-walk')];
 const PHOTO_COUNT = 3912;
 
 export const RollPrivacy: React.FC = () => {
@@ -229,7 +230,7 @@ export const RollPrivacy: React.FC = () => {
 };
 
 // The four days between dates, each a tile standing in for that day's photo
-const GAP_SNAPS: Snap[] = [E('⛰️', '#e3f0f4'), E('🎂', '#fbe3f2'), E('🌻', '#eef3e6'), E('🌅', '#fde7d9')];
+const GAP_SNAPS: Snap[] = [M('river-walk'), E('🎂', '#fbe3f2'), E('🌻', '#eef3e6'), M('sun-on-the-rocks', 'center 85%')];
 
 export const RollGaps: React.FC = () => {
   const T = useUi(roll);
