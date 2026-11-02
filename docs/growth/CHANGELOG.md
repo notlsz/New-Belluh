@@ -2,6 +2,7 @@
 
 Newest first. One line per change, with the PR or source.
 
+- 2026-11-02: Locket reverted. Other languages keep their Heartprint names (ハートプリント, 心迹, 하트프린트, Heartprint); English is now Our Afterglow. /afterglow is the page and QR code; /locket, /heartprint and /passport still open it.
 - 2026-11-02: Our Heartprint renamed again, to Our Locket: the page you keep close and hand to the one you love. Localized as a keepsake word each culture already has: お守り (Japan), 锦囊 (China), 펜던트 (Korea), médaillon, medaglione, medalhão, relicario, Medaillon. /locket is the page and QR code; /heartprint and /passport still open it.
 - 2026-11-02: Our Passport renamed Our Heartprint in every language (ハートプリント in Japanese, 하트프린트 in Korean, 心迹 in Chinese, Heartprint elsewhere); /heartprint is the page and its QR code, /passport still opens it. Nine new couple photos on the landing's camera-roll sections for more diversity.
 - 2026-11-02: Belluh Memory, query and profile (after Rollup): a stateless memory-agent whose tools run on the device, Our Passport (You, Us, Timeline, Sharing, Activity; file, ChatGPT or Claude text, QR), Ask your photos and on-device search, the AI permission screen and Privacy Center switch, Bella reading only the Passport sections shared with her, and the Privacy Policy, Cookie Policy and Consumer Health Data Policy updated; all 9 languages plus es-MX and pt-PT.
