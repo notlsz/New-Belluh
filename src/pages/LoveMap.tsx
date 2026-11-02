@@ -13,6 +13,7 @@ import { herePlace, placesOn, setPlacesOn } from '../lib/places';
 import { Emoji, emojiSrc } from '../lib/emoji3d';
 import GuidesPanel from '../components/GuidesPanel';
 import guidesUi from '../i18n/ui/guides';
+import photoStoryUi from '../i18n/ui/photoStory';
 import SolarSystem, { type SolarSystemHandle } from '../components/SolarSystem';
 
 const OCEAN = '#c6d8eb', LAND = '#fdf0e9', ROAD = '#f7cdb2', ROAD_MAIN = '#f3b994';
@@ -80,10 +81,11 @@ const titleOf = (e: JournalEntry) => {
 
 const emojiFor = (e: JournalEntry) => e.type === EntryType.Voice || e.audioUrl ? '🎙️' : e.type === EntryType.Photo ? '📸' : (e.mood && (MOOD_EMOJIS as any)[e.mood]) || '💌';
 
-interface Props { entries: JournalEntry[]; currentUserId: string; myName?: string | null }
+interface Props { entries: JournalEntry[]; currentUserId: string; myName?: string | null; /** Opens Add from your photos */ onPhotos?: () => void }
 
-const LoveMap: React.FC<Props> = ({ entries, currentUserId, myName = null }) => {
+const LoveMap: React.FC<Props> = ({ entries, currentUserId, myName = null, onPhotos }) => {
   const G = useUi(guidesUi);
+  const P = useUi(photoStoryUi);
   const [tab, setTab] = useState<'memories' | 'guides'>('memories');
   // A guide is open: only its pins show, and its countries light up
   const [focus, setFocus] = useState<string[] | null>(null);
@@ -278,6 +280,7 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId, myName = null }) => 
 
       {/* The two ways to look: the whole world, or your places */}
       <div className="absolute z-10 top-0 right-0 px-4 md:px-6 pt-5 md:pt-6 flex items-center gap-2 pointer-events-none">
+        {onPhotos && <button type="button" onClick={onPhotos} aria-label={P.open} className="pointer-events-auto h-12 px-4 rounded-full bg-white/90 backdrop-blur-xl border border-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.5)] inline-flex items-center gap-2 text-sm font-bold text-slate-800"><Emoji e="📸" size={24} /><span className="hidden sm:inline">{P.open}</span></button>}
         <button type="button" onClick={() => mapRef.current?.flyTo({ zoom: 0.7, pitch: 0, bearing: 0, duration: 2200 })} className="pointer-events-auto h-12 px-4 rounded-full bg-white/90 backdrop-blur-xl border border-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.5)] inline-flex items-center gap-2 text-sm font-bold text-slate-800"><Emoji e="🌍" size={24} /><span className="hidden sm:inline">{T.globe}</span></button>
         {groups.length > 0 && <button type="button" onClick={() => fit()} className="pointer-events-auto h-12 px-4 rounded-full bg-white/90 backdrop-blur-xl border border-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.5)] inline-flex items-center gap-2 text-sm font-bold text-slate-800"><Emoji e="💞" size={24} /><span className="hidden sm:inline">{T.ours}</span></button>}
       </div>
@@ -330,6 +333,7 @@ const LoveMap: React.FC<Props> = ({ entries, currentUserId, myName = null }) => 
               <div className="mt-5 rounded-2xl bg-[#fdf1ec] p-4">
                 <p className="font-bold text-slate-900">{T.emptyTitle}</p>
                 <p className="mt-1 text-sm text-slate-600 leading-relaxed">{T.emptyBody}</p>
+                {onPhotos && <button type="button" onClick={onPhotos} className="mt-3 mr-2 h-11 px-5 rounded-full bg-slate-900 hover:bg-black text-white text-sm font-bold inline-flex items-center gap-2"><Emoji e="📸" size={18} />{P.open}</button>}
                 {!on ? <button type="button" onClick={turnOn} className="mt-3 h-11 px-5 rounded-full bg-[#5e9db3] hover:bg-[#4f8ea4] text-white text-sm font-bold inline-flex items-center gap-2"><Emoji e="📍" size={18} />{T.turnOn}</button>
                   : <p className="mt-3 text-sm font-bold text-[#3f8aa3] inline-flex items-center gap-1.5"><Emoji e="✅" size={16} /> {T.pinned}</p>}
                 {note && <p className="mt-2 text-[13px] text-slate-500">{note}</p>}

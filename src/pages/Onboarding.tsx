@@ -6,12 +6,15 @@ import BelluhSpeech from '../components/BelluhSpeech';
 import { belluh } from '../lib/belluhPresence';
 import { useI18n, useUi } from '../i18n';
 import onboardingStrings from '../i18n/ui/onboarding';
+import photoStoryUi from '../i18n/ui/photoStory';
+import { Emoji } from '../lib/emoji3d';
 
 interface OnboardingProps {
-  onComplete: (partnerName: string, firstEntry: string) => void | Promise<void>;
+  onComplete: (partnerName: string, firstEntry: string, fromPhotos?: boolean) => void | Promise<void>;
 }
 
 const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
+  const P = useUi(photoStoryUi);
   const T = useUi(onboardingStrings);
   const { f } = useI18n();
   // Ideas for the first entry, what Bella says when tapped on the welcome screen, and the step names
@@ -133,11 +136,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     }
   };
 
-  const finish = async () => {
+  const finish = async (fromPhotos = false) => {
     if (finishing) return;
     setFinishing(true);
     belluh.become('water', 'water', false);
-    try { await onComplete(name, entry.trim()); }
+    try { await onComplete(name, entry.trim(), fromPhotos); }
     finally { setFinishing(false); }
   };
 
@@ -355,11 +358,15 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             {inviteStatus === 'error' && <p className="mt-3 text-sm text-rose-500">{T.invite.error}</p>}
 
             <button
-              onClick={finish}
+              onClick={() => finish()}
               disabled={finishing}
               className={`mt-8 w-full py-4 rounded-full font-bold transition-all active:scale-[0.98] disabled:opacity-60 ${invited ? 'bg-slate-900 text-white hover:bg-black shadow-lg' : 'text-slate-500 hover:text-slate-900'}`}
             >
               {finishing ? T.opening : invited ? T.startWriting : T.skip}
+            </button>
+            {/* Skip the blank page: straight into adding their places, trips and firsts from photos */}
+            <button type="button" onClick={() => finish(true)} disabled={finishing} className="mt-2 h-11 px-4 inline-flex items-center justify-center gap-2 text-sm font-bold text-[#5e9db3] hover:text-slate-900 disabled:opacity-60">
+              <Emoji e="📸" size={18} />{P.onboarding}
             </button>
           </div>
         )}
