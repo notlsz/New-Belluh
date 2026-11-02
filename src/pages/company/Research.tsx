@@ -1,5 +1,5 @@
 // belluh.com/research, laid out like hinge.co/labs: Belluh Research, the science behind the product. The studies cited
-// are real, peer-reviewed papers (the same three Bella cites on the landing page), linked by DOI.
+// are real, peer-reviewed papers, linked by DOI.
 import React from 'react';
 import { Emoji } from '../../lib/emoji3d';
 import { useUi } from '../../i18n';
@@ -7,13 +7,18 @@ import table from '../../i18n/ui/companyPages';
 import { Shell, SplitHero, Wrap, Eyebrow, Big, Body, Reveal, Ring, Numbered, Photo, Pill, ShareBar, Dark, go, BLUE, type PageProps } from './kit';
 
 const METHODS = ['📚', '💬', '💡'];
+// Recent, peer-reviewed studies (2018 to 2025), each checked against Crossref or PubMed. `paper` is the original
+// title, kept in its own language; the card copy describes the finding modestly and is localized in companyPages.
 const PAPERS = [
-  { photo: '/milestones/first-kiss.webp', kicker: 'Family Process, 2004', by: 'Driver & Gottman', doi: '10.1111/j.1545-5300.2004.00024.x' },
-  { photo: '/milestones/just-married.webp', kicker: 'Journal of Personality and Social Psychology, 2004', by: 'Gable, Reis, Impett & Asher', doi: '10.1037/0022-3514.87.2.228' },
-  { photo: '/milestones/78th-trip.webp', kicker: 'Journal of Personality and Social Psychology, 2000', by: 'Aron, Norman, Aron, McKenna & Heyman', doi: '10.1037/0022-3514.78.2.273' },
-  { photo: '/milestones/first-date.webp', kicker: 'Personal Relationships, 2010', by: 'Algoe, Gable & Maisel', doi: '10.1111/j.1475-6811.2010.01273.x' },
-  { photo: '/milestones/first-baby.webp', kicker: 'Psychological Science, 2006', by: 'Coan, Schaefer & Davidson', doi: '10.1111/j.1467-9280.2006.01832.x' },
-  { photo: '/milestones/30th-anniversary.webp', kicker: 'Journal of Personality and Social Psychology, 1996', by: 'Murray, Holmes & Griffin', doi: '10.1037/0022-3514.70.1.79' },
+  { photo: '/milestones/first-kiss.webp', kicker: 'PNAS, 2020', by: 'Joel et al.', doi: '10.1073/pnas.1917036117', paper: 'Machine learning uncovers the most robust self-report predictors of relationship quality across 43 longitudinal couples studies' },
+  { photo: '/moments/couch-hug.webp', kicker: 'Emotion, 2022', by: 'Chang, Dwyer & Algoe', doi: '10.1037/emo0001020', paper: 'Better together: Integrative analysis of behavioral gratitude in close relationships using the three-factorial interpersonal emotions (TIE) framework' },
+  { photo: '/milestones/just-married.webp', kicker: 'Social and Personality Psychology Compass, 2018', by: 'Peters, Reis & Gable', doi: '10.1111/spc3.12407', paper: 'Making the good even better: A review and theoretical model of interpersonal capitalization' },
+  { photo: '/milestones/78th-trip.webp', kicker: 'Journal of Personality and Social Psychology, 2019', by: 'Muise et al.', doi: '10.1037/pspi0000148', paper: 'Broadening your horizons: Self-expanding activities promote desire and satisfaction in established romantic relationships' },
+  { photo: '/moments/paris-seine.webp', kicker: 'Journal of the Association for Consumer Research, 2019', by: 'Garcia-Rada, Sezer & Norton', doi: '10.1086/702761', paper: 'Rituals and Nuptials: The Emotional and Relational Consequences of Relationship Rituals' },
+  { photo: '/milestones/30th-anniversary.webp', kicker: 'The Gerontologist, 2022', by: 'Mroz et al.', doi: '10.1093/geront/gnac053', paper: 'When Harry Met Sally: Older Adult Spouses’ First Encounter Reminiscing and Well-Being' },
+  { photo: '/moments/rainy-campus.webp', kicker: 'Couple and Family Psychology: Research and Practice, 2021', by: 'Rodriguez, Stewart & Neighbors', doi: '10.1037/cfp0000173', paper: 'Effects of a brief web-based interpersonal conflict cognitive reappraisal expressive-writing intervention on changes in romantic conflict during COVID-19 quarantine' },
+  { photo: '/moments/bus-ride.webp', kicker: 'Journal of Social and Personal Relationships, 2021', by: 'Holtzman et al.', doi: '10.1177/02654075211043296', paper: 'Long-distance texting: Text messaging is linked with higher relationship satisfaction in long-distance relationships' },
+  { photo: '/moments/couch-kiss.webp', kicker: 'PLOS Mental Health, 2025', by: 'Hatch et al.', doi: '10.1371/journal.pmen.0000145', paper: 'When ELIZA meets therapists: A Turing test for the heart and mind' },
 ];
 
 const Research: React.FC<PageProps> = (p) => {
@@ -62,16 +67,17 @@ const Research: React.FC<PageProps> = (p) => {
     {/* The studies */}
     <section className="pb-24 md:pb-32">
       <Wrap>
-        <Reveal><h2 className="font-serif text-[2.5rem] md:text-[3.25rem] tracking-[-0.02em] font-bold">{C.scienceTitle}<sup className="ml-1 text-[14px] font-sans font-normal" style={{ color: BLUE }}>({papers.length})</sup></h2></Reveal>
+        <Reveal><h2 className="font-serif text-[2.5rem] md:text-[3.25rem] tracking-[-0.02em] font-bold">{C.scienceTitle}<sup className="ml-1 text-[14px] font-sans font-normal" style={{ color: BLUE }}>({papers.length})</sup></h2>
+          <p className="mt-4 max-w-[520px] text-[15px] leading-[1.6] text-[#1a1a1a]/75">{C.scienceNote}</p></Reveal>
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-14">
           {papers.map((x, i) => (
-            <Reveal key={x.doi} delay={i * 90}>
-              <a href={`https://doi.org/${x.doi}`} target="_blank" rel="noopener noreferrer" className="group block">
-                <div className="aspect-[16/9] overflow-hidden rounded-md"><img src={x.photo} alt="" loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" /></div>
+            <Reveal key={x.doi} delay={i * 90} className="h-full">
+              <a href={`https://doi.org/${x.doi}`} target="_blank" rel="noopener noreferrer" title={x.paper} className="group flex h-full flex-col items-start">
+                <div className="aspect-[16/9] w-full overflow-hidden rounded-md"><img src={x.photo} alt="" loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" /></div>
                 <p className="mt-4 text-[13px] font-semibold" style={{ color: BLUE }}>{x.kicker}</p>
                 <h3 className="mt-2 font-serif text-[1.5rem] leading-snug tracking-tight">{x.title}</h3>
                 <p className="mt-2 text-[15px] leading-[1.6] text-[#1a1a1a]/75">{x.body}</p>
-                <span className="mt-4 inline-flex h-8 items-center px-3.5 rounded-full bg-[#1a1a1a]/[0.06] text-[13px]">{x.by} ↗</span>
+                <span className="mt-auto pt-4"><span className="inline-flex h-8 items-center px-3.5 rounded-full bg-[#1a1a1a]/[0.06] text-[13px]">{x.by} ↗</span></span>
               </a>
             </Reveal>
           ))}
