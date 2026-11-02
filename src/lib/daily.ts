@@ -12,6 +12,27 @@ export function computeStreak(dates: Date[], now = new Date()): number {
   return n;
 }
 
+/**
+ * Days in a row you both showed up: at least one entry from each of you, ending today or yesterday. Belluh is for
+ * two, so once a partner has written anything the streak counts the two of you together, not one person alone.
+ */
+export function computeCoupleStreak(mine: Date[], theirs: Date[], now = new Date()): number {
+  const a = new Set(mine.map(dayKey)), b = new Set(theirs.map(dayKey));
+  const both = (d: Date) => a.has(dayKey(d)) && b.has(dayKey(d));
+  const cursor = new Date(now);
+  if (!both(cursor)) cursor.setDate(cursor.getDate() - 1);
+  let n = 0;
+  while (both(cursor)) { n++; cursor.setDate(cursor.getDate() - 1); }
+  return n;
+}
+
+/** The streak to show: together once your partner writes too, yours alone before that. */
+export function streakFor(entries: { userId: string; timestamp: Date }[], me: string, now = new Date()): number {
+  const mine = entries.filter(e => e.userId === me).map(e => e.timestamp);
+  const theirs = entries.filter(e => e.userId !== me).map(e => e.timestamp);
+  return theirs.length ? computeCoupleStreak(mine, theirs, now) : computeStreak(mine, now);
+}
+
 /** The same question for both partners on the same calendar day. */
 export function questionForDay(questions: string[], now = new Date()): string {
   const local = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86_400_000;
