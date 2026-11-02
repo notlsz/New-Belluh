@@ -52,6 +52,10 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), aboutPage()],
     // Emojis instead of line icons, everywhere (see src/lib/emojiIcons.tsx)
     resolve: { alias: { 'lucide-react': path.resolve(__dirname, 'src/lib/emojiIcons.tsx') } },
+    // Belluh Memory's understanding worker loads its models with dynamic imports, so workers are ES modules
+    worker: { format: 'es' },
+    // ...and its model runtime finds its wasm by URL, which dev-time pre-bundling would break
+    optimizeDeps: { exclude: ['@huggingface/transformers', 'onnxruntime-web'] },
     // This defines process.env variables globally for the browser at BUILD time.
     define: {
       'process.env.NEXT_PUBLIC_SUPABASE_URL': JSON.stringify(env.NEXT_PUBLIC_SUPABASE_URL),

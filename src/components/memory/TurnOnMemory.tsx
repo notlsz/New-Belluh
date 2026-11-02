@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { useI18n, useUi } from '../../i18n';
 import strings from '../../i18n/ui/passport';
+import engineStrings from '../../i18n/ui/memoryEngine';
 import type { IndexingState, MemoryEngine } from '../../lib/memory/types';
 import { setMemoryConsent } from '../../lib/memory/consent';
 import { Switch } from '../PrivacyCenter';
@@ -23,6 +24,7 @@ export const PickPhotos: React.FC<{ engine: MemoryEngine; label: string; classNa
 /** Where indexing is: model download (with its size when the engine knows it), progress, pause and resume. */
 export const IndexStatus: React.FC<{ engine: MemoryEngine; state: IndexingState }> = ({ engine, state }) => {
   const T = useUi(strings).onboarding;
+  const M = useUi(engineStrings);
   const { num } = useI18n();
   const mb = Math.round(Number((engine as any).modelDownloadBytes ?? 0) / 1e6);
   let line = '', sub = '', fraction: number | null = null, action: React.ReactNode = null;
@@ -34,7 +36,7 @@ export const IndexStatus: React.FC<{ engine: MemoryEngine; state: IndexingState 
     action = <button type="button" className={btnSoft} onClick={() => engine.pause()}><Emoji e="⏸️" size={16} />{T.pause}</button>;
   } else if (state.type === 'paused') { line = fillT(T.paused, { n: num(state.summary.photos + state.summary.videos + state.summary.screenshots) }); action = <button type="button" className={btnDark} onClick={() => engine.resume()}>{T.resume}</button>; }
   else if (state.type === 'ready') { line = fillT(T.ready, { n: num(state.summary.photos + state.summary.videos + state.summary.screenshots) }); action = <PickPhotos engine={engine} label={T.addMore} className={btnSoft} />; }
-  else if (state.type === 'unfinished') { line = fillT(T.unfinished, { reason: state.reason }); action = <button type="button" className={btnDark} onClick={() => engine.resume()}>{T.resume}</button>; }
+  else if (state.type === 'unfinished') { line = state.reason === 'failed' ? M.failed : state.reason === 'interrupted' || state.reason === 'waiting' ? M.interrupted : fillT(T.unfinished, { reason: state.reason }); action = <button type="button" className={btnDark} onClick={() => engine.resume()}>{T.resume}</button>; }
   else if (state.type === 'failed') line = T.failed;
   return (
     <div>

@@ -122,7 +122,10 @@ export type JsonSchema = Record<string, unknown>;
 export interface Profile { json: Record<string, unknown>; evidence: Record<string, string[]>; refused: { pointer: string; reason: string }[] }
 
 export type MemoryErrorCode = 'noIndex' | 'notStarted' | 'unsupported' | 'storageFull' | 'modelDownloadFailed' | 'network' | 'declined' | 'invalidSchema' | 'notConsented' | 'rateLimited' | 'cancelled' | 'internal';
-export class MemoryError extends Error { constructor(public code: MemoryErrorCode, message?: string) { super(message ?? code); } }
+export class MemoryError extends Error {
+  code: MemoryErrorCode;
+  constructor(code: MemoryErrorCode, message?: string) { super(message ?? code); this.code = code; this.name = 'MemoryError'; }
+}
 
 /** The tools the server agent may call. They run on the device against the index and return text only. */
 export type ToolName =
@@ -137,7 +140,11 @@ export type ToolName =
 
 export interface ToolCall { name: ToolName; args: Record<string, unknown> }
 /** What a tool returns: text the server may see, plus the local ids behind it (never sent, kept for evidence) */
-export interface ToolResult { text: string; ids: string[] }
+export interface ToolResult {
+  text: string; ids: string[];
+  /** Optional: the ids behind each line of `text` (same count as its lines), so an answer can cite a single line */
+  lines?: string[][];
+}
 
 /** The on-device engine. One per browser profile; everything lives in IndexedDB. */
 export interface MemoryEngine {
