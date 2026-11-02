@@ -3,6 +3,8 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import BelluhOrb from './components/BelluhOrb';
 import DragonflyMark from './components/DragonflyMark';
 const LoveMap = React.lazy(() => import('./pages/LoveMap'));
+// Skip the blank page: photos read on this device become places, trips and firsts (with its EXIF reader, only when opened)
+const PhotoStory = React.lazy(() => import('./components/PhotoStory'));
 const GuidePage = React.lazy(() => import('./pages/GuidePage'));
 const MissionPage = React.lazy(() => import('./pages/company/Mission'));
 const ImpactPage = React.lazy(() => import('./pages/company/Impact'));
@@ -169,6 +171,7 @@ const App: React.FC = () => {
   
   // Intro Guide State
   const [showIntro, setShowIntro] = useState(false);
+  const [photosOpen, setPhotosOpen] = useState(false);
   
   // Pending Invites State
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
@@ -679,7 +682,8 @@ const App: React.FC = () => {
                 authorName,
                 authorAvatar,
                 content: e.content || '',
-                timestamp: new Date(e.created_at),
+                // Added from photos: dated the day the photos were taken, not the day they were added
+                timestamp: new Date(e.date && Array.isArray(e.tags) && e.tags.includes('from_photos') ? e.date : e.created_at),
                 type: e.type as EntryType,
                 mood: e.mood as Mood,
                 prompt: e.title,
@@ -852,7 +856,7 @@ const App: React.FC = () => {
       }
   };
 
-  const handleOnboardingComplete = async (partnerName: string, firstEntry: string) => {
+  const handleOnboardingComplete = async (partnerName: string, firstEntry: string, fromPhotos = false) => {
     // Whatever happens below, onboarding is done: it never shows again for this person
     try { if (user.id) localStorage.setItem(`belluh_onboarded:${user.id}`, '1'); } catch { /* storage blocked */ }
     try {
@@ -900,7 +904,7 @@ const App: React.FC = () => {
       console.error('Finishing onboarding', err);
     } finally {
       setIsOnboarding(false);
-      setShowIntro(true);
+      if (fromPhotos) setPhotosOpen(true); else setShowIntro(true);
     }
   };
 
@@ -1088,6 +1092,34 @@ const App: React.FC = () => {
   const handleCompose = (prompt?: string) => {
       setComposePrompt(prompt);
       setIsComposeOpen(true);
+  };
+
+  // Saves what they ticked on the photo story: entries (each a pin on the map) and dates for Bella. The photos
+  // themselves never reach this function; only captions, days and rounded coordinates do.
+  const savePhotoStory = async (plan: { entries: any[]; occasions: any[] }): Promise<number> => {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) return 0;
+    let saved = 0;
+    if (plan.entries.length) {
+      const rows = plan.entries.map(r => ({ ...r, user_id: currentUser.id }));
+      const { data, error } = await supabase.from('journal_entries').insert(rows).select('id, created_at, date, content, lat, lng, is_shared, tags');
+      if (error) { console.error('Saving from photos', error); return 0; }
+      const added: JournalEntry[] = (data ?? []).map((d: any) => ({
+        id: d.id, userId: currentUser.id, authorName: user.name, authorAvatar: user.avatar, content: d.content || '',
+        timestamp: new Date(d.date || d.created_at), type: EntryType.Freeform, isPrivate: !d.is_shared,
+        circleId: user.activeCircleId, likes: 0, isLiked: false,
+        lat: typeof d.lat === 'number' ? d.lat : undefined, lng: typeof d.lng === 'number' ? d.lng : undefined,
+      }));
+      saved += added.length;
+      setEntries(prev => [...added, ...prev]);
+    }
+    // One at a time, so a date already saved (same label and day) is simply skipped
+    for (const o of plan.occasions) {
+      const { error } = await supabase.from('occasions').insert({ ...o, user_id: currentUser.id });
+      if (!error) saved++;
+    }
+    trackEvent('photo_story_saved', { entries: plan.entries.length, occasions: plan.occasions.length });
+    return saved;
   };
 
   const handleAddEntry = async (content: string, mood: Mood | undefined, type: EntryType, prompt?: string, isPrivate?: boolean, audioUrl?: string, mediaUrl?: string, where?: { lat: number; lng: number } | null) => {
@@ -1348,8 +1380,8 @@ const App: React.FC = () => {
 
   return (
     <div data-app className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in lg:pl-[var(--sidebar-w,16rem)] lg:transition-[padding] lg:duration-300">
-      {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} partnerName={user.partnerName} avatars={hasPartner ? [user.avatar, calmAvatar(user.partnerAvatar) || avatarFor(user.partnerName || 'partner')] : [user.avatar]} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} onAskBelluh={askBelluh} onOpenBelluh={() => askBelluh('')} />}
-      {currentTab === 'map' && <React.Suspense fallback={<div className="fixed inset-0 bg-[#fbe3f1]" />}><LoveMap entries={readableEntries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} myName={user.name} /></React.Suspense>}
+      {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} partnerName={user.partnerName} avatars={hasPartner ? [user.avatar, calmAvatar(user.partnerAvatar) || avatarFor(user.partnerName || 'partner')] : [user.avatar]} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} onAskBelluh={askBelluh} onOpenBelluh={() => askBelluh('')} onPhotos={() => setPhotosOpen(true)} />}
+      {currentTab === 'map' && <React.Suspense fallback={<div className="fixed inset-0 bg-[#fbe3f1]" />}><LoveMap entries={readableEntries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} myName={user.name} onPhotos={() => setPhotosOpen(true)} /></React.Suspense>}
       {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => handleCompose(prompt)} initialSpace={hasPartner ? tabSpace : undefined} />}
       {belluhSheet && (
         <div className="fixed inset-0 z-[70] bg-paper animate-slide-up" role="dialog" aria-label="Bella">
@@ -1378,6 +1410,7 @@ const App: React.FC = () => {
       {isComposeOpen && <div className="fixed inset-0 z-[60] bg-paper animate-slide-up"><button onClick={() => setIsComposeOpen(false)} aria-label={T.close} className="absolute top-5 right-4 w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 z-50 transition-colors"><X size={22} /></button><Journal onAddEntry={handleAddEntry} partnerName={user.partnerName || ''} onTriggerPremium={handleTriggerPremium} initialPrompt={composePrompt} userName={user.name} partnerHasEntry={partnerHasEntry} /></div>}
       
       {showIntro && <IntroGuide onClose={() => setShowIntro(false)} />}
+      {photosOpen && <React.Suspense fallback={null}><PhotoStory userId={user.id} circleId={user.activeCircleId === 'constellation' ? 'c1' : user.activeCircleId} partnerName={user.partnerName} onClose={() => setPhotosOpen(false)} onSave={savePhotoStory} onOpenMap={() => setCurrentTab('map')} /></React.Suspense>}
 
       {legalModalOpen && <LegalModal type={legalModalOpen} onClose={() => setLegalModalOpen(null)} />}
       

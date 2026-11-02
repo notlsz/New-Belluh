@@ -1,5 +1,7 @@
 import { useI18n, useUi, localQuestion } from '../i18n';
 import storyUi from '../i18n/ui/story';
+import photoStoryUi from '../i18n/ui/photoStory';
+import { Emoji } from '../lib/emoji3d';
 import BelluhActions from '../components/BelluhActions';
 import React, { useMemo, useState, useEffect } from 'react';
 import BelluhOrb from '../components/BelluhOrb';
@@ -36,9 +38,12 @@ interface TimelineProps {
   onAskBelluh?: (message: string) => void;
   /** Opens the Belluh conversation. */
   onOpenBelluh?: () => void;
+  /** Opens Add from your photos (offered while the journal is still nearly empty) */
+  onPhotos?: () => void;
 }
 
-const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName, avatars = [], activeCircleId, circles, onCircleChange, onLikeEntry, onCompose, onSearch: _onSearch, onDeleteEntry, onUpdateEntry, streak, onAskBelluh, onOpenBelluh }) => {
+const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName, avatars = [], activeCircleId, circles, onCircleChange, onLikeEntry, onCompose, onSearch: _onSearch, onDeleteEntry, onUpdateEntry, streak, onAskBelluh, onOpenBelluh, onPhotos }) => {
+  const P = useUi(photoStoryUi);
   const { d: d0, f, date } = useI18n();
   const T = useUi(storyUi);
   const a = d0.app;
@@ -574,6 +579,21 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
                       </div>
                   </div>
                   )}
+              </div>
+          )}
+
+          {/* Skip the blank page: while the journal is nearly empty, start it from your photos */}
+          {onPhotos && !isArchived && !isConstellation && entries.filter(e => e.userId === currentUserId).length < 3 && (
+              <div className="relative pl-20 md:pl-24 pr-6 mb-16 animate-slide-up">
+                  <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-[#9bbecb] border-[2px] border-belluh-25 rounded-full z-10 -translate-x-[3.5px]"></div>
+                  <button type="button" onClick={onPhotos} className="w-full text-left bg-white border border-slate-100 shadow-sm hover:shadow-lg rounded-[2rem] p-6 md:p-8 transition-shadow flex items-center gap-5">
+                      <Emoji e="📸" size={56} className="shrink-0" style={{ transform: 'rotate(-6deg)' }} />
+                      <span className="min-w-0">
+                          <span className="block font-serif text-xl md:text-2xl text-slate-900 leading-tight">{P.nudgeTitle}</span>
+                          <span className="mt-1.5 block text-sm text-slate-500 leading-relaxed">{P.nudgeBody}</span>
+                          <span className="mt-4 inline-flex items-center gap-2 h-10 px-5 rounded-full bg-slate-900 text-white text-sm font-bold">{P.open} <ArrowRight size={15} /></span>
+                      </span>
+                  </button>
               </div>
           )}
 
