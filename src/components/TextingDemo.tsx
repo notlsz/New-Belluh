@@ -33,23 +33,23 @@ const TextingDemo: React.FC = () => {
         <div ref={ref} className="relative mx-auto w-full max-w-[360px]">
           {/* The phone */}
           <div className="relative rounded-[3rem] bg-[#0f172a] p-3 shadow-[0_40px_90px_-30px_rgba(15,23,42,0.55)]">
-            <div className="relative rounded-[2.4rem] bg-white overflow-hidden h-[660px] flex flex-col">
+            <div className="relative rounded-[2.4rem] bg-white overflow-hidden h-[720px] flex flex-col">
               <div className="absolute left-1/2 top-2.5 -translate-x-1/2 w-[110px] h-[30px] rounded-full bg-black z-10" aria-hidden />
               {/* Header: the contact */}
-              <div className="pt-12 pb-3 flex flex-col items-center bg-[#f8f8fa]">
+              <div className="pt-11 pb-2.5 flex flex-col items-center bg-[#f8f8fa]">
                 <span className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center"><DragonflyMark size={30} /></span>
                 <p className="mt-1.5 text-[12px] font-semibold text-slate-900">{T.contact}</p>
                 <p className="text-[10px] text-slate-400">{T.status}</p>
               </div>
               {/* The thread */}
-              <div className="flex-1 min-h-0 px-3 py-4 flex flex-col justify-end gap-1.5 overflow-hidden" aria-live="polite">
+              <div className="flex-1 min-h-0 px-3 py-3 flex flex-col justify-end gap-1.5 overflow-hidden" aria-live="polite">
                 <p className="text-center text-[10px] font-semibold text-slate-400 mb-1">{T.today}</p>
                 {thread.map((m, i) => (
                   <React.Fragment key={i}>
-                    <div className={`shrink-0 max-w-[78%] px-3.5 py-2 text-[14px] leading-snug transition-all duration-500 ${m.me ? 'self-end bg-[#0a84ff] text-white rounded-[18px] rounded-br-[6px]' : 'self-start bg-[#e9e9eb] text-slate-900 rounded-[18px] rounded-bl-[6px]'} ${shown > i ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>{m.text}</div>
+                    <div className={`shrink-0 max-w-[78%] px-3.5 py-[7px] text-[13.5px] leading-snug transition-all duration-500 ${m.me ? 'self-end bg-[#0a84ff] text-white rounded-[18px] rounded-br-[6px]' : 'self-start bg-[#e9e9eb] text-slate-900 rounded-[18px] rounded-bl-[6px]'} ${shown > i ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>{m.text}</div>
                     {i === 3 && (
                       <div className={`shrink-0 self-start w-[78%] rounded-[18px] overflow-hidden border border-slate-200 bg-white transition-all duration-500 ${shown > i ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-                        <img src="/milestones/first-date.webp" alt="" className="w-full h-24 object-cover" />
+                        <img src="/milestones/first-date.webp" alt="" className="w-full h-16 object-cover" />
                         <div className="px-3 py-2">
                           <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-600">{T.card.label}</p>
                           <p className="text-[13px] font-semibold text-slate-900">{T.card.title}</p>
@@ -68,7 +68,6 @@ const TextingDemo: React.FC = () => {
               </div>
             </div>
           </div>
-          <p className="mt-4 text-center text-[12px] text-slate-400">{T.note}</p>
         </div>
       </div>
     </section>
