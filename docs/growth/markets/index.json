@@ -1,0 +1,723 @@
+{
+ "US": {
+  "name": "United States",
+  "rank": 1,
+  "wave": "1",
+  "file": "us-united-states.md",
+  "langs": "en"
+ },
+ "GB": {
+  "name": "United Kingdom",
+  "rank": 2,
+  "wave": "1",
+  "file": "gb-united-kingdom.md",
+  "langs": "en"
+ },
+ "FR": {
+  "name": "France",
+  "rank": 3,
+  "wave": "1",
+  "file": "fr-france.md",
+  "langs": "fr"
+ },
+ "DE": {
+  "name": "Germany",
+  "rank": 4,
+  "wave": "1",
+  "file": "de-germany.md",
+  "langs": "de"
+ },
+ "KR": {
+  "name": "South Korea",
+  "rank": 5,
+  "wave": "2",
+  "file": "kr-south-korea.md",
+  "langs": "ko"
+ },
+ "JP": {
+  "name": "Japan",
+  "rank": 6,
+  "wave": "1",
+  "file": "jp-japan.md",
+  "langs": "ja"
+ },
+ "ES": {
+  "name": "Spain",
+  "rank": 7,
+  "wave": "1",
+  "file": "es-spain.md",
+  "langs": "es"
+ },
+ "CA": {
+  "name": "Canada",
+  "rank": 8,
+  "wave": "1",
+  "file": "ca-canada.md",
+  "langs": "en, fr"
+ },
+ "IN": {
+  "name": "India",
+  "rank": 9,
+  "wave": "2",
+  "file": "in-india.md",
+  "langs": "hi, en"
+ },
+ "AU": {
+  "name": "Australia",
+  "rank": 10,
+  "wave": "1",
+  "file": "au-australia.md",
+  "langs": "en"
+ },
+ "IT": {
+  "name": "Italy",
+  "rank": 11,
+  "wave": "2",
+  "file": "it-italy.md",
+  "langs": "it"
+ },
+ "BR": {
+  "name": "Brazil",
+  "rank": 12,
+  "wave": "2",
+  "file": "br-brazil.md",
+  "langs": "pt"
+ },
+ "AE": {
+  "name": "United Arab Emirates",
+  "rank": 13,
+  "wave": "2",
+  "file": "ae-united-arab-emirates.md",
+  "langs": "ar, en"
+ },
+ "NL": {
+  "name": "Netherlands",
+  "rank": 14,
+  "wave": "2",
+  "file": "nl-netherlands.md",
+  "langs": "nl"
+ },
+ "SG": {
+  "name": "Singapore",
+  "rank": 15,
+  "wave": "1",
+  "file": "sg-singapore.md",
+  "langs": "en, zh"
+ },
+ "CH": {
+  "name": "Switzerland",
+  "rank": 16,
+  "wave": "1",
+  "file": "ch-switzerland.md",
+  "langs": "de, fr, it"
+ },
+ "TR": {
+  "name": "Türkiye",
+  "rank": 17,
+  "wave": "3",
+  "file": "tr-turkiye.md",
+  "langs": "tr"
+ },
+ "SA": {
+  "name": "Saudi Arabia",
+  "rank": 18,
+  "wave": "2",
+  "file": "sa-saudi-arabia.md",
+  "langs": "ar"
+ },
+ "NO": {
+  "name": "Norway",
+  "rank": 19,
+  "wave": "2",
+  "file": "no-norway.md",
+  "langs": "nb"
+ },
+ "PL": {
+  "name": "Poland",
+  "rank": 20,
+  "wave": "3",
+  "file": "pl-poland.md",
+  "langs": "pl"
+ },
+ "BE": {
+  "name": "Belgium",
+  "rank": 21,
+  "wave": "2",
+  "file": "be-belgium.md",
+  "langs": "nl, fr"
+ },
+ "IE": {
+  "name": "Ireland",
+  "rank": 22,
+  "wave": "1",
+  "file": "ie-ireland.md",
+  "langs": "en"
+ },
+ "SE": {
+  "name": "Sweden",
+  "rank": 23,
+  "wave": "2",
+  "file": "se-sweden.md",
+  "langs": "sv"
+ },
+ "MX": {
+  "name": "Mexico",
+  "rank": 24,
+  "wave": "1",
+  "file": "mx-mexico.md",
+  "langs": "es-MX"
+ },
+ "AT": {
+  "name": "Austria",
+  "rank": 25,
+  "wave": "1",
+  "file": "at-austria.md",
+  "langs": "de"
+ },
+ "DK": {
+  "name": "Denmark",
+  "rank": 30,
+  "wave": "2",
+  "file": "dk-denmark.md",
+  "langs": "da"
+ },
+ "PT": {
+  "name": "Portugal",
+  "rank": 35,
+  "wave": "2",
+  "file": "pt-portugal.md",
+  "langs": "pt-PT"
+ },
+ "FI": {
+  "name": "Finland",
+  "rank": 36,
+  "wave": "2",
+  "file": "fi-finland.md",
+  "langs": "fi"
+ },
+ "CZ": {
+  "name": "Czechia",
+  "rank": 38,
+  "wave": "3",
+  "file": "cz-czechia.md",
+  "langs": "cs"
+ },
+ "GR": {
+  "name": "Greece",
+  "rank": 40,
+  "wave": "3",
+  "file": "gr-greece.md",
+  "langs": "el"
+ },
+ "HU": {
+  "name": "Hungary",
+  "rank": 42,
+  "wave": "3",
+  "file": "hu-hungary.md",
+  "langs": "hu"
+ },
+ "RO": {
+  "name": "Romania",
+  "rank": 43,
+  "wave": "3",
+  "file": "ro-romania.md",
+  "langs": "ro"
+ },
+ "BG": {
+  "name": "Bulgaria",
+  "rank": 47,
+  "wave": "3",
+  "file": "bg-bulgaria.md",
+  "langs": "bg"
+ },
+ "SK": {
+  "name": "Slovakia",
+  "rank": 48,
+  "wave": "3",
+  "file": "sk-slovakia.md",
+  "langs": "sk"
+ },
+ "UA": {
+  "name": "Ukraine",
+  "rank": 49,
+  "wave": "3",
+  "file": "ua-ukraine.md",
+  "langs": "uk"
+ },
+ "HR": {
+  "name": "Croatia",
+  "rank": 52,
+  "wave": "3",
+  "file": "hr-croatia.md",
+  "langs": "hr"
+ },
+ "LT": {
+  "name": "Lithuania",
+  "rank": 54,
+  "wave": "3",
+  "file": "lt-lithuania.md",
+  "langs": "lt"
+ },
+ "SI": {
+  "name": "Slovenia",
+  "rank": 55,
+  "wave": "3",
+  "file": "si-slovenia.md",
+  "langs": "sl"
+ },
+ "AZ": {
+  "name": "Azerbaijan",
+  "rank": 57,
+  "wave": "Avail.",
+  "file": "az-azerbaijan.md",
+  "langs": "az"
+ },
+ "RS": {
+  "name": "Serbia",
+  "rank": 61,
+  "wave": "3",
+  "file": "rs-serbia.md",
+  "langs": "sr"
+ },
+ "LU": {
+  "name": "Luxembourg",
+  "rank": 63,
+  "wave": "2",
+  "file": "lu-luxembourg.md",
+  "langs": "fr, de"
+ },
+ "CY": {
+  "name": "Cyprus",
+  "rank": 67,
+  "wave": "3",
+  "file": "cy-cyprus.md",
+  "langs": "el"
+ },
+ "LV": {
+  "name": "Latvia",
+  "rank": 70,
+  "wave": "3",
+  "file": "lv-latvia.md",
+  "langs": "lv"
+ },
+ "EE": {
+  "name": "Estonia",
+  "rank": 74,
+  "wave": "3",
+  "file": "ee-estonia.md",
+  "langs": "et"
+ },
+ "IS": {
+  "name": "Iceland",
+  "rank": 80,
+  "wave": "2",
+  "file": "is-iceland.md",
+  "langs": "is"
+ },
+ "GE": {
+  "name": "Georgia",
+  "rank": 82,
+  "wave": "Avail.",
+  "file": "ge-georgia.md",
+  "langs": "ka"
+ },
+ "BA": {
+  "name": "Bosnia and Herzegovina",
+  "rank": 84,
+  "wave": "Avail.",
+  "file": "ba-bosnia-and-herzegovina.md",
+  "langs": "bs"
+ },
+ "MT": {
+  "name": "Malta",
+  "rank": 88,
+  "wave": "2",
+  "file": "mt-malta.md",
+  "langs": "en"
+ },
+ "MK": {
+  "name": "North Macedonia",
+  "rank": 90,
+  "wave": "Avail.",
+  "file": "mk-north-macedonia.md",
+  "langs": "mk"
+ },
+ "AM": {
+  "name": "Armenia",
+  "rank": 98,
+  "wave": "Avail.",
+  "file": "am-armenia.md",
+  "langs": "hy"
+ },
+ "AR": {
+  "name": "Argentina",
+  "rank": 26,
+  "wave": "3",
+  "file": "ar-argentina.md",
+  "langs": "es"
+ },
+ "CL": {
+  "name": "Chile",
+  "rank": 37,
+  "wave": "3",
+  "file": "cl-chile.md",
+  "langs": "es"
+ },
+ "CO": {
+  "name": "Colombia",
+  "rank": 41,
+  "wave": "3",
+  "file": "co-colombia.md",
+  "langs": "es"
+ },
+ "PE": {
+  "name": "Peru",
+  "rank": 50,
+  "wave": "3",
+  "file": "pe-peru.md",
+  "langs": "es"
+ },
+ "DO": {
+  "name": "Dominican Republic",
+  "rank": 56,
+  "wave": "3",
+  "file": "do-dominican-republic.md",
+  "langs": "es"
+ },
+ "PR": {
+  "name": "Puerto Rico",
+  "rank": 59,
+  "wave": "1",
+  "file": "pr-puerto-rico.md",
+  "langs": "es, en"
+ },
+ "CR": {
+  "name": "Costa Rica",
+  "rank": 65,
+  "wave": "3",
+  "file": "cr-costa-rica.md",
+  "langs": "es"
+ },
+ "EC": {
+  "name": "Ecuador",
+  "rank": 68,
+  "wave": "3",
+  "file": "ec-ecuador.md",
+  "langs": "es"
+ },
+ "PA": {
+  "name": "Panama",
+  "rank": 76,
+  "wave": "3",
+  "file": "pa-panama.md",
+  "langs": "es"
+ },
+ "UY": {
+  "name": "Uruguay",
+  "rank": 79,
+  "wave": "3",
+  "file": "uy-uruguay.md",
+  "langs": "es"
+ },
+ "GT": {
+  "name": "Guatemala",
+  "rank": 85,
+  "wave": "Avail.",
+  "file": "gt-guatemala.md",
+  "langs": "es"
+ },
+ "PY": {
+  "name": "Paraguay",
+  "rank": 87,
+  "wave": "Avail.",
+  "file": "py-paraguay.md",
+  "langs": "es"
+ },
+ "BO": {
+  "name": "Bolivia",
+  "rank": 92,
+  "wave": "Avail.",
+  "file": "bo-bolivia.md",
+  "langs": "es"
+ },
+ "JM": {
+  "name": "Jamaica",
+  "rank": 93,
+  "wave": "Avail.",
+  "file": "jm-jamaica.md",
+  "langs": "en"
+ },
+ "MY": {
+  "name": "Malaysia",
+  "rank": 27,
+  "wave": "3",
+  "file": "my-malaysia.md",
+  "langs": "ms, en"
+ },
+ "TH": {
+  "name": "Thailand",
+  "rank": 28,
+  "wave": "3",
+  "file": "th-thailand.md",
+  "langs": "th"
+ },
+ "ID": {
+  "name": "Indonesia",
+  "rank": 29,
+  "wave": "3",
+  "file": "id-indonesia.md",
+  "langs": "id"
+ },
+ "HK": {
+  "name": "Hong Kong",
+  "rank": 32,
+  "wave": "2",
+  "file": "hk-hong-kong.md",
+  "langs": "zh-Hant"
+ },
+ "TW": {
+  "name": "Taiwan (unscored)",
+  "rank": null,
+  "wave": "2",
+  "file": "tw-taiwan-unscored.md",
+  "langs": "zh-Hant"
+ },
+ "NZ": {
+  "name": "New Zealand",
+  "rank": 33,
+  "wave": "1",
+  "file": "nz-new-zealand.md",
+  "langs": "en"
+ },
+ "VN": {
+  "name": "Vietnam",
+  "rank": 34,
+  "wave": "3",
+  "file": "vn-vietnam.md",
+  "langs": "vi"
+ },
+ "KZ": {
+  "name": "Kazakhstan",
+  "rank": 44,
+  "wave": "3",
+  "file": "kz-kazakhstan.md",
+  "langs": "kk, ru"
+ },
+ "PH": {
+  "name": "Philippines",
+  "rank": 46,
+  "wave": "3",
+  "file": "ph-philippines.md",
+  "langs": "en, fil"
+ },
+ "BD": {
+  "name": "Bangladesh",
+  "rank": 58,
+  "wave": "Avail.",
+  "file": "bd-bangladesh.md",
+  "langs": "bn"
+ },
+ "PK": {
+  "name": "Pakistan",
+  "rank": 60,
+  "wave": "Avail.",
+  "file": "pk-pakistan.md",
+  "langs": "ur, en"
+ },
+ "UZ": {
+  "name": "Uzbekistan",
+  "rank": 62,
+  "wave": "Avail.",
+  "file": "uz-uzbekistan.md",
+  "langs": "uz"
+ },
+ "LK": {
+  "name": "Sri Lanka",
+  "rank": 73,
+  "wave": "Avail.",
+  "file": "lk-sri-lanka.md",
+  "langs": "si, ta, en"
+ },
+ "MO": {
+  "name": "Macao",
+  "rank": 77,
+  "wave": "Avail.",
+  "file": "mo-macao.md",
+  "langs": "zh-Hant"
+ },
+ "MN": {
+  "name": "Mongolia",
+  "rank": 89,
+  "wave": "Avail.",
+  "file": "mn-mongolia.md",
+  "langs": "mn"
+ },
+ "BN": {
+  "name": "Brunei",
+  "rank": 96,
+  "wave": "Avail.",
+  "file": "bn-brunei.md",
+  "langs": "ms"
+ },
+ "NP": {
+  "name": "Nepal",
+  "rank": 97,
+  "wave": "Avail.",
+  "file": "np-nepal.md",
+  "langs": "ne"
+ },
+ "KG": {
+  "name": "Kyrgyz Republic",
+  "rank": 100,
+  "wave": "Avail.",
+  "file": "kg-kyrgyz-republic.md",
+  "langs": "ky, ru"
+ },
+ "IL": {
+  "name": "Israel",
+  "rank": 31,
+  "wave": "2",
+  "file": "il-israel.md",
+  "langs": "he"
+ },
+ "QA": {
+  "name": "Qatar",
+  "rank": 51,
+  "wave": "3",
+  "file": "qa-qatar.md",
+  "langs": "ar, en"
+ },
+ "KW": {
+  "name": "Kuwait",
+  "rank": 53,
+  "wave": "3",
+  "file": "kw-kuwait.md",
+  "langs": "ar"
+ },
+ "OM": {
+  "name": "Oman",
+  "rank": 66,
+  "wave": "3",
+  "file": "om-oman.md",
+  "langs": "ar"
+ },
+ "IQ": {
+  "name": "Iraq",
+  "rank": 72,
+  "wave": "Avail.",
+  "file": "iq-iraq.md",
+  "langs": "ar"
+ },
+ "BH": {
+  "name": "Bahrain",
+  "rank": 78,
+  "wave": "3",
+  "file": "bh-bahrain.md",
+  "langs": "ar"
+ },
+ "JO": {
+  "name": "Jordan",
+  "rank": 81,
+  "wave": "3",
+  "file": "jo-jordan.md",
+  "langs": "ar"
+ },
+ "LB": {
+  "name": "Lebanon",
+  "rank": 95,
+  "wave": "Avail.",
+  "file": "lb-lebanon.md",
+  "langs": "ar, fr"
+ },
+ "ZA": {
+  "name": "South Africa",
+  "rank": 39,
+  "wave": "3",
+  "file": "za-south-africa.md",
+  "langs": "en"
+ },
+ "EG": {
+  "name": "Egypt",
+  "rank": 45,
+  "wave": "3",
+  "file": "eg-egypt.md",
+  "langs": "ar"
+ },
+ "NG": {
+  "name": "Nigeria",
+  "rank": 64,
+  "wave": "Avail.",
+  "file": "ng-nigeria.md",
+  "langs": "en"
+ },
+ "DZ": {
+  "name": "Algeria",
+  "rank": 69,
+  "wave": "Avail.",
+  "file": "dz-algeria.md",
+  "langs": "ar, fr"
+ },
+ "MA": {
+  "name": "Morocco",
+  "rank": 71,
+  "wave": "Avail.",
+  "file": "ma-morocco.md",
+  "langs": "ar, fr"
+ },
+ "GH": {
+  "name": "Ghana",
+  "rank": 75,
+  "wave": "Avail.",
+  "file": "gh-ghana.md",
+  "langs": "en"
+ },
+ "KE": {
+  "name": "Kenya",
+  "rank": 83,
+  "wave": "Avail.",
+  "file": "ke-kenya.md",
+  "langs": "en, sw"
+ },
+ "AO": {
+  "name": "Angola",
+  "rank": 86,
+  "wave": "Avail.",
+  "file": "ao-angola.md",
+  "langs": ""
+ },
+ "TN": {
+  "name": "Tunisia",
+  "rank": 91,
+  "wave": "Avail.",
+  "file": "tn-tunisia.md",
+  "langs": "ar, fr"
+ },
+ "CI": {
+  "name": "Côte d'Ivoire",
+  "rank": 94,
+  "wave": "Avail.",
+  "file": "ci-cote-d-ivoire.md",
+  "langs": "fr"
+ },
+ "MU": {
+  "name": "Mauritius",
+  "rank": 99,
+  "wave": "Avail.",
+  "file": "mu-mauritius.md",
+  "langs": "en, fr"
+ },
+ "CN": {
+  "name": "China",
+  "rank": null,
+  "wave": "Excluded",
+  "file": "cn-china.md",
+  "langs": "zh"
+ },
+ "RU": {
+  "name": "Russia",
+  "rank": null,
+  "wave": "Excluded",
+  "file": "ru-russia.md",
+  "langs": "ru"
+ }
+}
