@@ -74,6 +74,12 @@ export async function chatWithTools(opts: {
   maxRounds?: number;
   /** Filled with the tools that worked this turn, in order */
   ran?: string[];
+  /**
+   * A tool that runs on the person's phone, not here (look_in_photos). When the model asks for it before any tool has
+   * run in this request, the turn stops: its parts land in `paused` and this returns null, for the app to run it.
+   */
+  pauseOn?: string;
+  paused?: { parts: GeminiPart[] | null };
 }): Promise<string | null> {
   const contents = [...opts.contents];
   let model = AGENT_MODEL();
@@ -124,6 +130,7 @@ export async function chatWithTools(opts: {
     if (!reply) return usedTools ? finish(null) : null;
     const calls = (reply.parts ?? []).filter(p => p.functionCall);
     if (!calls.length) return finish(reply);
+    if (opts.pauseOn && opts.paused && !usedTools && calls.some(p => p.functionCall!.name === opts.pauseOn)) { opts.paused.parts = reply.parts; return null; }
     // The model's parts go back verbatim (Gemini 3 needs its thought signatures)
     contents.push({ role: 'model', parts: reply.parts });
     const responses: GeminiPart[] = [];

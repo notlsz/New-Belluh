@@ -66,8 +66,8 @@ const MemorySettings: React.FC<Props> = ({ engine, state, onClose, onDeletePassp
           <span>{O.peopleAgree}</span>
         </label>
       )}
-      {engine && danger('index', '🗑️', S.deleteIndex, S.deleteIndexBody, () => engine.deleteIndex())}
-      {engine && danger('reset', '🔄', S.reset, S.resetBody, () => engine.reset())}
+      {engine && danger('index', '🗑️', S.deleteIndex, S.deleteIndexBody, () => engine.deleteIndex().then(() => import('../../lib/memory/devicechat').then(m => m.clearCites())))}
+      {engine && danger('reset', '🔄', S.reset, S.resetBody, () => engine.reset().then(() => import('../../lib/memory/devicechat').then(m => m.clearCites())))}
       {danger('passport', '🌅', S.deletePassport, S.deletePassportBody, onDeletePassport)}
     </Sheet>
   );

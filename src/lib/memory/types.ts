@@ -139,6 +139,8 @@ export type ToolName =
   | 'trips';             // { from?, to? } -> trips away from home with dates and places
 
 export interface ToolCall { name: ToolName; args: Record<string, unknown> }
+/** What list() returns: one kind of media, a date range (YYYY-MM-DD, inclusive), at most `limit` (default 200, max 2000) */
+export interface ListOptions { mediaType?: MediaType | null; from?: string | null; to?: string | null; limit?: number }
 /** What a tool returns: text the server may see, plus the local ids behind it (never sent, kept for evidence) */
 export interface ToolResult {
   text: string; ids: string[];
@@ -168,6 +170,11 @@ export interface MemoryEngine {
   facets(limit?: number, samples?: number): Promise<Facet[]>;
   /** Run one agent tool on the device. Sensitive items are always left out. */
   runTool(call: ToolCall): Promise<ToolResult>;
+  /**
+   * Indexed items, newest first, sensitive ones always left out: screenshots to turn into plans, or what happened
+   * since the last date. Stays on the device. Optional, so an engine without it still meets the contract.
+   */
+  list?(o?: ListOptions): Promise<IndexedItem[]>;
   /** Delete the index and everything derived; keep downloaded models and options */
   deleteIndex(): Promise<void>;
   /** Delete everything Belluh Memory keeps on this device, models included */

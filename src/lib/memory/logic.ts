@@ -623,4 +623,12 @@ export async function runTool(call: ToolCall, ctx: ToolContext): Promise<ToolRes
       return { text: `Unknown tool ${(call as any).name}.`, ids: [] };
   }
 }
+/** Items for list(): newest first, never sensitive, one kind of media and a date range when asked */
+export function listItems(items: Rec[], o: { mediaType?: string | null; from?: string | null; to?: string | null; limit?: number } = {}): Rec[] {
+  const limit = Math.max(1, Math.min(2000, Math.floor(Number(o.limit) || 200)));
+  return items
+    .filter(r => usable(r) && (!o.mediaType || r.mediaType === o.mediaType) && inRange(r, o.from ?? undefined, o.to ?? undefined))
+    .sort((a, b) => (b.wall ?? b.addedAt ?? 0) - (a.wall ?? a.addedAt ?? 0))
+    .slice(0, limit);
+}
 const scrubbed = (r: ToolResult): ToolResult => ({ text: scrub(r.text).slice(0, TOOL_MAX), ids: r.ids });

@@ -14,10 +14,10 @@
 
 import {
   MemoryError, type IndexOptions, type IndexSummary, type IndexingState, type IndexedItem, type MemoryEngine, type MediaType,
-  type SearchResult, type Sensitivity, type ToolCall, type ToolResult, type Interest, type Facet, type Person,
+  type SearchResult, type Sensitivity, type ToolCall, type ToolResult, type Interest, type Facet, type Person, type ListOptions,
 } from './types.ts';
 import { parseQuery } from './query.ts';
-import { rank, knownPlaces, facets as facetsOf, interests as interestsOf, assignFaces, mergeClusters, peopleOf, resolvePerson, runTool as runToolOn, publicItem, usable, LABEL_MIN, type Rec, type Cluster, type FaceRec, type SearchResultsX, type InterestX, type PersonX } from './logic.ts';
+import { rank, knownPlaces, facets as facetsOf, interests as interestsOf, assignFaces, mergeClusters, peopleOf, resolvePerson, runTool as runToolOn, listItems, publicItem, usable, LABEL_MIN, type Rec, type Cluster, type FaceRec, type SearchResultsX, type InterestX, type PersonX } from './logic.ts';
 import { cellOf, cellsFor, matchVenue, nearestCity, r3, type Cities, type CellPlaces } from './geo.ts';
 import { LABELS, LABEL_BY_NAME, SENSITIVE, promptOf, sensitiveText } from './vocab.ts';
 import { labelsFrom, sensitivityFrom } from './scoring.ts';
@@ -652,6 +652,11 @@ export class BrowserMemoryEngine implements MemoryEngine {
       items: [...this.items.values()], vectors: this.vectors, now: this.now(), countryOf,
       search: (q, limit) => this.search(q, { limit }),
     });
+  }
+
+  async list(o: ListOptions = {}): Promise<IndexedItem[]> {
+    await this.init();
+    return listItems([...this.items.values()], o).map(publicItem);
   }
 
   // ---------------------------------------------------------------------------------------------------------- delete
