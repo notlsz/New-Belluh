@@ -48,9 +48,9 @@ test('Bring it anywhere: Markdown, JSON and a text for ChatGPT or Claude, text o
   assert.deepEqual(evidenceMap(d), { 'food:Ramen at Ichiran': ['p7'] });
   const s = storedFromDraft(d, { share_partner: maya.share_partner, share_bella: maya.share_bella });
   assert.ok(!JSON.stringify(s).includes('p7'));
-  const L = { heading: '{name}’s Heartprint', sections: { music: 'Music', food: 'Food', travel: 'Travel', places: 'Places', rhythm: 'Rhythm', firsts: 'Firsts' }, footer: 'Made with Belluh', aiIntro: 'This is {name}’s Passport.' };
+  const L = { heading: '{name}’s Locket', sections: { music: 'Music', food: 'Food', travel: 'Travel', places: 'Places', rhythm: 'Rhythm', firsts: 'Firsts' }, footer: 'Made with Belluh', aiIntro: 'This is {name}’s Passport.' };
   const md = toMarkdown(s, 'Maya', L);
-  assert.match(md, /^# Maya’s Heartprint\n\n\*Sunrise runner, ramen regular\*\n\n## Music\n- House shows, monthly/);
+  assert.match(md, /^# Maya’s Locket\n\n\*Sunrise runner, ramen regular\*\n\n## Music\n- House shows, monthly/);
   assert.ok(!md.includes('## Places'));
   assert.equal(JSON.parse(toJson(s, 'Maya')).sections.food[1], 'Matcha most mornings');
   assert.match(forAssistant(s, 'Maya', L), /^This is Maya’s Passport\.\n\n# Maya/);
@@ -59,10 +59,10 @@ test('Bring it anywhere: Markdown, JSON and a text for ChatGPT or Claude, text o
 test('The QR code to show your partner: smallest version that fits, quiet zone, too long refused', async () => {
   const { qrMatrix, qrPath } = await import('../src/lib/qr.ts');
   assert.equal(qrMatrix('hi')!.length, 21);
-  assert.equal(qrMatrix('https://belluh.com/heartprint')!.length, 29);
+  assert.equal(qrMatrix('https://belluh.com/locket')!.length, 25);
   assert.equal(qrMatrix('x'.repeat(214)), null);
-  const m = qrMatrix('https://belluh.com/heartprint')!;
+  const m = qrMatrix('https://belluh.com/locket')!;
   // Finder pattern corners are dark, the separator ring light
-  assert.ok(m[0][0] && m[6][6] && !m[7][7] && m[0][28] && m[28][0]);
-  assert.equal(qrPath(m).size, 33);
+  assert.ok(m[0][0] && m[6][6] && !m[7][7] && m[0][24] && m[24][0]);
+  assert.equal(qrPath(m).size, 29);
 });
