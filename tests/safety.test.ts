@@ -20,6 +20,18 @@ test('Crisis line: the local line in the local language, always in the reply', (
   assert.match(withCrisisLine("I'm so glad you told me.", 'GB'), /116 123/);
 });
 
+test('Crisis line: the second wave of countries has its own verified lines; unverified ones keep the safe fallback', () => {
+  assert.match(crisisLine('NL'), /113/);
+  assert.match(crisisLine('NL'), /0800-0113/);
+  assert.match(crisisLine('NZ'), /1737/);
+  assert.match(crisisLine('IE'), /116 123/);
+  assert.match(crisisLine('ZA'), /0800 567 567/);
+  assert.match(crisisLine('CO'), /106/);
+  assert.match(crisisLine('VN'), /emergency number/, 'no verified 24/7 national line yet');
+  assert.match(withCrisisLine('Estoy aquí contigo.', 'CL'), /\*4141/);
+  assert.match(disclosure('AR'), /Soy Bella/);
+});
+
 test('AI disclosure: new conversation and every three hours, in their language', () => {
   const now = Date.parse('2026-11-01T12:00:00Z');
   assert.ok(needsDisclosure(null, now));
