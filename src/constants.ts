@@ -149,6 +149,101 @@ export const ORGANIZATIONS: Organization[] = [
     domain: 'uchicago.edu',
     logo: '/logos/uchicago-edu.png'
   },
+  { 
+    name: 'MIT',
+    domain: 'mit.edu',
+    logo: '/logos/mit-edu.png'
+  },
+  { 
+    name: 'Caltech',
+    domain: 'caltech.edu',
+    logo: '/logos/caltech-edu.png'
+  },
+  { 
+    name: 'UCSB',
+    domain: 'ucsb.edu',
+    logo: '/logos/ucsb-edu.png'
+  },
+  { 
+    name: 'Purdue',
+    domain: 'purdue.edu',
+    logo: '/logos/purdue-edu.png'
+  },
+  { 
+    name: 'UT Austin',
+    domain: 'utexas.edu',
+    logo: '/logos/utexas-edu.png'
+  },
+  { 
+    name: 'Harvey Mudd',
+    domain: 'hmc.edu',
+    logo: '/logos/hmc-edu.png'
+  },
+  { 
+    name: 'Pomona',
+    domain: 'pomona.edu',
+    logo: '/logos/pomona-edu.png'
+  },
+  { 
+    name: 'Claremont McKenna',
+    domain: 'cmc.edu',
+    logo: '/logos/cmc-edu.png'
+  },
+  { 
+    name: 'Williams',
+    domain: 'williams.edu',
+    logo: '/logos/williams-edu.png'
+  },
+  { 
+    name: 'Amherst',
+    domain: 'amherst.edu',
+    logo: '/logos/amherst-edu.png'
+  },
+  { 
+    name: 'Swarthmore',
+    domain: 'swarthmore.edu',
+    logo: '/logos/swarthmore-edu.png'
+  },
+  { 
+    name: 'Colorado College',
+    domain: 'coloradocollege.edu',
+    logo: '/logos/coloradocollege-edu.png'
+  },
+  { 
+    name: 'ETH Zurich',
+    domain: 'ethz.ch',
+    logo: '/logos/ethz-ch.png'
+  },
+  { 
+    name: 'HKU',
+    domain: 'hku.hk',
+    logo: '/logos/hku-hk.png'
+  },
+  { 
+    name: 'Peking University',
+    domain: 'pku.edu.cn',
+    logo: '/logos/pku-edu-cn.png'
+  },
+  { 
+    name: 'Tsinghua',
+    domain: 'tsinghua.edu.cn',
+    logo: '/logos/tsinghua-edu-cn.png'
+  },
+  { 
+    name: 'Fudan',
+    domain: 'fudan.edu.cn',
+    logo: '/logos/fudan-edu-cn.png'
+  },
+  { 
+    name: 'Shanghai Jiao Tong',
+    domain: 'sjtu.edu.cn',
+    logo: '/logos/sjtu-edu-cn.png'
+  },
+  { 
+    name: 'Wuhan University',
+    domain: 'whu.edu.cn',
+    logo: '/logos/whu-edu-cn.png'
+  },
   // Tech & Finance
   {
     name: 'Amazon',
@@ -186,6 +281,16 @@ export const ORGANIZATIONS: Organization[] = [
     logo: '/logos/cognition-ai.png'
   },
   { 
+    name: 'xAI',
+    domain: 'x.ai',
+    logo: '/logos/x-ai.png'
+  },
+  { 
+    name: 'Databricks',
+    domain: 'databricks.com',
+    logo: '/logos/databricks-com.png'
+  },
+  { 
     name: 'Perplexity',
     domain: 'perplexity.ai',
     logo: '/logos/perplexity-ai.png'
@@ -204,6 +309,11 @@ export const ORGANIZATIONS: Organization[] = [
     name: 'NVIDIA',
     domain: 'nvidia.com',
     logo: '/logos/nvidia-com.png'
+  },
+  { 
+    name: 'TSMC',
+    domain: 'tsmc.com',
+    logo: '/logos/tsmc-com.png'
   },
   { 
     name: 'SpaceX',
@@ -334,6 +444,81 @@ export const ORGANIZATIONS: Organization[] = [
     name: 'Under Armour',
     domain: 'underarmour.com',
     logo: '/logos/underarmour-com.png'
+  },
+  { 
+    name: 'Pfizer',
+    domain: 'pfizer.com',
+    logo: '/logos/pfizer-com.png'
+  },
+  { 
+    name: 'Eli Lilly',
+    domain: 'lilly.com',
+    logo: '/logos/lilly-com.png'
+  },
+  { 
+    name: 'Johnson & Johnson',
+    domain: 'jnj.com',
+    logo: '/logos/jnj-com.png'
+  },
+  { 
+    name: 'Merck',
+    domain: 'merck.com',
+    logo: '/logos/merck-com.png'
+  },
+  { 
+    name: 'Novo Nordisk',
+    domain: 'novonordisk.com',
+    logo: '/logos/novonordisk-com.png'
+  },
+  { 
+    name: 'Roche',
+    domain: 'roche.com',
+    logo: '/logos/roche-com.png'
+  },
+  { 
+    name: 'Novartis',
+    domain: 'novartis.com',
+    logo: '/logos/novartis-com.png'
+  },
+  { 
+    name: 'AstraZeneca',
+    domain: 'astrazeneca.com',
+    logo: '/logos/astrazeneca-com.png'
+  },
+  { 
+    name: 'Sanofi',
+    domain: 'sanofi.com',
+    logo: '/logos/sanofi-com.png'
+  },
+  { 
+    name: 'GSK',
+    domain: 'gsk.com',
+    logo: '/logos/gsk-com.png'
+  },
+  { 
+    name: 'Bristol Myers Squibb',
+    domain: 'bms.com',
+    logo: '/logos/bms-com.png'
+  },
+  { 
+    name: 'Amgen',
+    domain: 'amgen.com',
+    logo: '/logos/amgen-com.png'
+  },
+  { 
+    name: 'Gilead',
+    domain: 'gilead.com',
+    logo: '/logos/gilead-com.png'
+  },
+  { 
+    name: 'Vertex',
+    domain: 'vrtx.com',
+    logo: '/logos/vrtx-com.png'
+  },
+  { 
+    name: 'Sinopharm',
+    domain: 'sinopharm.com',
+    logo: '/logos/sinopharm-com.png'
   },
 ];
 
