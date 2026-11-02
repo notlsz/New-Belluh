@@ -25,6 +25,10 @@ const Drawing: React.FC<{ label: string }> = ({ label }) => (
     <path d={sparkle(512, 176, 6)} fill={BLUE} className="nf-twinkle" style={{ animationDelay: '2.3s' }} />
     {/* the chair that's taken: tucked in */}
     <path d="M104 168v196M104 276h66v110M104 168c0-30 54-30 54 0v108M126 186v86M140 186v86" {...LINE} strokeWidth="6" />
+    {/* the chair still waiting: pulled out, a little turned */}
+    <g transform="rotate(8 440 262)">
+      <path d="M478 146v196M478 254h-66v110M478 146c0-30-54-30-54 0v108M456 164v86M442 164v86" {...LINE} strokeWidth="6" />
+    </g>
     {/* the table, laid with a cloth */}
     <path d="M298 300v92M254 394h88" {...LINE} strokeWidth="6" />
     <path d="M132 254c0 14 4 32 18 38 14 6 26 0 40 0s26 8 50 2 34-4 50 2 26 4 50-2 36-2 50-2 26 6 40 0 18-24 18-38" fill="#fff" stroke={INK} strokeWidth="4.5" strokeLinejoin="round" />
@@ -52,10 +56,6 @@ const Drawing: React.FC<{ label: string }> = ({ label }) => (
     <path d="M334 274c2-9 10-13 17-12-1 7-9 12-17 12z" fill={BLUE} stroke={INK} strokeWidth="2.5" strokeLinejoin="round" />
     <circle cx="372" cy="277" r="11" fill={PINK} stroke={INK} strokeWidth="3" />
     <path d="M372 271c-5 0-7 4-5 7s7 3 8-1-2-7-6-5" {...LINE} strokeWidth="2.2" />
-    {/* the chair still waiting: pulled out, a little turned */}
-    <g transform="rotate(8 440 262)">
-      <path d="M478 146v196M478 254h-66v110M478 146c0-30-54-30-54 0v108M456 164v86M442 164v86" {...LINE} strokeWidth="6" />
-    </g>
     {/* Bella keeps the seat: a dragonfly hovering over it */}
     <g className="nf-hover">
       <g transform="translate(470 92)">
