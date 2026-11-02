@@ -18,6 +18,7 @@ export const LOCAL_APPS: Record<Country, Record<AppCategory, string[]>> = {
   ES: { table: ['TheFork', 'Google Maps'], gifts: ['El Corte Inglés', 'Amazon.es', 'Interflora'], food: ['Glovo', 'Just Eat', 'Uber Eats'], rides: ['Cabify', 'Uber', 'Renfe'], tickets: ['Ticketmaster', 'Entradas.com'] },
   MX: { table: ['OpenTable', 'Google Maps'], gifts: ['Mercado Libre', 'Amazon.com.mx'], food: ['Rappi', 'Uber Eats', 'DiDi Food'], rides: ['Uber', 'DiDi'], tickets: ['Ticketmaster', 'Boletia'] },
   PT: { table: ['TheFork', 'Google Maps'], gifts: ['Fnac', 'Worten', 'El Corte Inglés'], food: ['Glovo', 'Uber Eats', 'Bolt Food'], rides: ['Uber', 'Bolt', 'CP'], tickets: ['Ticketline', 'BOL'] },
+  KR: { table: ['캐치테이블', '네이버 예약'], gifts: ['카카오톡 선물하기', '쿠팡', '네이버 쇼핑'], food: ['배달의민족', '쿠팡이츠', '요기요'], rides: ['카카오 T', '네이버 지도'], tickets: ['NOL 티켓', 'YES24 티켓', '멜론티켓'] },
   OTHER: { table: ['TheFork', 'OpenTable', 'Google Maps'], gifts: ['Amazon'], food: ['Uber Eats'], rides: ['Uber'], tickets: ['Ticketmaster'] },
 };
 

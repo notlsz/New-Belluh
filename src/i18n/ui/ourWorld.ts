@@ -23,6 +23,18 @@ const ourWorld: UiTable<typeof en> = {
   zh: { scratch: '我们的刮刮地图', ofWorld: '的世界', countries: '{n} 个国家', country: '1 个国家', places: '{n} 个地方', place: '1 个地方', top: '我们最爱的地方', memories: '{n} 段回忆', memory: '1 段回忆', empty: '把回忆钉在一个地方，你们的地图就开始被点亮。' },
   de: { scratch: 'Unsere Rubbelkarte', ofWorld: 'der Welt', countries: '{n} Länder', country: '1 Land', places: '{n} Orte', place: '1 Ort', top: 'Unsere Lieblingsorte', memories: '{n} Erinnerungen', memory: '1 Erinnerung', empty: 'Pinne eine Erinnerung an einen Ort, und eure Karte füllt sich.' },
   es,
+  ko: {
+    scratch: '우리의 스크래치 맵',
+    ofWorld: '전 세계 중',
+    countries: '{n}개국',
+    country: '1개국',
+    places: '장소 {n}곳',
+    place: '장소 1곳',
+    top: '우리가 자주 간 곳',
+    memories: '추억 {n}개',
+    memory: '추억 1개',
+    empty: '추억에 장소를 남기면 지도가 하나씩 채워져요.',
+  },
   'es-MX': { empty: 'Guarda un recuerdo en un lugar y su mapa empezará a llenarse.' },
   'pt-PT': { scratch: 'O nosso mapa de raspar', places: '{n} locais', place: '1 local', top: 'Os nossos sítios favoritos', empty: 'Marca uma memória num local e o vosso mapa começa a encher-se.' },
 };

@@ -11,6 +11,12 @@ const t: UiTable<typeof en> = {
   zh: { usedBy: '这些地方的情侣在用', usedByNote: '* 由个人独立使用，与上述机构无任何关联。', worksWith: '可连接', worksWithNote: '* 商标归各自所有者所有。' },
   de: { usedBy: 'Genutzt von Paaren bei', usedByNote: '* Privat von Einzelpersonen genutzt. Keine Verbindung zu diesen Organisationen.', worksWith: 'Funktioniert mit', worksWithNote: '* Marken gehören ihren jeweiligen Inhabern.' },
   es: { usedBy: 'Lo usan parejas en', usedByNote: '* Uso independiente por particulares. Sin afiliación con estas organizaciones.', worksWith: 'Funciona con', worksWithNote: '* Las marcas pertenecen a sus propietarios.' },
+  ko: {
+    usedBy: '이런 곳에 다니는 커플들이 써요',
+    usedByNote: '* 개인이 자유롭게 이용하고 있으며, 해당 기관과는 관련이 없습니다.',
+    worksWith: '함께 쓰는 서비스',
+    worksWithNote: '* 각 상표의 권리는 해당 소유자에게 있습니다.',
+  },
   'es-MX': {},
   'pt-PT': { usedBy: 'Usado por casais na', usedByNote: '* Usado de forma independente por particulares. Sem afiliação com estas organizações.', worksWithNote: '* As marcas pertencem aos respetivos titulares.' },
 };

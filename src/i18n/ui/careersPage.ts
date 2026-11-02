@@ -1,5 +1,5 @@
 // The public Careers page (belluh.com/careers and /careers/fellows): every word on it, in every language Belluh
-// speaks. Figures stay the ones we publish; the email address, routes and the numbers 0, 8 and 350K live in the page.
+// speaks. Figures stay the ones we publish; the email address, routes and the numbers 0, 9 and 350K live in the page.
 // Teams and roles are keyed by a stable id so the filter never compares translated labels.
 import type { UiTable } from '../ui';
 
@@ -634,6 +634,121 @@ const careersPage: UiTable<typeof en> = {
   },
   pt,
   es,
+  ko: {
+    pageTitle: '채용',
+    hiring: { eyebrow: '우리에 대해', line: '내 얘기 같나요?', cta: '우리 팀 알아보기' },
+    hero: { title: '더 많은 사랑이 오래가도록.', body: '세심한 AI로 커플이 더 깊이 연결되도록 돕는, 작고 열정적인 팀에 함께하세요.', cta: '채용 공고 보기' },
+    how: { eyebrow: '일하는 방식', title: '모든 건 뾰족함에서 시작해요.', body: '최고의 팀은 무엇이든 한 가지에 비범한 사람들로 이루어져요. 매일 일하는 방식으로는 이런 뜻이에요.' },
+    principles: [
+      { title: '이력서보다 뾰족함', body: '경력보다 삶의 경험을 먼저 봐요. 기술은 가르칠 수 있지만, 관점은 만들기 어려워요.' },
+      { title: '합의를 거부하기', body: '남들이 못 본 비밀을 좇고, 창의적으로 생각하고, 세상을 보는 나만의 시선을 가지세요.' },
+      { title: '원대한 미션', body: '진짜 문제, 진짜 커플, 그리고 어디로 가든 그 문제를 풀 수 있는 자유.' },
+      { title: '관료주의 없음', body: '“내가 선배니까”로 이기는 논쟁은 없어요. 누구의 아이디어든 가장 좋은 아이디어가 이겨요.' },
+    ],
+    numbers: {
+      eyebrow: '비교해 보면',
+      title: '숫자로 보는 Belluh',
+      captions: [
+        '관료주의. “내가 선배니까”는 없어요. 누구의 아이디어든 가장 좋은 아이디어가 이겨요.',
+        'Belluh가 이미 커플들과 대화하는 언어 수. 일본어부터 포르투갈어까지.',
+        '우리 협업자 한 명이 12살에 만든 게임의 플레이어 수. 이력서가 아니라 뾰족함이에요.',
+      ],
+      footnote: '* 아래 소개한, 성과를 냈던 이전 협업자들의 기록이에요.',
+    },
+    collaborators: '성과를 냈던 이전 협업자들',
+    spikes: [
+      '발로란트 북미 상위 30위',
+      '미국 복싱 상위 3위',
+      '12살에 플레이어 35만 명 이상의 비디오 게임 제작',
+      '70만 명이 참가한 사진 공모전 상위 100위',
+      '운동선수 출신',
+      '국제수학올림피아드 금메달',
+      '독학으로 배관공이 된 사람',
+      '아이언맨 70.3 완주',
+      '50종 이상의 꽃을 파는 플로리스트',
+      '월 독자 3만 명의 철학 블로거',
+      'YC 창업자 출신',
+      '틸 펠로우',
+      '로즈 장학생',
+      '슈워츠먼 장학생',
+      '자전거로 유럽 대륙 횡단',
+      '스카이다이빙 500회 이상',
+      '올림픽 국가대표',
+      'Sequoia Arc 창업자 출신',
+    ],
+    perks: {
+      eyebrow: '복지와 혜택',
+      title: '인생 최고의 일을 하세요.',
+      note: '혜택은 직무와 근무지에 따라 달라요.',
+      items: [
+        { title: '하이브리드와 원격 근무', body: '하이브리드는 주 3일 사무실 출근이에요. 격주 금요일에는 팀 전체가 모여 전체 회의를 하고, 보통 달콤한 간식도 함께해요.' },
+        { title: '퇴직연금', body: '미국에서는 세전 401(k)에 넣는 금액 중 처음 10%를 Belluh가 100% 매칭해요. 연간 최대 1만 달러. 근무지에 따라 달라요.' },
+        { title: '데이트', body: 'Belluh의 커플들이 사는 삶을 직접 살아 보세요. 미국 팀원에게는 멋진 데이트를 위해 매달 200달러를 드려요.' },
+        { title: '건강보험', body: '미국에서는 본인과 가족의 의료, 치과, 안과 보험을 지원해요. 보험사는 근무지에 따라 달라요.' },
+        { title: '사회 공헌', body: '기부금을 1:1로 최대 2만 달러까지 매칭하고, 미국 팀원은 매년 봉사활동을 위한 유급 휴가 하루를 받아요.' },
+        {
+          title: '유급 휴가',
+          body: '미국에서는 적립되는 휴가 20일, 웰니스 데이 10일, 사회 공헌의 날 하루, 넉넉한 공휴일이 있어요. 2년이 지나면 휴가가 늘어나요. 근무지에 따라 달라요.',
+        },
+        { title: '출퇴근', body: '미국 하이브리드 팀원은 대중교통, 주차, 자전거 정비와 보관 등에 매달 200달러를 받아요.' },
+        {
+          title: '육아휴직과 가족계획',
+          body: '미국에서는 출산 여부와 관계없이 모든 새 부모에게 20주 전액 유급 휴직을 드려요. 난임 치료와 생식세포 보존 비용도 지원해요. 근무지에 따라 달라요.',
+        },
+        { title: '반려동물', body: '가장 친한 친구와 함께 출근하세요. 미국 팀원은 펫 보험도 받아요.' },
+        {
+          title: '웰니스',
+          body: '미국에서는 One Medical, ClassPass, Citi Bike 비용을 지원해요. 본인과 부양가족은 Modern Health를 통해 상담, 그룹 상담, 코칭을 받을 수 있어요. 근무지에 따라 달라요.',
+        },
+        { title: '법률 지원', body: '미국에서는 양육권과 양육비, 이혼, 주택 구매, 임대, 세금, 유언과 상속 계획 등에 대한 법률 도움을 저렴하게 받을 수 있어요.' },
+        { title: '성장 지원', body: '미국에서는 입사 3개월 후부터 배움을 위해 매년 3,000달러를 지원해요.' },
+        {
+          title: '난임 지원',
+          body: '미국에서는 Carrot을 통해 첫 상담부터 생식세포 보존까지 난임 치료를 쉽게 받을 수 있고, 생식세포 보존 비용으로 15,000달러를 지원해요. 배우자나 동거 파트너도 함께 대상이에요.',
+        },
+        { title: 'Belluh 무료', body: '팀원 모두와 그들이 사랑하는 사람에게 Belluh Duo가 무료예요.' },
+      ],
+    },
+    process: {
+      eyebrow: '채용 절차',
+      title: '복잡한 관문은 없어요. 이렇게 진행돼요.',
+      steps: [
+        { title: '나의 뾰족함을 알려 주세요.', body: '나를 특별하게 만드는 것을 {email} 주소로 보내 주세요. 몇 줄과 링크 한두 개면 충분해요.' },
+        { title: '서로를 알아 가는 통화.', body: '당신에 대해, 하고 싶은 일에 대해, 왜 Belluh인지에 대해 이야기해요. 궁금한 것도 가져오세요. 서로에게 잘 맞아야 하니까요.' },
+        { title: '첫 번째 미션.', body: '펠로우는 미션으로 시작해요. 지원금이 함께하는 진짜 일이에요. 함께 만드는 게 어떤지 서로 확인할 수 있어요.' },
+        { title: '정규직으로 가는 길.', body: '뛰어난 성과를 낸 분에게는 정규직으로 바로 가는 길이 열려 있어요.' },
+      ],
+    },
+    openings: {
+      eyebrow: '채용 공고',
+      title: '채용 중이에요.',
+      filterBy: '필터:',
+      allTeams: '모든 팀',
+      notListed: '원하는 포지션이 없나요? 그래도 {email} 주소로 연락 주세요.',
+    },
+    teams: { growth: { name: '그로스', about: 'Belluh를 좋아할 모든 커플에게 Belluh를 전해요.' } },
+    roles: { fellow: { title: 'Belluh 펠로우', where: '하이브리드, 정규직' } },
+    fellow: {
+      back: '전체 포지션',
+      eyebrow: '그로스, 마케팅, 제안 메이커',
+      tags: ['하이브리드', '정규직', '최대 5만 달러 지원금'],
+      lede: '우리는 Belluh를 만들고 있어요. 관계가 멀어지는 걸 3주 먼저 알아채는 AI예요. 어디서든 뛰어난, 재미있는 사람들과 일해요.',
+      body1: '그들은 합의를 거부하고, 남들이 못 본 비밀을 좇고, 창의적이며, 세상을 보는 나만의 시선을 가졌어요. 우리는 경력보다 삶의 경험을 먼저 봐요. 기술은 가르칠 수 있지만, 관점은 만들기 어려워요. 무슨 일을 하든 뾰족함을 보고 싶어요.',
+      criteria: '정해진 자격 요건은 없어요. 뾰족함이 있다면 스스로 알 거예요.',
+      body2: '펠로우에게 최대 5만 달러의 지원금을 드리고, 미국 전역으로 원대한 미션을 보내요. 뛰어난 성과를 낸 분에게는 연봉 20만 달러의 정규직으로 바로 가는 길이 있어요.',
+      numbers: [
+        { big: '5만 달러', small: '펠로우 1인당 최대 지원금' },
+        { big: '20만 달러', small: '뛰어난 성과자의 정규직 연봉' },
+        { big: '3주', small: '커플이 멀어지는 걸 Belluh가 먼저 알아채는 시간' },
+      ],
+      ctaTitle: '남다르다는 말을 자주 듣나요? 만나고 싶어요.',
+      ctaBody: '나를 특별하게 만드는 것을 메일로 보내 주세요.',
+      email: '메일 보내기: {email}',
+      copy: '주소 복사',
+      copied: '복사했어요',
+    },
+    share: '더 많은 사랑이 오래가도록. Belluh가 채용 중이에요.',
+  },
   'es-MX': {
     pageTitle: 'Empleos',
     spikes: ['Top 30 de Valorant en Norteamérica', 'Top 3 de box en EE. UU.', 'Creó a los 12 años un videojuego con más de 350,000 jugadores', 'Top 100 entre 700,000 en un concurso de fotografía', 'Atleta de alto rendimiento', 'Oro en la IMO', 'Plomero autodidacta', 'Finisher del Ironman 70.3', 'Florista con más de 50 tipos de flores', 'Bloguero de filosofía con 30,000 lectores al mes', 'Exfundadores de YC', 'Un Thiel Fellow', 'Un becario Rhodes', 'Un becario Schwarzman', 'Cruzó Europa continental en bici', 'Más de 500 saltos en paracaídas', 'Atletas olímpicos', 'Exfundadores de Sequoia Arc'],

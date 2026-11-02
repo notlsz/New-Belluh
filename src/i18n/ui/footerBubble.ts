@@ -85,6 +85,18 @@ const t: UiTable<typeof en> = {
     "Estáis agotados. La cena está resuelta. Descansad.",
     "Tres semanas sin una cita. El jueves a las 21:00 es vuestro.",
   ] },
+  ko: {
+    lines: [
+      '금요일이 기념일이에요. 자리 예약했고, 꽃은 6시에 도착해요.',
+      '3월에 말했던 그 라멘집, 예약해 뒀어요.',
+      '이번 주 많이 힘들었대요. 이렇게 말해 주세요.',
+      '3년 전 오늘이 첫 데이트였어요. 그때 쓴 글이에요.',
+      '일요일이 어머님 생신이에요. 카드는 벌써 써 뒀어요.',
+      '이번 주는 일 얘기뿐이었죠. 오늘 밤엔 리스본 얘기를 물어봐 주세요.',
+      '둘 다 지쳐 있어요. 저녁은 해결했으니 쉬세요.',
+      '3주째 데이트가 없었어요. 목요일 8시, 비워 뒀어요.',
+    ],
+  },
   'es-MX': { lines: [
     "Aniversario el viernes. Mesa reservada, flores a las 6.",
     "¿El lugar de ramen que mencionó en marzo? Reservado.",

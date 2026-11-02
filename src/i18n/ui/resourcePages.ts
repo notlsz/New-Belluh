@@ -80,7 +80,7 @@ const en: T = {
     accessibility: {
       eyebrow: 'Accessibility statement', title: 'Belluh, for everyone.', lede: 'Love isn’t only for people who can use a mouse. We want Belluh to work for every couple.',
       parts: [
-        { h: 'What we do', list: ['Respect your device’s reduced-motion setting: animations and effects stop.', 'Label buttons and images for screen readers.', 'Work with a keyboard, and close menus and dialogs with Escape.', 'Speak eight languages, in local formats.'] },
+        { h: 'What we do', list: ['Respect your device’s reduced-motion setting: animations and effects stop.', 'Label buttons and images for screen readers.', 'Work with a keyboard, and close menus and dialogs with Escape.', 'Speak nine languages, in local formats.'] },
         { h: 'Our aim', p: ['We aim to meet the Web Content Accessibility Guidelines (WCAG) 2.2 at level AA. We’re not perfect yet, and we’re working on it.'] },
         { h: 'Tell us', p: ['If something in Belluh is hard to use, please tell us. We read every note.'], links: ['Report an accessibility problem'] },
       ],
@@ -157,7 +157,7 @@ const ja: T = {
     accessibility: {
       eyebrow: 'アクセシビリティ方針', title: 'Belluhを、すべての人に。', lede: '愛は、マウスを使える人だけのものではありません。Belluhがすべてのカップルにとって使いやすいものであってほしいと考えています。',
       parts: [
-        { h: '取り組んでいること', list: ['端末の「視差効果を減らす」設定を尊重し、アニメーションやエフェクトを止めます。', 'ボタンや画像にスクリーンリーダー用のラベルを付けています。', 'キーボードで操作でき、メニューやダイアログはEscキーで閉じられます。', '8つの言語に対応し、各地域の表記に合わせています。'] },
+        { h: '取り組んでいること', list: ['端末の「視差効果を減らす」設定を尊重し、アニメーションやエフェクトを止めます。', 'ボタンや画像にスクリーンリーダー用のラベルを付けています。', 'キーボードで操作でき、メニューやダイアログはEscキーで閉じられます。', '9つの言語に対応し、各地域の表記に合わせています。'] },
         { h: '目標', p: ['Web Content Accessibility Guidelines（WCAG）2.2のレベルAAへの準拠を目指しています。まだ完璧ではありませんが、改善を続けています。'] },
         { h: 'お知らせください', p: ['Belluhで使いにくいところがあれば、ぜひ教えてください。いただいた声はすべて読んでいます。'], links: ['アクセシビリティの問題を報告する'] },
       ],
@@ -234,7 +234,7 @@ const fr: T = {
     accessibility: {
       eyebrow: 'Déclaration d’accessibilité', title: 'Belluh, pour tout le monde.', lede: 'L’amour n’est pas réservé à ceux qui peuvent utiliser une souris. Nous voulons que Belluh fonctionne pour chaque couple.',
       parts: [
-        { h: 'Ce que nous faisons', list: ['Respecter le réglage « réduire les animations » de ton appareil : animations et effets s’arrêtent.', 'Étiqueter les boutons et les images pour les lecteurs d’écran.', 'Fonctionner au clavier, et fermer menus et fenêtres avec Échap.', 'Parler huit langues, avec les formats locaux.'] },
+        { h: 'Ce que nous faisons', list: ['Respecter le réglage « réduire les animations » de ton appareil : animations et effets s’arrêtent.', 'Étiqueter les boutons et les images pour les lecteurs d’écran.', 'Fonctionner au clavier, et fermer menus et fenêtres avec Échap.', 'Parler neuf langues, avec les formats locaux.'] },
         { h: 'Notre objectif', p: ['Nous visons la conformité aux Règles pour l’accessibilité des contenus Web (WCAG) 2.2, niveau AA. Nous n’y sommes pas encore tout à fait, et nous y travaillons.'] },
         { h: 'Dis-le-nous', p: ['Si quelque chose dans Belluh est difficile à utiliser, dis-le-nous. Nous lisons chaque message.'], links: ['Signaler un problème d’accessibilité'] },
       ],
@@ -311,7 +311,7 @@ const it: T = {
     accessibility: {
       eyebrow: 'Dichiarazione di accessibilità', title: 'Belluh, per tutti.', lede: 'L’amore non è solo per chi può usare un mouse. Vogliamo che Belluh funzioni per ogni coppia.',
       parts: [
-        { h: 'Cosa facciamo', list: ['Rispettiamo l’impostazione di riduzione del movimento del tuo dispositivo: animazioni ed effetti si fermano.', 'Etichettiamo pulsanti e immagini per gli screen reader.', 'Funzioniamo da tastiera, e menu e finestre si chiudono con Esc.', 'Parliamo otto lingue, con i formati locali.'] },
+        { h: 'Cosa facciamo', list: ['Rispettiamo l’impostazione di riduzione del movimento del tuo dispositivo: animazioni ed effetti si fermano.', 'Etichettiamo pulsanti e immagini per gli screen reader.', 'Funzioniamo da tastiera, e menu e finestre si chiudono con Esc.', 'Parliamo nove lingue, con i formati locali.'] },
         { h: 'Il nostro obiettivo', p: ['Puntiamo a rispettare le Linee guida per l’accessibilità dei contenuti Web (WCAG) 2.2 al livello AA. Non siamo ancora perfetti, e ci stiamo lavorando.'] },
         { h: 'Diccelo', p: ['Se qualcosa in Belluh è difficile da usare, diccelo. Leggiamo ogni messaggio.'], links: ['Segnala un problema di accessibilità'] },
       ],
@@ -388,7 +388,7 @@ const pt: T = {
     accessibility: {
       eyebrow: 'Declaração de acessibilidade', title: 'Belluh, para todo mundo.', lede: 'O amor não é só para quem consegue usar um mouse. Queremos que o Belluh funcione para todos os casais.',
       parts: [
-        { h: 'O que fazemos', list: ['Respeitamos a configuração de redução de movimento do seu dispositivo: animações e efeitos param.', 'Identificamos botões e imagens para leitores de tela.', 'Funcionamos pelo teclado, e menus e janelas fecham com Esc.', 'Falamos oito idiomas, com formatos locais.'] },
+        { h: 'O que fazemos', list: ['Respeitamos a configuração de redução de movimento do seu dispositivo: animações e efeitos param.', 'Identificamos botões e imagens para leitores de tela.', 'Funcionamos pelo teclado, e menus e janelas fecham com Esc.', 'Falamos nove idiomas, com formatos locais.'] },
         { h: 'Nosso objetivo', p: ['Buscamos atender às Diretrizes de Acessibilidade para Conteúdo Web (WCAG) 2.2, nível AA. Ainda não somos perfeitos, e estamos trabalhando nisso.'] },
         { h: 'Conte para a gente', p: ['Se algo no Belluh for difícil de usar, conte para a gente. Lemos todas as mensagens.'], links: ['Relatar um problema de acessibilidade'] },
       ],
@@ -465,7 +465,7 @@ const zh: T = {
     accessibility: {
       eyebrow: '无障碍声明', title: 'Belluh，属于每个人。', lede: '爱不只属于会用鼠标的人。我们希望 Belluh 适合每一对情侣。',
       parts: [
-        { h: '我们做了什么', list: ['遵从设备的“减弱动态效果”设置：动画和特效会停止。', '为屏幕阅读器标注按钮和图片。', '支持键盘操作，按 Esc 可关闭菜单和对话框。', '支持八种语言，并采用当地格式。'] },
+        { h: '我们做了什么', list: ['遵从设备的“减弱动态效果”设置：动画和特效会停止。', '为屏幕阅读器标注按钮和图片。', '支持键盘操作，按 Esc 可关闭菜单和对话框。', '支持九种语言，并采用当地格式。'] },
         { h: '我们的目标', p: ['我们的目标是达到《Web 内容无障碍指南》（WCAG）2.2 的 AA 级。我们还不完美，正在持续改进。'] },
         { h: '告诉我们', p: ['如果 Belluh 有什么地方不好用，请告诉我们。每一条反馈我们都会看。'], links: ['报告无障碍问题'] },
       ],
@@ -619,7 +619,7 @@ const es: T = {
     accessibility: {
       eyebrow: 'Declaración de accesibilidad', title: 'Belluh, para todos.', lede: 'El amor no es solo para quien puede usar un ratón. Queremos que Belluh funcione para todas las parejas.',
       parts: [
-        { h: 'Lo que hacemos', list: ['Respetar el ajuste de movimiento reducido de tu dispositivo: las animaciones y los efectos se detienen.', 'Etiquetar botones e imágenes para lectores de pantalla.', 'Funcionar con teclado, y cerrar menús y diálogos con Esc.', 'Hablar ocho idiomas, con formatos locales.'] },
+        { h: 'Lo que hacemos', list: ['Respetar el ajuste de movimiento reducido de tu dispositivo: las animaciones y los efectos se detienen.', 'Etiquetar botones e imágenes para lectores de pantalla.', 'Funcionar con teclado, y cerrar menús y diálogos con Esc.', 'Hablar nueve idiomas, con formatos locales.'] },
         { h: 'Nuestro objetivo', p: ['Aspiramos a cumplir las Pautas de Accesibilidad para el Contenido Web (WCAG) 2.2 en el nivel AA. Aún no somos perfectos, y estamos trabajando en ello.'] },
         { h: 'Cuéntanoslo', p: ['Si algo en Belluh es difícil de usar, cuéntanoslo. Leemos todos los mensajes.'], links: ['Informar de un problema de accesibilidad'] },
       ],
@@ -630,6 +630,173 @@ const es: T = {
 const t: UiTable<T> = {
   en, ja, fr, it, pt, zh, de, es,
   // Mexico: ustedes rather than vosotros, celular, and Mexico's own emergency and support lines
+  ko: {
+    updated: '최종 업데이트 {date}',
+    closing: '이 페이지는 어떻게 운영되는지 쉬운 말로 설명해요. 효력은 {privacy}과 {terms}에 따릅니다.',
+    subjects: {
+      story: '우리의 Belluh 이야기',
+      help: '도움 요청',
+      privacy: '개인정보 관련 요청',
+      data: '데이터 요청',
+      optOut: '처리 거부 요청',
+      accessibility: '접근성',
+    },
+    docs: {
+      newsroom: {
+        eyebrow: '뉴스룸',
+        title: 'Belluh의 새 소식.',
+        lede: '제품 소식과 공지를 최신순으로 전해요. 인터뷰와 언론 문의는 보도 자료를 확인해 주세요.',
+        parts: [
+          {
+            h: '{date}: 내 방식대로, 내 프로필',
+            p: [
+              '프로필이 빈 캔버스가 되었어요. 배경을 지운 몇 초짜리 반복 영상, 내 얼굴을 녹화해 프로필 사진으로 써 보세요. 노래, 책, 영화, 음성 메모, 그림, 도형, 스티커를 어디든 올리고, 움직이는 꾸미기와 효과도 더할 수 있어요.',
+            ],
+          },
+          {
+            h: '{date}: Belluh 리서치',
+            p: ['Belluh의 바탕이 된 과학을 공개했어요. 무엇을 연구하는지, 어떻게 일하는지, 그리고 커플을 가깝게 지켜 주는 것에 대한 동료 심사 연구 6편까지.'],
+            links: ['Belluh 리서치 둘러보기'],
+          },
+          { h: '{date}: 공유하고 싶은 가이드', p: ['좋아하는 장소를 가이드로 만들 수 있어요. 둘만 보거나, 친구에게 링크로 공유하거나, 모든 커플에게 공개하세요.'] },
+          { h: '{date}: 사랑의 지도', p: ['모든 추억을 그 일이 있었던 곳에 핀으로. 행성까지 축소되는 지도 위에요.'] },
+        ],
+        cta: '보도 자료',
+      },
+      stories: {
+        eyebrow: '커플 이야기',
+        title: 'Belluh 덕분에 사랑이 오래갔나요?',
+        lede: '깜빡할 뻔했지만 놓치지 않은 기념일. 어느새 둘만의 전통이 된 데이트. 꼭 맞는 말을 전해 준 메시지. 그 이야기를 듣고 싶어요.',
+        parts: [
+          {
+            h: '이야기를 들려주세요',
+            p: [
+              '두 사람의 이름(성은 빼도 돼요), 함께한 기간, 그리고 Belluh가 함께한 순간을 적어 보내 주세요. 사진도 환영해요.',
+              '무엇이든 공유하기 전에 꼭 두 사람 모두에게 물어보고, 허락 없이는 절대 이야기를 공개하지 않아요.',
+            ],
+          },
+        ],
+        cta: '이야기 공유하기',
+      },
+      contact: {
+        eyebrow: '문의하기',
+        title: '사람과 이야기하세요.',
+        lede: 'Belluh는 작은 팀이에요. 메시지를 보내면 사람이 직접 읽어요.',
+        parts: [
+          { h: '앱 사용 도움', p: ['먼저 벨라에게 물어보세요. 모든 기능을 다 알고 있어요. 벨라가 해결하지 못하면 저희에게 메시지를 보내 주세요.'] },
+          { h: '개인정보와 내 데이터', p: ['내 데이터의 열람, 다운로드, 정정, 삭제 요청.'] },
+          { h: '언론, 제휴, 채용', links: ['보도 자료', 'Belluh Together', '채용'] },
+        ],
+      },
+      'safety-tips': {
+        eyebrow: '안전',
+        title: '사랑은 안전해야 해요.',
+        lede: 'Belluh는 사랑을 가까이 지키기 위한 곳이에요. 건강한 관계는 어떤 모습인지, 그렇지 않은 건 무엇인지, 어디에 도움을 청할 수 있는지 알려 드려요.',
+        parts: [
+          {
+            h: '건강한 관계는 이래요',
+            list: [
+              '싫다고 말할 수 있고, 그 말이 존중받아요.',
+              '내 친구, 내 돈, 내 휴대폰, 내 시간은 내 것으로 지켜져요.',
+              '다툼이 두려움 없이 끝나요.',
+              '두 사람 모두 있는 그대로의 자신일 수 있어요.',
+            ],
+          },
+          {
+            h: '위험 신호',
+            list: [
+              '묻지 않고 휴대폰, 위치, 메시지를 확인해요.',
+              '친구나 가족과 만나지 못하게 해요.',
+              '돈을 통제하거나, 무엇을 입고 무엇을 할지 정해요.',
+              '협박하거나, 깎아내리거나, 두렵게 만들어요.',
+            ],
+          },
+          { h: '나의 Belluh, 나의 경계', p: ['모든 글은 공유할지 비공개로 둘지 내가 정해요. 연인은 내 비공개 글을 절대 볼 수 없어요. 서클은 언제든 나갈 수 있어요.'] },
+          {
+            h: '지금 도움받기',
+            p: [
+              '위험한 상황이라면 바로 112(경찰)나 119에 전화하세요. 미국에서는 911이에요.',
+              '여성긴급전화 1366: 가정폭력, 데이트폭력 상담을 24시간 받을 수 있어요. 무료이고 비밀이 보장돼요.',
+              '자살예방 상담전화 109: 24시간 언제든 전화하세요.',
+              '미국에서는 전국 가정폭력 핫라인 1-800-799-7233(또는 88788로 START 문자), 위기 상담 988에 연락할 수 있어요. 그 밖의 나라에서는 현지 긴급 번호와 지원 기관이 도와줄 거예요.',
+            ],
+          },
+        ],
+      },
+      'how-belluh-works': {
+        eyebrow: 'Belluh 이용 방법',
+        title: '벨라가 두 사람을 가깝게 지키는 방법.',
+        lede: '마법도, 비밀도 없어요. 벨라가 무엇을 보고, 그걸로 무엇을 하는지 알려 드려요.',
+        parts: [
+          {
+            h: '벨라가 아는 것',
+            p: ['Belluh에 직접 준 것만 알아요. 다이어리에 쓴 글, 저장한 기념일과 디테일, 그리고 연결했다면 캘린더까지. 비공개 글은 벨라가 연인과 대화할 때도 비공개로 지켜져요.'],
+          },
+          {
+            h: '벨라가 그걸로 하는 일',
+            list: [
+              '연인의 커피 주문, 세 번째 데이트 때 간 식당 같은 디테일을 기억해요.',
+              '생일과 기념일 전에 미리 알려 줘요.',
+              '연인이 탭 한 번으로 수락할 수 있는 계획과 데이트를 제안해요.',
+              '매주 일요일, 인사이트 하나와 함께 해 볼 작은 것 하나를 건네요.',
+            ],
+          },
+          { h: '결정은 두 사람이', p: ['벨라는 제안하고, 선택은 두 사람이 해요. 계획을 거절하면 벨라가 취향을 배워요.'] },
+          { h: '연구에 기반해요', p: ['벨라의 제안은 수십 년의 관계 과학을 바탕으로 해요.'], links: ['Belluh 리서치 둘러보기'] },
+        ],
+      },
+      nfaq: {
+        eyebrow: 'NFAQ',
+        title: '별로 자주 묻지 않는 질문.',
+        lede: '아무도 묻지 않았지만, 그래도 답해 봤어요.',
+        parts: [
+          { h: '로고는 왜 잠자리인가요?', p: ['잠자리는 가볍고, 날쌔고, 날이 따뜻할 때 나타나요. Belluh가 남기고 싶은 느낌이 바로 그거예요.'] },
+          {
+            h: '벨라는 누구인가요?',
+            p: [
+              '벨라는 Belluh의 AI예요. 잊어버릴 것을 기억하고, 미뤄 둘 것을 계획하고, 절대 한쪽 편을 들지 않아요. 벨라라는 이름은 아주 특별한 사람에게서 왔어요.',
+              '재미있는 사실: “Belluh”는 “bella”라는 단어의 소리를 장난스럽게 비튼 이름이에요.',
+            ],
+          },
+          { h: '벨라가 누가 옳은지 판정해 줄 수 있나요?', p: ['아니요. 벨라는 절대 편을 들지 않아요. 대신 저녁 메뉴는 추천해 줄지도 몰라요.'] },
+          { h: '서로 다른 시간대에 살아도 Belluh를 쓸 수 있나요?', p: ['네. Belluh는 두 사람의 시간대를 각각 기억해서, 리마인더가 두 사람 모두에게 알맞은 시간에 도착해요.'] },
+          { h: 'Belluh가 할 수 있는 가장 로맨틱한 일은?', p: ['몇 달 전 연인이 딱 한 번 했던 말을, 꼭 맞는 순간에 기억해 내는 것.'] },
+        ],
+      },
+      'privacy-choices': {
+        eyebrow: '개인정보 설정',
+        title: '내 데이터, 내 선택.',
+        lede: '내 정보로 무엇을 할 수 있는지, 그리고 그 방법.',
+        parts: [
+          { h: '공유할 것 고르기', p: ['모든 글은 공유할지 비공개로 둘지 내가 정해요. 가이드는 비공개, 링크 공유, 전체 공개 중에 고를 수 있고, 언제든 바꿀 수 있어요.'] },
+          {
+            h: '열람, 다운로드, 정정, 삭제',
+            p: ['다이어리 글, 사진, 관계 데이터의 사본을 요청하거나, 정정을 요청하거나, 계정과 데이터 삭제를 요청할 수 있어요. 본인 확인 후 30일 이내에 답변드려요.'],
+            links: ['요청하기'],
+          },
+          { h: '처리 거부', p: ['법이 거부할 수 있도록 허용한 목적에 내 정보가 쓰이길 원하지 않는다면, 알려 주세요. 그대로 따를게요.'], links: ['처리 거부하기'] },
+        ],
+      },
+      accessibility: {
+        eyebrow: '접근성 안내',
+        title: '모두를 위한 Belluh.',
+        lede: '사랑은 마우스를 쓸 수 있는 사람만의 것이 아니에요. 모든 커플이 Belluh를 쓸 수 있으면 좋겠어요.',
+        parts: [
+          {
+            h: '우리가 하는 일',
+            list: [
+              '기기의 동작 줄이기 설정을 존중해요. 애니메이션과 효과가 멈춰요.',
+              '스크린 리더를 위해 버튼과 이미지에 설명을 달아요.',
+              '키보드로 쓸 수 있고, Esc 키로 메뉴와 대화상자를 닫을 수 있어요.',
+              '9개 언어를, 각 나라의 표기 방식으로 지원해요.',
+            ],
+          },
+          { h: '우리의 목표', p: ['웹 콘텐츠 접근성 지침(WCAG) 2.2 AA 수준을 목표로 해요. 아직 완벽하지 않지만, 계속 개선하고 있어요.'] },
+          { h: '알려 주세요', p: ['Belluh에서 쓰기 어려운 부분이 있다면 꼭 알려 주세요. 모든 메시지를 직접 읽어요.'], links: ['접근성 문제 신고하기'] },
+        ],
+      },
+    },
+  },
   'es-MX': {
     // Mexico's names for the policies are masculine: el Aviso de privacidad, los Términos de servicio
     closing: 'Esta página explica con palabras sencillas cómo funcionan las cosas. Prevalecen el {privacy} y los {terms}.',

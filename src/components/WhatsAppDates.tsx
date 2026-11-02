@@ -29,6 +29,8 @@ function channelOrder(): Via[] {
   let tz = '', lang = '';
   try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? ''; lang = (navigator.language || '').toLowerCase(); } catch { /* defaults */ }
   if (tz === 'Asia/Tokyo' || lang.startsWith('ja')) return ['line', 'imessage', 'whatsapp', 'sms', 'telegram'];
+  // Korea texts on KakaoTalk, which Belluh can't reach yet; plain texts and iMessage are the next most used
+  if (tz === 'Asia/Seoul' || lang.startsWith('ko')) return ['sms', 'imessage', 'telegram', 'whatsapp', 'line'];
   if (/^America\/(New_York|Chicago|Denver|Los_Angeles|Phoenix|Anchorage|Detroit|Boise|Indiana|Kentucky)/.test(tz) || tz === 'Pacific/Honolulu') return ['imessage', 'sms', 'whatsapp', 'telegram', 'line'];
   return ['whatsapp', 'imessage', 'telegram', 'sms', 'line'];
 }

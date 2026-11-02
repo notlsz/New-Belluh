@@ -43,6 +43,10 @@ const planActions: UiTable<typeof en> = {
     plan: { yourPartner: "tu pareja", icsDetails: "Planeado juntos en Belluh" },
     acts: { call: "Llamar", bookAt: "Resérvanos una mesa en {name}, para 2, a las ", bookAtAddress: "Resérvanos una mesa en {name}, {address}, para 2, a las " },
   },
+  ko: {
+    plan: { yourPartner: '연인', icsDetails: 'Belluh에서 함께 세운 계획' },
+    acts: { call: '전화', bookAt: '{name}에 2명 자리 예약해 줘. 시간은 ', bookAtAddress: '{name}({address})에 2명 자리 예약해 줘. 시간은 ' },
+  },
   'es-MX': {},
   'pt-PT': {
     plan: { yourPartner: "a tua cara-metade", icsDetails: "Planeado a dois no Belluh" },

@@ -23,6 +23,7 @@ export function citiesFor(country: Country, lang: string): SceneKey[] {
     case 'IT': return ['rome', 'paris', 'tokyo', 'newyork'];
     case 'BR': return ['saopaulo', 'newyork', 'paris', 'tokyo'];
     case 'CN': return ['shanghai', 'tokyo', 'paris', 'newyork'];
+    case 'KR': return ['tokyo', 'shanghai', 'paris', 'newyork'];
     case 'CH': return ['zurich', 'paris', 'rome', 'tokyo'];
     case 'ES': return ['madrid', 'paris', 'rome', 'newyork'];
     case 'MX': return ['mexicocity', 'madrid', 'newyork', 'paris'];

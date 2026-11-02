@@ -11,6 +11,16 @@ const site: UiTable<typeof en> = {
   de: { mission: 'Mission', impact: 'Wirkung', research: 'Forschung', careers: 'Karriere', why: 'Unser Warum', menu: 'Menü', close: 'Schließen', onThisPage: 'Auf dieser Seite' },
   ja: { mission: 'ミッション', impact: 'インパクト', research: 'リサーチ', careers: '採用', why: 'わたしたちの想い', menu: 'メニュー', close: '閉じる', onThisPage: 'このページ' },
   zh: { mission: '使命', impact: '影响', research: '研究', careers: '加入我们', why: '我们的初心', menu: '菜单', close: '关闭', onThisPage: '本页内容' },
+  ko: {
+    mission: '미션',
+    impact: '임팩트',
+    research: '연구',
+    careers: '채용',
+    why: '우리가 하는 이유',
+    menu: '메뉴',
+    close: '닫기',
+    onThisPage: '이 페이지에서',
+  },
   'es-MX': { careers: 'Empleos' },
   'pt-PT': { careers: 'Carreiras', research: 'Investigação' },
 };
