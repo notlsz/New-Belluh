@@ -167,6 +167,8 @@ jobs:
           supabase functions deploy belluh-gift --project-ref "$PROJECT_REF" --no-verify-jwt
           # Belluh Memory's agent (query and profile): checks the sign-in itself, stores nothing but counts
           supabase functions deploy memory-agent --project-ref "$PROJECT_REF" --no-verify-jwt
+          # Shop order confirmations: the shop signs each event and the function checks it, so no Supabase sign-in
+          supabase functions deploy order-webhook --project-ref "$PROJECT_REF" --no-verify-jwt
           # Deleting an account: only for the signed-in person, so Supabase checks their sign-in before it runs
           supabase functions deploy delete-account --project-ref "$PROJECT_REF"
 
