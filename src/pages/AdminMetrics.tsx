@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { ConflictLog, AnalyticsEvent } from '../types';
 import { isAdmin } from '../services/admin';
-import { ArrowLeft, Loader2, TrendingUp, Users, MessageSquare, ShieldAlert, Activity, Clock, Calendar, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Loader2, TrendingUp, Users, MessageSquare, ShieldAlert, Activity, Clock, Calendar, BarChart3, Heart } from 'lucide-react';
+import { coupleMetrics, type CoupleMetrics } from '../lib/coupleMetrics';
 
 interface AdminMetricsProps {
     onBack: () => void;
@@ -16,6 +17,8 @@ const AdminMetrics: React.FC<AdminMetricsProps> = ({ onBack }) => {
     // Calculated Metrics
     const [dau, setDau] = useState(0);
     const [avgDaysActive, setAvgDaysActive] = useState(0);
+    // Belluh is for two: the numbers that matter are couples where both people show up
+    const [couples, setCouples] = useState<CoupleMetrics | null>(null);
     const [topFeatures, setTopFeatures] = useState<{name: string, count: number}[]>([]);
     const [leastFeatures, setLeastFeatures] = useState<{name: string, count: number}[]>([]);
     const [heatmap, setHeatmap] = useState<number[]>(new Array(24).fill(0));
@@ -39,6 +42,8 @@ const AdminMetrics: React.FC<AdminMetricsProps> = ({ onBack }) => {
             // Fetch Journal Entries for specific calc
             // Counts only; the admin function never returns anyone's writing
             const { data: journalData } = await supabase.rpc('admin_entry_stats');
+            const { data: coupleRows } = await supabase.rpc('admin_couple_stats');
+            setCouples(coupleMetrics(coupleRows ?? [], journalData ?? []));
 
             if (analyticsData) {
                 // @ts-ignore
@@ -122,6 +127,26 @@ const AdminMetrics: React.FC<AdminMetricsProps> = ({ onBack }) => {
                         Live
                     </div>
                 </div>
+
+                {couples && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+                        {[
+                            ['Couples', String(couples.couples), 'Connected'],
+                            ['Both Active (7d)', String(couples.bothActive7d), 'Both wrote this week'],
+                            ['Both Active Rate', `${couples.bothActiveRate}%`, 'Of all couples'],
+                            ['Week 1, Both', couples.week1Both === null ? 'n/a' : `${couples.week1Both}%`, 'Both wrote in first 7 days'],
+                        ].map(([label, value, note]) => (
+                            <div key={label} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                                <div className="flex items-center gap-2 mb-4 text-slate-400">
+                                    <Heart size={18} />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
+                                </div>
+                                <div className="text-4xl font-bold tracking-tight">{value}</div>
+                                <div className="text-xs text-slate-400 mt-2 font-medium">{note}</div>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 {/* KPI Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">

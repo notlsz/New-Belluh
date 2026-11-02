@@ -54,7 +54,8 @@ import { trackEvent, flushCta } from './services/analytics';
 import { belluhAgent } from './services/belluhAgent';
 import { belluh } from './lib/belluhPresence';
 import { resolveMedia, repairLegacyUrl } from './services/media';
-import { computeStreak, hideLockedAnswer, questionForDay } from './lib/daily';
+import { streakFor, hideLockedAnswer, questionForDay } from './lib/daily';
+import InviteFirst from './components/InviteFirst';
 
 import Acquisition from './pages/Acquisition';
 import Report from './pages/Report';
@@ -205,6 +206,10 @@ const App: React.FC = () => {
   }, [belluhSheet]);
   // With a partner connected, the tab is "Us": the two of you and Belluh together
   const [hasPartner, setHasPartner] = useState(false);
+  // Belluh is for two: until a partner joins, home is the invite (InviteFirst). Known once the first check returns,
+  // so nobody sees it flash; "Look around first" lets someone in for this visit.
+  const [partnerKnown, setPartnerKnown] = useState(false);
+  const [lookAround, setLookAround] = useState(() => { try { return sessionStorage.getItem('belluh_look_around') === '1'; } catch { return false; } });
   // The tab opens where the news is: your own thread when a note or something from Belluh is waiting, otherwise Us
   const [tabSpace, setTabSpace] = useState<'me' | 'us'>('us');
   const [inviteOffer, setInviteOffer] = useState<{ token: string; name: string } | null>(null);
@@ -231,7 +236,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated) return;
     supabase.auth.getUser().then(({ data: { user: u } }) => { if (u) belluhAgent.saveTimeZone(u.id); });
-    supabase.from('partner_connections').select('id').eq('status', 'connected').limit(1).then(({ data }) => setHasPartner(!!data?.length));
+    supabase.from('partner_connections').select('id').eq('status', 'connected').limit(1).then(({ data, error }) => { setHasPartner(!!data?.length); if (!error) setPartnerKnown(true); });
     const check = () => {
       belluhAgent.unreadNotes().then(setUnreadNotes);
       belluhAgent.hasNewFromBelluh().then(setNewFromBelluh);
@@ -722,10 +727,11 @@ const App: React.FC = () => {
             } catch (err: any) { trackEvent('media_failed', { message: String(err?.message ?? err).slice(0, 200) }); }
         })();
 
-        // Streak = consecutive days with at least one entry of yours, counting back from today (or yesterday)
-        setStreak(computeStreak(mappedEntries.filter(e => e.userId === sessionUser.id).map(e => e.timestamp)));
+        // Streak = consecutive days you both wrote (yours alone until your partner writes), counting back from today or yesterday
+        setStreak(streakFor(mappedEntries, sessionUser.id));
 
         const primaryPartner = connectedProfiles.length > 0 ? connectedProfiles[0] : null;
+        if (primaryPartner) setHasPartner(true);
         const displayPartnerName = myProfile?.partner_name || primaryPartner?.full_name || undefined;
 
         // Parse user settings if available in profile (assuming we store them later, for now defaults)
@@ -1169,7 +1175,7 @@ const App: React.FC = () => {
         };
         setEntries(prev => {
             const next = [newEntry, ...prev];
-            setStreak(computeStreak(next.filter(e => e.userId === currentUser.id).map(e => e.timestamp)));
+            setStreak(streakFor(next, currentUser.id));
             return next;
         });
         setIsComposeOpen(false); 
@@ -1379,19 +1385,24 @@ const App: React.FC = () => {
       ) : null;
 
   if (isOnboarding) return <>{inviteModal}{recoveryModal}<Onboarding onComplete={handleOnboardingComplete} /></>;
+  // Home is the invite until a partner joins (Bella stays reachable, to plan a surprise for them)
+  const inviteFirst = isAuthenticated && partnerKnown && !hasPartner && !lookAround && currentTab !== 'ai-coach' && !belluhSheet;
 
   return (
     <div data-app className="bg-paper min-h-screen text-slate-800 font-sans selection:bg-belluh-100 selection:text-belluh-900 overflow-x-hidden animate-fade-in lg:pl-[var(--sidebar-w,16rem)] lg:transition-[padding] lg:duration-300">
-      {currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} partnerName={user.partnerName} avatars={hasPartner ? [user.avatar, calmAvatar(user.partnerAvatar) || avatarFor(user.partnerName || 'partner')] : [user.avatar]} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} onAskBelluh={askBelluh} onOpenBelluh={() => askBelluh('')} onPhotos={() => setPhotosOpen(true)} />}
-      {currentTab === 'map' && <React.Suspense fallback={<div className="fixed inset-0 bg-[#fbe3f1]" />}><LoveMap entries={readableEntries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} myName={user.name} onPhotos={() => setPhotosOpen(true)} /></React.Suspense>}
+      {inviteFirst && <InviteFirst partnerName={user.partnerName || null} pendingInvites={pendingInvites} onAcceptInvite={handleAcceptInvite} onDeclineInvite={handleDeclineInvite}
+        onAskBella={() => { trackEvent('invite_first_bella'); setCurrentTab('ai-coach'); }}
+        onLookAround={() => { trackEvent('invite_first_look_around'); try { sessionStorage.setItem('belluh_look_around', '1'); } catch { /* private mode */ } setLookAround(true); }} />}
+      {!inviteFirst && currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} partnerName={user.partnerName} avatars={hasPartner ? [user.avatar, calmAvatar(user.partnerAvatar) || avatarFor(user.partnerName || 'partner')] : [user.avatar]} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} onAskBelluh={askBelluh} onOpenBelluh={() => askBelluh('')} onPhotos={() => setPhotosOpen(true)} />}
+      {!inviteFirst && currentTab === 'map' && <React.Suspense fallback={<div className="fixed inset-0 bg-[#fbe3f1]" />}><LoveMap entries={readableEntries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} myName={user.name} onPhotos={() => setPhotosOpen(true)} /></React.Suspense>}
       {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => handleCompose(prompt)} initialSpace={hasPartner ? tabSpace : undefined} />}
       {belluhSheet && (
         <div className="fixed inset-0 z-[70] bg-paper animate-slide-up" role="dialog" aria-label="Bella">
           <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => { setBelluhSheet(false); handleCompose(prompt); }} initialSpace="me" inSheet onClose={() => setBelluhSheet(false)} />
         </div>
       )}
-      {currentTab === 'afterglow' && <React.Suspense fallback={null}><PassportPage userName={user.name} partnerName={user.partnerName || null} hasPartner={hasPartner} /></React.Suspense>}
-      {currentTab === 'profile' && <Profile user={user} entries={readableEntries} streak={streak} onCircleChange={handleCircleChange} onCreateCircle={handleCreateCircle} onArchiveCircle={handleArchiveCircle} onRenameCircle={handleRenameCircle} onLogout={handleLogout} onUpdateUser={handleUpdateUser} onShowLegal={(type) => setLegalModalOpen(type)} onViewArtifact={(type) => setArtifactModalOpen(type)} onShowToast={showNotification} pendingInvites={pendingInvites} onAcceptInvite={handleAcceptInvite} onDeclineInvite={handleDeclineInvite} />}
+      {!inviteFirst && currentTab === 'afterglow' && <React.Suspense fallback={null}><PassportPage userName={user.name} partnerName={user.partnerName || null} hasPartner={hasPartner} /></React.Suspense>}
+      {!inviteFirst && currentTab === 'profile' && <Profile user={user} entries={readableEntries} streak={streak} onCircleChange={handleCircleChange} onCreateCircle={handleCreateCircle} onArchiveCircle={handleArchiveCircle} onRenameCircle={handleRenameCircle} onLogout={handleLogout} onUpdateUser={handleUpdateUser} onShowLegal={(type) => setLegalModalOpen(type)} onViewArtifact={(type) => setArtifactModalOpen(type)} onShowToast={showNotification} pendingInvites={pendingInvites} onAcceptInvite={handleAcceptInvite} onDeclineInvite={handleDeclineInvite} />}
       
       {notification && <Toast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
       {inviteModal}
@@ -1409,7 +1420,7 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
-      <TabBar currentTab={currentTab} usTab={hasPartner} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(c => !c)} badges={{ 'ai-coach': unreadNotes > 0 || newFromBelluh }} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); if (tab === 'ai-coach') { setTabSpace(unreadNotes > 0 || newFromBelluh ? 'me' : 'us'); setUnreadNotes(0); setNewFromBelluh(false); setBelluhReply(null); } const onPassport = window.location.pathname.replace(/\/+$/, '') === '/passport'; if (tab === 'passport' && !onPassport) window.history.pushState({}, '', '/passport'); else if (tab !== 'passport' && onPassport) window.history.replaceState({}, '', '/'); setCurrentTab(tab); }} onCompose={() => handleCompose()} />
+      {!inviteFirst && <TabBar currentTab={currentTab} usTab={hasPartner} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(c => !c)} badges={{ 'ai-coach': unreadNotes > 0 || newFromBelluh }} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); if (tab === 'ai-coach') { setTabSpace(unreadNotes > 0 || newFromBelluh ? 'me' : 'us'); setUnreadNotes(0); setNewFromBelluh(false); setBelluhReply(null); } const onPassport = window.location.pathname.replace(/\/+$/, '') === '/passport'; if (tab === 'passport' && !onPassport) window.history.pushState({}, '', '/passport'); else if (tab !== 'passport' && onPassport) window.history.replaceState({}, '', '/'); setCurrentTab(tab); }} onCompose={() => handleCompose()} />}
       {isComposeOpen && <div className="fixed inset-0 z-[60] bg-paper animate-slide-up"><button onClick={() => setIsComposeOpen(false)} aria-label={T.close} className="absolute top-5 right-4 w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 z-50 transition-colors"><X size={22} /></button><Journal onAddEntry={handleAddEntry} partnerName={user.partnerName || ''} onTriggerPremium={handleTriggerPremium} initialPrompt={composePrompt} userName={user.name} partnerHasEntry={partnerHasEntry} /></div>}
       
       {showIntro && <IntroGuide onClose={() => setShowIntro(false)} />}
