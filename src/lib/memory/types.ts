@@ -1,6 +1,6 @@
 // Belluh Memory: the camera roll as a memory layer, after Rollup (tryrollup.com). This file is the contract between
 // the on-device engine (index, search, people, interests, facets, places, the agent's tools) and everything that uses
-// it (query and profile through the server agent, Our Locket, Bella). Photos and the index never leave the device:
+// it (query and profile through the server agent, Our Afterglow, Bella). Photos and the index never leave the device:
 // search runs on the device; query and profile send only the question or schema and the TEXT results of tools that
 // run on the device; places sends only ~1 km cells (0.01 degree). Nothing is stored on the server.
 

@@ -30,7 +30,7 @@ const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose, bad
   const tabs = [
     { id: 'timeline', emoji: '📖', label: tb.story },
     { id: 'map', emoji: '🗺️', label: M.tab },
-    { id: 'locket', emoji: '💗', label: P.tab },
+    { id: 'afterglow', emoji: '🌅', label: P.tab },
     { id: 'compose', emoji: '', label: tb.capture },
     { id: 'ai-coach', emoji: usTab ? '💞' : '✨', label: usTab ? tb.us : tb.bella },
     { id: 'profile', emoji: '🙂', label: tb.me },

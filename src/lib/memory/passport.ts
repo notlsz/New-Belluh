@@ -1,4 +1,4 @@
-// Our Locket on the device: the Belluh schema profile() fills, turning the filled profile into a draft the person
+// Our Afterglow on the device: the Belluh schema profile() fills, turning the filled profile into a draft the person
 // approves line by line, the photos behind each line (kept only here), and the ways to bring it anywhere.
 import type { JsonSchema, Profile } from './types';
 import { SECTION_KEYS, LINES_MAX, LINE_MAX, type SectionKey, type StoredPassport } from '../../../supabase/functions/_shared/passport.ts';
@@ -7,7 +7,7 @@ export { SECTION_KEYS, SECTION_EMOJI, mergePassports, cleanPassport, type Sectio
 
 const list = (description: string) => ({ type: 'array', items: { type: 'string' }, description: `${description} Up to ${LINES_MAX} short lines, most telling first, each under 90 characters. Null if the photos don't show it.` });
 
-/** The schema Our Locket fills. Plain taste, nothing sensitive (the server screens it anyway). */
+/** The schema Our Afterglow fills. Plain taste, nothing sensitive (the server screens it anyway). */
 export const PASSPORT_SCHEMA: JsonSchema = {
   type: 'object',
   properties: {
@@ -74,7 +74,7 @@ export function toMarkdown(s: StoredPassport, name: string, L: ExportLabels): st
 }
 
 export function toJson(s: StoredPassport, name: string): string {
-  return JSON.stringify({ format: 'belluh-locket', version: 1, name, title: s.title, sections: Object.fromEntries(SECTION_KEYS.filter(k => s.sections?.[k]?.length).map(k => [k, s.sections[k]])), exported_at: new Date().toISOString() }, null, 2);
+  return JSON.stringify({ format: 'belluh-afterglow', version: 1, name, title: s.title, sections: Object.fromEntries(SECTION_KEYS.filter(k => s.sections?.[k]?.length).map(k => [k, s.sections[k]])), exported_at: new Date().toISOString() }, null, 2);
 }
 
 /** A ready text to paste into ChatGPT or Claude */
