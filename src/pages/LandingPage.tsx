@@ -1,5 +1,6 @@
 
 
+import BelluhFilm from '../components/BelluhFilm';
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Lock, Menu, Sparkles, Activity, TrendingUp, Fingerprint, X, ChevronDown, Heart, MessageCircle, CalendarCheck, Plus, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Receipt } from './About';
@@ -597,6 +598,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
               <p className="mt-4 text-[17px] md:text-lg text-slate-500 leading-relaxed max-w-xl mx-auto [text-wrap:pretty]">{SC.missionSub}</p>
           </div>
       </section>
+
+      {/* The one-minute film: Bella doing what you meant to do */}
+      <BelluhFilm />
 
       {/* Where Belluh's couples are */}
       <LogoMarquee title={LS.usedBy} orgs={ORGANIZATIONS} note={LS.usedByNote} />
