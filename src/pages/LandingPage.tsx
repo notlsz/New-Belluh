@@ -359,6 +359,15 @@ function useShapeTap() {
   return { tap, label: n < 0 ? null : d.common.shapes[n] ?? '' };
 }
 
+// What Belluh connects to, shown in the second scrolling strip
+const INTEGRATIONS = [
+  { name: 'WhatsApp', domain: 'whatsapp.com', logo: '/logos/whatsapp.png' },
+  { name: 'Google Calendar', domain: 'calendar.google.com', logo: '/logos/google-calendar.png' },
+  { name: 'Apple iCloud', domain: 'icloud.com', logo: '/logos/icloud.png' },
+  { name: 'Outlook', domain: 'outlook.live.com', logo: '/logos/outlook.png' },
+  { name: 'Gemini', domain: 'gemini.google.com', logo: '/logos/gemini.png' },
+];
+
 // Universities get one row and companies the other
 const isUniversity = (domain: string) => /\.(edu|ac\.uk|ca)$/.test(domain);
 type Org = { name: string; domain: string; logo?: string };
@@ -656,6 +665,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
 
       {/* Where the story comes from, and Bella acting on it; this took the place of the "works with" logo strip */}
       <RollEverywhere />
+
+      {/* What Belluh works with */}
+      <LogoMarquee title={LS.worksWith} orgs={INTEGRATIONS} note={LS.worksWithNote} />
 
       {/* Infinite Marquee Section */}
       <section id="stories" className="relative z-10 py-20 md:py-28 overflow-hidden scroll-mt-20">
