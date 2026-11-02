@@ -27,7 +27,7 @@ const NotFoundPage = React.lazy(() => import('./pages/NotFound'));
 // Every address Belluh answers; anything else is a 404
 const knownPath = (path: string) => {
   const p = path.replace(/\/+$/, '') || '/';
-  return p === '/' || p === '/index.html' || ['/login', '/signup', '/about', '/faq', '/press', '/privacy', '/terms', '/cookies', '/consumer-health-data', '/security', '/mission', '/impact', '/research', '/careers', '/careers/fellows', '/passport'].includes(p)
+  return p === '/' || p === '/index.html' || ['/login', '/signup', '/about', '/faq', '/press', '/privacy', '/terms', '/cookies', '/consumer-health-data', '/security', '/mission', '/impact', '/research', '/careers', '/careers/fellows', '/heartprint', '/passport'].includes(p)
     || !!resourceAt(p) || p.startsWith('/report') || p.startsWith('/we-have-been-acquired') || /^\/g\/[a-z0-9]{6,32}$/i.test(p);
 };
 const guideSlug = window.location.pathname.match(/^\/g\/([a-z0-9]{6,32})\/?$/i)?.[1] ?? null;
@@ -162,8 +162,8 @@ const App: React.FC = () => {
       return true;
     } catch { return false; }
   });
-  // /passport opens Our Passport (the QR code a partner scans points here)
-  const [currentTab, setCurrentTab] = useState(() => (window.location.pathname.replace(/\/+$/, '') === '/passport' ? 'passport' : 'timeline'));
+  // /heartprint opens Our Heartprint (the QR code a partner scans points here); /passport, its first name, still works
+  const [currentTab, setCurrentTab] = useState(() => (['/heartprint', '/passport'].includes(window.location.pathname.replace(/\/+$/, '')) ? 'heartprint' : 'timeline'));
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [composePrompt, setComposePrompt] = useState<string | undefined>(undefined);
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -1390,7 +1390,7 @@ const App: React.FC = () => {
           <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => { setBelluhSheet(false); handleCompose(prompt); }} initialSpace="me" inSheet onClose={() => setBelluhSheet(false)} />
         </div>
       )}
-      {currentTab === 'passport' && <React.Suspense fallback={null}><PassportPage userName={user.name} partnerName={user.partnerName || null} hasPartner={hasPartner} /></React.Suspense>}
+      {currentTab === 'heartprint' && <React.Suspense fallback={null}><PassportPage userName={user.name} partnerName={user.partnerName || null} hasPartner={hasPartner} /></React.Suspense>}
       {currentTab === 'profile' && <Profile user={user} entries={readableEntries} streak={streak} onCircleChange={handleCircleChange} onCreateCircle={handleCreateCircle} onArchiveCircle={handleArchiveCircle} onRenameCircle={handleRenameCircle} onLogout={handleLogout} onUpdateUser={handleUpdateUser} onShowLegal={(type) => setLegalModalOpen(type)} onViewArtifact={(type) => setArtifactModalOpen(type)} onShowToast={showNotification} pendingInvites={pendingInvites} onAcceptInvite={handleAcceptInvite} onDeclineInvite={handleDeclineInvite} />}
       
       {notification && <Toast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
