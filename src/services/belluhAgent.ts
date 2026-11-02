@@ -79,6 +79,8 @@ export const belluhAgent = {
   /** Yes or not now to something Belluh offered on its own (a birthday coming up, say). Yes runs it like a request. */
   bookingDone: (bookingId: string, done: boolean) => call<{ booking: any; message: AgentMessage | null }>({ action: 'booking', booking_id: bookingId, done }),
   /** Belluh phones the restaurant and books the table; the outcome arrives as a message in the thread. */
+  /** Their answer to Bella's one "Did it go through?" for something she can't confirm herself. */
+  bookingAnswer: (bookingId: string, answer: 'yes' | 'not_yet' | 'no', messageId?: string) => call<{ booking: any; message: AgentMessage | null }>({ action: 'booking_answer', booking_id: bookingId, answer, ...(messageId ? { message_id: messageId } : {}) }),
   bookingCall: (bookingId: string) => call<{ booking: any; message: AgentMessage | null; called: boolean }>({ action: 'booking_call', booking_id: bookingId }),
   ideas: () => call<{ ideas: Idea[] }>({ action: 'ideas' }),
   goalLog: (goalId: string, amount: number) => call<{ goal: CoupleGoal; reached: boolean }>({ action: 'goal_log', goal_id: goalId, amount }),

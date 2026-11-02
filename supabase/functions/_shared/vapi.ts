@@ -129,7 +129,7 @@ export function callPrompt(c: CallRequest): { system: string; first: string } {
     'Any time within 30 minutes of the request is fine: accept it. If they offer something further off, do not book it; thank them, ask what the closest time is, and remember it.',
     `Give only the name ${c.name} and the party size. If they ask for a phone number, credit card or deposit, say ${c.name} will call back to give it, and don't book unless they can hold it without one.`,
     'If you reach voicemail, an automated menu you cannot get through, or they say they only book online, end the call politely without leaving a message.',
-    'Before hanging up, repeat back the day, time, party size and name once. Then thank them and end the call.',
+    'Before hanging up, repeat back the day, time, party size and name once, and ask if there is a confirmation number. Then thank them and end the call.',
   ].join('\n');
   return { system, first };
 }
@@ -140,6 +140,8 @@ const OUTCOME = {
   properties: {
     booked: { type: 'boolean', description: 'True only if the restaurant confirmed a reservation on this call.' },
     confirmed_time: { type: 'string', description: 'The confirmed time as HH:mm in 24-hour time, if booked.' },
+    party_size: { type: 'integer', description: 'How many people the restaurant confirmed the table for, if booked.' },
+    confirmation: { type: 'string', description: 'A confirmation number or code the restaurant gave, if any. Leave empty if they gave none; never make one up.' },
     name: { type: 'string', description: 'The name the reservation is under.' },
     alternative: { type: 'string', description: 'If not booked, the closest time they offered, in their words.' },
     notes: { type: 'string', description: 'Anything the guests need to know (a deposit, a time limit, call back to confirm), in one short sentence.' },
@@ -190,6 +192,8 @@ export interface CallOutcome {
   bookingId: string | null;
   booked: boolean;
   time: string | null;          // "19:30"
+  people: number | null;        // the party size they confirmed
+  ref: string | null;           // a confirmation number, only if the restaurant gave one
   alternative: string | null;
   notes: string | null;
   reason: string;               // why it ended, e.g. "customer-did-not-answer"
@@ -210,6 +214,8 @@ export function parseCallReport(body: any): CallOutcome | null {
     bookingId: str(call.metadata?.booking_id ?? m.metadata?.booking_id, 64),
     booked: data.booked === true,
     time: t && /^([01]\d|2[0-3]):[0-5]\d$/.test(t) ? t : null,
+    people: Number.isInteger(data.party_size) && data.party_size >= 1 && data.party_size <= 20 ? data.party_size : null,
+    ref: (() => { const r = str(data.confirmation, 40)?.replace(/^#\s*/, '') ?? null; return r && /^[A-Za-z0-9][A-Za-z0-9 #._-]{1,39}$/.test(r) ? r : null; })(),
     alternative: str(data.alternative),
     notes: str(data.notes),
     reason: str(m.endedReason ?? call.endedReason, 80) ?? 'ended',

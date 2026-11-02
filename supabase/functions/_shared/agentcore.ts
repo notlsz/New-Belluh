@@ -11,7 +11,9 @@ import type { CheckinStatus } from './weekly.ts';
 import { validatePlan, formatOption, localDateOf, type PlanOption } from './plans.ts';
 import { notify } from './notify.ts';
 import { searchShopify, type ShopProduct } from './shopify.ts';
-import { readyOrder, parseUsAddress, NOT_FRESH_FLOWERS, shopStyle } from './shopcheckout.ts';
+import { readyOrder, parseUsAddress, NOT_FRESH_FLOWERS, shopStyle, checkoutOrder, type ReadyOrder } from './shopcheckout.ts';
+import { confirmVia, decideCall, callLine, doneHeadline, discreetLine, partnerLine, followUpDue, followUpAsk, readConfirmation, matchBooking, sameShop, type DoneDetail, type OrderConfirmation } from './confirms.ts';
+import { localized } from './localize.ts';
 import { findSpots, type Spot } from './places.ts';
 import { regionLinks, osmCountry, KITS } from './region.ts';
 import { playlistLinks } from './jarvis.ts';
@@ -103,9 +105,10 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   // The restaurant Belluh found this turn, so a ride asked for in the same breath goes to its door
   let restaurant: { name: string; address: string | null } | null = null;
   // What this turn got ready, to confirm with "I booked it" once they've done it
-  const prepared: BookingDraft[] = [];
-  const prepare = (name: string, args: Record<string, unknown>, firstUrl: string | null, productTitle?: string | null) => {
-    const b = bookingFromTool(name, args, ctx.timezone, ctx.partnerName, firstUrl, productTitle);
+  const prepared: Prepared[] = [];
+  const prepare = (name: string, args: Record<string, unknown>, firstUrl: string | null, productTitle?: string | null, order?: ReadyOrder | null) => {
+    const b: Prepared | null = bookingFromTool(name, args, ctx.timezone, ctx.partnerName, firstUrl, productTitle);
+    if (b && order?.checkout && order.url === firstUrl) b.order = { ...order.checkout, totalCents: order.totalCents, seller: order.seller };
     if (b && prepared.length < 3 && !prepared.some(x => x.kind === b.kind && x.title === b.title)) prepared.push(b);
   };
   const reply = await chatWithTools({
@@ -225,10 +228,10 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           // A real order at a florist that delivers there, ready to pay, when there's an address
           const order = to ? await readyOrder(`${what} fresh flowers bouquet delivery`, to, { maxCents: budget, exclude: NOT_FRESH_FLOWERS, intent: 'fresh flowers to send as a gift', tries: 4 }) : null;
           if (order) {
-            products.unshift(order);
+            products.unshift(shown(order));
             links.push(...fl.slice(1));
-            prepare('send_flowers', call.args, order.url, order.title);
-            return { ok: true, note: `A real order is ready under your reply: ${order.title} from ${order.seller}, ${order.total} including tax, delivering to ${order.deliversTo}. They tap "Review and pay"; on the florist's page they pick the delivery day${when ? ` (${when})` : ''}, add a phone number for the driver and paste the card message. Say what you picked and why it fits, and offer a two-line card message. Never say it's ordered until they've paid. Do not paste links.` };
+            prepare('send_flowers', call.args, order.url, order.title, order);
+            return { ok: true, note: `A real order is ready under your reply: ${order.title} from ${order.seller}, ${order.total} including tax, delivering to ${order.deliversTo}. They tap "Review and pay"; on the florist's page they pick the delivery day${when ? ` (${when})` : ''}, add a phone number for the driver and paste the card message. Once they've paid, you get the florist's confirmation and tell them yourself, with the order number and delivery day. Say what you picked and why it fits, and offer a two-line card message. Never say it's ordered until they've paid. Do not paste links.` };
           }
           links.push(...fl);
           prepare('send_flowers', call.args, fl[0]?.url ?? null);
@@ -246,7 +249,7 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           if (call.name === 'buy_item' && typeof call.args.item === 'string' && ctx.country === 'US') {
             const to = parseUsAddress(call.args.ship_to, typeof call.args.recipient === 'string' ? call.args.recipient : null);
             shipped = to ? await readyOrder(call.args.item, to, { maxCents: Number(call.args.max_price) > 0 ? Math.round(Number(call.args.max_price) * 100) : null }) : null;
-            if (shipped) products.unshift(shipped);
+            if (shipped) products.unshift(shown(shipped));
             addProducts(await searchShopify(call.args.item, Number(call.args.max_price) || null, 3));
           }
           const kind = ({ order_food: 'food', buy_item: 'buy', order_groceries: 'groceries', book_ride: 'ride', find_experience: 'experience' } as const)[call.name];
@@ -256,7 +259,7 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           if (cart) l = [{ label: 'Your cart on Instacart', url: cart }];
           if (!l.length) return { ok: false, error: call.name === 'order_groceries' ? 'List the groceries.' : call.name === 'book_ride' ? 'Say where they are going.' : 'Say what it is.' };
           links.push(...l);
-          if (call.name === 'buy_item') prepare('buy_item', call.args, products[0]?.url ?? l[0]?.url ?? null, products[0]?.title ?? null);
+          if (call.name === 'buy_item') prepare('buy_item', call.args, products[0]?.url ?? l[0]?.url ?? null, products[0]?.title ?? null, shipped);
           else if (call.name === 'order_food' || call.name === 'find_experience') prepare(call.name, call.args, l[0]?.url ?? null);
           const what = ctx.country !== 'US' ? `It is ready in the stores and apps people use in ${KITS[ctx.country]?.name ?? 'their country'} (${l.map(x => x.label).join(', ')})` : { order_food: 'The order is ready on DoorDash and Uber Eats', buy_item: 'It is ready to buy on Amazon and Target, with a price comparison', order_groceries: cart ? 'Every item is in one Instacart cart, ready to check out' : 'Each item is one tap from their Instacart cart', book_ride: 'Uber and Lyft are ready with the destination filled in', find_experience: 'Tickets and experiences are shown' }[call.name];
           const ready = shipped ? ` A real order is ready first under your reply: ${shipped.title} from ${shipped.seller}, ${shipped.total} including tax, shipping to ${shipped.deliversTo}; they tap "Review and pay".` : '';
@@ -359,6 +362,24 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
           return { ok: true, note: channel === 'app'
             ? 'Draft shown to the user with Send / Edit / Discard. Tell them briefly that it is ready for them to review.'
             : 'The draft is shown right below your reply, with how to send it. Just say briefly that you drafted it; do not repeat the note.' };
+        }
+        case 'confirm_booking': {
+          // Their own word or a confirmation they passed on (pasted, forwarded or a screenshot), never anything Bella read elsewhere
+          const words = (x: string) => x.toLowerCase().match(/[\p{L}\p{N}']+/gu) ?? [];
+          const said = new Set(words(text)), w = words(call.excerpt);
+          if (!photo && (!w.length || w.filter(x => said.has(x)).length / w.length < 0.6)) return { ok: false, error: 'Only use what they wrote or sent in their latest message.' };
+          const { data: waiting } = await db.from('bookings').select('id, title, place, kind').eq('user_id', ctx.userId).eq('status', 'prepared')
+            .gte('created_at', new Date(Date.now() - 14 * 86_400_000).toISOString()).order('created_at', { ascending: false }).limit(10);
+          const b = matchBooking(`${call.which} ${call.excerpt}`, (waiting ?? []) as { id: string; title: string; place: string | null; kind: string }[]);
+          if (!b) return { ok: false, error: waiting?.length ? 'Several things are waiting; ask which one it was.' : 'Nothing is waiting to be confirmed.', waiting: (waiting ?? []).map((x: { title: string }) => x.title) };
+          if (!call.went_through) {
+            await db.from('bookings').update({ follow_up_answer: call.not_yet ? 'not_yet' : 'no', ...(call.not_yet ? {} : { status: 'dismissed' }) }).eq('id', b.id).eq('status', 'prepared');
+            return { ok: true, note: call.not_yet ? 'Noted that it is not done yet. Say you will keep it ready.' : 'Set aside. Say so in a few words and offer another option.' };
+          }
+          const read = readConfirmation(call.excerpt);
+          const r = await bookingDone(ctx, b.id, true, undefined, { by: 'person', ref: read.ref, people: read.people, time: read.time });
+          if (r.body?.message) created.push(r.body.message);
+          return { ok: true, confirmed: { title: b.title, ref: read.ref, time: read.time, people: read.people }, note: 'It is confirmed and the confirmation line is shown separately. In one short line say it is in their calendar; do not repeat the details.' };
         }
         case 'set_proactivity': {
           await db.from('agent_settings').upsert({ user_id: ctx.userId, timezone: ctx.timezone, proactivity: call.level, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
@@ -609,20 +630,35 @@ export async function usSend(ctx: Ctx, message: string, askBelluh: boolean): Pro
 }
 
 
-// ---------- Bookings: what Belluh got ready, until they've done it ----------
+// ---------- Bookings: what Belluh got ready, until it's done ----------
 
 /** The card shown under Belluh's reply for each thing it got ready. */
 export type CallStatus = 'ready' | 'calling' | 'booked' | 'failed';
 export type BookingCard = {
   id: string; kind: string; title: string; when: string | null; surprise: boolean; label: string; status: 'prepared' | 'booked' | 'dismissed';
   call?: { place: string; phone: string; status: CallStatus; note?: string };   // Belluh can phone the restaurant for them
+  confirm?: 'call' | 'checkout' | 'ask';   // how it gets confirmed: Bella's call, the shop's confirmation, or their tap
+  seller?: string;                         // the shop Bella hears back from
+  by?: 'bella' | 'person'; ref?: string | null; people?: number | null;   // once it's done: who confirmed it and what
 };
 
-async function saveBookings(ctx: Ctx, prepared: BookingDraft[]): Promise<BookingCard[]> {
+/** What a turn got ready, plus the shop checkout behind an order (kept apart: only the owner ever sees it). */
+type Prepared = BookingDraft & { order?: { id: string; shop: string; totalCents: number; seller: string } };
+
+/** An order as shown under the reply: never the checkout's id. */
+const shown = (o: ReadyOrder) => { const { checkout: _c, ...rest } = o; return rest; };
+
+async function saveBookings(ctx: Ctx, prepared: Prepared[]): Promise<BookingCard[]> {
   if (!prepared.length) return [];
-  const { data } = await db.from('bookings').insert(prepared.map(b => ({ ...b, user_id: ctx.userId, partner_id: ctx.partnerId ?? null }))).select('id, kind, title, starts_at, all_day, surprise, place, phone, call_status');
-  return (data ?? []).map((r: any) => ({
+  const rows = prepared.map(({ order, ...b }) => ({ ...b, confirm_via: confirmVia({ ...b, checkout: !!order }), user_id: ctx.userId, partner_id: ctx.partnerId ?? null }));
+  const { data } = await db.from('bookings').insert(rows).select('id, kind, title, starts_at, all_day, surprise, place, phone, call_status, confirm_via');
+  const saved = (data ?? []) as any[];
+  const orders = saved.map(r => ({ r, p: prepared.find(p => p.kind === r.kind && p.title === r.title) })).filter(x => x.p?.order);
+  if (orders.length) await db.from('booking_orders').insert(orders.map(({ r, p }) => ({ booking_id: r.id, user_id: ctx.userId, checkout_id: p!.order!.id, shop: p!.order!.shop, total_cents: p!.order!.totalCents || null, seller: p!.order!.seller.slice(0, 60) })));
+  return saved.map((r: any) => ({
     id: r.id, kind: r.kind, title: r.title, when: whenText(r, ctx.timezone), surprise: r.surprise, label: doneLabel(r.kind), status: 'prepared' as const,
+    confirm: r.confirm_via ?? 'ask',
+    ...(orders.find(x => x.r.id === r.id) ? { seller: orders.find(x => x.r.id === r.id)!.p!.order!.seller } : {}),
     ...(r.phone && r.call_status ? { call: { place: r.place ?? r.title, phone: r.phone, status: r.call_status } } : {}),
   }));
 }
@@ -674,94 +710,208 @@ export async function placeCall(ctx: Ctx, bookingId: string): Promise<Result> {
   return res({ booking: { ...claimed[0], call_id: callId }, message, called: true });
 }
 
-/** The call's outcome: booked → finished like "I booked it" (calendar, reminder, partner); not booked → say why. */
+
+/**
+ * The call's outcome. Booked on the call: Bella marks it booked herself with what the restaurant confirmed (time, party
+ * size, any reference), and it goes in the calendar, gets a reminder, and the partner hears. Not booked: nothing is
+ * marked, she says why and offers the next option, and the "I booked it" tap comes back for the links.
+ */
 export async function finishCall(o: CallOutcome): Promise<'booked' | 'failed' | 'ignored'> {
   const { data: b } = await db.from('bookings').select('*').eq('call_id', o.callId).maybeSingle();
   if (!b || (o.bookingId && o.bookingId !== b.id) || b.call_status !== 'calling') return 'ignored';
   const { data: s } = await db.from('agent_settings').select('timezone').eq('user_id', b.user_id).maybeSingle();
   const ctx = await loadCtx(b.user_id, s?.timezone ?? 'America/Los_Angeles');
-  const summary = [o.booked ? 'Booked' : whyNot(o), o.notes].filter(Boolean).join('. ').slice(0, 2000);
+  const d = decideCall(b, o, ctx.timezone);
+  const summary = [d.state === 'booked' ? `Booked${d.ref ? ` (ref ${d.ref})` : ''}` : whyNot(o), o.notes].filter(Boolean).join('. ').slice(0, 2000);
 
-  if (!o.booked) {
-    const { data: claimed } = await db.from('bookings').update({ call_status: 'failed', call_summary: summary }).eq('id', b.id).eq('call_status', 'calling').select('id');
+  if (d.state === 'failed') {
+    const { data: claimed } = await db.from('bookings').update({ call_status: 'failed', call_summary: summary, confirm_via: 'ask' }).eq('id', b.id).eq('call_status', 'calling').select('id');
     if (!claimed?.length) return 'ignored';
     const note = whyNot(o);
-    await patchCard(b.message_id, b.id, c => ({ ...c, call: c.call ? { ...c.call, status: 'failed', note } : c.call }));
-    const text = `I called ${b.place}, but ${note}.${o.notes ? ` ${o.notes}` : ''} Want me to find another spot, or will you try the links?`;
+    await patchCard(b.message_id, b.id, c => ({ ...c, confirm: 'ask', call: c.call ? { ...c.call, status: 'failed', note } : c.call }));
+    const text = await localized(db, ctx.userId, callLine(b, d, ctx.timezone, note, o.notes));
     await addMessage(ctx.userId, 'belluh', text, { kind: 'booking_call', booking_id: b.id });
     await notify(ctx.userId, text, { push: text, tag: 'booking' });
+    await logActivity(ctx.userId, 'called_place', `${b.place ?? b.title}: ${note}`, false);
     return 'failed';
   }
 
-  // They may have offered a slightly different time; the booking follows what the restaurant confirmed
-  let startsAt = b.starts_at as string;
-  if (o.time && b.starts_at) {
-    const day = new Intl.DateTimeFormat('en-CA', { timeZone: ctx.timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(b.starts_at));
-    startsAt = zonedToUtc(`${day}T${o.time}`, ctx.timezone) ?? startsAt;
-  }
-  const { data: claimed } = await db.from('bookings').update({ call_status: 'booked', call_summary: summary, starts_at: startsAt }).eq('id', b.id).eq('call_status', 'calling').select('id');
+  const { data: claimed } = await db.from('bookings').update({ call_status: 'booked', call_summary: summary, starts_at: d.starts_at, ...(d.people ? { people: d.people } : {}) })
+    .eq('id', b.id).eq('call_status', 'calling').select('id');
   if (!claimed?.length) return 'ignored';
-  await patchCard(b.message_id, b.id, c => ({ ...c, when: whenText({ starts_at: startsAt, all_day: false }, ctx.timezone), call: c.call ? { ...c.call, status: 'booked' } : c.call }));
-  const r = await bookingDone(ctx, b.id, true, `They confirmed on the phone, under ${(ctx.myName || '').split(' ')[0] || 'your name'}.${o.notes ? ` ${o.notes}` : ''}`);
+  await patchCard(b.message_id, b.id, c => ({ ...c, call: c.call ? { ...c.call, status: 'booked' } : c.call }));
+  const r = await bookingDone(ctx, b.id, true, [callLine(b, d, ctx.timezone, '', null), o.notes].filter(Boolean).join(' '), { by: 'bella', ref: d.ref, people: d.people });
   const line = (r.body?.message as any)?.body as string | undefined;
-  if (line) await notify(ctx.userId, line, { push: line, tag: 'booking' });
+  if (line) await notify(ctx.userId, discreetLine(b, line), { push: discreetLine(b, line), tag: 'booking' });
   return 'booked';
 }
 
 /**
- * "I booked it" (or "Not now"): once it's done, it goes in their calendar feed, gets a reminder, is remembered, and the
- * partner hears about it in your shared thread (never for flowers or gifts, which are surprises).
+ * The shop confirmed an order (its signed order webhook, or the checkout Bella opened coming back completed). Only a
+ * checkout Bella opened for this person counts, and a webhook only from that same shop. Then it's marked ordered with
+ * the order number and delivery day, exactly like a booking she made. A canceled order is never marked; she says so.
  */
-export async function bookingDone(ctx: Ctx, bookingId: string, done: boolean, lead?: string): Promise<Result> {
+export async function confirmOrder(conf: OrderConfirmation, from: { profile: string | null } | null): Promise<'ordered' | 'canceled' | 'ignored'> {
+  if (!conf.checkoutId) return 'ignored';
+  const { data: o } = await db.from('booking_orders').select('*').eq('checkout_id', conf.checkoutId).maybeSingle();
+  if (!o || (from && !sameShop(from.profile, o.shop))) return 'ignored';
+  const { data: b } = await db.from('bookings').select('*').eq('id', o.booking_id).maybeSingle();
+  if (!b || b.user_id !== o.user_id) return 'ignored';
+  const { data: s } = await db.from('agent_settings').select('timezone').eq('user_id', b.user_id).maybeSingle();
+  const ctx = await loadCtx(b.user_id, s?.timezone ?? 'America/Los_Angeles');
+  if (conf.canceled) {
+    if (o.order_id && o.order_id !== conf.orderId) return 'ignored';   // already canceled, or a different order
+    const claim = db.from('booking_orders').update({ order_id: `canceled:${conf.orderId}`.slice(0, 120) }).eq('booking_id', o.booking_id);
+    const { data: once } = await (o.order_id ? claim.eq('order_id', o.order_id) : claim.is('order_id', null)).select('booking_id');
+    if (!once?.length) return 'ignored';
+    // Something Bella marked ordered is no longer on its way: it comes off the calendar
+    if (b.status === 'booked' && b.confirmed_by === 'bella') {
+      await db.from('bookings').update({ status: 'dismissed' }).eq('id', b.id);
+      await patchCard(b.message_id, b.id, c => ({ ...c, status: 'dismissed' }));
+    }
+    const text = await localized(db, ctx.userId, `${o.seller ?? 'The shop'} canceled the order for ${b.title}, so nothing is on its way. Want me to find another option?`);
+    await addMessage(ctx.userId, 'belluh', text, { kind: 'booking_call', booking_id: b.id });
+    await notify(ctx.userId, discreetLine(b, text), { push: discreetLine(b, text), tag: 'booking' });
+    return 'canceled';
+  }
+  // Claim it, so a webhook and the hourly check never confirm it twice
+  const { data: claimed } = await db.from('booking_orders').update({ order_id: conf.orderId }).eq('booking_id', o.booking_id).is('order_id', null).select('booking_id');
+  if (!claimed?.length) return 'ignored';
+  if (b.status !== 'prepared') {
+    // They tapped "I ordered it" first: keep their tap, add what the shop confirmed
+    await db.from('bookings').update({ confirm_ref: conf.ref, ...(conf.deliveryOn ? { delivery_on: conf.deliveryOn } : {}) }).eq('id', b.id);
+    return 'ignored';
+  }
+  const r = await bookingDone(ctx, b.id, true, undefined, { by: 'bella', ref: conf.ref, deliveryOn: conf.deliveryOn, seller: o.seller });
+  const line = (r.body?.message as any)?.body as string | undefined;
+  if (line) await notify(ctx.userId, discreetLine(b, line), { push: discreetLine(b, line), tag: 'booking' });
+  return 'ordered';
+}
+
+/** Every hour: asks the shop about checkouts Bella opened in the last three days that haven't been confirmed yet. */
+export async function checkOpenOrders(onlyUser: string | null = null, fetchImpl: typeof fetch = fetch): Promise<number> {
+  let q = db.from('booking_orders').select('booking_id, checkout_id, shop, checked_at').is('order_id', null)
+    .gte('created_at', new Date(Date.now() - 3 * 86_400_000).toISOString()).order('created_at', { ascending: false }).limit(40);
+  if (onlyUser) q = q.eq('user_id', onlyUser);
+  const { data } = await q;
+  let n = 0;
+  for (const o of data ?? []) {
+    if (o.checked_at && Date.now() - new Date(o.checked_at).getTime() < 50 * 60_000) continue;
+    await db.from('booking_orders').update({ checked_at: new Date().toISOString() }).eq('booking_id', o.booking_id);
+    const conf = await checkoutOrder(o.shop, o.checkout_id, fetchImpl);
+    if (conf && (await confirmOrder({ ...conf, checkoutId: o.checkout_id }, null)) === 'ordered') n++;
+  }
+  return n;
+}
+
+/**
+ * Once per booking, for what Bella can't confirm herself: "Did the tickets go through?" In the app it comes with a
+ * yes and a not yet; by text, BOOKED or ORDERED. Surprises are asked about without naming them on a lock screen.
+ */
+export async function askIfDone(ctx: Ctx, now = new Date()): Promise<number> {
+  const { data } = await db.from('bookings').select('id, kind, title, status, surprise, confirm_via, call_status, created_at, starts_at, follow_up_at')
+    .eq('user_id', ctx.userId).eq('status', 'prepared').is('follow_up_at', null)
+    .gte('created_at', new Date(now.getTime() - 7 * 86_400_000).toISOString()).order('created_at', { ascending: true }).limit(10);
+  for (const b of data ?? []) {
+    if (!followUpDue(b, now)) continue;
+    const { data: claimed } = await db.from('bookings').update({ follow_up_at: now.toISOString() }).eq('id', b.id).is('follow_up_at', null).eq('status', 'prepared').select('id');
+    if (!claimed?.length) continue;
+    const body = await localized(db, ctx.userId, followUpAsk(b, false));
+    await addMessage(ctx.userId, 'belluh', body, { kind: 'booking_check', booking_id: b.id, booking_kind: b.kind, status: 'open' });
+    await logActivity(ctx.userId, 'asked_if_booked', b.surprise ? null : b.title);
+    const text = await localized(db, ctx.userId, followUpAsk(b, true));
+    await notify(ctx.userId, text, { push: discreetLine(b, body), tag: 'booking' });
+    return 1;   // one question at a time
+  }
+  return 0;
+}
+
+/** Their answer to "Did it go through?": yes finishes it like "I booked it"; not yet keeps it ready; no sets it aside. */
+export async function bookingAnswer(ctx: Ctx, bookingId: string, answer: string, messageId: string | null = null): Promise<Result> {
+  if (answer !== 'yes' && answer !== 'not_yet' && answer !== 'no') return res({ error: 'Bad answer' }, 400);
+  const { data: b } = await db.from('bookings').select('id, user_id, status').eq('id', bookingId).maybeSingle();
+  if (!b || b.user_id !== ctx.userId) return res({ error: 'Not found' }, 404);
+  if (messageId) {
+    const { data: m } = await db.from('agent_messages').select('id, user_id, meta').eq('id', messageId).maybeSingle();
+    if (m && m.user_id === ctx.userId && (m.meta as any)?.booking_id === bookingId) await db.from('agent_messages').update({ meta: { ...(m.meta as object), status: answer } }).eq('id', messageId);
+  }
+  if (answer === 'yes') return bookingDone(ctx, bookingId, true);
+  await db.from('bookings').update({ follow_up_answer: answer }).eq('id', bookingId);
+  if (answer === 'no') return bookingDone(ctx, bookingId, false);
+  return res({ booking: b, message: null });
+}
+
+/**
+ * Done: by their tap ("I booked it"), their word, or Bella's own confirmation (the restaurant on her call, the shop's
+ * order). It goes in their calendar feed, gets a reminder, is remembered, and the partner hears about it in the shared
+ * thread (never for flowers or gifts, which are surprises). "Not now" just sets it aside.
+ */
+export async function bookingDone(ctx: Ctx, bookingId: string, done: boolean, lead?: string, detail: DoneDetail & { time?: string | null } = { by: 'person' }): Promise<Result> {
   const { data: b } = await db.from('bookings').select('*').eq('id', bookingId).maybeSingle();
   if (!b || b.user_id !== ctx.userId) return res({ error: 'Not found' }, 404);
   const status = done ? 'booked' : 'dismissed';
   if (b.status !== 'prepared') return res({ booking: b, message: null });
-  const { data: claimed } = await db.from('bookings').update({ status, booked_at: done ? new Date().toISOString() : null }).eq('id', bookingId).eq('status', 'prepared').select('*');
+  // What was confirmed wins over what was planned: a time on the same day, a delivery day for something without one
+  let startsAt: string | null = b.starts_at, allDay: boolean = b.all_day;
+  if (done && detail.time && b.starts_at && !b.all_day) {
+    const day = new Intl.DateTimeFormat('en-CA', { timeZone: ctx.timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(b.starts_at));
+    startsAt = zonedToUtc(`${day}T${detail.time}`, ctx.timezone) ?? startsAt;
+  }
+  if (done && detail.deliveryOn && (!b.starts_at || b.all_day)) { startsAt = zonedToUtc(`${detail.deliveryOn}T00:00`, ctx.timezone) ?? startsAt; allDay = true; }
+  const { data: claimed } = await db.from('bookings').update({
+    status, booked_at: done ? new Date().toISOString() : null,
+    ...(done ? { confirmed_by: detail.by, starts_at: startsAt, all_day: allDay, ...(detail.ref ? { confirm_ref: detail.ref.slice(0, 60) } : {}), ...(detail.people ? { people: detail.people } : {}), ...(detail.deliveryOn ? { delivery_on: detail.deliveryOn } : {}) } : {}),
+    ...(b.follow_up_at && !b.follow_up_answer ? { follow_up_answer: done ? 'yes' : 'no' } : {}),
+  }).eq('id', bookingId).eq('status', 'prepared').select('*');
   if (!claimed?.length) return res({ booking: b, message: null });
+  const row = claimed[0];
+  const when = whenText(row, ctx.timezone);
 
   // The card under Belluh's reply shows the new state wherever it's opened
-  await patchCard(b.message_id, bookingId, c => ({ ...c, status }));
-  await logActivity(ctx.userId, done ? 'marked_booked' : 'dismissed_booking', claimed[0].title);
-  if (!done) return res({ booking: claimed[0], message: null });
+  await patchCard(b.message_id, bookingId, c => ({ ...c, status, ...(done ? { when, by: detail.by, ref: row.confirm_ref ?? null, people: row.kind === 'table' ? row.people ?? null : null } : {}) }));
+  await logActivity(ctx.userId, done ? (detail.by === 'bella' ? 'confirmed_booking' : 'marked_booked') : 'dismissed_booking', row.surprise && detail.by === 'bella' ? null : row.title);
+  if (!done) return res({ booking: row, message: null });
 
-  b.starts_at = claimed[0].starts_at;   // a call may have moved the time
-  const when = whenText(b, ctx.timezone);
   const done_: string[] = [];
   // Remembered, so Belluh knows what they've tried and never suggests the same gift twice
-  const fact = memoryFor(b, ctx.partnerName, ctx.timezone);
+  const fact = memoryFor(row, ctx.partnerName, ctx.timezone);
   const { error: memErr } = await db.from('agent_memories').insert({ user_id: ctx.userId, fact });
   if (!memErr || memErr.code === '23505') done_.push('remembered');
   // A reminder before it happens, for them and (unless it's a surprise) their partner
-  const r = reminderFor(b, ctx.timezone);
+  const r = reminderFor(row, ctx.timezone);
   if (r) {
     await db.from('personal_reminders').insert({ user_id: ctx.userId, body: r.body, due_at: r.due_at });
-    if (!b.surprise && ctx.partnerId) {
-      const pr = reminderFor(b, await tzOf(ctx.partnerId, ctx.timezone));
+    if (!row.surprise && ctx.partnerId) {
+      const pr = reminderFor(row, await tzOf(ctx.partnerId, ctx.timezone));
       if (pr) await db.from('personal_reminders').insert({ user_id: ctx.partnerId, body: pr.body, due_at: pr.due_at });
     }
     done_.push('reminder');
   }
-  if (b.starts_at) done_.push('calendar');
-  // The partner hears about it in the shared thread, and on their phone
-  if (!b.surprise && ctx.partnerId) {
-    const line = `${ctx.myName} booked ${b.title}${when ? `, ${when}` : ''}. It's in both your calendars and I'll remind you both.`;
-    await usAdd(ctx, null, 'belluh', b.starts_at ? line : `${ctx.myName} booked ${b.title}.`, { booking_id: b.id });
-    await notify(ctx.partnerId, b.starts_at ? line : `${ctx.myName} booked ${b.title}.`, { push: b.starts_at ? line : `${ctx.myName} booked ${b.title}.`, tag: 'booking' });
+  if (row.starts_at) done_.push('calendar');
+  // The partner hears about it in the shared thread, and on their phone, in their own language
+  if (!row.surprise && ctx.partnerId) {
+    const line = await localized(db, ctx.partnerId, partnerLine(row, detail, when, ctx.myName));
+    await usAdd(ctx, null, 'belluh', line, { booking_id: row.id });
+    await notify(ctx.partnerId, line, { push: line, tag: 'booking' });
     done_.push('partner');
   }
   const parts = [
-    b.starts_at ? `It's in your calendar${!b.surprise && ctx.partnerId ? ` and ${ctx.partnerName ?? 'your partner'}'s` : ''}` : null,
+    row.starts_at ? `It's in your calendar${!row.surprise && ctx.partnerId ? ` and ${ctx.partnerName ?? 'your partner'}'s` : ''}` : null,
     r ? `I'll remind you ${new Date(r.due_at).getTime() - Date.now() > 20 * 3600_000 ? 'the evening before' : 'a couple of hours before'}` : null,
-    b.surprise ? `${ctx.partnerName ?? 'Your partner'} won't see a thing` : null,
+    row.surprise ? `${ctx.partnerName ?? 'Your partner'} won't see a thing` : null,
   ].filter(Boolean);
-  const text = `${b.kind === 'gift' || b.kind === 'flowers' || b.kind === 'dinner' ? 'Ordered' : 'Booked'}: ${b.call_status === 'booked' && b.place ? `${b.place}` : b.title}${when ? `, ${when}` : ''}.${lead ? ` ${lead}` : ''}${parts.length ? ` ${parts.join('. ')}.` : ''}`;
-  const message = await addMessage(ctx.userId, 'belluh', text, { kind: 'booking_done', booking_id: b.id });
-  return res({ booking: claimed[0], message, done: done_ });
+  const head = doneHeadline(row, { ...detail, people: row.kind === 'table' ? row.people : null, ref: row.confirm_ref }, when, ctx.partnerName, (ctx.myName || '').split(' ')[0] || null);
+  const text = await localized(db, ctx.userId, `${head}${lead ? ` ${lead}` : ''}${parts.length ? ` ${parts.join('. ')}.` : ''}`);
+  const message = await addMessage(ctx.userId, 'belluh', text, { kind: 'booking_done', booking_id: row.id, by: detail.by });
+  return res({ booking: row, message, done: done_ });
 }
 
 /** Texting: BOOKED / ORDERED confirms the latest thing Belluh got ready. */
 export async function latestPrepared(userId: string): Promise<string | null> {
+  // The one Bella just asked about ("Did the tickets go through?") comes first
+  const { data: asked } = await db.from('bookings').select('id').eq('user_id', userId).eq('status', 'prepared').is('follow_up_answer', null)
+    .gte('follow_up_at', new Date(Date.now() - 2 * 86_400_000).toISOString()).order('follow_up_at', { ascending: false }).limit(1);
+  if (asked?.[0]) return asked[0].id;
   const { data } = await db.from('bookings').select('id').eq('user_id', userId).eq('status', 'prepared')
     .gte('created_at', new Date(Date.now() - 7 * 86_400_000).toISOString()).order('created_at', { ascending: false }).limit(1);
   return data?.[0]?.id ?? null;

@@ -16,7 +16,7 @@
 import { cleanReply, REACT_INSTRUCTION } from '../_shared/agent.ts';
 import { jsonAnswer } from '../_shared/gemini.ts';
 import { db, loadCtx, buildSystem, addMessage, history, weekView, type Ctx } from '../_shared/agentdb.ts';
-import { chat, underLimit, sendNote, planRespond, planCancel, checkin, ownPhoto, usHistory, usSend, offerRespond, bookingDone, placeCall, type Result } from '../_shared/agentcore.ts';
+import { chat, underLimit, sendNote, planRespond, planCancel, checkin, ownPhoto, usHistory, usSend, offerRespond, bookingDone, placeCall, bookingAnswer, type Result } from '../_shared/agentcore.ts';
 import { ideasFor, goalLog, goalStop, watchStop, goalStep, activityFor } from '../_shared/goalsdb.ts';
 
 const CORS = {
@@ -75,6 +75,7 @@ Deno.serve(async (req) => {
       case 'offer_respond': return out(await offerRespond(ctx, String(body.message_id ?? ''), body.accept === true));
       case 'booking': return out(await bookingDone(ctx, String(body.booking_id ?? ''), body.done !== false));
       case 'booking_call': return out(await placeCall(ctx, String(body.booking_id ?? '')));
+      case 'booking_answer': return out(await bookingAnswer(ctx, String(body.booking_id ?? ''), String(body.answer ?? ''), typeof body.message_id === 'string' ? body.message_id : null));
       case 'us_history': return out(await usHistory(ctx));
       case 'us_send': return out(await usSend(ctx, String(body.message ?? ''), body.ask_belluh !== false));
       case 'ideas': return json(await ideasFor(ctx));

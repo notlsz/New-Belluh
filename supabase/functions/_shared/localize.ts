@@ -21,7 +21,7 @@ export function languageFor(tag: string | null | undefined): string | null {
 
 const keep = (s: string) => [
   ...(s.match(/https?:\/\/\S+/g) ?? []),                 // links
-  ...(s.match(/\b(PLAN IT|NOT NOW|DID IT|NOT YET|SKIP|NONE|STOP|START|LIST|HELP|LINK)\b/g) ?? []),   // reply words the inbox understands
+  ...(s.match(/\b(PLAN IT|NOT NOW|DID IT|NOT YET|SKIP|NONE|STOP|START|LIST|HELP|LINK|BOOKED|ORDERED|CALL)\b/g) ?? []),   // reply words the inbox understands
   ...(s.match(/\d+\)/g) ?? []),                          // numbered choices
 ];
 

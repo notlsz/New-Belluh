@@ -630,7 +630,7 @@ const ko: Dict = {
       draft_note_to_partner: '메시지 초안을 썼어요',
       sent_note: '{partner}에게 메시지를 보냈어요',
       called_place: '대신 가게에 전화했어요',
-      marked_booked: '예약 완료로 표시했어요',
+      marked_booked: '예약 완료로 표시했어요', confirmed_booking: '벨라가 직접 예약을 확인했어요', asked_if_booked: '됐는지 물어봤어요', confirm_booking: '됐다고 기록했어요',
       dismissed_booking: '보류했어요',
       sent_reminder: '리마인더를 보냈어요',
       watch_found: '기다리던 걸 찾았어요',

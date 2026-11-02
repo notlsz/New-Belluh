@@ -570,6 +570,16 @@ export const TOOL_DECLARATIONS = [
     parameters: { type: 'OBJECT', properties: { level: { type: 'STRING', description: 'quiet, normal or more' } }, required: ['level'] },
   },
   {
+    name: 'confirm_booking',
+    description: 'Record whether something you got ready earlier (a table, a trip, tickets, flowers, a gift, food) went through, when they tell you in their own words ("the tickets went through", "not yet", "we decided not to") or paste, forward or screenshot its confirmation. Only from their latest message. You never confirm anything yourself from a guess.',
+    parameters: { type: 'OBJECT', properties: {
+      which: { type: 'STRING', description: 'Which thing it is, in a few words (the restaurant, the show, the gift).' },
+      excerpt: { type: 'STRING', description: 'Their words, or the confirmation text exactly as it appears (with any confirmation or order number, time and party size).' },
+      went_through: { type: 'BOOLEAN', description: 'True if it is booked or ordered.' },
+      not_yet: { type: 'BOOLEAN', description: 'True if they still mean to do it.' },
+    }, required: ['which', 'excerpt', 'went_through'] },
+  },
+  {
     name: 'draft_note_to_partner',
     description: "Draft a note to the user's partner, in the user's voice. The user approves it before it is sent.",
     parameters: { type: 'OBJECT', properties: { text: { type: 'STRING' } }, required: ['text'] },
@@ -599,7 +609,8 @@ export type ToolCall =
   | { name: 'take_shape'; shape: Shape }
   | { name: 'set_goal' | 'watch_for'; args: Record<string, unknown> }
   | { name: 'log_goal'; goal: string; amount: number }
-  | { name: 'set_proactivity'; level: 'quiet' | 'normal' | 'more' };
+  | { name: 'set_proactivity'; level: 'quiet' | 'normal' | 'more' }
+  | { name: 'confirm_booking'; which: string; excerpt: string; went_through: boolean; not_yet: boolean };
 
 /** A shape Belluh's water body takes: back to water, an emoji's silhouette, or an SVG path in a 100x100 box. */
 export type Shape = { water: true } | { label: string; emoji: string } | { label: string; path: string };
@@ -633,6 +644,10 @@ export function validateToolCall(name: string, args: Record<string, unknown> | u
     }
     case 'set_goal': return typeof a.kind === 'string' && typeof a.title === 'string' ? { name, args: a } : null; // checked by validateGoal
     case 'watch_for': return typeof a.kind === 'string' && typeof a.what === 'string' ? { name, args: a } : null; // checked by validateWatch
+    case 'confirm_booking': {
+      const which = clean(a.which, 80), excerpt = clean(a.excerpt, 1500);
+      return excerpt.length >= 2 && typeof a.went_through === 'boolean' ? { name, which, excerpt, went_through: a.went_through, not_yet: a.went_through ? false : a.not_yet === true } : null;
+    }
     case 'set_proactivity': return a.level === 'quiet' || a.level === 'normal' || a.level === 'more' ? { name, level: a.level } : null;
     case 'log_goal': {
       const goal = clean(a.goal, 80), amount = Number(a.amount);
