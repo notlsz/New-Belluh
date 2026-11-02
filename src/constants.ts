@@ -176,6 +176,16 @@ export const ORGANIZATIONS: Organization[] = [
     logo: '/logos/openai-com.png'
   },
   { 
+    name: 'Anthropic',
+    domain: 'anthropic.com',
+    logo: '/logos/anthropic-com.png'
+  },
+  { 
+    name: 'Cognition',
+    domain: 'cognition.ai',
+    logo: '/logos/cognition-ai.png'
+  },
+  { 
     name: 'Perplexity',
     domain: 'perplexity.ai',
     logo: '/logos/perplexity-ai.png'
@@ -186,9 +196,19 @@ export const ORGANIZATIONS: Organization[] = [
     logo: '/logos/apple-com.png'
   },
   { 
+    name: 'Samsung',
+    domain: 'samsung.com',
+    logo: '/logos/samsung-com.png'
+  },
+  { 
     name: 'NVIDIA',
     domain: 'nvidia.com',
     logo: '/logos/nvidia-com.png'
+  },
+  { 
+    name: 'SpaceX',
+    domain: 'spacex.com',
+    logo: '/logos/spacex-com.png'
   },
   { 
     name: 'Palantir',
@@ -199,6 +219,21 @@ export const ORGANIZATIONS: Organization[] = [
     name: 'Jane Street',
     domain: 'janestreet.com',
     logo: '/logos/janestreet-com.png'
+  },
+  { 
+    name: 'Hudson River Trading',
+    domain: 'hudsonrivertrading.com',
+    logo: '/logos/hudsonrivertrading-com.png'
+  },
+  { 
+    name: 'Citadel',
+    domain: 'citadel.com',
+    logo: '/logos/citadel-com.png'
+  },
+  { 
+    name: 'J.P. Morgan',
+    domain: 'jpmorgan.com',
+    logo: '/logos/jpmorgan-com.png'
   },
   { 
     name: 'Goldman Sachs',
@@ -236,9 +271,39 @@ export const ORGANIZATIONS: Organization[] = [
     logo: '/logos/tiktok-com.png'
   },
   { 
+    name: 'Tencent',
+    domain: 'tencent.com',
+    logo: '/logos/tencent-com.png'
+  },
+  { 
     name: 'Snapchat',
     domain: 'snapchat.com',
     logo: '/logos/snapchat-com.png'
+  },
+  { 
+    name: 'Tinder',
+    domain: 'tinder.com',
+    logo: '/logos/tinder-com.png'
+  },
+  { 
+    name: 'Hinge',
+    domain: 'hinge.co',
+    logo: '/logos/hinge-co.png'
+  },
+  { 
+    name: 'Grindr',
+    domain: 'grindr.com',
+    logo: '/logos/grindr-com.png'
+  },
+  { 
+    name: 'Tantan',
+    domain: 'tantanapp.com',
+    logo: '/logos/tantanapp-com.png'
+  },
+  { 
+    name: 'Soul',
+    domain: 'soulapp.cn',
+    logo: '/logos/soulapp-cn.png'
   },
   { 
     name: 'Discord',
