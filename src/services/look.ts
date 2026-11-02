@@ -57,7 +57,8 @@ export function musicEmbed(url: string): { src: string; h: number } | null {
 
 // Search that finds the real thing: several sources at once, ranked by how closely the title (and artist or author)
 // matches what was typed, the same item merged across sources, and the best cover kept.
-export interface Found { title: string; by: string; year: string; cover: string | null; preview?: string | null; url?: string | null; kind?: string }
+export interface Found { title: string; by: string; year: string; cover: string | null; preview?: string | null; url?: string | null; kind?: string; /** Every cover found for it, best first: if one won't load, the next is tried */ covers?: string[] }
+const coversOf = (...xs: (Found | undefined)[]) => [...new Set(xs.flatMap(x => (x ? [...(x.covers ?? []), ...(x.cover ? [x.cover] : [])] : [])))];
 const norm = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\u3040-\u30ff\u4e00-\u9fff ]+/g, ' ').replace(/\s+/g, ' ').trim();
 function score(q: string, x: Found): number {
   const nq = norm(q), t = norm(x.title), b = norm(x.by), both = `${t} ${b}`;
@@ -85,7 +86,7 @@ function rank(q: string, all: Found[], n = 8): Found[] {
     const was = seen.get(k);
     // Keep the name in the script the search was typed in (Haruki Murakami for "murakami", 村上春樹 for "村上")
     const latin = /^[\x00-\x7f\u00c0-\u024f\s]*$/;
-    if (!was) seen.set(k, x); else seen.set(k, { ...was, by: latin.test(q) && !latin.test(was.by) && latin.test(x.by) ? x.by : was.by, cover: was.cover ?? x.cover, year: was.year || x.year, preview: was.preview ?? x.preview, url: was.url ?? x.url });
+    if (!was) seen.set(k, { ...x, covers: coversOf(x) }); else { const covers = coversOf(was, x); seen.set(k, { ...was, by: latin.test(q) && !latin.test(was.by) && latin.test(x.by) ? x.by : was.by, cover: covers[0] ?? null, covers, year: was.year || x.year, preview: was.preview ?? x.preview, url: was.url ?? x.url }); }
   }
   // The artist or author who shows up most for this search is usually the original
   const lead = (x: Found) => norm(x.by).split(' ').slice(0, 2).join(' ');
@@ -123,24 +124,28 @@ export async function findMovies(q: string): Promise<Found[]> {
   ]);
   const all: Found[] = [
     ...(apple?.results ?? []).map((r: any, i: number) => ({ _i: i, title: r.trackName, by: r.artistName ?? '', year: (r.releaseDate ?? '').slice(0, 4), cover: big(r.artworkUrl100, '600x900'), url: r.trackViewUrl ?? null, kind: 'film' })),
-    ...(appleTv?.results ?? []).map((r: any) => ({ title: String(r.artistName ?? r.collectionName).replace(/, Season \d+$/i, ''), by: '', year: (r.releaseDate ?? '').slice(0, 4), cover: big(r.artworkUrl100, '600x900'), kind: 'series' })),
-    ...(en ?? []), ...(local ?? []),
     ...((tv ?? []) as any[]).slice(0, 6).map(x => ({ title: x.show.name, by: '', year: (x.show.premiered ?? '').slice(0, 4), cover: x.show.image?.original?.replace('http:', 'https:') ?? x.show.image?.medium?.replace('http:', 'https:') ?? null, kind: 'series' })),
+    ...(en ?? []), ...(local ?? []),
+    // Apple's TV art is a square season tile: kept as a last resort behind a real poster
+    ...(appleTv?.results ?? []).map((r: any) => ({ title: String(r.artistName ?? r.collectionName).replace(/, Season \d+$/i, ''), by: '', year: (r.releaseDate ?? '').slice(0, 4), cover: big(r.artworkUrl100, '600x600'), kind: 'series' })),
   ];
   // Directors from Apple aren't the "by" people expect; match on title and year
   return rank(t, all.map(x => ({ ...x, by: x.year })));
 }
 
-/** Books: Open Library and Google Books together, real editions with covers */
+/** Books: Apple Books, Open Library and Google Books together, real editions with real covers. Apple's covers are the
+ * sharpest; Open Library's are asked for without its blank stand-in, so a missing one fails and the next is tried. */
 export async function findBooks(q: string): Promise<Found[]> {
   const t = q.trim(); if (t.length < 2) return [];
-  const [ol, gb] = await Promise.all([
+  const [apple, ol, gb] = await Promise.all([
+    getJson(`https://itunes.apple.com/search?term=${encodeURIComponent(t)}&media=ebook&entity=ebook&limit=10&country=${country()}`),
     getJson(`https://openlibrary.org/search.json?q=${encodeURIComponent(t)}&limit=12&fields=title,author_name,cover_i,first_publish_year,key,edition_count`),
     getJson(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(t)}&maxResults=12&printType=books`),
   ]);
   const all: Found[] = [
-    ...(ol?.docs ?? []).sort((a: any, b: any) => (b.edition_count ?? 0) - (a.edition_count ?? 0)).map((d: any, i: number) => ({ _i: i, title: d.title, by: (d.author_name ?? [])[0] ?? '', year: String(d.first_publish_year ?? ''), cover: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg` : null, url: d.key ? `https://openlibrary.org${d.key}` : null })),
-    ...(gb?.items ?? []).map((i: any) => ({ title: i.volumeInfo?.title, by: (i.volumeInfo?.authors ?? [])[0] ?? '', year: (i.volumeInfo?.publishedDate ?? '').slice(0, 4), cover: (i.volumeInfo?.imageLinks?.thumbnail ?? i.volumeInfo?.imageLinks?.smallThumbnail ?? '').replace('http:', 'https:').replace('&edge=curl', '').replace('zoom=1', 'zoom=2') || null, url: i.volumeInfo?.infoLink ?? null })).filter((x: Found) => x.title),
+    ...(apple?.results ?? []).map((r: any, i: number) => ({ _i: i, title: String(r.trackName ?? '').replace(/: A Novel$/i, ''), by: r.artistName ?? '', year: (r.releaseDate ?? '').slice(0, 4), cover: big(r.artworkUrl100, '600x900'), url: r.trackViewUrl ?? null })).filter((x: Found) => x.title),
+    ...(ol?.docs ?? []).sort((a: any, b: any) => (b.edition_count ?? 0) - (a.edition_count ?? 0)).map((d: any, i: number) => ({ _i: i, title: d.title, by: (d.author_name ?? [])[0] ?? '', year: String(d.first_publish_year ?? ''), cover: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg?default=false` : null, url: d.key ? `https://openlibrary.org${d.key}` : null })),
+    ...(gb?.items ?? []).map((i: any) => ({ title: i.volumeInfo?.title, by: (i.volumeInfo?.authors ?? [])[0] ?? '', year: (i.volumeInfo?.publishedDate ?? '').slice(0, 4), cover: (i.volumeInfo?.imageLinks?.thumbnail ?? i.volumeInfo?.imageLinks?.smallThumbnail ?? '').replace('http:', 'https:').replace('&edge=curl', '') || null, url: i.volumeInfo?.infoLink ?? null })).filter((x: Found) => x.title),
   ];
   return rank(t, all);
 }
