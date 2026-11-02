@@ -120,7 +120,7 @@ const NoteDraft: React.FC<{ msg: AgentMessage; onSend: (id: string, text: string
 };
 
 const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremium, userName, initialMessage, onInitialMessageSent, onCompose, initialSpace, inSheet, onClose }) => {
-  const { d, f } = useI18n(); const ch = d.app.chat;
+  const { d, f, lang } = useI18n(); const ch = d.app.chat;
   const T = useUi(bellaUi);
   // 'agent' = server-side Belluh with memory; 'legacy' = the original in-browser chat, used if the agent isn't deployed
   const [mode, setMode] = useState<'loading' | 'agent' | 'legacy'>('loading');
@@ -249,7 +249,9 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
       ref = await uploadPrivate('photos', attached.file, ext, attached.file.type || 'image/jpeg');
       if (ref) setPhotoLinks(prev => new Map(prev).set(ref!, attached.preview));
     }
-    const res = await belluhAgent.chat(text, mediate ? 'mediate' : 'chat', ref);
+    // A question about their own past: Belluh Memory answers it on this phone first, so Bella can use the photos
+    const fromPhotos = mediate ? null : await import('../lib/memory/bella').then(m => m.photoAnswerFor(text, lang)).catch(() => null);
+    const res = await belluhAgent.chat(text, mediate ? 'mediate' : 'chat', ref, fromPhotos);
     if (res?.messages?.length) setRevealIds(prev => { const n = new Set(prev); res.messages.forEach(m => { if (m.role === 'belluh') n.add(m.id); }); return n; });
     res?.messages?.forEach(m => { if (m.role === 'belluh' && m.meta?.shape) belluh.applyAgentShape(m.meta.shape); });
     setAgentMessages(prev => {

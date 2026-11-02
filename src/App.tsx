@@ -5,6 +5,7 @@ import DragonflyMark from './components/DragonflyMark';
 const LoveMap = React.lazy(() => import('./pages/LoveMap'));
 // Skip the blank page: photos read on this device become places, trips and firsts (with its EXIF reader, only when opened)
 const PhotoStory = React.lazy(() => import('./components/PhotoStory'));
+const PassportPage = React.lazy(() => import('./pages/Passport'));
 const GuidePage = React.lazy(() => import('./pages/GuidePage'));
 const MissionPage = React.lazy(() => import('./pages/company/Mission'));
 const ImpactPage = React.lazy(() => import('./pages/company/Impact'));
@@ -26,7 +27,7 @@ const NotFoundPage = React.lazy(() => import('./pages/NotFound'));
 // Every address Belluh answers; anything else is a 404
 const knownPath = (path: string) => {
   const p = path.replace(/\/+$/, '') || '/';
-  return p === '/' || p === '/index.html' || ['/login', '/signup', '/about', '/faq', '/press', '/privacy', '/terms', '/cookies', '/consumer-health-data', '/security', '/mission', '/impact', '/research', '/careers', '/careers/fellows'].includes(p)
+  return p === '/' || p === '/index.html' || ['/login', '/signup', '/about', '/faq', '/press', '/privacy', '/terms', '/cookies', '/consumer-health-data', '/security', '/mission', '/impact', '/research', '/careers', '/careers/fellows', '/passport'].includes(p)
     || !!resourceAt(p) || p.startsWith('/report') || p.startsWith('/we-have-been-acquired') || /^\/g\/[a-z0-9]{6,32}$/i.test(p);
 };
 const guideSlug = window.location.pathname.match(/^\/g\/([a-z0-9]{6,32})\/?$/i)?.[1] ?? null;
@@ -161,7 +162,8 @@ const App: React.FC = () => {
       return true;
     } catch { return false; }
   });
-  const [currentTab, setCurrentTab] = useState('timeline');
+  // /passport opens Our Passport (the QR code a partner scans points here)
+  const [currentTab, setCurrentTab] = useState(() => (window.location.pathname.replace(/\/+$/, '') === '/passport' ? 'passport' : 'timeline'));
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [composePrompt, setComposePrompt] = useState<string | undefined>(undefined);
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -1388,6 +1390,7 @@ const App: React.FC = () => {
           <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => { setBelluhSheet(false); handleCompose(prompt); }} initialSpace="me" inSheet onClose={() => setBelluhSheet(false)} />
         </div>
       )}
+      {currentTab === 'passport' && <React.Suspense fallback={null}><PassportPage userName={user.name} partnerName={user.partnerName || null} hasPartner={hasPartner} /></React.Suspense>}
       {currentTab === 'profile' && <Profile user={user} entries={readableEntries} streak={streak} onCircleChange={handleCircleChange} onCreateCircle={handleCreateCircle} onArchiveCircle={handleArchiveCircle} onRenameCircle={handleRenameCircle} onLogout={handleLogout} onUpdateUser={handleUpdateUser} onShowLegal={(type) => setLegalModalOpen(type)} onViewArtifact={(type) => setArtifactModalOpen(type)} onShowToast={showNotification} pendingInvites={pendingInvites} onAcceptInvite={handleAcceptInvite} onDeclineInvite={handleDeclineInvite} />}
       
       {notification && <Toast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
@@ -1406,7 +1409,7 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
-      <TabBar currentTab={currentTab} usTab={hasPartner} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(c => !c)} badges={{ 'ai-coach': unreadNotes > 0 || newFromBelluh }} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); if (tab === 'ai-coach') { setTabSpace(unreadNotes > 0 || newFromBelluh ? 'me' : 'us'); setUnreadNotes(0); setNewFromBelluh(false); setBelluhReply(null); } setCurrentTab(tab); }} onCompose={() => handleCompose()} />
+      <TabBar currentTab={currentTab} usTab={hasPartner} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(c => !c)} badges={{ 'ai-coach': unreadNotes > 0 || newFromBelluh }} onTabChange={(tab) => { trackEvent('tab_changed', { tab }); if (tab === 'ai-coach') { setTabSpace(unreadNotes > 0 || newFromBelluh ? 'me' : 'us'); setUnreadNotes(0); setNewFromBelluh(false); setBelluhReply(null); } const onPassport = window.location.pathname.replace(/\/+$/, '') === '/passport'; if (tab === 'passport' && !onPassport) window.history.pushState({}, '', '/passport'); else if (tab !== 'passport' && onPassport) window.history.replaceState({}, '', '/'); setCurrentTab(tab); }} onCompose={() => handleCompose()} />
       {isComposeOpen && <div className="fixed inset-0 z-[60] bg-paper animate-slide-up"><button onClick={() => setIsComposeOpen(false)} aria-label={T.close} className="absolute top-5 right-4 w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 z-50 transition-colors"><X size={22} /></button><Journal onAddEntry={handleAddEntry} partnerName={user.partnerName || ''} onTriggerPremium={handleTriggerPremium} initialPrompt={composePrompt} userName={user.name} partnerHasEntry={partnerHasEntry} /></div>}
       
       {showIntro && <IntroGuide onClose={() => setShowIntro(false)} />}

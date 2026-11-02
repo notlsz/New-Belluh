@@ -1,6 +1,7 @@
 import { useI18n, useUi } from '../i18n';
 import shell from '../i18n/ui/shell';
 import map from '../i18n/ui/map';
+import passport from '../i18n/ui/passport';
 import DragonflyMark from './DragonflyMark';
 import { Emoji } from '../lib/emoji3d';
 import React from 'react';
@@ -25,9 +26,11 @@ const TabBar: React.FC<TabBarProps> = ({ currentTab, onTabChange, onCompose, bad
   const tb = useI18n().d.app.tabs;
   const T = useUi(shell).tabs;
   const M = useUi(map);
+  const P = useUi(passport);
   const tabs = [
     { id: 'timeline', emoji: '📖', label: tb.story },
     { id: 'map', emoji: '🗺️', label: M.tab },
+    { id: 'passport', emoji: '📘', label: P.tab },
     { id: 'compose', emoji: '', label: tb.capture },
     { id: 'ai-coach', emoji: usTab ? '💞' : '✨', label: usTab ? tb.us : tb.bella },
     { id: 'profile', emoji: '🙂', label: tb.me },
