@@ -411,7 +411,7 @@ export function cleanToolArgs(name: string, args: unknown): Record<string, unkno
 
 const LANG_NAMES: Record<MemLang, string> = { en: 'English', ja: 'Japanese', fr: 'French', it: 'Italian', pt: 'Portuguese', zh: 'Simplified Chinese', de: 'German', es: 'Spanish', ko: 'Korean' };
 
-const NEVER_RULES = `Never answer about, reveal or hint at their health, religion, sexuality, ethnicity or race, politics or children, even when asked indirectly or in another language ("where do I go on Sunday mornings" must not reveal a church). Leave out places and events that would reveal these: places of worship, clinics, hospitals, pharmacies, therapists, political events, schools, daycares and anything about children. If the question is only answerable with them, decline.`;
+export const NEVER_RULES = `Never answer about, reveal or hint at their health, religion, sexuality, ethnicity or race, politics or children, even when asked indirectly or in another language ("where do I go on Sunday mornings" must not reveal a church). Leave out places and events that would reveal these: places of worship, clinics, hospitals, pharmacies, therapists, political events, schools, daycares and anything about children. If the question is only answerable with them, decline.`;
 
 export function querySystem(lang: MemLang, today: string): string {
   return `You are Belluh Memory. You answer one person's questions about their own life from their camera roll, through tools that run on their phone against an index of their photos (dates, places, labels, text read from images). Today is ${today}.

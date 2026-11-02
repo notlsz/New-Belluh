@@ -23,6 +23,11 @@ import AskPhotos from '../components/memory/AskPhotos';
 import MemorySettings from '../components/memory/MemorySettings';
 import { AiBadge, Segmented, Thumb, card, btnDark, btnSoft, btnQuiet, fillT } from '../components/memory/bits';
 import type { PassportActivity } from '../services/passportStore';
+import fromPhotosUi from '../i18n/ui/fromPhotos';
+import { FromPhotosPanel } from '../components/memory/FromPhotos';
+import { useFromPhotos } from '../lib/memory/fromPhotos';
+import { shotForBella, type ShotPlan } from '../lib/memory/screenshots';
+import type { DateMark } from '../lib/memory/gaps';
 
 export interface PassportStoreLike {
   mine(): Promise<StoredPassport | null>;
@@ -43,12 +48,15 @@ interface Props {
   transport?: Transport;
   engineLoader?: () => Promise<MemoryEngine | null>;
   initialTab?: Tab;
+  /** For tests and the dev harness: the couple's last date, and how a plan reaches Bella */
+  lastDate?: () => Promise<DateMark | null>;
+  askBella?: (text: string, extras: { screenshot?: ReturnType<typeof shotForBella>; gaps?: string | null }) => Promise<boolean>;
 }
 type Tab = 'you' | 'us' | 'timeline' | 'sharing' | 'activity';
 const notReady: Transport = async function* () { yield { type: 'error', code: 'agent_unavailable', message: 'Loading' }; };
 const NO_SHARE = () => Object.fromEntries(SECTION_KEYS.map(k => [k, false])) as Record<SectionKey, boolean>;
 
-const Passport: React.FC<Props> = ({ userName, partnerName, hasPartner, store: storeIn, transport: transportIn, engineLoader = loadEngine, initialTab = 'you' }) => {
+const Passport: React.FC<Props> = ({ userName, partnerName, hasPartner, store: storeIn, transport: transportIn, engineLoader = loadEngine, initialTab = 'you', lastDate, askBella }) => {
   const T = useUi(strings);
   const { lang, date } = useI18n();
   const [store, setStore] = useState<PassportStoreLike | null>(storeIn ?? null);
@@ -316,7 +324,7 @@ const Passport: React.FC<Props> = ({ userName, partnerName, hasPartner, store: s
       <div className="mt-4">
         {tab === 'you' && youTab}
         {tab === 'us' && usTab}
-        {tab === 'timeline' && <TimelineTab engine={engine ?? null} searchable={searchable} />}
+        {tab === 'timeline' && <TimelineTab engine={engine ?? null} searchable={searchable} lastDate={lastDate} askBella={askBella} />}
         {tab === 'sharing' && sharingTab}
         {tab === 'activity' && activityTab}
       </div>
@@ -331,9 +339,29 @@ const Empty: React.FC<{ emoji: string; text: string }> = ({ emoji, text }) => (
   <div className={`${card} p-6 flex items-center gap-4`}><Emoji e={emoji} size={32} className="shrink-0" /><p className="text-[15px] text-slate-600 leading-relaxed">{text}</p></div>
 );
 
-/** Trips and months, straight from the index's own tools on this device; nothing is sent. */
-const TimelineTab: React.FC<{ engine: MemoryEngine | null; searchable: boolean }> = ({ engine, searchable }) => {
+/** Sends one message to Bella in the app chat; true when she answered */
+const toBella: NonNullable<Props['askBella']> = async (text, extras) => {
+  const { belluhAgent } = await import('../services/belluhAgent');
+  const r = await belluhAgent.chat(text, 'chat', null, null, extras);
+  return !!r?.messages?.some(m => m.role !== 'user');
+};
+
+/**
+ * The gaps between your dates and your screenshots as plans, then trips and months, straight from the index's own
+ * tools on this device. Nothing is sent until the person says yes to a plan.
+ */
+const TimelineTab: React.FC<{ engine: MemoryEngine | null; searchable: boolean; lastDate?: () => Promise<DateMark | null>; askBella?: Props['askBella'] }> = ({ engine, searchable, lastDate, askBella = toBella }) => {
   const T = useUi(strings).timeline;
+  const F = useUi(fromPhotosUi);
+  const fp = useFromPhotos(searchable ? engine : null, { lastDate });
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState<string | null>(null);
+  const send = async (text: string, extras: Parameters<NonNullable<Props['askBella']>>[1]) => {
+    setBusy(true); setSent(null);
+    const ok = await askBella(text, extras).catch(() => false);
+    setBusy(false); setSent(ok ? F.done : F.failed);
+  };
+  const planShot = (s: ShotPlan) => { const body = shotForBella(s); if (body) void send(fillT(F.shots.ask, { name: s.subject }), { screenshot: body }); };
   const [data, setData] = useState<{ trips: { text: string; id?: string }[]; months: { text: string; id?: string }[] } | null>(null);
   useEffect(() => {
     if (!engine || !searchable) return;
@@ -358,7 +386,9 @@ const TimelineTab: React.FC<{ engine: MemoryEngine | null; searchable: boolean }
   );
   return (
     <div className="flex flex-col gap-4">
-      <p className="flex items-center gap-2 text-sm text-slate-500 px-2"><Emoji e="🔒" size={14} />{T.local}</p>
+      {fp && <FromPhotosPanel gaps={fp.gaps} shots={fp.shots} engine={engine} busy={busy} onNextDate={summary => void send(F.gaps.ask, { gaps: summary })} onPlanShot={planShot} />}
+      {sent && <p role="status" className="text-sm font-semibold text-[#3f7486] px-2">{sent}</p>}
+      {!fp && <p className="flex items-center gap-2 text-sm text-slate-500 px-2"><Emoji e="🔒" size={14} />{T.local}</p>}
       {data && block('✈️', T.trips, data.trips)}
       {data && block('📅', T.months, data.months)}
     </div>

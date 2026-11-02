@@ -16,6 +16,20 @@ import BellaPlate, { type PlateView } from '../components/BellaPlate';
 import { uploadPrivate, resolveMedia } from '../services/media';
 import { supabase } from '../lib/supabaseClient';
 import { trackEvent } from '../services/analytics';
+import fromPhotosUi from '../i18n/ui/fromPhotos';
+import passportUi from '../i18n/ui/passport';
+import type { MemoryEngine } from '../lib/memory/types';
+import { memoryEnabled } from '../lib/memory/index';
+import { loadEngine } from '../lib/memory/engineRef';
+import { aiAllowed } from '../lib/memory/consent';
+import { progressLine } from '../lib/memory/agent';
+import { chatWithDevice, loadCites, saveCites } from '../lib/memory/devicechat';
+import { useFromPhotos } from '../lib/memory/fromPhotos';
+import { looksLikeDateAsk } from '../lib/memory/gaps';
+import { shotForBella, type ShotPlan } from '../lib/memory/screenshots';
+import { FromPhotosPanel, CitedPhotos } from '../components/memory/FromPhotos';
+import { Sheet, fillT } from '../components/memory/bits';
+import { Emoji } from '../lib/emoji3d';
 
 interface AICoachProps {
   insights: Insight[];
@@ -122,6 +136,16 @@ const NoteDraft: React.FC<{ msg: AgentMessage; onSend: (id: string, text: string
 const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremium, userName, initialMessage, onInitialMessageSent, onCompose, initialSpace, inSheet, onClose }) => {
   const { d, f, lang } = useI18n(); const ch = d.app.chat;
   const T = useUi(bellaUi);
+  const F = useUi(fromPhotosUi);
+  const P = useUi(passportUi).progress;
+  // Belluh Memory on this device, when it's on: Bella can look in the photos mid-chat, and "From your photos" shows
+  // the gaps between dates and screenshots as plans. Photos and the index never leave the device.
+  const [memEngine, setMemEngine] = useState<MemoryEngine | null>(null);
+  useEffect(() => { if (memoryEnabled()) loadEngine().then(setMemEngine).catch(() => {}); }, []);
+  const fromPhotos = useFromPhotos(memEngine);
+  const [photosOpen, setPhotosOpen] = useState(false);
+  const [cites, setCites] = useState<Record<string, string[]>>(() => loadCites());
+  const [lookup, setLookup] = useState<string | null>(null);
   // 'agent' = server-side Belluh with memory; 'legacy' = the original in-browser chat, used if the agent isn't deployed
   const [mode, setMode] = useState<'loading' | 'agent' | 'legacy'>('loading');
   const [partnerName, setPartnerName] = useState<string | null>(null);
@@ -236,7 +260,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
     return Math.max(-1, -0.2 * count);
   };
 
-  const sendAgent = async (text: string, attached: { file: File; preview: string } | null = null) => {
+  const sendAgent = async (text: string, attached: { file: File; preview: string } | null = null, extras: { screenshot?: ReturnType<typeof shotForBella>; gaps?: string | null } = {}) => {
     const mediate = isConflictMode;
     // Asked to become something Belluh already knows? It changes right away, before the reply.
     if (!mediate) belluh.fromMessage(text).catch(() => {});
@@ -249,15 +273,26 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
       ref = await uploadPrivate('photos', attached.file, ext, attached.file.type || 'image/jpeg');
       if (ref) setPhotoLinks(prev => new Map(prev).set(ref!, attached.preview));
     }
-    // A question about their own past: Belluh Memory answers it on this phone first, so Bella can use the photos
-    const fromPhotos = mediate ? null : await import('../lib/memory/bella').then(m => m.photoAnswerFor(text, lang)).catch(() => null);
-    const res = await belluhAgent.chat(text, mediate ? 'mediate' : 'chat', ref, fromPhotos);
-    if (res?.messages?.length) setRevealIds(prev => { const n = new Set(prev); res.messages.forEach(m => { if (m.role === 'belluh') n.add(m.id); }); return n; });
-    res?.messages?.forEach(m => { if (m.role === 'belluh' && m.meta?.shape) belluh.applyAgentShape(m.meta.shape); });
+    // Asking for a date: what happened since the last one (read on this phone) makes the idea theirs. Text only, and
+    // only with AI answers from photos allowed.
+    const gaps = mediate ? null : extras.gaps ?? (fromPhotos?.gaps && aiAllowed() && looksLikeDateAsk(text) ? fromPhotos.gaps.summary : null);
+    // Bella may look in the photos on this phone mid-answer: each lookup runs here and only its text goes back
+    const run = await chatWithDevice({
+      text, engine: mediate ? null : memEngine, allowed: aiAllowed, lang,
+      send: device => belluhAgent.chat(text, mediate ? 'mediate' : 'chat', ref, null, { screenshot: mediate ? null : extras.screenshot ?? null, gaps, device }),
+      onLookup: c => setLookup(progressLine(c, P)),
+    });
+    setLookup(null);
+    if (Object.keys(run.cites).length) setCites(saveCites(run.cites));
+    const got = run.messages as AgentMessage[];
+    if (got.length) setRevealIds(prev => { const n = new Set(prev); got.forEach(m => { if (m.role === 'belluh') n.add(m.id); }); return n; });
+    got.forEach(m => { if (m.role === 'belluh' && m.meta?.shape) belluh.applyAgentShape(m.meta.shape); });
+    const replied = got.some(m => m.role !== 'user');
+    const err: AgentMessage = { id: `err-${Date.now()}`, role: 'belluh', body: uiRef.current.errorReach, meta: {}, created_at: new Date().toISOString() };
     setAgentMessages(prev => {
       const rest = prev.filter(m => m.id !== temp.id);
-      if (res?.messages?.length) return [...rest, ...res.messages];
-      return [...rest, temp, { id: `err-${Date.now()}`, role: 'belluh', body: uiRef.current.errorReach, meta: {}, created_at: new Date().toISOString() }];
+      if (got.length) return [...rest, ...got, ...(replied ? [] : [err])];
+      return [...rest, temp, err];
     });
     setIsConflictMode(false);
   };
@@ -334,11 +369,15 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
     ...(week && !week.mine ? [T.makeTime] : []),
     partnerName ? ch.starterPlan : ch.starterWrite,
   ];
-  const sendNow = async (text: string) => {
+  const sendNow = async (text: string, extras: Parameters<typeof sendAgent>[2] = {}) => {
     if (isTyping) return;
     setIsTyping(true);
-    try { await sendAgent(text); } finally { setIsTyping(false); }
+    try { await sendAgent(text, null, extras); } finally { setIsTyping(false); }
   };
+  // From your photos: a screenshot becomes a plan (its words only, after their yes), or the next date from the gaps
+  const planShot = (s: ShotPlan) => { const body = shotForBella(s); if (!body) return; setPhotosOpen(false); pickSpace('me'); trackEvent('screenshot_plan', { intent: s.intent }); sendNow(fillT(F.shots.ask, { name: s.subject }), { screenshot: body }); };
+  const nextDate = (summary: string) => { setPhotosOpen(false); pickSpace('me'); trackEvent('gaps_next_date'); sendNow(F.gaps.ask, { gaps: summary }); };
+  const hasFromPhotos = mode === 'agent' && !!fromPhotos && (!!fromPhotos.gaps || fromPhotos.shots.length > 0);
 
   const me = firstName(userName);
   const spaceSwitch = (
@@ -460,6 +499,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                        {msg.meta?.kind === 'offer' && <p className="text-[13px] font-semibold text-[#7fa7b6] mb-1.5">{T.noticed}</p>}
                        {msg.meta?.kind === 'remind' && <p className="text-[13px] font-semibold text-[#7fa7b6] mb-1.5">{T.reminder}</p>}
                        <p className="font-serif text-lg leading-relaxed text-slate-900 whitespace-pre-wrap">{revealIds.has(msg.id) ? <Reveal text={msg.body} onTick={() => messagesEndRef.current?.scrollIntoView({ block: 'end' })} /> : msg.body}</p>
+                       {cites[msg.id] && <CitedPhotos ids={cites[msg.id]} engine={memEngine} />}
                        {Array.isArray(msg.meta?.saved) && msg.meta.saved.length > 0 && (
                          <button onClick={openMemories} className="mt-2 flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-700 text-left">
                            <Brain size={12} /> {f(T.savedToMemory, { items: msg.meta.saved.join(', ') })}
@@ -509,7 +549,7 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
                     <div className="flex gap-4 md:gap-6 animate-fade-in pl-0">
                         <BelluhAvatar thinking />
                         <div className="flex items-center mt-2">
-                            <span className="text-sm text-slate-400 italic font-serif">{agentMessages[agentMessages.length - 1]?.meta?.photo_preview ? ch.lookingPhoto : isConflictMode ? ch.findingWords : ch.thinking}</span>
+                            <span className="text-sm text-slate-400 italic font-serif">{lookup ?? (agentMessages[agentMessages.length - 1]?.meta?.photo_preview ? ch.lookingPhoto : isConflictMode ? ch.findingWords : ch.thinking)}</span>
                         </div>
                     </div>
                 )}
@@ -524,6 +564,12 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
             <div aria-hidden="true" className="pointer-events-none absolute -top-10 inset-x-0 h-10 bg-gradient-to-t from-belluh-25 to-transparent" />
             <div className="max-w-2xl mx-auto relative flex flex-col">
                 <div className="flex items-center gap-2 mb-3 -mx-4 px-4 overflow-x-auto no-scrollbar">
+                    {hasFromPhotos && (
+                        <button onClick={() => { setPhotosOpen(true); trackEvent('from_photos_opened'); }} disabled={isTyping}
+                            className="shrink-0 h-9 px-4 rounded-full bg-white border border-[#9bbecb] text-[13px] font-semibold text-[#3f7486] whitespace-nowrap inline-flex items-center gap-2 hover:bg-[#f4f8fa] disabled:opacity-50 transition-colors">
+                            <Emoji e="📸" size={16} />{F.open}
+                        </button>
+                    )}
                     {starters.map(t => (
                         <button key={t} onClick={() => sendNow(t)} disabled={isTyping}
                             className="shrink-0 h-9 px-4 rounded-full bg-white border border-slate-200 text-[13px] font-semibold text-slate-700 whitespace-nowrap hover:border-[#9bbecb] hover:text-[#3f7486] disabled:opacity-50 transition-colors">
@@ -580,6 +626,11 @@ const AICoach: React.FC<AICoachProps> = ({ insights, entryTexts, onTriggerPremiu
 
        {/* What Belluh remembers */}
        {plateSheet}{toastEl}
+       {photosOpen && fromPhotos && (
+         <Sheet title={F.title} onClose={() => setPhotosOpen(false)} closeLabel={F.close}>
+           <FromPhotosPanel framed={false} gaps={fromPhotos.gaps} shots={fromPhotos.shots} engine={memEngine} busy={isTyping} onNextDate={nextDate} onPlanShot={planShot} />
+         </Sheet>
+       )}
        {memories && (
          <div className="fixed inset-0 z-[90] bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-fade-in" onClick={() => setMemories(null)}>
            <div className="bg-white rounded-[2rem] w-full max-w-md max-h-[75vh] overflow-y-auto p-6 shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}>

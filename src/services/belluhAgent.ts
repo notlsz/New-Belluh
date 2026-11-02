@@ -4,6 +4,8 @@ import type { Idea } from '../../supabase/functions/_shared/ideas';
 import type { Goal } from '../../supabase/functions/_shared/goals';
 
 export type { Idea };
+import type { DeviceStep } from '../lib/memory/devicechat';
+export interface ChatExtras { screenshot?: { intent: string; subject: string; text: string } | null; gaps?: string | null; device?: Record<string, unknown> | null }
 export type CoupleGoal = Goal & { id: string; created_by: string; partner_id: string | null; status: 'active' | 'done' | 'stopped' };
 export interface BellaActivity { id: string; action: string; detail: string | null; ok: boolean; channel: string | null; created_at: string }
 export interface BellaPlanned { kind: 'reminder' | 'watch' | 'plan'; id: string; detail: string; at: string | null }
@@ -72,7 +74,13 @@ export const belluhAgent = {
   planRespond: (planId: string, optionId: string | null, note = '') => call<{ plan: Plan; messages: AgentMessage[] }>({ action: 'plan_respond', plan_id: planId, option_id: optionId, note }),
   planCancel: (planId: string) => call<{ plan: Plan }>({ action: 'plan_cancel', plan_id: planId }),
   checkin: (actionId: string, status: CheckinStatus) => call<{ messages: AgentMessage[]; week: WeekView | null }>({ action: 'checkin', action_id: actionId, status }),
-  chat: (message: string, mode: 'chat' | 'mediate' = 'chat', photo: string | null = null, memory: { question: string; answer: string } | null = null) => call<{ messages: AgentMessage[] }>({ action: 'chat', message, mode, ...(photo ? { photo } : {}), ...(memory ? { memory } : {}) }),
+  /**
+   * extras, from the app only and each after the person's yes: a screenshot turned into a plan (its words, never the
+   * image), what happened since the last date, and device (look_in_photos: { on: true }, or { ticket, rounds } to go on)
+   */
+  chat: (message: string, mode: 'chat' | 'mediate' = 'chat', photo: string | null = null, memory: { question: string; answer: string } | null = null, extras: ChatExtras = {}) =>
+    call<{ messages: AgentMessage[]; device?: DeviceStep }>({ action: 'chat', message, mode, ...(photo ? { photo } : {}), ...(memory ? { memory } : {}),
+      ...(extras.screenshot ? { screenshot: extras.screenshot } : {}), ...(extras.gaps ? { gaps: extras.gaps } : {}), ...(extras.device ? { device: extras.device } : {}) }),
   react: (entryId: string) => call<{ message: AgentMessage | null }>({ action: 'react', entry_id: entryId }),
   sendNote: (draftId: string, text?: string) => call<{ ok: boolean }>({ action: 'send_note', draft_id: draftId, text }),
   discardNote: (draftId: string) => call<{ ok: boolean }>({ action: 'discard_note', draft_id: draftId }),

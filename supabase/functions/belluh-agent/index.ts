@@ -3,6 +3,9 @@
 //
 // POST body: { action: 'history' }
 //            { action: 'chat', message: string, mode?: 'chat' | 'mediate', memory?: { question, answer } }   (memory: answered on the phone by Belluh Memory)
+//              also, from the app only: screenshot?: { intent, subject, text } (a screenshot turned into a plan, text only),
+//              gaps?: string (what happened since the last date), device?: { on: true } | { ticket, rounds } (look_in_photos:
+//              the reply may carry device: { calls, parts, ticket }; the app runs the calls on the phone and sends the text back)
 //            { action: 'react', entry_id: string }
 //            { action: 'send_note', draft_id: string, text?: string }
 //            { action: 'discard_note', draft_id: string }
@@ -70,7 +73,7 @@ Deno.serve(async (req) => {
       case 'checkin': return out(await checkin(ctx, String(body.action_id ?? ''), String(body.status ?? '')));
       case 'plan_respond': return out(await planRespond(ctx, String(body.plan_id ?? ''), body.option_id ? String(body.option_id) : null, String(body.note ?? '')));
       case 'plan_cancel': return out(await planCancel(ctx, String(body.plan_id ?? '')));
-      case 'chat': return json(await chat(ctx, String(body.message ?? ''), body.mode === 'mediate' ? 'mediate' : 'chat', 'app', typeof body.photo === 'string' ? body.photo : null, body.memory ?? null));
+      case 'chat': return json(await chat(ctx, String(body.message ?? ''), body.mode === 'mediate' ? 'mediate' : 'chat', 'app', typeof body.photo === 'string' ? body.photo : null, body.memory ?? null, { screenshot: body.screenshot, gaps: body.gaps, device: body.device }));
       case 'react': return json(await react(ctx, String(body.entry_id ?? '')));
       case 'offer_respond': return out(await offerRespond(ctx, String(body.message_id ?? ''), body.accept === true));
       case 'booking': return out(await bookingDone(ctx, String(body.booking_id ?? ''), body.done !== false));
