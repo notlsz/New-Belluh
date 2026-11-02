@@ -1,15 +1,52 @@
 // The song, the movie or show, and the book on a profile. Search finds the real thing with its real cover (Apple's
-// catalog, Wikipedia, TVmaze, Open Library, Google Books). Songs work like Instagram's music sticker: album art, title,
+// catalog and Apple Books, Wikipedia, TVmaze, Open Library, Google Books). Songs work like Instagram's music sticker: album art, title,
 // artist, and a 30-second preview to tap and play. Movies, shows and books work like Letterboxd and Goodreads: a rating
 // in half stars, a heart for the ones you love, where you are with it, and a line about it.
 import React, { useEffect, useRef, useState } from 'react';
 import { findSongs, findMovies, findBooks, type Found } from '../services/look';
+import { Emoji } from '../lib/emoji3d';
 
 export type MediaKind = 'music' | 'movie' | 'book';
 export interface MediaStrings { songPh: string; rate: string; loved: string; reviewPh: string; play: string; pause: string; none: string; useTyped: string; watched: string; toWatch: string; read: string; reading: string; toRead: string; onRepeat: string; change: string }
 type Data = Record<string, string>;
 
 const FIND: Record<MediaKind, (q: string) => Promise<Found[]>> = { music: findSongs, movie: findMovies, book: findBooks };
+
+// A cover that always shows something real: each source's cover is tried in turn (a dead link, a quota error or a
+// blank stand-in moves on to the next); if none loads, the title is looked up again for a fresh one; failing that, a
+// clean tile with the kind's emoji. Older saves with a single cover get the same repair.
+const GLYPH: Record<MediaKind, string> = { music: '🎵', movie: '🎬', book: '📚' };
+const TILE: Record<MediaKind, string> = { music: '#f6dbe9', movie: '#dbe8f0', book: '#f3e7d3' };
+const fresh = new Map<string, Promise<string[]>>();
+const keyOf = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[^a-z0-9\u3040-\u30ff\u4e00-\u9fff\uac00-\ud7af]+/g, '');
+function refetch(kind: MediaKind, title: string, by: string): Promise<string[]> {
+  const k = `${kind}|${title}|${by}`;
+  if (!fresh.has(k)) fresh.set(k, FIND[kind](`${title} ${by}`.trim()).then(r => {
+    const same = r.find(x => keyOf(x.title) === keyOf(title)) ?? r.find(x => keyOf(x.title).includes(keyOf(title)) || keyOf(title).includes(keyOf(x.title)));
+    return same ? (same.covers?.length ? same.covers : same.cover ? [same.cover] : []) : [];
+  }).catch(() => []));
+  return fresh.get(k)!;
+}
+export const Cover: React.FC<{ kind: MediaKind; srcs: string[]; title?: string; by?: string; className: string }> = ({ kind, srcs, title, by, className }) => {
+  const list = [...new Set(srcs.filter(Boolean))];
+  const [urls, setUrls] = useState(list);
+  const [i, setI] = useState(0);
+  const [tried, setTried] = useState(false);
+  const sig = list.join('\n');
+  useEffect(() => { setUrls(list); setI(0); setTried(false); }, [sig]); // eslint-disable-line react-hooks/exhaustive-deps
+  const next = () => setI(n => n + 1);
+  useEffect(() => {
+    if (i < urls.length || tried || !title) return;
+    setTried(true);
+    let live = true;
+    refetch(kind, title, by ?? '').then(more => { const add = more.filter(u => !urls.includes(u)); if (live && add.length) { setUrls(u => [...u, ...add]); } });
+    return () => { live = false; };
+  }, [i, urls, tried, title, by, kind]);
+  const src = urls[i];
+  if (!src) return <span className={`${className} inline-flex items-center justify-center`} style={{ background: TILE[kind] }} aria-hidden><Emoji e={GLYPH[kind]} size="42%" /></span>;
+  return <img key={src} src={src} alt="" referrerPolicy="no-referrer" decoding="async" className={className}
+    onError={next} onLoad={e => { if ((e.currentTarget as HTMLImageElement).naturalWidth < 40) next(); }} />;
+};
 
 const Search: React.FC<{ kind: MediaKind; placeholder: string; S: MediaStrings; onPick: (d: Data) => void; autoFocus?: boolean }> = ({ kind, placeholder, S, onPick, autoFocus }) => {
   const [q, setQ] = useState('');
@@ -21,7 +58,7 @@ const Search: React.FC<{ kind: MediaKind; placeholder: string; S: MediaStrings; 
     const t = setTimeout(() => FIND[kind](q).then(r => { if (live) { setRes(r); setBusy(false); } }), 320);
     return () => { live = false; clearTimeout(t); };
   }, [q, kind]);
-  const pick = (x: Found) => { onPick({ title: x.title, by: kind === 'movie' ? '' : x.by, year: x.year, cover: x.cover ?? '', preview: x.preview ?? '', url: x.url ?? '', kind: x.kind ?? '' }); setQ(''); setRes(null); };
+  const pick = (x: Found) => { onPick({ title: x.title, by: kind === 'movie' ? '' : x.by, year: x.year, cover: x.cover ?? '', covers: (x.covers ?? []).slice(0, 4).join('\n'), preview: x.preview ?? '', url: x.url ?? '', kind: x.kind ?? '' }); setQ(''); setRes(null); };
   const square = kind === 'music';
   return (
     <div className="relative">
@@ -33,7 +70,7 @@ const Search: React.FC<{ kind: MediaKind; placeholder: string; S: MediaStrings; 
         <div className="absolute z-30 inset-x-0 top-12 rounded-2xl bg-white shadow-[0_20px_50px_-20px_rgba(15,23,42,0.45)] border border-slate-100 max-h-80 overflow-y-auto p-1">
           {res.map((x, i) => (
             <button key={i} type="button" onClick={() => pick(x)} className="w-full flex items-center gap-3 p-2 rounded-xl text-left hover:bg-slate-50">
-              {x.cover ? <img src={x.cover} alt="" className={`shrink-0 object-cover shadow-sm ${square ? 'w-11 h-11 rounded-md' : 'w-9 h-[54px] rounded'}`} /> : <span className={`shrink-0 bg-slate-100 ${square ? 'w-11 h-11 rounded-md' : 'w-9 h-[54px] rounded'}`} />}
+              <Cover kind={kind} srcs={x.covers?.length ? x.covers : x.cover ? [x.cover] : []} className={`shrink-0 object-cover shadow-sm ${square ? 'w-11 h-11 rounded-md' : 'w-9 h-[54px] rounded'}`} />
               <span className="min-w-0 flex-1">
                 <span className="block text-[14px] font-bold text-slate-900 truncate">{x.title}</span>
                 <span className="block text-[12px] text-slate-500 truncate">{[x.by && x.by !== x.year ? x.by : '', x.year].filter(Boolean).join(', ')}</span>
@@ -98,7 +135,8 @@ const Preview: React.FC<{ src: string; S: MediaStrings; dark: boolean }> = ({ sr
 };
 
 const MediaBlock: React.FC<{ kind: MediaKind; data: Data; editing: boolean; dark: boolean; label: React.ReactNode; placeholder: string; S: MediaStrings; set: (d: Data) => void }> = ({ kind, data, editing, dark, label, placeholder, S, set }) => {
-  const title = data.title, by = data.by ?? data.artist ?? data.author ?? '', cover = data.cover || data.poster || '';
+  const title = data.title, by = data.by ?? data.artist ?? data.author ?? '';
+  const covers = [data.cover, data.poster, ...(data.covers ?? '').split('\n')].filter(Boolean) as string[];
   const rating = Number(data.rating || 0), loved = data.loved === '1';
   const [changing, setChanging] = useState(!title);
   const ink = dark ? 'text-white' : 'text-slate-900', sub = dark ? 'text-white/70' : 'text-slate-500';
@@ -108,10 +146,10 @@ const MediaBlock: React.FC<{ kind: MediaKind; data: Data; editing: boolean; dark
   return (
     <div className="h-full flex flex-col gap-3">
       <div className="flex items-center justify-between">{label}{editing && title && !changing && <button type="button" onClick={() => setChanging(true)} className={`text-[12px] font-bold ${sub} hover:underline`}>{S.change}</button>}</div>
-      {editing && (changing || !title) && <Search kind={kind} placeholder={placeholder} S={S} autoFocus={!!title} onPick={d => { set({ title: d.title, by: d.by ?? '', year: d.year ?? '', cover: d.cover ?? '', preview: d.preview ?? '', url: d.url ?? '', kind: d.kind ?? '', artist: '', author: '', poster: '' }); setChanging(false); }} />}
+      {editing && (changing || !title) && <Search kind={kind} placeholder={placeholder} S={S} autoFocus={!!title} onPick={d => { set({ title: d.title, by: d.by ?? '', year: d.year ?? '', cover: d.cover ?? '', covers: d.covers ?? '', preview: d.preview ?? '', url: d.url ?? '', kind: d.kind ?? '', artist: '', author: '', poster: '' }); setChanging(false); }} />}
       {title && (
         <div className={`flex gap-4 ${square ? 'items-center' : 'items-start'} min-h-0`}>
-          {cover ? <img src={cover} alt="" className={`shrink-0 object-cover shadow-[0_12px_24px_-12px_rgba(15,23,42,0.6)] ${square ? 'w-20 h-20 rounded-xl' : 'w-[84px] h-[126px] rounded-lg'}`} /> : <span className={`shrink-0 ${dark ? 'bg-white/10' : 'bg-slate-100'} ${square ? 'w-20 h-20 rounded-xl' : 'w-[84px] h-[126px] rounded-lg'}`} />}
+          <Cover kind={kind} srcs={covers} title={title} by={kind === 'movie' ? '' : by} className={`shrink-0 object-cover shadow-[0_12px_24px_-12px_rgba(15,23,42,0.6)] ${square ? 'w-20 h-20 rounded-xl' : 'w-[84px] h-[126px] rounded-lg'}`} />
           <div className="min-w-0 flex-1">
             <p className={`font-serif text-[1.15rem] leading-snug ${ink} [overflow-wrap:anywhere]`}>{title}</p>
             <p className={`mt-0.5 text-[13px] font-semibold ${sub} truncate`}>{[by, data.year].filter(Boolean).join(', ')}</p>
