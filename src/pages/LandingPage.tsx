@@ -19,6 +19,7 @@ import understood from '../i18n/ui/understood';
 import AskMoments, { PENDING_ASK } from '../components/AskMoments';
 import logoStrip from '../i18n/ui/logoStrip';
 import { ORGANIZATIONS } from '../constants';
+import { RollSteps, RollLearns, RollPrivacy, RollGaps, RollEverywhere } from '../components/CameraRollStory';
 
 
 // Priced in line with Hinge+ ($29.99 a month), but for the couple, not each person: one Duo covers both partners.
@@ -358,15 +359,6 @@ function useShapeTap() {
   return { tap, label: n < 0 ? null : d.common.shapes[n] ?? '' };
 }
 
-// What Belluh connects to, shown in the second scrolling strip
-const INTEGRATIONS = [
-  { name: 'WhatsApp', domain: 'whatsapp.com', logo: '/logos/whatsapp.png' },
-  { name: 'Google Calendar', domain: 'calendar.google.com', logo: '/logos/google-calendar.png' },
-  { name: 'Apple iCloud', domain: 'icloud.com', logo: '/logos/icloud.png' },
-  { name: 'Outlook', domain: 'outlook.live.com', logo: '/logos/outlook.png' },
-  { name: 'Gemini', domain: 'gemini.google.com', logo: '/logos/gemini.png' },
-];
-
 // Universities get one row and companies the other
 const isUniversity = (domain: string) => /\.(edu|ac\.uk|ca)$/.test(domain);
 type Org = { name: string; domain: string; logo?: string };
@@ -600,9 +592,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
       {/* Where Belluh's couples are */}
       <LogoMarquee title={LS.usedBy} orgs={ORGANIZATIONS} note={LS.usedByNote} />
 
+      {/* The problem: a blank journal while years of the two of you sit on your phones; then what the photos hold, and
+          that they never leave the phone */}
+      <RollSteps />
+      <RollLearns />
+      <RollPrivacy />
+
       <BellaAtWork />
 
       <TextingDemo />
+
+      {/* Between dates, Belluh keeps up, so the next one isn't a guess */}
+      <RollGaps />
 
       {/* Real app screens */}
       <section id="inside" className="relative z-10 px-6 pb-28 scroll-mt-24">
@@ -653,8 +654,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
           </div>
       </section>
 
-      {/* What Belluh works with */}
-      <LogoMarquee title={LS.worksWith} orgs={INTEGRATIONS} note={LS.worksWithNote} />
+      {/* Where the story comes from, and Bella acting on it; this took the place of the "works with" logo strip */}
+      <RollEverywhere />
 
       {/* Infinite Marquee Section */}
       <section id="stories" className="relative z-10 py-20 md:py-28 overflow-hidden scroll-mt-20">
