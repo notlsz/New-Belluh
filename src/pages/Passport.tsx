@@ -18,7 +18,7 @@ import { qrMatrix, qrPath } from '../lib/qr';
 import { Emoji } from '../lib/emoji3d';
 import { Switch } from '../components/PrivacyCenter';
 import MemoryConsent from '../components/memory/MemoryConsent';
-import TurnOnMemory from '../components/memory/TurnOnMemory';
+import TurnOnMemory, { IndexStatus } from '../components/memory/TurnOnMemory';
 import AskPhotos from '../components/memory/AskPhotos';
 import MemorySettings from '../components/memory/MemorySettings';
 import { AiBadge, Segmented, Thumb, card, btnDark, btnSoft, btnQuiet, fillT } from '../components/memory/bits';
@@ -305,6 +305,8 @@ const Passport: React.FC<Props> = ({ userName, partnerName, hasPartner, store: s
 
       <div className="mt-6 flex flex-col gap-4">
         {engine !== undefined && !memoryOn && <TurnOnMemory engine={engine} state={state} />}
+        {/* While the models download or photos are read (or when paused or stopped), say where it is, with pause and resume */}
+        {memoryOn && state && state.type !== 'ready' && <div className={`${card} p-6`}><IndexStatus engine={engine!} state={state} /></div>}
         {memoryOn && <AskPhotos engine={engine!} searchable={searchable} agent={agent} withConsent={withConsent} />}
       </div>
 

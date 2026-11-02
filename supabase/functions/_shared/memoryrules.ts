@@ -334,14 +334,25 @@ export function keepEvidence(json: Record<string, unknown>, evidence: unknown): 
 // turns those back into ids, most telling first.
 
 export interface Tagged { text: string; refs: Record<string, string[]> }
-export function tagResult(k: number, result: { text: string; ids: string[] }): Tagged {
+export function tagResult(k: number, result: { text: string; ids: string[]; lines?: string[][] }): Tagged {
   const text = String(result?.text ?? '');
   const ids = Array.isArray(result?.ids) ? result.ids.filter(x => typeof x === 'string') : [];
   const lines = text.split('\n');
   const content = lines.map((l, i) => [l, i] as const).filter(([l]) => l.trim());
   const refs: Record<string, string[]> = { [String(k)]: ids };
+  const per = Array.isArray(result?.lines) && result.lines.length === lines.length ? result.lines : null;
   let out: string;
-  if (ids.length && content.length === ids.length) {
+  if (per && per.some(x => Array.isArray(x) && x.length)) {
+    // The engine said which ids sit behind each line: tag only the lines that have some (headings stay as they are)
+    let n = 0;
+    out = lines.map((l, i) => {
+      const own = Array.isArray(per[i]) ? per[i].filter(x => typeof x === 'string') : [];
+      if (!own.length || !l.trim()) return l;
+      refs[`${k}.${++n}`] = own;
+      return `[${k}.${n}] ${l}`;
+    }).join('\n');
+    if (!/^\[/.test(out)) out = `[${k}] ${out}`;
+  } else if (ids.length && content.length === ids.length) {
     const tagged = [...lines];
     content.forEach(([l, i], n) => { tagged[i] = `[${k}.${n + 1}] ${l}`; refs[`${k}.${n + 1}`] = [ids[n]]; });
     out = tagged.join('\n');

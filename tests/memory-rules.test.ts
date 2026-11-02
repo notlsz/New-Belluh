@@ -108,6 +108,11 @@ test('Device ids never leave: results are tagged with references, and references
   assert.equal(g.text, '[4] 12 days');
   assert.deepEqual(resolveRefs(['3.2', '4', '3.1', '9'], { ...t.refs, ...g.refs }), ['idB', 'idC', 'idD', 'idE', 'idA']);
   assert.ok(tagResult(1, { text: 'x'.repeat(9000), ids: [] }).text.length < 6100);
+  // The device engine says which ids sit behind each line: a heading stays untagged, a line can stand for several shots
+  const h = tagResult(5, { text: '2 places (most visited first):\nNaples: 2 days\nLisbon: 1 day', ids: ['a', 'b', 'c'], lines: [[], ['a', 'b'], ['c']] });
+  assert.equal(h.text, '[5] 2 places (most visited first):\n[5.1] Naples: 2 days\n[5.2] Lisbon: 1 day');
+  assert.deepEqual(resolveRefs(['5.1'], h.refs), ['a', 'b']);
+  assert.deepEqual(resolveRefs(['5'], h.refs), ['a', 'b', 'c']);
 });
 
 test('Answers: the evidence line is parsed and never shown while streaming; decline tokens become declines', () => {

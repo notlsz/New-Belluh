@@ -9,6 +9,7 @@ import { Emoji } from '../lib/emoji3d';
 import { countryOf } from '../lib/world';
 import { countryName } from '../lib/countryCodes';
 import { buildStory, suggest, rowsFor, type Shot, type Story, type Suggestion, type EntryRow, type OccasionRow, type DayPart } from '../lib/photoStory';
+import { feedMemory } from '../lib/memory';
 
 export interface PhotoStoryPlan { entries: EntryRow[]; occasions: OccasionRow[] }
 interface Props {
@@ -67,6 +68,8 @@ const PhotoStory: React.FC<Props> = ({ userId, circleId, partnerName, onClose, o
     if (!chosen.length) return;
     urls.current.forEach(u => URL.revokeObjectURL(u)); urls.current.clear(); files.current.clear();
     setStage('reading'); setProgress({ n: 0, total: chosen.length }); setFailed(false);
+    // With Belluh Memory on, the same photos also join the on-device index (search, places, interests); off, nothing happens
+    feedMemory(chosen);
     const { parse } = await import('exifr');
     const shots: Shot[] = new Array(chosen.length);
     let next = 0, done = 0;
