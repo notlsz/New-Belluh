@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExternalLink, ShoppingBag, PenLine, ArrowUpRight, CalendarCheck, Gift, Flower2, UtensilsCrossed, Plane, Ticket, Check, Lock, Phone, MapPin, Clock } from 'lucide-react';
+import { ExternalLink, ShoppingBag, PenLine, ArrowUpRight, CalendarCheck, Gift, Flower2, UtensilsCrossed, Plane, Ticket, Check, CheckCircle2, Lock, Phone, MapPin, Clock } from 'lucide-react';
 import { belluhAgent, AgentMessage } from '../services/belluhAgent';
 import PlanCard from './PlanCard';
 import { prettyPhone } from '../lib/phone';
@@ -36,7 +36,28 @@ const BelluhActions: React.FC<{
   type SpotCard = { name: string; kind: string; address: string | null; phone: string | null; website: string | null; hours: string | null; map: string; bookable: boolean };
   const spots: SpotCard[] = Array.isArray(msg.meta?.spots) ? msg.meta.spots.filter((x: any) => typeof x?.name === 'string' && typeof x?.map === 'string' && x.map.startsWith('https://')) : [];
   // What Belluh got ready, waiting for "I booked it" so it can go in the calendar, the reminders and the journal
-  type Card = { id: string; kind: string; title: string; when: string | null; surprise: boolean; label: string; status: string; call?: { place: string; phone: string; status: string; note?: string } };
+  type Card = {
+    id: string; kind: string; title: string; when: string | null; surprise: boolean; label: string; status: string;
+    call?: { place: string; phone: string; status: string; note?: string };
+    confirm?: 'call' | 'checkout' | 'ask'; seller?: string;           // how it gets confirmed: Bella's call, the shop, or their tap
+    by?: 'bella' | 'person'; ref?: string | null; people?: number | null;   // once done: who confirmed it and what
+  };
+  const isOrder = (k: string) => k === 'flowers' || k === 'gift' || k === 'dinner';
+  // "Booked by Bella, Sat, Oct 24 at 8:00 PM, table for 2, ref 4KD9": exactly what she confirmed
+  const confirmedLine = (c: Card) => [isOrder(c.kind) ? T.orderedByBella : T.bookedByBella, c.when, c.kind === 'table' && c.people ? f(T.tableFor, { n: String(c.people) }) : null, c.ref ? f(isOrder(c.kind) ? T.orderRef : T.ref, { ref: c.ref }) : null].filter(Boolean).join(', ');
+  // Bella's one "Did it go through?" for something she can't confirm herself
+  const [checkStatus, setCheckStatus] = useState<string | undefined>(msg.meta?.status);
+  const answerCheck = async (answer: 'yes' | 'not_yet' | 'no') => {
+    const id = msg.meta?.booking_id;
+    if (!id) return;
+    setBusy(true);
+    trackEvent('booking_check', { answer });
+    const r = await belluhAgent.bookingAnswer(id, answer, msg.id);
+    setBusy(false);
+    if (!r) return;
+    setCheckStatus(answer);
+    onAdded?.(r.message ? [r.message] : [], { ...msg, meta: { ...msg.meta, status: answer } });
+  };
   const [cards, setCards] = useState<Card[]>(Array.isArray(msg.meta?.bookings) ? msg.meta.bookings : []);
   const [cardBusy, setCardBusy] = useState<string | null>(null);
   const markBooking = async (id: string, done: boolean) => {
@@ -166,7 +187,7 @@ const BelluhActions: React.FC<{
               <Icon size={18} className="mt-0.5 shrink-0 text-[#9bbecb]" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-slate-900 leading-snug">{c.title}</p>
-                {c.when && <p className="mt-0.5 text-xs text-slate-500">{c.when}</p>}
+                {c.when && !(c.status === 'booked' && c.by === 'bella') && <p className="mt-0.5 text-xs text-slate-500">{c.when}</p>}
                 {c.call && c.status !== 'booked' && (
                   <p className="mt-1 text-xs text-slate-500">
                     {c.call.status === 'calling' ? f(A.onPhone, { place: c.call.place })
@@ -177,16 +198,23 @@ const BelluhActions: React.FC<{
                 {c.surprise && c.status !== 'booked' && <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-slate-400"><Lock size={11} /> {f(A.surprise, { partner: partnerName ?? A.yourPartner })}</p>}
               </div>
             </div>
-            {c.status === 'booked' ? (
+            {c.status === 'booked' && c.by === 'bella' ? (
+              <p className="mt-3 flex items-center gap-1.5 text-xs font-bold text-[#3f7486]"><CheckCircle2 size={14} className="shrink-0" /> <span>{confirmedLine(c)}</span></p>
+            ) : c.status === 'booked' ? (
               <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#3f7486]"><Check size={14} /> {c.when ? A.doneCal : A.doneMem}</p>
-            ) : c.call?.status === 'calling' ? null : (
+            ) : c.call?.status === 'calling' ? null : c.confirm === 'checkout' && c.seller ? (
+              <div className="mt-3 flex items-center gap-3">
+                <p className="text-xs text-slate-500 leading-snug">{f(T.confirmsOnPay, { seller: c.seller })}</p>
+                <button disabled={cardBusy === c.id} onClick={() => markBooking(c.id, false)} className="ml-auto h-9 px-1 shrink-0 rounded-full text-xs font-bold text-slate-400 hover:text-slate-700">{A.notNow}</button>
+              </div>
+            ) : (
               <div className="mt-3 flex flex-wrap items-center gap-1.5">
                 {c.call?.status === 'ready' && (
                   <button disabled={cardBusy === c.id} onClick={() => callFor(c.id)} className="h-9 px-3.5 rounded-full bg-slate-900 text-white text-xs font-bold disabled:opacity-60 inline-flex items-center gap-1.5">
                     <Phone size={13} /> {cardBusy === c.id ? A.calling : A.callForMe}
                   </button>
                 )}
-                {c.call?.status !== 'calling' && (
+                {c.call?.status !== 'calling' && c.call?.status !== 'ready' && (
                   <button disabled={cardBusy === c.id} onClick={() => markBooking(c.id, true)} className={c.call?.status === 'ready' ? 'h-9 px-3.5 rounded-full border border-slate-200 text-slate-700 text-xs font-bold disabled:opacity-60' : 'h-9 px-4 rounded-full bg-slate-900 text-white text-xs font-bold disabled:opacity-60'}>
                     {cardBusy === c.id && c.call?.status !== 'ready' ? A.saving : c.label}
                   </button>
@@ -194,7 +222,7 @@ const BelluhActions: React.FC<{
                 {c.call?.status !== 'calling' && (
                   <button disabled={cardBusy === c.id} onClick={() => markBooking(c.id, false)} className="h-9 px-1 rounded-full text-xs font-bold text-slate-400 hover:text-slate-700">{A.notNow}</button>
                 )}
-                <span className="ml-auto text-[11px] text-slate-400 hidden sm:block">{A.tapDone}</span>
+                {c.call?.status !== 'ready' && <span className="ml-auto text-[11px] text-slate-400 hidden sm:block">{A.tapDone}</span>}
               </div>
             )}
           </div>
@@ -207,6 +235,16 @@ const BelluhActions: React.FC<{
           </button>
           <button disabled={busy} onClick={() => answer(false)} className="px-4 py-2.5 rounded-full text-sm font-bold text-slate-400 hover:text-slate-700">{A.notNow}</button>
         </div>
+      )}
+      {kind === 'booking_check' && msg.meta?.booking_id && (!checkStatus || checkStatus === 'open') && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button disabled={busy} onClick={() => answerCheck('yes')} className="h-9 px-4 rounded-full bg-slate-900 text-white text-xs font-bold disabled:opacity-60">{busy ? A.saving : T.wentThrough}</button>
+          <button disabled={busy} onClick={() => answerCheck('not_yet')} className="h-9 px-4 rounded-full border border-slate-200 text-slate-700 text-xs font-bold disabled:opacity-60">{T.notYet}</button>
+          <button disabled={busy} onClick={() => answerCheck('no')} className="h-9 px-1 rounded-full text-xs font-bold text-slate-400 hover:text-slate-700">{T.skipIt}</button>
+        </div>
+      )}
+      {kind === 'booking_check' && checkStatus && checkStatus !== 'open' && (
+        <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-[#3f7486]">{checkStatus === 'yes' ? <><Check size={14} /> {A.doneCal}</> : checkStatus === 'not_yet' ? T.keptReady : T.setAside}</p>
       )}
       {kind === 'offer' && status === 'dismissed' && <p className="mt-2 text-xs text-slate-300">{A.okayNot}</p>}
       {kind === 'plan_nudge' && msg.meta?.plan_id && <div className="mt-3"><PlanCard planId={msg.meta.plan_id} partnerName={partnerName ?? null} /></div>}

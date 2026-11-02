@@ -22,7 +22,7 @@ const say = (userId: string, text: string) => localized(db, userId, text);
 import { countryOf } from '../_shared/region.ts';
 import { searchShopify } from '../_shared/shopify.ts';
 import { parseTicketmaster, eventFound, priceFound, ticketmasterUrl, foundText, type Watch } from '../_shared/watches.ts';
-import { planChoices, logActivity } from '../_shared/agentcore.ts';
+import { planChoices, logActivity, askIfDone, checkOpenOrders } from '../_shared/agentcore.ts';
 import { proactivityOf, offerWindow, type Proactivity } from '../_shared/activity.ts';
 import {
   occasionToOffer, offerFallback, offerAsk, plansToNudge, plansJustHappened, daytime, type NudgePlan, type OfferOccasion,
@@ -181,6 +181,8 @@ Deno.serve(async (req) => {
   // The daily checks run once an hour (the job itself runs every 5 minutes for reminders)
   if (force !== 'daily' && now.getUTCMinutes() >= 5) return Response.json({ people: 0, ...results });
   { const w = await checkWatches(onlyUser); results.watches_checked = w.checked; results.watches_found = w.found; }
+  // Orders Bella opened a checkout for: the shop's word that they're placed, if its webhook hasn't come
+  try { results.orders_confirmed = await checkOpenOrders(onlyUser); } catch (e) { console.error('order check', e); }
   for (const p of people ?? []) {
     // Quiet: only what they asked for (reminders and watches, above); nothing Bella thinks of herself
     const level = proactivityOf((p as any).proactivity);
@@ -195,6 +197,7 @@ Deno.serve(async (req) => {
       results.plan_nudges = (results.plan_nudges ?? 0) + await nudgePlans(ctx, plans);
       results.after_plans = (results.after_plans ?? 0) + await afterPlans(ctx, plans);
       results.after_bookings = (results.after_bookings ?? 0) + await afterBookings(ctx);
+      results.asked_if_done = (results.asked_if_done ?? 0) + await askIfDone(ctx);
     } catch (e) {
       console.error('belluh-nudges', p.user_id, e);
       results.error = (results.error ?? 0) + 1;

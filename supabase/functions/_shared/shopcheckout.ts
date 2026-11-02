@@ -5,6 +5,7 @@
 // until then every order ends on that page. Pure parsing is unit-tested; network failures just mean no ready order.
 
 import type { ShopProduct } from './shopify.ts';
+import { SPENDS, spendAllowed, parseOrder, type SpendApproval, type OrderConfirmation } from './confirms.ts';
 
 const env = (k: string) => { try { return (globalThis as any).Deno?.env.get(k) ?? undefined; } catch { return undefined; } };
 const SHOP_MCP = () => env('SHOP_MCP_URL') || 'https://mcp.shop.com/';
@@ -18,7 +19,7 @@ export interface Recipient {
 
 export interface Offer { title: string; variantId: string; shop: string; seller: string; priceCents: number; image: string | null; url: string | null }
 
-export interface ReadyOrder extends ShopProduct { total: string; totalCents: number; deliversTo: string; ready: true }
+export interface ReadyOrder extends ShopProduct { total: string; totalCents: number; deliversTo: string; ready: true; checkout?: { id: string; shop: string } }
 
 const money = (cents: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: cents % 100 ? 2 : 0 }).format(cents / 100);
 
@@ -87,7 +88,9 @@ const totalOf = (checkout: any): number | null => {
   return Number.isFinite(Number(t?.amount)) && Number(t.amount) > 0 ? Number(t.amount) : null;
 };
 
-async function call(name: string, args: Record<string, unknown>, fetchImpl: typeof fetch, timeoutMs = 9000): Promise<any | null> {
+async function call(name: string, args: Record<string, unknown>, fetchImpl: typeof fetch, timeoutMs = 9000, approval?: { given: SpendApproval | null; ask: { booking_id: string; item: string; cents: number } }): Promise<any | null> {
+  // Nothing that charges someone goes out without their explicit yes for that item at that price
+  if (!spendGuard(name, approval)) { console.error('Shop', name, 'refused: no approval to spend'); return null; }
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), timeoutMs);
   try {
@@ -99,6 +102,18 @@ async function call(name: string, args: Record<string, unknown>, fetchImpl: type
     if (!r.ok) { console.error('Shop', name, r.status); return null; }
     return await r.json();
   } catch (e) { console.error('Shop', name, String(e).slice(0, 120)); return null; } finally { clearTimeout(t); }
+}
+
+/** Whether a Shop tool may run: anything that spends needs an approval that passes spendAllowed. */
+export function spendGuard(name: string, approval?: { given: SpendApproval | null; ask: { booking_id: string; item: string; cents: number } }, now = new Date()): boolean {
+  return !SPENDS.test(name) || !!approval && spendAllowed(approval.given, approval.ask, now);
+}
+
+/** The shop's word on a checkout Bella opened: its order once they've paid, null until then (or if Shop can't say). */
+export async function checkoutOrder(shop: string, id: string, fetchImpl: typeof fetch = fetch): Promise<OrderConfirmation | null> {
+  if (!/^[a-z0-9.-]+$/i.test(shop) || !id) return null;
+  const json = await call('get_checkout', { shop, id }, fetchImpl);
+  return json ? parseOrder(json) : null;
 }
 
 export async function searchOffers(query: string, opts: { postalCode?: string; maxCents?: number | null; intent?: string; exclude?: RegExp } = {}, fetchImpl: typeof fetch = fetch): Promise<Offer[]> {
@@ -134,6 +149,7 @@ export async function readyOrder(query: string, to: Recipient, opts: { maxCents?
     return {
       title: o.title, seller: o.seller, image: o.image, url: co.continue_url,
       price: money(o.priceCents), total: money(total), totalCents: total, deliversTo: oneLine(to), ready: true,
+      ...(typeof co.id === 'string' && co.id ? { checkout: { id: co.id.slice(0, 200), shop: o.shop } } : {}),
     };
   }
   return null;

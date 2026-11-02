@@ -34,7 +34,7 @@ test('Linq: inbound texts only, from a phone number or an Apple ID', () => {
 
 test('Calls: the report says booked, the time, or why not', () => {
   const r = parseCallReport({ message: { type: 'end-of-call-report', endedReason: 'customer-ended-call', call: { id: 'c1', metadata: { booking_id: 'b1' } }, analysis: { structuredData: { booked: true, confirmed_time: '19:30', notes: 'Card needed to hold it' } } } });
-  assert.deepEqual(r, { callId: 'c1', bookingId: 'b1', booked: true, time: '19:30', alternative: null, notes: 'Card needed to hold it', reason: 'customer-ended-call' });
+  assert.deepEqual(r, { callId: 'c1', bookingId: 'b1', booked: true, time: '19:30', people: null, ref: null, alternative: null, notes: 'Card needed to hold it', reason: 'customer-ended-call' });
   assert.equal(parseCallReport({ message: { type: 'end-of-call-report', call: { id: 'c1', analysis: { structuredData: { booked: true, confirmed_time: '7:30pm' } } } } })?.time, null, 'odd times are dropped');
   assert.equal(parseCallReport({ message: { type: 'status-update', call: { id: 'c1' } } }), null);
   assert.equal(parseCallReport({ message: { type: 'end-of-call-report', call: { id: 'c1' } } })?.booked, false, 'no data means not booked');

@@ -58,10 +58,11 @@ async function talk(m: Inbound, link: Link, text: string) {
   const draft = messages.find(x => x?.role === 'note_draft');
   const extra = draft ? `\n\nNote to ${ctx.partnerName ?? 'your partner'}:\n"${draft.body}"\n\nReply SEND to send it, or DISCARD.` : '';
   const last = [...messages].reverse().find(x => x?.role === 'belluh');
-  const cards = (last?.meta?.bookings ?? []) as { label: string; call?: { place: string; status: string } }[];
+  const cards = (last?.meta?.bookings ?? []) as { label: string; confirm?: string; seller?: string; call?: { place: string; status: string } }[];
   const callable = cards.find(c => c.call?.status === 'ready');
   const booked = !draft && cards.length ? (callable
     ? `\n\nReply CALL and I'll phone ${callable.call!.place} and book it for you, or BOOKED once you've done it yourself.`
+    : cards[0].confirm === 'checkout' ? `\n\nOnce you've paid, I'll get the confirmation from ${cards[0].seller ?? 'the shop'} myself and let you know.`
     : `\n\nReply ${cards[0].label === 'I booked it' ? 'BOOKED' : 'ORDERED'} once it's done and I'll add it to your calendar and remind you.`) : '';
   // Links Belluh found (a table to book, gift ideas) come after the reply, one per line
   const links = (([...messages].reverse().find(x => x?.role === 'belluh')?.meta?.links ?? []) as { label: string; url: string }[])

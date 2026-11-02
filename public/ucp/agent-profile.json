@@ -31,7 +31,20 @@
           "version": "2026-08-25",
           "spec": "https://shopify.dev/docs/agents/catalog/global-catalog",
           "schema": "https://shopify.dev/ucp/schemas/2026-08-25/shopify_catalog_global.json",
-          "extends": ["dev.ucp.shopping.catalog.lookup", "dev.ucp.shopping.catalog.search"]
+          "extends": [
+            "dev.ucp.shopping.catalog.lookup",
+            "dev.ucp.shopping.catalog.search"
+          ]
+        }
+      ],
+      "dev.ucp.shopping.order": [
+        {
+          "version": "2026-08-25",
+          "spec": "https://ucp.dev/2026-08-25/specification/order",
+          "schema": "https://ucp.dev/2026-08-25/schemas/shopping/order.json",
+          "config": {
+            "webhook_url": "https://ctbsycrlakdanfzbaqmz.supabase.co/functions/v1/order-webhook"
+          }
         }
       ]
     },
