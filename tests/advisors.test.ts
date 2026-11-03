@@ -33,6 +33,8 @@ test('Advisors: unindexed foreign keys get an index, only when none leads with t
 
 test('Advisors: the migration is new, not an edit of an applied one, and changes no data', () => {
   const files = fs.readdirSync(path.join(ROOT, 'supabase/migrations')).sort();
-  assert.equal(files[files.length - 1], path.basename(MIG));
+  // Newer than every migration that existed when it was written (later migrations may follow it)
+  const at = files.indexOf(path.basename(MIG));
+  assert.ok(at >= 0 && files.slice(0, at).every(f => f < path.basename(MIG)) && at > files.indexOf('20261103010000_clarity.sql'));
   assert.ok(!/\b(insert into|update public\.|delete from|truncate|drop table|drop policy)\b/i.test(code));
 });

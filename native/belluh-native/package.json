@@ -1,0 +1,15 @@
+{
+  "name": "belluh-native",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Belluh's own Capacitor plugin: the photo library with real dates and places (read on the device), background preparation of new photos, and Share to Belluh.",
+  "main": "index.js",
+  "files": ["android/src/main/", "android/build.gradle", "ios/Sources", "Package.swift", "index.js"],
+  "capacitor": {
+    "ios": { "src": "ios" },
+    "android": { "src": "android" }
+  },
+  "peerDependencies": {
+    "@capacitor/core": "^8.0.0"
+  }
+}

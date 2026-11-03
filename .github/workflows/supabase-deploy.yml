@@ -82,6 +82,11 @@ jobs:
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      # Notifications for the iOS and Android apps (docs/native-app.md); each only if set
+      APNS_KEY_P8: ${{ secrets.APNS_KEY_P8 }}
+      APNS_KEY_ID: ${{ secrets.APNS_KEY_ID }}
+      APNS_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      FCM_SERVICE_ACCOUNT: ${{ secrets.FCM_SERVICE_ACCOUNT }}
       PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || 'ctbsycrlakdanfzbaqmz' }}
     steps:
       - name: Check setup
@@ -156,6 +161,22 @@ jobs:
             echo "Backup AI on:$(for k in GROQ_API_KEY CEREBRAS_API_KEY OPENROUTER_API_KEY; do [ -n "${!k}" ] && printf ' %s' "${k%%_API_KEY}"; done)"
           else
             echo "::notice::No backup AI keys; if Gemini is out of quota, Belluh says it's having trouble. Add GROQ_API_KEY to turn on a free backup."
+          fi
+
+      - name: Notifications for the iOS and Android apps
+        if: steps.setup.outputs.ready == 'true'
+        run: |
+          if [ -n "$APNS_KEY_P8" ] && [ -n "$APNS_KEY_ID" ] && [ -n "$APNS_TEAM_ID" ]; then
+            supabase secrets set --project-ref "$PROJECT_REF" APNS_KEY_P8="$APNS_KEY_P8" APNS_KEY_ID="$APNS_KEY_ID" APNS_TEAM_ID="$APNS_TEAM_ID" > /dev/null
+            echo "iPhone notifications on."
+          else
+            echo "::notice::iPhone notifications are off: add APNS_KEY_P8, APNS_KEY_ID and APPLE_TEAM_ID (docs/native-app.md)."
+          fi
+          if [ -n "$FCM_SERVICE_ACCOUNT" ]; then
+            supabase secrets set --project-ref "$PROJECT_REF" FCM_SERVICE_ACCOUNT="$FCM_SERVICE_ACCOUNT" > /dev/null
+            echo "Android notifications on."
+          else
+            echo "::notice::Android notifications are off: add FCM_SERVICE_ACCOUNT (docs/native-app.md)."
           fi
 
       - name: Deploy edge functions

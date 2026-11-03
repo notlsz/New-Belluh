@@ -3,7 +3,7 @@
 
 type MemoryErrorCode = 'noIndex' | 'notStarted' | 'unsupported' | 'storageFull' | 'modelDownloadFailed' | 'network' | 'declined' | 'invalidSchema' | 'notConsented' | 'rateLimited' | 'cancelled' | 'internal';
 
-export type RunTrigger = 'picked' | 'folder' | 'resume' | 'options' | 'reopen';
+export type RunTrigger = 'picked' | 'folder' | 'library' | 'resume' | 'options' | 'reopen';
 export type RunOutcome = 'ready' | 'paused' | 'stopped' | 'unfinished' | 'failed';
 export const STAGES = ['models', 'reading', 'understanding', 'text', 'places', 'events', 'people'] as const;
 export type Stage = typeof STAGES[number];
@@ -33,7 +33,7 @@ export interface RunReport {
 
 const INT = (x: unknown, max = 1e7) => { const n = Math.round(Number(x)); return Number.isFinite(n) && n >= 0 ? Math.min(max, n) : 0; };
 const SEC = (x: unknown) => { const n = Number(x); return Number.isFinite(n) && n >= 0 ? Math.min(86_400, Math.round(n * 10) / 10) : 0; };
-const TRIGGERS: RunTrigger[] = ['picked', 'folder', 'resume', 'options', 'reopen'];
+const TRIGGERS: RunTrigger[] = ['picked', 'folder', 'library', 'resume', 'options', 'reopen'];
 const OUTCOMES: RunOutcome[] = ['ready', 'paused', 'stopped', 'unfinished', 'failed'];
 const ERRORS: MemoryErrorCode[] = ['noIndex', 'notStarted', 'unsupported', 'storageFull', 'modelDownloadFailed', 'network', 'declined', 'invalidSchema', 'notConsented', 'rateLimited', 'cancelled', 'internal'];
 

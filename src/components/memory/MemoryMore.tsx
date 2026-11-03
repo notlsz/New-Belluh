@@ -12,13 +12,19 @@ import { Switch } from '../PrivacyCenter';
 import { Emoji } from '../../lib/emoji3d';
 import { Thumb, card, btnSoft, btnQuiet, fillT } from './bits';
 import { folderSupported } from '../../lib/memory/folder';
+import { isNative } from '../../lib/native/platform';
+import { NativeLibrary } from './NativeLibrary';
 
 const Text: React.FC<{ title: string; body?: React.ReactNode }> = ({ title, body }) => (
   <div className="flex-1 min-w-0"><p className="font-semibold text-slate-900 leading-snug">{title}</p>{body && <p className="text-sm text-slate-500 leading-relaxed mt-0.5">{body}</p>}</div>
 );
 
-/** Keep adding: pick a folder once; new photos in it are read each time the person comes back. Null where unsupported. */
-export const KeepAdding: React.FC<{ engine: MemoryEngine | null; supported?: boolean }> = ({ engine, supported }) => {
+/** Keep adding: in the iOS and Android apps, the phone's photo library; on the web, a folder picked once */
+export const KeepAdding: React.FC<{ engine: MemoryEngine | null; supported?: boolean }> = props =>
+  isNative() ? <NativeLibrary engine={props.engine} /> : <FolderKeepAdding {...props} />;
+
+/** Pick a folder once; new photos in it are read each time the person comes back. Null where unsupported. */
+const FolderKeepAdding: React.FC<{ engine: MemoryEngine | null; supported?: boolean }> = ({ engine, supported }) => {
   const T = useUi(strings).keep;
   const { num } = useI18n();
   const [ok] = useState(() => supported ?? folderSupported());

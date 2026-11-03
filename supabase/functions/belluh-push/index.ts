@@ -1,12 +1,15 @@
-// Web push setup for the app: hands out Belluh's public VAPID key and sends a test notification.
-// Deploy with: supabase functions deploy belluh-push   (JWT verification ON)
+// Push setup: hands out Belluh's public VAPID key (web) and sends a test notification to the caller's browsers and
+// phones. The iOS and Android apps register their APNs or FCM token with the register_native_push RPC (RLS-checked).
+// Deploy with: supabase functions deploy belluh-push   (checks the sign-in itself)
 //
 // POST body: { action: 'key' }    → { publicKey }
-//            { action: 'test' }   → sends "Notifications are on" to the caller's browsers
+//            { action: 'test' }   → sends "Notifications are on" to the caller's browsers and phones
+//            { action: 'status' } → { web: true, ios: bool, android: bool } which kinds the server can send
 
 import { db } from '../_shared/agentdb.ts';
 import { vapidKeys } from '../_shared/pushkeys.ts';
 import { pushTo } from '../_shared/notify.ts';
+import { apnsConfig, fcmAccount } from '../_shared/nativepush.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -25,6 +28,7 @@ Deno.serve(async (req) => {
   switch (body.action) {
     case 'key': return json({ publicKey: (await vapidKeys()).publicKey });
     case 'test': return json({ sent: await pushTo(user.id, { title: 'Belluh', body: "Notifications are on. I'll only message you when it matters.", url: '/', tag: 'test' }) });
+    case 'status': return json({ web: true, ios: !!apnsConfig(), android: !!fcmAccount() });
     default: return json({ error: 'Unknown action' }, 400);
   }
 });

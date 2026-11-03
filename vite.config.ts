@@ -39,6 +39,24 @@ function aboutPage() {
   };
 }
 
+// belluh.com/.well-known: the files that let links open the iOS and Android apps, when their ids are set
+function appLinks(env: Record<string, string>) {
+  let outDir = 'dist';
+  return {
+    name: 'belluh-app-links',
+    configResolved(c: any) { outDir = c.build.outDir; },
+    async closeBundle() {
+      const { appleAssociation, androidAssetLinks } = await import('./scripts/native-links.mjs');
+      const apple = appleAssociation(env.BELLUH_APPLE_TEAM_ID), android = androidAssetLinks(env.BELLUH_ANDROID_CERT_SHA256);
+      if (!apple && !android) return;
+      const dir = path.resolve(outDir, '.well-known');
+      fs.mkdirSync(dir, { recursive: true });
+      if (apple) fs.writeFileSync(path.join(dir, 'apple-app-site-association'), JSON.stringify(apple));
+      if (android) fs.writeFileSync(path.join(dir, 'assetlinks.json'), JSON.stringify(android));
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, (process as any).cwd(), '');
   
@@ -49,7 +67,7 @@ export default defineConfig(({ mode }) => {
   const appleDeveloperToken = env.VITE_APPLE_DEVELOPER_TOKEN || '';
 
   return {
-    plugins: [react(), aboutPage()],
+    plugins: [react(), aboutPage(), appLinks(env)],
     // Emojis instead of line icons, everywhere (see src/lib/emojiIcons.tsx)
     resolve: { alias: { 'lucide-react': path.resolve(__dirname, 'src/lib/emojiIcons.tsx') } },
     // Belluh Memory's understanding worker loads its models with dynamic imports, so workers are ES modules
