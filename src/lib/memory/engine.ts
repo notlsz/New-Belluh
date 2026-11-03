@@ -15,9 +15,13 @@
 import {
   MemoryError, type IndexOptions, type IndexSummary, type IndexingState, type IndexedItem, type MemoryEngine, type MediaType,
   type SearchResult, type Sensitivity, type ToolCall, type ToolResult, type Interest, type Facet, type Person, type ListOptions,
+  type IndexedBatch,
 } from './types.ts';
+import { detectEvents, itemEvents, lookupCandidates, lookupRequest, visitsOf, eventsTool, type EventHit, type EventRec } from './events.ts';
+import { cleanReport, worthReporting, REPORTS_MAX, type RunReport, type RunTrigger, type Stage } from './reports.ts';
+import { buildStory } from '../photoStory.ts';
 import { parseQuery } from './query.ts';
-import { rank, knownPlaces, facets as facetsOf, interests as interestsOf, assignFaces, mergeClusters, peopleOf, resolvePerson, runTool as runToolOn, listItems, publicItem, usable, LABEL_MIN, type Rec, type Cluster, type FaceRec, type SearchResultsX, type InterestX, type PersonX } from './logic.ts';
+import { rank, knownPlaces, facets as facetsOf, interests as interestsOf, assignFaces, mergeClusters, peopleOf, resolvePerson, runTool as runToolOn, listItems, publicItem, usable, capped, LABEL_MIN, type Rec, type Cluster, type FaceRec, type SearchResultsX, type InterestX, type PersonX } from './logic.ts';
 import { cellOf, cellsFor, matchVenue, nearestCity, r3, type Cities, type CellPlaces } from './geo.ts';
 import { LABELS, LABEL_BY_NAME, SENSITIVE, promptOf, sensitiveText } from './vocab.ts';
 import { labelsFrom, sensitivityFrom } from './scoring.ts';
@@ -25,6 +29,7 @@ import { openDb, deleteDb, type Db } from './idb.ts';
 import type { Reader, ReadFile } from './reader.ts';
 import type { Ocr } from './ocr.ts';
 import { MEMORY_ON_FLAG } from './constants.ts';
+import type { MemoryErrorCode } from './types.ts';
 
 function flagOn(on: boolean) {
   try { if (on) localStorage.setItem(MEMORY_ON_FLAG, '1'); else localStorage.removeItem(MEMORY_ON_FLAG); } catch { /* no storage here */ }
@@ -38,6 +43,7 @@ export const DEFAULT_OPTIONS: IndexOptions = {
   places: false,
   readText: true,
   people: false,
+  events: false,
   maxPhotos: null,
 };
 
@@ -72,6 +78,10 @@ export interface EngineDeps {
   countryOf?: (lng: number, lat: number) => string | null;
   /** Sends cells to memory-places; only cells, nothing else */
   places?: (cells: string[]) => Promise<CellPlaces[]>;
+  /** Sends visits to memory-events (with the lookup on): a cell, venue names and local times each; one answer per visit */
+  events?: (visits: { cell: string; venues: string[]; start: string; end: string }[]) => Promise<(EventHit | null)[]>;
+  /** Called with each run's report (counts and timings only); the default sends it only when the person allows it */
+  sendReport?: (r: RunReport) => Promise<unknown>;
   now?: () => number;
   uiLang?: () => string;
   /** Model caches to delete on reset() (Cache Storage names) */
@@ -90,6 +100,9 @@ const ITEM_KEYS = ['items', 'vectors', 'thumbs', 'faces'] as const;
 const BATCH = 12;
 const PLACES_CHUNK = 64;
 const PLACES_TTL = 30 * 86_400_000;
+const EVENTS_CHUNK = 20;
+const EVENTS_TTL = 30 * 86_400_000;
+const EVENTS_MAX_PER_RUN = 200;
 
 type Pending = { id: string; file?: File; work?: ImageBitmap | null };
 
@@ -117,6 +130,14 @@ export class BrowserMemoryEngine implements MemoryEngine {
   private skipped = 0; private failed = 0;
   private nextPerson = 1;
   private lastError: string | null = null;
+  private eventList: EventRec[] = [];
+  private lookups = new Map<string, { at: number; hit: EventHit | null }>();
+  private batchListeners = new Set<(b: IndexedBatch) => void>();
+  private trigger: RunTrigger = 'reopen';
+  private searches = 0;
+  private home: { n: number; at: { lat: number; lng: number } | null } | null = null;
+  /** The report of the run under way: counts and timings only */
+  private rep: (RunReport & { t0: number; stageAt: number; stage: Stage | null }) | null = null;
   /** Which image model is loaded, and at what precision (fp16, or fp32 where the browser can't run fp16) */
   modelInfo: { id: string; vision: string | null } | null = null;
 
@@ -144,6 +165,8 @@ export class BrowserMemoryEngine implements MemoryEngine {
       for (const [k, v] of await this.db.all<Float32Array>('vectors')) this.vectors.set(k, v);
       const ps = await this.db.get<{ clusters: Cluster[]; next: number }>('meta', 'people');
       if (ps) { this.clusters = ps.clusters; this.nextPerson = ps.next; }
+      for (const [k, v] of Object.entries((await this.db.get<Record<string, { at: number; hit: EventHit | null }>>('meta', 'eventLookups')) ?? {})) this.lookups.set(k, v);
+      this.eventList = (await this.db.get<EventRec[]>('meta', 'events')) ?? [];
       this.settle();
     })();
     return this.ready;
@@ -188,19 +211,25 @@ export class BrowserMemoryEngine implements MemoryEngine {
       for (const r of this.items.values()) { r.placesResolved = false; r.places = []; r.cuisines = []; if (r.location) { r.location.neighborhood = null; r.location.metro = null; } }
       await this.saveItems([...this.items.values()]);
     }
+    if (changed('events') || (changed('places') && !this._options.places)) {
+      // As in Rollup: turning the lookup on or off rebuilds what it found; off forgets every lookup
+      this.lookups.clear(); await this.db!.del('meta', 'eventLookups');
+      await this.refreshEvents();
+    }
     if (changed('people') && !this._options.people) {
       this.clusters = []; this.nextPerson = 1;
       for (const r of this.items.values()) r.people = [];
       await this.db!.clear('faces'); await this.db!.del('meta', 'people');
       await this.saveItems([...this.items.values()]);
     }
-    if ((changed('places') && this._options.places) || (changed('people') && this._options.people) || changed('focus')) this.kick();
+    if ((changed('places') && this._options.places) || (changed('people') && this._options.people) || (changed('events') && this._options.events) || changed('focus')) { this.trigger = 'options'; this.kick(); }
     else if (!this.run) this.settle();
   }
 
-  async addFiles(files: FileList | File[]): Promise<void> {
+  async addFiles(files: FileList | File[], o: { source?: 'picked' | 'folder' } = {}): Promise<void> {
     // Copy first: a FileList is live, and pickers clear their input (value = '') right after handing it over
     const list = Array.from(files);
+    if (!this.run) this.trigger = o.source ?? 'picked';
     await this.init();
     if (!this.firstBuilt) { this.firstBuilt = this.now(); await this.db!.put('meta', 'firstBuilt', this.firstBuilt); }
     flagOn(true);
@@ -221,6 +250,7 @@ export class BrowserMemoryEngine implements MemoryEngine {
     this.paused = false;
     await this.db!.put('meta', 'paused', false);
     this.lastError = null;
+    this.trigger = 'resume';
     this.kick();
   }
   /** Waits for the run under way, if any (tests and the harness) */
@@ -235,19 +265,63 @@ export class BrowserMemoryEngine implements MemoryEngine {
       return;
     }
     this.stop = false;
+    this.beginReport();
+    let error: MemoryErrorCode | null = null;
     this.run = this.runAll().catch(e => {
       this.lastError = String((e as any)?.message ?? e);
       const code = e instanceof MemoryError ? e.code : /quota|storage/i.test(this.lastError) ? 'storageFull' : 'internal';
+      error = code;
       if (!this.items.size || code === 'modelDownloadFailed') this.setState({ type: 'failed', error: code });
       console.warn('belluh memory:', e);
-    }).finally(() => {
+    }).finally(async () => {
       this.run = null;
       if (this.st.type !== 'failed') this.settle();
+      await this.endReport(error).catch(() => {});
       if (!this.paused && !this.stop && this.queue.some(p => p.file)) this.kick();
     });
   }
 
   // ------------------------------------------------------------------------------------------------------------ runs
+
+  // ----------------------------------------------------------------------------------------------------- run reports
+
+  private beginReport() {
+    const t = this.now();
+    this.rep = { ...cleanReport({}), trigger: this.trigger, t0: t, stageAt: t, stage: null };
+    this.trigger = 'reopen';
+  }
+  private stage(s: Stage | null) {
+    const r = this.rep; if (!r) return;
+    const t = this.now();
+    if (r.stage) r.stages[r.stage] = Math.round(((r.stages[r.stage] ?? 0) + (t - r.stageAt) / 1000) * 10) / 10;
+    r.stage = s; r.stageAt = t;
+  }
+  private count(k: 'read' | 'skipped' | 'failed' | 'located' | 'understood' | 'labels' | 'textRead' | 'placeCells' | 'eventLookups', n = 1) { if (this.rep) this.rep[k] += n; }
+  private async endReport(error: MemoryErrorCode | null) {
+    const r = this.rep; if (!r || !this.db) return;
+    this.stage(null); this.rep = null;
+    const waiting = [...this.items.values()].filter(x => x.stage === 'read').length;
+    const report = cleanReport({
+      ...r, at: new Date(this.now()).toISOString(), seconds: (this.now() - r.t0) / 1000, error,
+      outcome: error ? 'failed' : this.paused ? 'paused' : this.stop ? 'stopped' : waiting ? 'unfinished' : 'ready',
+      events: this.eventList.filter(e => !e.upcoming).length, indexTotal: this.items.size, remaining: waiting, searches: this.searches,
+    } as any);
+    if (!worthReporting(report)) return;
+    this.searches = 0;
+    const list = [report, ...((await this.db.get<RunReport[]>('meta', 'reports')) ?? [])].slice(0, REPORTS_MAX);
+    await this.db.put('meta', 'reports', list);
+    const send = this.deps.sendReport ?? (typeof window !== 'undefined' ? async (x: RunReport) => (await import('./reports.ts')).sendRunReport(x) : null);
+    if (send) void Promise.resolve(send(report)).catch(() => {});
+  }
+  /** The last runs, newest first: counts and timings only, kept on this device */
+  async reports(): Promise<RunReport[]> { await this.init(); return (await this.db!.get<RunReport[]>('meta', 'reports')) ?? []; }
+
+  onBatch(cb: (b: IndexedBatch) => void): () => void { this.batchListeners.add(cb); return () => { this.batchListeners.delete(cb); }; }
+  private emitBatch(ids: string[], indexed: number, total: number) {
+    if (!ids.length) return;
+    const ok = ids.filter(id => { const r = this.items.get(id); return r && usable(r); });
+    for (const cb of this.batchListeners) { try { cb({ ids: ok, indexed, total }); } catch { /* a listener's problem */ } }
+  }
 
   private progress(step: 'downloadingModels' | 'reading' | 'understanding' | 'places' | 'people' | 'finishing', indexed: number, total: number, started?: number) {
     const searchable = [...this.items.values()].some(r => r.stage === 'understood') || (step !== 'reading' && this.items.size > 0);
@@ -260,31 +334,33 @@ export class BrowserMemoryEngine implements MemoryEngine {
     const todo = this.queue.filter(p => p.file);
     this.queue = this.queue.filter(p => !p.file);
     const reader = this.deps.reader ?? (await import('./reader.ts')).browserReader();
+    if (todo.length) this.stage('reading');
     let n = 0;
     const total = todo.length;
     const one = async (p: Pending) => {
       const f = p.file!;
       try {
         const kind: MediaType | null = f.type.startsWith('video/') || /\.(mov|mp4|m4v|webm)$/i.test(f.name) ? 'video' : 'photo';
-        if (kind === 'video' && !this._options.mediaTypes.includes('video')) { this.skipped++; return; }
+        if (kind === 'video' && !this._options.mediaTypes.includes('video')) { this.skipped++; this.count('skipped'); return; }
         const got = await reader.read(f);
-        if (!got) { this.skipped++; return; }
-        if (!this._options.mediaTypes.includes(got.mediaType) || (this._options.focus === 'food' && got.mediaType === 'screenshot')) { got.work?.close(); this.skipped++; return; }
-        if (!this.inWindow(got.wall)) { got.work?.close(); this.skipped++; return; }
+        if (!got) { this.skipped++; this.count('skipped'); return; }
+        if (!this._options.mediaTypes.includes(got.mediaType) || (this._options.focus === 'food' && got.mediaType === 'screenshot')) { got.work?.close?.(); this.skipped++; this.count('skipped'); return; }
+        if (!this.inWindow(got.wall)) { got.work?.close?.(); this.skipped++; this.count('skipped'); return; }
         const have = this.items.get(got.id);
         if (have) {
           // Picked again: keep the file around if it still needs understanding
-          if (have.stage === 'read') { this.files.set(got.id, f); this.queue.push({ id: got.id, file: undefined, work: got.work }); } else got.work?.close();
+          if (have.stage === 'read') { this.files.set(got.id, f); this.queue.push({ id: got.id, file: undefined, work: got.work }); } else got.work?.close?.();
           return;
         }
         const rec = await this.recordOf(got);
         this.items.set(rec.id, rec);
+        this.count('read'); if (rec.location) this.count('located');
         this.files.set(rec.id, f);
         await this.db!.put('items', rec.id, rec);
         if (got.thumb) { try { await this.db!.put('thumbs', rec.id, got.thumb); } catch { /* a preview is optional */ } }
         this.queue.push({ id: rec.id, work: got.work });
       } catch (e) {
-        this.failed++;
+        this.failed++; this.count('failed');
         if (/quota/i.test(String(e))) throw new MemoryError('storageFull');
       } finally {
         n++;
@@ -378,6 +454,7 @@ export class BrowserMemoryEngine implements MemoryEngine {
         const { promptMatrix, vision } = await u.load({
           faces: this._options.people, cache,
           onProgress: (mb, total) => {
+            if (this.rep) this.rep.modelMB = Math.round(total || mb);
             const fraction = Math.min(0.99, total ? mb / total : 0);
             if (fraction - lastFrac >= 0.01 && this.run) { lastFrac = fraction; this.setState({ type: 'downloadingModels', fraction }); }
           },
@@ -418,7 +495,9 @@ export class BrowserMemoryEngine implements MemoryEngine {
     const works = new Map(this.queue.filter(p => p.work).map(p => [p.id, p.work!] as const));
     this.queue = [];
     if (todo.length || (this._options.people && [...this.items.values()].some(r => r.stage === 'understood' && !r.people.length && !(r as any).facesDone))) {
+      this.stage('models');
       const model = await this.getModel();
+      this.stage('understanding');
       this.progress('understanding', indexed, total, started);
       const ocrWant: Rec[] = [];
       const faceRecs: FaceRec[] = [];
@@ -428,24 +507,28 @@ export class BrowserMemoryEngine implements MemoryEngine {
         let work: ImageBitmap | Blob | null = works.get(r.id) ?? null;
         works.delete(r.id);
         if (!work) work = (await this.db!.get<Blob>('thumbs', r.id)) ?? null;
-        if (!work) { this.failed++; continue; }
+        if (!work) { this.failed++; this.count('failed'); continue; }
         let u: Understood;
         try { u = await model.image(work, this._options.people); }
-        catch { this.failed++; continue; }
+        catch { this.failed++; this.count('failed'); continue; }
         this.apply(r, u);
+        this.count('understood'); this.count('labels', r.labels.filter(l => l.p >= LABEL_MIN).length);
         if (this._options.people) { u.faces.forEach(f => faceRecs.push({ item: r.id, box: f.box, emb: f.emb, score: f.score })); (r as any).facesDone = true; }
         if (this.wantsText(r, u)) ocrWant.push(r);
         batch.push(r);
         indexed++;
-        if (batch.length >= BATCH) { await this.saveBatch(batch); batch = []; this.progress('understanding', indexed, total, started); }
+        if (batch.length >= BATCH) { await this.saveBatch(batch); this.emitBatch(batch.map(x => x.id), indexed, total); batch = []; this.progress('understanding', indexed, total, started); }
       }
       await this.saveBatch(batch);
+      this.emitBatch(batch.map(x => x.id), indexed, total);
       works.forEach(w => (w as ImageBitmap).close?.());
       if (this._options.focus === 'food') await this.prune();
-      if (!this.stop && ocrWant.length) await this.readText(ocrWant, indexed, total);
-      if (!this.stop && this._options.people) await this.peoplePass(faceRecs, model);
+      if (!this.stop && ocrWant.length) { this.stage('text'); await this.readText(ocrWant, indexed, total); }
+      if (!this.stop && this._options.people) { this.stage('people'); await this.peoplePass(faceRecs, model); }
     }
-    if (!this.stop && this._options.places) await this.placesPass();
+    if (!this.stop && this._options.places) { this.stage('places'); await this.placesPass(); }
+    if (!this.stop) { this.stage('events'); await this.eventsPass(); }
+    this.stage(null);
     if (this.stop || !this.items.size) return;
     this.progress('finishing', this.items.size, this.items.size);
     // The files themselves aren't needed once understood
@@ -482,6 +565,7 @@ export class BrowserMemoryEngine implements MemoryEngine {
         const text = await this.ocr.read(f);
         r.text = text || null;
         r.textRead = true;
+        this.count('textRead');
         const s = sensitiveText(text);
         if (s && !r.sensitivity) r.sensitivity = s;
         done.push(r);
@@ -514,6 +598,7 @@ export class BrowserMemoryEngine implements MemoryEngine {
     const fetcher = this.deps.places ?? defaultPlacesFetcher;
     for (let i = 0; i < missing.length && !this.stop; i += PLACES_CHUNK) {
       const chunk = missing.slice(i, i + PLACES_CHUNK);
+      this.count('placeCells', chunk.length);
       let res: CellPlaces[] = [];
       try { res = await fetcher(chunk); }
       catch (e) { if (/429|rate/i.test(String(e))) break; continue; }   // no network: country and city stay from the device
@@ -541,6 +626,55 @@ export class BrowserMemoryEngine implements MemoryEngine {
     }
     await this.saveItems(changed);
   }
+
+  // ---------------------------------------------------------------------------------------------------------- events
+
+  /**
+   * Events from what the photos show and tickets, always on the device; with the lookup on (and places), the visits
+   * that look like an event are asked about: per visit only its cell, the event venues in it and its local times.
+   */
+  private async eventsPass() {
+    if (this._options.events && this._options.places) {
+      const visits = visitsOf([...this.items.values()]);
+      const cellVenues = new Map<string, { name: string; kind: string }[]>();
+      for (const v of visits) if (v.cell && !cellVenues.has(v.cell)) {
+        const hit = await this.db!.get<{ at: number; data: CellPlaces }>('places', v.cell);
+        cellVenues.set(v.cell, hit?.data.venues ?? []);
+      }
+      const now = this.now();
+      const want = lookupCandidates(visits, v => cellVenues.get(v.cell!) ?? [])
+        .filter(c => { const l = this.lookups.get(c.visit.key); return !l || (l.hit === null && now - l.at > EVENTS_TTL); })
+        .slice(0, EVENTS_MAX_PER_RUN);
+      const fetcher = this.deps.events ?? defaultEventsFetcher;
+      for (let i = 0; i < want.length && !this.stop; i += EVENTS_CHUNK) {
+        const chunk = want.slice(i, i + EVENTS_CHUNK);
+        this.progress('places', i, want.length);
+        let res: (EventHit | null)[];
+        try { res = await fetcher(chunk.map(lookupRequest)); }
+        catch (e) { if (/429|rate/i.test(String(e))) break; continue; }   // no network: events from photos and tickets stay
+        this.count('eventLookups', chunk.length);
+        chunk.forEach((c, j) => this.lookups.set(c.visit.key, { at: now, hit: res[j] ?? null }));
+      }
+      if (want.length) await this.db!.put('meta', 'eventLookups', Object.fromEntries(this.lookups));
+    }
+    await this.refreshEvents();
+  }
+
+  /** Recomputes events from the index (and the lookups kept), and marks each item that belongs to one */
+  private async refreshEvents() {
+    const lookups = new Map([...this.lookups].map(([k, v]) => [k, v.hit] as const));
+    this.eventList = detectEvents([...this.items.values()], { now: this.now(), lookups });
+    const by = itemEvents(this.eventList);
+    const changed: Rec[] = [];
+    for (const r of this.items.values()) {
+      const next = by.get(r.id) ?? null;
+      if (JSON.stringify(next) !== JSON.stringify(r.event ?? null)) { r.event = next; changed.push(r); }
+    }
+    await this.saveItems(changed);
+    await this.db!.put('meta', 'events', this.eventList);
+  }
+
+  async events(): Promise<EventRec[]> { await this.init(); return this.eventList; }
 
   // ---------------------------------------------------------------------------------------------------------- people
 
@@ -609,7 +743,18 @@ export class BrowserMemoryEngine implements MemoryEngine {
     const plan = parseQuery(query, { now: this.now(), known: knownPlaces(all) });
     const textVec = plan.visualText ? await this.textVec(plan.visualText) : null;
     const people = opts.people?.map(p => resolvePerson(this.clusters, p)?.id ?? p);
-    return rank({ items: all, vectors: this.vectors, plan, query, textVec, people, limit: opts.limit });
+    this.searches++;
+    return rank({ items: all, vectors: this.vectors, plan, query, textVec, people, limit: opts.limit, home: this.homeAt() });
+  }
+
+  /** Home, as the place with the most located days (photoStory), recomputed when the index changes size */
+  private homeAt(): { lat: number; lng: number } | null {
+    if (this.home && this.home.n === this.items.size) return this.home.at;
+    const shots = [...this.items.values()].filter(r => r.wall != null && (r.exact || r.location)).map(r => ({ id: r.id, t: r.wall, lat: r.exact?.lat ?? r.location!.lat, lng: r.exact?.lng ?? r.location!.lng }));
+    let at: { lat: number; lng: number } | null = null;
+    try { const h = buildStory(shots).home; at = h ? { lat: h.lat, lng: h.lng } : null; } catch { at = null; }
+    this.home = { n: this.items.size, at };
+    return at;
   }
 
   async item(id: string): Promise<IndexedItem | null> { await this.init(); const r = this.items.get(id); return r ? publicItem(r) : null; }
@@ -647,6 +792,7 @@ export class BrowserMemoryEngine implements MemoryEngine {
   async runTool(call: ToolCall): Promise<ToolResult> {
     await this.init();
     if (!this.items.size) return { text: 'Nothing is indexed yet.', ids: [] };
+    if (call.name === 'events') return eventsTool(this.eventList, call.args ?? {}, capped);
     const countryOf = this.deps.countryOf ?? (await import('../world.ts')).countryOf;
     return runToolOn(call, {
       items: [...this.items.values()], vectors: this.vectors, now: this.now(), countryOf,
@@ -667,9 +813,11 @@ export class BrowserMemoryEngine implements MemoryEngine {
     this.queue = []; this.files.clear();
     this.items.clear(); this.vectors.clear(); this.clusters = []; this.nextPerson = 1; this.textCache.clear();
     this.skipped = 0; this.failed = 0; this.lastError = null;
+    this.eventList = []; this.lookups.clear(); this.home = null;
     // Keeps models, place data, options and a pause, as Rollup does
     await this.db!.clear('items', 'vectors', 'thumbs', 'faces');
     await this.db!.del('meta', 'people'); await this.db!.del('meta', 'firstBuilt');
+    await this.db!.del('meta', 'events'); await this.db!.del('meta', 'eventLookups');
     this.firstBuilt = null;
     flagOn(false);
     this.setState({ type: 'notStarted' });
@@ -682,10 +830,13 @@ export class BrowserMemoryEngine implements MemoryEngine {
     await this.ocr?.close().catch(() => {}); this.ocr = null;
     this.queue = []; this.files.clear(); this.items.clear(); this.vectors.clear(); this.clusters = []; this.textCache.clear();
     this.promptMatrix = null; this.firstBuilt = null; this.paused = false; this.lastError = null; this.nextPerson = 1;
+    this.eventList = []; this.lookups.clear(); this.home = null; this.searches = 0;
     this._options = { ...DEFAULT_OPTIONS };
     this.db!.close(); this.db = null;
     const idb = this.deps.idb ?? indexedDB;
     await deleteDb(idb, this.deps.dbName);
+    // The folder chosen for Keep adding, and what was read from it
+    try { await deleteDb(idb, `${this.deps.dbName ?? 'belluh-memory'}-folder`); } catch { /* none */ }
     // Downloaded models (Cache Storage) and tesseract's language data (its own IndexedDB store)
     const { MODEL_CACHE } = await import('./constants.ts');
     for (const name of this.deps.modelCaches ?? ['transformers-cache', MODEL_CACHE]) { try { await caches?.delete(name); } catch { /* no Cache Storage here */ } }
@@ -731,6 +882,16 @@ async function defaultPlacesFetcher(cells: string[]): Promise<CellPlaces[]> {
   const { data, error } = await supabase.functions.invoke('memory-places', { body: { cells } });
   if (error) throw error;
   return Array.isArray(data?.cells) ? data.cells : [];
+}
+
+/** Sends visits to Belluh's memory-events function, signed in: per visit a cell, venue names and local times only */
+async function defaultEventsFetcher(visits: { cell: string; venues: string[]; start: string; end: string }[]): Promise<(EventHit | null)[]> {
+  const { supabase } = await import('../supabaseClient.ts');
+  const { data, error } = await supabase.functions.invoke('memory-events', { body: { visits } });
+  if (error) throw error;
+  const out: (EventHit | null)[] = visits.map(() => null);
+  for (const r of Array.isArray(data?.visits) ? data.visits : []) if (Number.isInteger(r?.i) && r.i >= 0 && r.i < out.length && r.hit?.name) out[r.i] = r.hit;
+  return out;
 }
 
 let singleton: BrowserMemoryEngine | null = null;

@@ -18,6 +18,8 @@
 #   LINE_CHANNEL_SECRET        Basic settings → Channel secret
 #   LINE_CHANNEL_ACCESS_TOKEN  Messaging API → Channel access token (long-lived); the webhook is registered below
 # Optional, so Bella can watch for tickets going on sale: TICKETMASTER_API_KEY (free, developer.ticketmaster.com)
+#   It also lets Belluh Memory's opt-in event lookup name games and shows at a venue.
+# Optional, for naming the concert at a venue in Belluh Memory's event lookup: SETLISTFM_API_KEY (free, api.setlist.fm)
 # Optional, for more research papers: OPENALEX_API_KEY (openalex.org, free) and S2_API_KEY (semanticscholar.org)
 # Optional, for texting Belluh on Telegram (the fastest: no business number or carrier registration):
 #   TELEGRAM_BOT_TOKEN     from @BotFather in Telegram (/newbot); the webhook is registered below
@@ -67,6 +69,7 @@ jobs:
       LINE_CHANNEL_SECRET: ${{ secrets.LINE_CHANNEL_SECRET }}
       LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
       TICKETMASTER_API_KEY: ${{ secrets.TICKETMASTER_API_KEY }}
+      SETLISTFM_API_KEY: ${{ secrets.SETLISTFM_API_KEY }}
       OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
       S2_API_KEY: ${{ secrets.S2_API_KEY }}
       LINQ_API_KEY: ${{ secrets.LINQ_API_KEY }}
@@ -169,6 +172,10 @@ jobs:
           supabase functions deploy memory-agent --project-ref "$PROJECT_REF" --no-verify-jwt
           # Belluh Memory's places: only ~1 km cells in, public map data out; checks the sign-in itself, like memory-agent
           supabase functions deploy memory-places --project-ref "$PROJECT_REF" --no-verify-jwt
+          # Belluh Memory's opt-in event lookup: a cell, venue names and local times in, a listing out; keeps no visit
+          supabase functions deploy memory-events --project-ref "$PROJECT_REF" --no-verify-jwt
+          # Belluh Memory's run reports: counts and timings only, opt-in, stored with no user column, 90 days
+          supabase functions deploy memory-report --project-ref "$PROJECT_REF" --no-verify-jwt
           # Shop order confirmations: the shop signs each event and the function checks it, so no Supabase sign-in
           supabase functions deploy order-webhook --project-ref "$PROJECT_REF" --no-verify-jwt
           # Deleting an account: only for the signed-in person, so Supabase checks their sign-in before it runs
@@ -240,8 +247,9 @@ jobs:
           [ -n "$TICKETMASTER_API_KEY" ] && extra="$extra TICKETMASTER_API_KEY=$TICKETMASTER_API_KEY" || echo "::notice::Ticket watches are off: add TICKETMASTER_API_KEY to turn them on."
           [ -n "$OPENALEX_API_KEY" ] && extra="$extra OPENALEX_API_KEY=$OPENALEX_API_KEY"
           [ -n "$S2_API_KEY" ] && extra="$extra S2_API_KEY=$S2_API_KEY"
+          [ -n "$SETLISTFM_API_KEY" ] && extra="$extra SETLISTFM_API_KEY=$SETLISTFM_API_KEY"
           if [ -n "$extra" ]; then
-            for k in $TICKETMASTER_API_KEY $OPENALEX_API_KEY $S2_API_KEY; do echo "::add-mask::$k"; done
+            for k in $TICKETMASTER_API_KEY $OPENALEX_API_KEY $S2_API_KEY $SETLISTFM_API_KEY; do echo "::add-mask::$k"; done
             supabase secrets set --project-ref "$PROJECT_REF" $extra > /dev/null && echo "Watches and research keys set."
           fi
           if [ -n "$LINQ_API_KEY" ] && [ -n "$LINQ_WEBHOOK_SECRET" ]; then

@@ -9,6 +9,7 @@ import { setMemoryConsent } from '../../lib/memory/consent';
 import { Switch } from '../PrivacyCenter';
 import { Emoji } from '../../lib/emoji3d';
 import { card, btnDark, btnSoft, fillT } from './bits';
+import { JustIndexed, KeepAdding } from './MemoryMore';
 
 /** The file picker every Memory screen uses: the web can only read the photos the person picks. */
 export const PickPhotos: React.FC<{ engine: MemoryEngine; label: string; className?: string; onPicked?: () => void }> = ({ engine, label, className = btnDark, onPicked }) => {
@@ -49,6 +50,7 @@ export const IndexStatus: React.FC<{ engine: MemoryEngine; state: IndexingState 
       </div>
       {fraction != null && <div className="mt-3 h-2 rounded-full bg-[#eaf2f5] overflow-hidden"><div className="h-full rounded-full bg-[#9bbecb] transition-[width] duration-500" style={{ width: `${Math.max(3, Math.min(100, fraction * 100))}%` }} /></div>}
       {state.type === 'indexing' && state.progress.searchable && <p className="mt-3 text-sm text-[#3f7486]">{T.searchable}</p>}
+      {(state.type === 'indexing' || state.type === 'downloadingModels') && <JustIndexed engine={engine} />}
     </div>
   );
 };
@@ -108,6 +110,7 @@ const TurnOnMemory: React.FC<{ engine: MemoryEngine | null; state: IndexingState
         <h2 className="font-serif text-2xl text-slate-900 mt-4">{T.pick}</h2>
         <p className="text-[15px] text-slate-600 leading-relaxed mt-2 max-w-prose">{T.pickBody}</p>
         <div className="mt-6"><PickPhotos engine={engine} label={T.pick} /></div>
+        <div className="mt-4"><KeepAdding engine={engine} /></div>
       </>}
     </div>
   );

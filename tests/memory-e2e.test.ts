@@ -163,7 +163,7 @@ test('End to end: profile screens fields by words and by the model before the ag
   const p = await createMemoryAgent({ engine: fakeEngine(), transport: transportFor(deps().d), allowed: () => true }).profile(schema);
   const first = seen.find(s => s.url.includes(':streamGenerateContent'))!.body.contents[0].parts[0].text as string;
   assert.ok(!first.includes('medications') && !first.includes('sunday_routine'), 'refused fields are taken out before the agent sees the schema');
-  assert.deepEqual(p.json, { title: 'Sunrise runner, seafood regular', music: null, food: ['Seafood in Lisbon', '7'], travel: null, places: ['Prospect Park'], rhythm: null, firsts: null, medications: null, sunday_routine: null });
+  assert.deepEqual(p.json, { title: 'Sunrise runner, seafood regular', music: null, events: null, food: ['Seafood in Lisbon', '7'], travel: null, places: ['Prospect Park'], rhythm: null, firsts: null, medications: null, sunday_routine: null });
   assert.deepEqual(p.evidence, { '/food/0': ['p1'], '/places/0': ['p5'] });
   assert.deepEqual(p.refused.map(r => r.pointer), ['/medications', '/sunday_routine']);
   assert.equal(p.refused[0].reason, 'Belluh does not fill fields about health.');

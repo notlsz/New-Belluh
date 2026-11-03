@@ -14,7 +14,7 @@ const en = {
   ai: 'Written by AI from your photos',
   aiShort: 'AI',
   issued: 'Issued {date}',
-  sections: { music: 'Music', food: 'Food', travel: 'Travel', places: 'Places', rhythm: 'Rhythm', firsts: 'Firsts' },
+  sections: { music: 'Music', events: 'Events', food: 'Food', travel: 'Travel', places: 'Places', rhythm: 'Rhythm', firsts: 'Firsts' },
   empty: {
     title: 'Your Afterglow hasn’t lit up yet',
     body: 'Belluh reads your indexed photos and writes a short page about your taste: music, food, travel, places, rhythm and firsts. You approve every line.',
@@ -91,7 +91,7 @@ const en = {
     search: 'Searching your photos for “{q}”', places: 'Finding your places', placesIn: 'Finding your places in {city}',
     visits: 'Looking at your visits to {place}', days: 'Counting the days', months: 'Looking at your months', year: 'Looking at {year}',
     facets: 'Looking at what you photograph most', interests: 'Looking at what you love', trips: 'Looking at your trips',
-    tripsIn: 'Looking at your trips in {year}', thinking: 'Reading your index',
+    tripsIn: 'Looking at your trips in {year}', events: 'Looking at your concerts, games and shows', thinking: 'Reading your index',
   },
   consent: {
     title: 'Answers from your photos',
@@ -162,7 +162,7 @@ const ja: typeof en = {
   ai: '写真からAIが書きました',
   aiShort: 'AI',
   issued: '発行日 {date}',
-  sections: { music: '音楽', food: '食べもの', travel: '旅', places: 'よく行く場所', rhythm: '暮らしのリズム', firsts: 'はじめて' },
+  sections: { music: '音楽', events: 'イベント', food: '食べもの', travel: '旅', places: 'よく行く場所', rhythm: '暮らしのリズム', firsts: 'はじめて' },
   empty: {
     title: '余韻はまだありません',
     body: 'Belluhが読み込んだ写真から、あなたの好みを短いページにまとめます。音楽、食べもの、旅、場所、暮らしのリズム、はじめての出来事。1行ずつあなたが確認します。',
@@ -239,7 +239,7 @@ const ja: typeof en = {
     search: '写真から「{q}」を探しています', places: 'よく行く場所を探しています', placesIn: '{city}の場所を探しています',
     visits: '{place}に行った日を見ています', days: '日数を数えています', months: '月ごとに見ています', year: '{year}年を見ています',
     facets: 'よく撮るものを見ています', interests: '好きなものを見ています', trips: '旅を見ています',
-    tripsIn: '{year}年の旅を見ています', thinking: 'インデックスを読んでいます',
+    tripsIn: '{year}年の旅を見ています', events: 'ライブや試合、公演を見ています', thinking: 'インデックスを読んでいます',
   },
   consent: {
     title: '写真からの答え',
@@ -310,7 +310,7 @@ const fr: typeof en = {
   ai: 'Écrit par une IA à partir de vos photos',
   aiShort: 'IA',
   issued: 'Délivré le {date}',
-  sections: { music: 'Musique', food: 'Cuisine', travel: 'Voyages', places: 'Lieux', rhythm: 'Rythme', firsts: 'Premières fois' },
+  sections: { music: 'Musique', events: 'Sorties', food: 'Cuisine', travel: 'Voyages', places: 'Lieux', rhythm: 'Rythme', firsts: 'Premières fois' },
   empty: {
     title: 'Votre sillage est encore vierge',
     body: 'Belluh lit vos photos indexées et écrit une page courte sur vos goûts : musique, cuisine, voyages, lieux, rythme et premières fois. Vous validez chaque ligne.',
@@ -387,7 +387,7 @@ const fr: typeof en = {
     search: 'Recherche de « {q} » dans vos photos', places: 'Recherche de vos lieux', placesIn: 'Recherche de vos lieux à {city}',
     visits: 'Vos visites à {place}', days: 'Décompte des jours', months: 'Coup d’œil sur vos mois', year: 'Coup d’œil sur {year}',
     facets: 'Ce que vous photographiez le plus', interests: 'Ce que vous aimez', trips: 'Coup d’œil sur vos voyages',
-    tripsIn: 'Vos voyages en {year}', thinking: 'Lecture de votre index',
+    tripsIn: 'Vos voyages en {year}', events: 'Vos concerts, matchs et spectacles', thinking: 'Lecture de votre index',
   },
   consent: {
     title: 'Des réponses à partir de vos photos',
@@ -458,7 +458,7 @@ const it: typeof en = {
   ai: 'Scritto dall’IA dalle tue foto',
   aiShort: 'IA',
   issued: 'Rilasciato il {date}',
-  sections: { music: 'Musica', food: 'Cibo', travel: 'Viaggi', places: 'Luoghi', rhythm: 'Ritmo', firsts: 'Prime volte' },
+  sections: { music: 'Musica', events: 'Eventi', food: 'Cibo', travel: 'Viaggi', places: 'Luoghi', rhythm: 'Ritmo', firsts: 'Prime volte' },
   empty: {
     title: 'Il tuo riverbero è ancora vuoto',
     body: 'Belluh legge le tue foto indicizzate e scrive una pagina breve sui tuoi gusti: musica, cibo, viaggi, luoghi, ritmo e prime volte. Approvi ogni riga.',
@@ -535,7 +535,7 @@ const it: typeof en = {
     search: 'Cerco “{q}” nelle tue foto', places: 'Cerco i tuoi luoghi', placesIn: 'Cerco i tuoi luoghi a {city}',
     visits: 'Guardo le tue visite a {place}', days: 'Conto i giorni', months: 'Guardo i tuoi mesi', year: 'Guardo il {year}',
     facets: 'Guardo cosa fotografi di più', interests: 'Guardo cosa ami', trips: 'Guardo i tuoi viaggi',
-    tripsIn: 'Guardo i tuoi viaggi del {year}', thinking: 'Leggo il tuo indice',
+    tripsIn: 'Guardo i tuoi viaggi del {year}', events: 'Guardo concerti, partite e spettacoli', thinking: 'Leggo il tuo indice',
   },
   consent: {
     title: 'Risposte dalle tue foto',
@@ -606,7 +606,7 @@ const pt: typeof en = {
   ai: 'Escrito por IA a partir das suas fotos',
   aiShort: 'IA',
   issued: 'Emitido em {date}',
-  sections: { music: 'Música', food: 'Comida', travel: 'Viagens', places: 'Lugares', rhythm: 'Ritmo', firsts: 'Primeiras vezes' },
+  sections: { music: 'Música', events: 'Eventos', food: 'Comida', travel: 'Viagens', places: 'Lugares', rhythm: 'Ritmo', firsts: 'Primeiras vezes' },
   empty: {
     title: 'Seu arrebol ainda está em branco',
     body: 'O Belluh lê suas fotos indexadas e escreve uma página curta sobre o seu gosto: música, comida, viagens, lugares, ritmo e primeiras vezes. Você aprova cada linha.',
@@ -683,7 +683,7 @@ const pt: typeof en = {
     search: 'Buscando “{q}” nas suas fotos', places: 'Procurando seus lugares', placesIn: 'Procurando seus lugares em {city}',
     visits: 'Vendo suas visitas a {place}', days: 'Contando os dias', months: 'Vendo seus meses', year: 'Vendo {year}',
     facets: 'Vendo o que você mais fotografa', interests: 'Vendo o que você ama', trips: 'Vendo suas viagens',
-    tripsIn: 'Vendo suas viagens de {year}', thinking: 'Lendo seu índice',
+    tripsIn: 'Vendo suas viagens de {year}', events: 'Vendo seus shows, jogos e espetáculos', thinking: 'Lendo seu índice',
   },
   consent: {
     title: 'Respostas a partir das suas fotos',
@@ -754,7 +754,7 @@ const zh: typeof en = {
   ai: '由 AI 根据你的照片撰写',
   aiShort: 'AI',
   issued: '签发于 {date}',
-  sections: { music: '音乐', food: '美食', travel: '旅行', places: '常去的地方', rhythm: '生活节奏', firsts: '第一次' },
+  sections: { music: '音乐', events: '活动', food: '美食', travel: '旅行', places: '常去的地方', rhythm: '生活节奏', firsts: '第一次' },
   empty: {
     title: '你的心迹还是空白的',
     body: 'Belluh 读取你已建立索引的照片，写一页关于你喜好的简短介绍：音乐、美食、旅行、地方、生活节奏和第一次。每一行都由你确认。',
@@ -831,7 +831,7 @@ const zh: typeof en = {
     search: '正在照片中搜索“{q}”', places: '正在查找你去过的地方', placesIn: '正在查找你在{city}去过的地方',
     visits: '正在查看你去{place}的记录', days: '正在数天数', months: '正在按月查看', year: '正在查看{year}年',
     facets: '正在查看你最常拍的东西', interests: '正在查看你喜欢的事物', trips: '正在查看你的旅行',
-    tripsIn: '正在查看你{year}年的旅行', thinking: '正在读取你的索引',
+    tripsIn: '正在查看你{year}年的旅行', events: '正在查看你的演出、比赛和演唱会', thinking: '正在读取你的索引',
   },
   consent: {
     title: '根据你的照片回答',
@@ -902,7 +902,7 @@ const de: typeof en = {
   ai: 'Von KI aus deinen Fotos geschrieben',
   aiShort: 'KI',
   issued: 'Ausgestellt am {date}',
-  sections: { music: 'Musik', food: 'Essen', travel: 'Reisen', places: 'Orte', rhythm: 'Rhythmus', firsts: 'Erste Male' },
+  sections: { music: 'Musik', events: 'Events', food: 'Essen', travel: 'Reisen', places: 'Orte', rhythm: 'Rhythmus', firsts: 'Erste Male' },
   empty: {
     title: 'Dein Abendrot ist noch leer',
     body: 'Belluh liest deine indexierten Fotos und schreibt eine kurze Seite über deinen Geschmack: Musik, Essen, Reisen, Orte, Rhythmus und erste Male. Du bestätigst jede Zeile.',
@@ -979,7 +979,7 @@ const de: typeof en = {
     search: 'Suche „{q}“ in deinen Fotos', places: 'Suche deine Orte', placesIn: 'Suche deine Orte in {city}',
     visits: 'Sehe deine Besuche in {place} an', days: 'Zähle die Tage', months: 'Sehe deine Monate an', year: 'Sehe {year} an',
     facets: 'Sehe an, was du am meisten fotografierst', interests: 'Sehe an, was du liebst', trips: 'Sehe deine Reisen an',
-    tripsIn: 'Sehe deine Reisen {year} an', thinking: 'Lese deinen Index',
+    tripsIn: 'Sehe deine Reisen {year} an', events: 'Sehe deine Konzerte, Spiele und Shows an', thinking: 'Lese deinen Index',
   },
   consent: {
     title: 'Antworten aus deinen Fotos',
@@ -1050,7 +1050,7 @@ const es: typeof en = {
   ai: 'Escrito por IA a partir de tus fotos',
   aiShort: 'IA',
   issued: 'Expedido el {date}',
-  sections: { music: 'Música', food: 'Comida', travel: 'Viajes', places: 'Lugares', rhythm: 'Ritmo', firsts: 'Primeras veces' },
+  sections: { music: 'Música', events: 'Eventos', food: 'Comida', travel: 'Viajes', places: 'Lugares', rhythm: 'Ritmo', firsts: 'Primeras veces' },
   empty: {
     title: 'Tu arrebol aún está en blanco',
     body: 'Belluh lee tus fotos indexadas y escribe una página breve sobre tus gustos: música, comida, viajes, lugares, ritmo y primeras veces. Tú apruebas cada línea.',
@@ -1127,7 +1127,7 @@ const es: typeof en = {
     search: 'Buscando «{q}» en tus fotos', places: 'Buscando tus lugares', placesIn: 'Buscando tus lugares en {city}',
     visits: 'Mirando tus visitas a {place}', days: 'Contando los días', months: 'Mirando tus meses', year: 'Mirando {year}',
     facets: 'Mirando lo que más fotografías', interests: 'Mirando lo que te gusta', trips: 'Mirando tus viajes',
-    tripsIn: 'Mirando tus viajes de {year}', thinking: 'Leyendo tu índice',
+    tripsIn: 'Mirando tus viajes de {year}', events: 'Mirando tus conciertos, partidos y espectáculos', thinking: 'Leyendo tu índice',
   },
   consent: {
     title: 'Respuestas a partir de tus fotos',
@@ -1198,7 +1198,7 @@ const ko: typeof en = {
   ai: '사진을 바탕으로 AI가 작성했어요',
   aiShort: 'AI',
   issued: '{date} 발급',
-  sections: { music: '음악', food: '음식', travel: '여행', places: '자주 가는 곳', rhythm: '생활 리듬', firsts: '처음' },
+  sections: { music: '음악', events: '공연과 경기', food: '음식', travel: '여행', places: '자주 가는 곳', rhythm: '생활 리듬', firsts: '처음' },
   empty: {
     title: '여운이 아직 없어요',
     body: 'Belluh가 색인된 사진을 읽고 취향을 짧은 한 페이지로 써요. 음악, 음식, 여행, 장소, 생활 리듬, 처음 해 본 일까지. 한 줄씩 직접 확인해요.',
@@ -1275,7 +1275,7 @@ const ko: typeof en = {
     search: '사진에서 “{q}” 찾는 중', places: '자주 간 곳 찾는 중', placesIn: '{city}에서 간 곳 찾는 중',
     visits: '{place} 방문 기록 보는 중', days: '날짜 세는 중', months: '월별로 보는 중', year: '{year}년 보는 중',
     facets: '가장 많이 찍은 것 보는 중', interests: '좋아하는 것 보는 중', trips: '여행 보는 중',
-    tripsIn: '{year}년 여행 보는 중', thinking: '색인 읽는 중',
+    tripsIn: '{year}년 여행 보는 중', events: '공연, 경기, 쇼를 살펴보는 중', thinking: '색인 읽는 중',
   },
   consent: {
     title: '사진으로 답하기',

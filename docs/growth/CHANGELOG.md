@@ -2,6 +2,7 @@
 
 Newest first. One line per change, with the PR or source.
 
+- 2026-11-02: Belluh Memory, the last Rollup features: events (concerts, festivals, games, shows and races from venues, what photos show and tickets, on the device; an opt-in lookup sends only a ~1 km cell, venue names and times to the new memory-events function), an `events` agent tool and an Events section on Our Afterglow ("House shows, nine this year"), Keep adding from a folder on desktop Chrome and Edge, run reports in Memory settings (counts and timings only, shared only with the person's yes and Improving Belluh on, via memory-report), photos shown as they are indexed, and search results with context. All 9 languages plus es-MX and pt-PT; Privacy Policy updated.
 - 2026-11-02: Couples only. Until a partner joins, home is the invite (send your link, what opens together, plan a surprise with Bella); the streak counts days you both wrote; the admin dashboard tracks couples where both show up and first-week retention for both. All 9 languages plus es-MX and pt-PT.
 - 2026-11-02: The profile page gets the most beautiful local word for what a love leaves behind: Afterglow (en), 余韻 (ja), 여운 (ko), 心迹 (zh), sillage (fr), riverbero (it), arrebol (pt, es), Abendrot (de).
 - 2026-11-02: Locket reverted. Other languages keep their Heartprint names (ハートプリント, 心迹, 하트프린트, Heartprint); English is now Our Afterglow. /afterglow is the page and QR code; /locket, /heartprint and /passport still open it.

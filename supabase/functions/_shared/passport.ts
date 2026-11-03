@@ -2,9 +2,9 @@
 // approved line by line by them. Only that approved text is stored (memory_passports); each section is shared with the
 // partner and with Bella separately. Pure, so the app, Bella's context (agentdb) and the tests share the same rules.
 
-export const SECTION_KEYS = ['music', 'food', 'travel', 'places', 'rhythm', 'firsts'] as const;
+export const SECTION_KEYS = ['music', 'events', 'food', 'travel', 'places', 'rhythm', 'firsts'] as const;
 export type SectionKey = typeof SECTION_KEYS[number];
-export const SECTION_EMOJI: Record<SectionKey, string> = { music: '🎵', food: '🍜', travel: '✈️', places: '📍', rhythm: '🌅', firsts: '🌟' };
+export const SECTION_EMOJI: Record<SectionKey, string> = { music: '🎵', events: '🎟️', food: '🍜', travel: '✈️', places: '📍', rhythm: '🌅', firsts: '🌟' };
 export const LINES_MAX = 6;
 export const LINE_MAX = 160;
 
@@ -72,7 +72,7 @@ export function mergePassports(mine: StoredPassport | null, theirs: (SharedPassp
   return { title, sections, mine: mineKeys, theirs: theirKeys };
 }
 
-const NAMES: Record<SectionKey, string> = { music: 'Music', food: 'Food', travel: 'Travel', places: 'Places', rhythm: 'Rhythm', firsts: 'Firsts' };
+const NAMES: Record<SectionKey, string> = { music: 'Music', events: 'Events', food: 'Food', travel: 'Travel', places: 'Places', rhythm: 'Rhythm', firsts: 'Firsts' };
 
 /** What Bella may see, for her context: my sections I share with Bella, and my partner's that they share with both me
  *  and Bella. Returns null when there is nothing. */

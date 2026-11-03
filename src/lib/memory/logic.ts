@@ -6,7 +6,7 @@ import type { Facet, IndexedItem, Interest, Person, SearchResult, SearchResults,
 import { textHas, type KnownPlaces, type PlanX } from './query.ts';
 import { ACTIVITIES, LABEL_BY_NAME, TYPICAL_PHOTO_DAYS, type ActivityDef } from './vocab.ts';
 import { KIND_WORDS } from './geo.ts';
-import { buildStory, type Shot } from '../photoStory.ts';
+import { buildStory, km, type Shot } from '../photoStory.ts';
 
 /** One item as the index stores it on the device. Never leaves it. */
 export interface Rec extends IndexedItem {
@@ -132,6 +132,8 @@ export interface RankInput {
   /** Keep only items with every one of these people */
   people?: string[];
   limit?: number;
+  /** Where home is (the place with the most located days), for each result's context */
+  home?: { lat: number; lng: number } | null;
 }
 
 export interface SearchResultsX extends SearchResults {
@@ -175,9 +177,11 @@ export function rank(input: RankInput): SearchResultsX {
       if (m) { text = 1; matchedText = snippet(r.text, m.at, m.len); reasons.push('text'); }
     }
     if (plan.placeKinds?.length && plan.placeKinds.some(k => kindMatches(r, k))) place = 1;
+    let event = 0;
+    if (r.event && needle && eventMatches(r.event, needle)) { event = 1; reasons.push('event'); }
     if (place && !reasons.includes('place')) reasons.push('place');
     const c = sim == null ? 0 : Math.max(0, Math.min(1, (sim - 0.15) / (SIM_HIGH - 0.15)));
-    const score = visual || quoted ? Math.min(1, 0.6 * c + 0.45 * label + 0.5 * text + 0.35 * place) : 1;
+    const score = visual || quoted ? Math.min(1, 0.6 * c + 0.45 * label + 0.5 * text + 0.35 * place + 0.5 * event) : 1;
     return { r, score, sim, reasons, matchedText };
   });
 
@@ -187,9 +191,9 @@ export function rank(input: RankInput): SearchResultsX {
     scored = scored.filter(s => {
       const byImage = s.sim != null && s.sim >= cut;
       if (byImage) s.reasons.unshift('image');
-      if (quoted) return s.reasons.includes('text');
+      if (quoted) return s.reasons.includes('text') || s.reasons.includes('event');
       const byKind = (!!plan.placeKinds?.length && plan.placeKinds.some(k => kindMatches(s.r, k))) || (syn.kinds.size > 0 && s.r.places.some(p => syn.kinds.has(p.kind)));
-      return byImage || s.reasons.includes('label') || s.reasons.includes('text') || byKind;
+      return byImage || s.reasons.includes('label') || s.reasons.includes('text') || s.reasons.includes('event') || byKind;
     });
   }
 
@@ -223,6 +227,7 @@ export function rank(input: RankInput): SearchResultsX {
     matchedText: s.matchedText,
     matchReasons: [...new Set(s.reasons)],
     duplicates: dups,
+    context: contextOf(s.r, input.home ?? null),
   }));
   const count = plan.operation === 'count' ? {
     photos: reps.length,
@@ -236,7 +241,36 @@ export function publicItem(r: Rec): IndexedItem {
   return {
     id: r.id, date: r.date, timeZone: r.timeZone ?? null, mediaType: r.mediaType, isFavorite: r.isFavorite ?? false,
     location: r.location ? { ...r.location } : null, places: r.places, cuisines: r.cuisines, labels: r.labels,
-    text: r.text ?? null, sensitivity: r.sensitivity, people: r.people,
+    text: r.text ?? null, sensitivity: r.sensitivity, people: r.people, event: r.event ?? null,
+  };
+}
+
+// Words people search events with
+const EVENT_QUERY: Record<string, string[]> = {
+  concert: ['concert', 'concerts', 'gig', 'gigs', 'show', 'shows', 'live music', 'live show'],
+  festival: ['festival', 'festivals', 'fest'],
+  game: ['game', 'games', 'match', 'matches', 'sports game'],
+  show: ['show', 'shows', 'theater', 'theatre', 'musical', 'play', 'performance'],
+  race: ['race', 'races', 'marathon', 'grand prix'],
+};
+/** A search for "the Phoenix show", "Warriors game", "concerts", or the event's genre or venue finds its photos */
+export function eventMatches(e: NonNullable<IndexedItem['event']>, needle: string): boolean {
+  const q = needle.toLowerCase().trim();
+  if (!q) return false;
+  for (const w of [e.name, e.genre].filter((x): x is string => !!x && x.length >= 3)) if (textHas(q, w) || textHas(w, q)) return true;
+  return (EVENT_QUERY[e.kind] ?? []).some(w => q === w || textHas(q, w) != null && q.split(/\s+/).length <= 3);
+}
+
+const AWAY_KM = 50;
+/** When and how a photo was taken (Rollup's SearchContext): away from home, with people, part of day, weekend */
+export function contextOf(r: Rec, home: { lat: number; lng: number } | null): NonNullable<SearchResult['context']> {
+  const at = r.exact ?? (r.location ? { lat: r.location.lat, lng: r.location.lng } : null);
+  const day = r.wall != null ? new Date(r.wall).getUTCDay() : null;
+  return {
+    awayFromHome: home && at ? km(home, at) > AWAY_KM : null,
+    withPeople: r.people.length > 0 || r.labels.some(l => l.p >= LABEL_MIN && LABEL_BY_NAME.get(l.name)?.group === 'people'),
+    partOfDay: r.wall != null ? partOfDay(r.wall) as 'morning' | 'afternoon' | 'evening' | 'late night' : null,
+    weekend: day == null ? null : day === 0 || day === 6,
   };
 }
 
@@ -465,7 +499,7 @@ export function itemLine(r: Rec, _i?: number): string {
 }
 
 /** Joins lines up to the cap, saying how many were left out */
-function capped(head: string, lines: string[], ids: string[][] = []): ToolResult {
+export function capped(head: string, lines: string[], ids: string[][] = []): ToolResult {
   let text = head, used = 0;
   const keptIds: string[] = [];
   // The ids behind each line of the text (none for the heading), so an answer can cite one line, not the whole result
