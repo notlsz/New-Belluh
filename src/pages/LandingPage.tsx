@@ -1,5 +1,6 @@
 
 
+import MetOnApp from '../components/MetOnApp';
 import BelluhFilm from '../components/BelluhFilm';
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Lock, Menu, Sparkles, Activity, TrendingUp, Fingerprint, X, ChevronDown, Heart, MessageCircle, CalendarCheck, Plus, Check, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -604,6 +605,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
 
       {/* Where Belluh's couples are */}
       <LogoMarquee title={LS.usedBy} orgs={ORGANIZATIONS} note={LS.usedByNote} />
+
+      {/* Couples who met on an app: "Tinder finds love. Belluh keeps it." in the reader's market */}
+      <MetOnApp onStart={onGetStarted} />
 
       {/* The problem: a blank journal while years of the two of you sit on your phones; then what the photos hold, and
           that they never leave the phone */}
