@@ -19,6 +19,10 @@ export interface IndexOptions {
   readText: boolean;
   /** Group faces on the device. Biometric: off unless the person consents. */
   people: boolean;
+  /** Look up the concert, festival, game, show or race a visit at a venue was for. Needs places. Off: events still come
+   *  from what the photos show and tickets, on the device. On: a visit's ~1 km cell, nearby venue names and its local
+   *  start and end times go to Belluh's memory-events function. Off unless the person opts in. */
+  events?: boolean;
   /** Cap; the oldest are dropped beyond it */
   maxPhotos?: number | null;
 }
@@ -29,6 +33,9 @@ export interface IndexSummary {
   from: string | null;      // ISO date of the oldest indexed item
   to: string | null;        // ISO date of the newest
 }
+
+/** Photos that just became searchable, for showing them as they are indexed (Rollup's IndexedBatch) */
+export interface IndexedBatch { ids: string[]; indexed: number; total: number }
 
 export interface IndexingProgress {
   step: 'downloadingModels' | 'reading' | 'understanding' | 'places' | 'people' | 'finishing';
@@ -76,6 +83,8 @@ export interface IndexedItem {
   text?: string | null;           // text read from the image
   sensitivity: Sensitivity | null;
   people: string[];               // Person ids, when people indexing is on
+  /** The concert, festival, game, show or race this photo was taken at, when the engine found one */
+  event?: { name: string | null; kind: 'concert' | 'festival' | 'game' | 'show' | 'race'; venue: string | null; genre?: string | null } | null;
 }
 
 export interface SearchPlan {
@@ -94,6 +103,8 @@ export interface SearchResult extends IndexedItem {
   matchedText?: string | null;
   matchReasons: string[];
   duplicates: string[];           // other shots of the same moment, grouped into this one
+  /** When and how it was taken, as Rollup's SearchContext: away from home, with people, part of day, weekend */
+  context?: { awayFromHome: boolean | null; withPeople: boolean; partOfDay: 'morning' | 'afternoon' | 'evening' | 'late night' | null; weekend: boolean | null };
 }
 
 export interface SearchResults { query: string; plan: SearchPlan; results: SearchResult[] }
@@ -136,7 +147,8 @@ export type ToolName =
   | 'timeline'           // { from?, to?, granularity: 'month' | 'week' } -> counts and top places per period
   | 'facets'             // { limit? } -> largest groups
   | 'interests'          // { window?: 'now' | 'lifetime' } -> interests
-  | 'trips';             // { from?, to? } -> trips away from home with dates and places
+  | 'trips'              // { from?, to? } -> trips away from home with dates and places
+  | 'events';            // { kind?, from?, to?, limit? } -> concerts, festivals, games, shows and races with dates and venues
 
 export interface ToolCall { name: ToolName; args: Record<string, unknown> }
 /** What list() returns: one kind of media, a date range (YYYY-MM-DD, inclusive), at most `limit` (default 200, max 2000) */
@@ -175,6 +187,12 @@ export interface MemoryEngine {
    * since the last date. Stays on the device. Optional, so an engine without it still meets the contract.
    */
   list?(o?: ListOptions): Promise<IndexedItem[]>;
+  /** Concerts, festivals, games, shows and races found in the index (and upcoming ones from tickets). Optional. */
+  events?(): Promise<import('./events.ts').EventRec[]>;
+  /** The last indexing runs, counts and timings only, kept on this device. Optional. */
+  reports?(): Promise<import('./reports.ts').RunReport[]>;
+  /** Photos that just became searchable, batch by batch (Rollup's IndexedBatch). Optional. */
+  onBatch?(cb: (b: IndexedBatch) => void): () => void;
   /** Delete the index and everything derived; keep downloaded models and options */
   deleteIndex(): Promise<void>;
   /** Delete everything Belluh Memory keeps on this device, models included */

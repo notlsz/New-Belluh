@@ -3,18 +3,20 @@
 //            provider (Google Gemini) to answer, and are not stored. Asked once, before the first query or profile.
 //   places   naming places: ~1 km areas where photos were taken go to Belluh's server
 //   people   grouping faces on this device (biometric): off unless the person agrees
+//   events   looking up the concert, game or show at a venue: a visit's ~1 km cell, venue names and times go to Belluh
+//   diagnostics  run reports (counts and timings only) go to Belluh; also needs "Improving Belluh" in the Privacy Center
 // Kept on this device (localStorage), like the index itself: the app sends consent: true only while ai is on, and the
 // memory-agent refuses any call without it. Belluh is for adults; Memory is never offered to anyone under 18.
 
-export interface MemoryConsent { ai: boolean; places: boolean; people: boolean; aiAt: string | null; peopleAt: string | null }
+export interface MemoryConsent { ai: boolean; places: boolean; people: boolean; events: boolean; diagnostics: boolean; aiAt: string | null; peopleAt: string | null }
 export const MEMORY_CONSENT_KEY = 'belluh_memory_consent';
 export const MEMORY_CONSENT_EVENT = 'belluh:memory-consent';
-const OFF: MemoryConsent = { ai: false, places: false, people: false, aiAt: null, peopleAt: null };
+const OFF: MemoryConsent = { ai: false, places: false, people: false, events: false, diagnostics: false, aiAt: null, peopleAt: null };
 
 export function getMemoryConsent(): MemoryConsent {
   try {
     const c = JSON.parse(localStorage.getItem(MEMORY_CONSENT_KEY) ?? 'null');
-    if (c && typeof c === 'object') return { ...OFF, ai: c.ai === true, places: c.places === true, people: c.people === true, aiAt: c.aiAt ?? null, peopleAt: c.peopleAt ?? null };
+    if (c && typeof c === 'object') return { ...OFF, ai: c.ai === true, places: c.places === true, people: c.people === true, events: c.events === true, diagnostics: c.diagnostics === true, aiAt: c.aiAt ?? null, peopleAt: c.peopleAt ?? null };
   } catch { /* storage off: nothing allowed */ }
   return { ...OFF };
 }

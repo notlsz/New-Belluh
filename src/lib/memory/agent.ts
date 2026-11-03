@@ -27,13 +27,13 @@ export type Transport = (body: Record<string, unknown>, signal: AbortSignal) => 
 
 export interface ProgressStrings {
   search: string; places: string; placesIn: string; visits: string; days: string; months: string; year: string;
-  facets: string; interests: string; trips: string; tripsIn: string; thinking: string;
+  facets: string; interests: string; trips: string; tripsIn: string; thinking: string; events?: string;
 }
 export const PROGRESS_EN: ProgressStrings = {
   search: 'Searching your photos for “{q}”', places: 'Finding your places', placesIn: 'Finding your places in {city}',
   visits: 'Looking at your visits to {place}', days: 'Counting the days', months: 'Looking at your months', year: 'Looking at {year}',
   facets: 'Looking at what you photograph most', interests: 'Looking at what you love', trips: 'Looking at your trips',
-  tripsIn: 'Looking at your trips in {year}', thinking: 'Reading your index',
+  tripsIn: 'Looking at your trips in {year}', thinking: 'Reading your index', events: 'Looking at your concerts, games and shows',
 };
 
 const yearOf = (a: Record<string, unknown>) => {
@@ -54,6 +54,7 @@ export function progressLine(call: { name: string; args: Record<string, unknown>
     case 'facets': return P.facets;
     case 'interests': return P.interests;
     case 'trips': return y ? fill(P.tripsIn, { year: y }) : P.trips;
+    case 'events': return P.events ?? PROGRESS_EN.events!;
     default: return P.thinking;
   }
 }

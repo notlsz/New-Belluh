@@ -39,6 +39,12 @@ export async function getMemoryEngine(): Promise<MemoryEngine | null> {
   try { return await getMemory(); } catch { return null; }
 }
 
+/** Keep adding from a kept folder (desktop Chrome and Edge) when Belluh opens and when it comes back into view */
+export function startKeepAdding(): void {
+  if (!memoryEnabled() || !memorySupported()) return;
+  void import('./keepAdding.ts').then(m => m.startKeepAdding()).catch(() => {});
+}
+
 /** Hands picked files to Memory when it is on; does nothing (and loads nothing) when it is off */
 export function feedMemory(files: File[] | FileList): void {
   if (!memoryEnabled() || !memorySupported()) return;

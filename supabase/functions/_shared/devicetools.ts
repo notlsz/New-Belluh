@@ -21,7 +21,7 @@ export const DEVICE_TOOL_DECLARATION = {
   parameters: {
     type: 'OBJECT',
     properties: {
-      tool: { type: 'STRING', enum: MEMORY_TOOL_NAMES, description: 'search_photos (query), list_places (kind, city, from, to), list_visits (place, from, to), count_days (query, place, from, to), timeline (granularity, from, to), facets, interests (window), trips (from, to)' },
+      tool: { type: 'STRING', enum: MEMORY_TOOL_NAMES, description: 'search_photos (query), list_places (kind, city, from, to), list_visits (place, from, to), count_days (query, place, from, to), timeline (granularity, from, to), facets, interests (window), trips (from, to), events (kind, from, to)' },
       query: S('What to look for, e.g. "ramen in Tokyo"'),
       place: S('A place as named in the photos'),
       city: S('City name'),

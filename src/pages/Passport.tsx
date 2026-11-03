@@ -28,6 +28,9 @@ import { FromPhotosPanel } from '../components/memory/FromPhotos';
 import { useFromPhotos } from '../lib/memory/fromPhotos';
 import { shotForBella, type ShotPlan } from '../lib/memory/screenshots';
 import type { DateMark } from '../lib/memory/gaps';
+import moreStrings from '../i18n/ui/memoryMore';
+import { EventsBlock } from '../components/memory/MemoryMore';
+import { withEventLines } from '../lib/memory/passport';
 
 export interface PassportStoreLike {
   mine(): Promise<StoredPassport | null>;
@@ -58,7 +61,8 @@ const NO_SHARE = () => Object.fromEntries(SECTION_KEYS.map(k => [k, false])) as 
 
 const Passport: React.FC<Props> = ({ userName, partnerName, hasPartner, store: storeIn, transport: transportIn, engineLoader = loadEngine, initialTab = 'you', lastDate, askBella }) => {
   const T = useUi(strings);
-  const { lang, date } = useI18n();
+  const { lang, date, num } = useI18n();
+  const M = useUi(moreStrings);
   const [store, setStore] = useState<PassportStoreLike | null>(storeIn ?? null);
   const [transport, setTransport] = useState<Transport | null>(() => transportIn ?? null);
   useEffect(() => {
@@ -107,7 +111,10 @@ const Passport: React.FC<Props> = ({ userName, partnerName, hasPartner, store: s
     setMaking([]); setNote(null);
     try {
       const p = await agent.profile(PASSPORT_SCHEMA, { onProgress: l => setMaking(m => [...(m ?? []), l]) });
-      setDraft(draftFromProfile(p)); setDirty(true);
+      // Events come from the device too, so the line is there even when the AI left it out
+      const events = await engine?.events?.().catch(() => []) ?? [];
+      setDraft(withEventLines(draftFromProfile(p), events, { words: M.events, lang, num, date: d => date(new Date(`${d}T12:00:00`), { month: 'short', year: 'numeric' }) }));
+      setDirty(true);
     } catch (e: any) {
       setNote(e?.code === 'rateLimited' ? T.ask.rate : e?.code === 'network' ? T.ask.offline : e?.code === 'notStarted' || e?.code === 'noIndex' ? T.ask.notReady : T.ask.error);
     } finally { setMaking(null); }
@@ -389,6 +396,7 @@ const TimelineTab: React.FC<{ engine: MemoryEngine | null; searchable: boolean; 
       {fp && <FromPhotosPanel gaps={fp.gaps} shots={fp.shots} engine={engine} busy={busy} onNextDate={summary => void send(F.gaps.ask, { gaps: summary })} onPlanShot={planShot} />}
       {sent && <p role="status" className="text-sm font-semibold text-[#3f7486] px-2">{sent}</p>}
       {!fp && <p className="flex items-center gap-2 text-sm text-slate-500 px-2"><Emoji e="🔒" size={14} />{T.local}</p>}
+      <EventsBlock engine={engine} />
       {data && block('✈️', T.trips, data.trips)}
       {data && block('📅', T.months, data.months)}
     </div>

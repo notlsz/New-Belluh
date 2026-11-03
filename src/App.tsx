@@ -54,6 +54,7 @@ import { trackEvent, flushCta } from './services/analytics';
 import { belluhAgent } from './services/belluhAgent';
 import { belluh } from './lib/belluhPresence';
 import { resolveMedia, repairLegacyUrl } from './services/media';
+import { startKeepAdding } from './lib/memory';
 import { streakFor, hideLockedAnswer, questionForDay } from './lib/daily';
 import InviteFirst from './components/InviteFirst';
 
@@ -122,6 +123,8 @@ const App: React.FC = () => {
     document.documentElement.style.setProperty('--sidebar-w', sidebarCollapsed ? '5rem' : '16rem');
     try { if (canStore('preferences')) localStorage.setItem('belluh_sidebar', sidebarCollapsed ? 'collapsed' : 'open'); } catch { /* storage off */ }
   }, [sidebarCollapsed]);
+  // Belluh Memory's Keep adding: new photos in a kept folder are indexed when signed-in people come back (desktop Chrome and Edge)
+  useEffect(() => { if (isAuthenticated) startKeepAdding(); }, [isAuthenticated]);
   const [isOnboarding, setIsOnboarding] = useState(false);
   
   // View State for Unauthenticated Users ('landing' | 'auth' | 'about' | 'careers' | 'acquisition' | 'report' | 'mission' | 'impact' | 'research' | 'resource' | 'legal' | 'faq' | 'press' | 'notfound')

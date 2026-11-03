@@ -9,20 +9,30 @@ import { Switch } from '../PrivacyCenter';
 import { Emoji } from '../../lib/emoji3d';
 import { Sheet, btnSoft } from './bits';
 import { IndexStatus } from './TurnOnMemory';
+import { KeepAdding, RunReports } from './MemoryMore';
+import moreStrings from '../../i18n/ui/memoryMore';
 
 interface Props { engine: MemoryEngine | null; state: IndexingState | null; onClose: () => void; onDeletePassport: () => Promise<boolean> }
 
 const MemorySettings: React.FC<Props> = ({ engine, state, onClose, onDeletePassport }) => {
   const T = useUi(strings);
   const S = T.settingsSheet, O = T.onboarding;
+  const E = useUi(moreStrings).events;
   const [c, setC] = useState(getMemoryConsent);
   const [opts, setOpts] = useState(() => engine?.options ?? null);
   const [confirm, setConfirm] = useState<null | 'index' | 'reset' | 'passport'>(null);
   const [done, setDone] = useState<string | null>(null);
   // Faces are biometric: turning them on here asks for the same agreement as in Turn on Memory
   const [askFaces, setAskFaces] = useState(false);
-  const set = (k: 'ai' | 'places' | 'people', v: boolean) => setC(setMemoryConsent({ [k]: v }));
-  const setOpt = async (k: 'places' | 'readText' | 'people', v: boolean) => { if (!engine) return; await engine.setOptions({ [k]: v }); setOpts({ ...engine.options }); if (k !== 'readText') set(k, v); };
+  const set = (k: 'ai' | 'places' | 'people' | 'events', v: boolean) => setC(setMemoryConsent({ [k]: v }));
+  const setOpt = async (k: 'places' | 'readText' | 'people' | 'events', v: boolean) => {
+    if (!engine) return;
+    // The event lookup needs places: turning places off turns it off too
+    await engine.setOptions(k === 'places' && !v ? { places: false, events: false } : { [k]: v });
+    setOpts({ ...engine.options });
+    if (k !== 'readText') set(k, v);
+    if (k === 'places' && !v) set('events', false);
+  };
 
   const toggle = (emoji: string, title: string, body: string, on: boolean, onChange: (v: boolean) => void) => (
     <div className="flex items-center gap-4 py-3">
@@ -58,6 +68,7 @@ const MemorySettings: React.FC<Props> = ({ engine, state, onClose, onDeletePassp
       )}
       {toggle('✨', S.aiAnswers, S.aiAnswersBody, c.ai, v => set('ai', v))}
       {opts && toggle('📍', O.places, O.placesBody, opts.places, v => setOpt('places', v))}
+      {opts && toggle('🎟️', E.lookup, opts.places ? E.lookupBody : `${E.lookupBody} ${E.needsPlaces}`, !!opts.events && opts.places, v => { if (opts.places || !v) void setOpt('events', v); })}
       {opts && toggle('📄', O.readText, O.readTextBody, opts.readText, v => setOpt('readText', v))}
       {opts && toggle('🙂', O.people, O.peopleBody, opts.people && c.people, v => { if (v) setAskFaces(true); else { setAskFaces(false); void setOpt('people', false); } })}
       {askFaces && (
@@ -66,6 +77,8 @@ const MemorySettings: React.FC<Props> = ({ engine, state, onClose, onDeletePassp
           <span>{O.peopleAgree}</span>
         </label>
       )}
+      <KeepAdding engine={engine} />
+      <RunReports engine={engine} />
       {engine && danger('index', '🗑️', S.deleteIndex, S.deleteIndexBody, () => engine.deleteIndex().then(() => import('../../lib/memory/devicechat').then(m => m.clearCites())))}
       {engine && danger('reset', '🔄', S.reset, S.resetBody, () => engine.reset().then(() => import('../../lib/memory/devicechat').then(m => m.clearCites())))}
       {danger('passport', '🌅', S.deletePassport, S.deletePassportBody, onDeletePassport)}
