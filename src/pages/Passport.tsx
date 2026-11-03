@@ -29,6 +29,7 @@ import { useFromPhotos } from '../lib/memory/fromPhotos';
 import { shotForBella, type ShotPlan } from '../lib/memory/screenshots';
 import type { DateMark } from '../lib/memory/gaps';
 import moreStrings from '../i18n/ui/memoryMore';
+import howWeMetUi from '../i18n/ui/howWeMet';
 import { EventsBlock } from '../components/memory/MemoryMore';
 import { withEventLines } from '../lib/memory/passport';
 
@@ -54,12 +55,14 @@ interface Props {
   /** For tests and the dev harness: the couple's last date, and how a plan reaches Bella */
   lastDate?: () => Promise<DateMark | null>;
   askBella?: (text: string, extras: { screenshot?: ReturnType<typeof shotForBella>; gaps?: string | null }) => Promise<boolean>;
+  /** Opens Bring your story from the app you met on (Firsts, on the Timeline tab) */
+  onHowWeMet?: () => void;
 }
 type Tab = 'you' | 'us' | 'timeline' | 'sharing' | 'activity';
 const notReady: Transport = async function* () { yield { type: 'error', code: 'agent_unavailable', message: 'Loading' }; };
 const NO_SHARE = () => Object.fromEntries(SECTION_KEYS.map(k => [k, false])) as Record<SectionKey, boolean>;
 
-const Passport: React.FC<Props> = ({ userName, partnerName, hasPartner, store: storeIn, transport: transportIn, engineLoader = loadEngine, initialTab = 'you', lastDate, askBella }) => {
+const Passport: React.FC<Props> = ({ userName, partnerName, hasPartner, store: storeIn, transport: transportIn, engineLoader = loadEngine, initialTab = 'you', lastDate, askBella, onHowWeMet }) => {
   const T = useUi(strings);
   const { lang, date, num } = useI18n();
   const M = useUi(moreStrings);
@@ -331,6 +334,7 @@ const Passport: React.FC<Props> = ({ userName, partnerName, hasPartner, store: s
       <div className="mt-4">
         {tab === 'you' && youTab}
         {tab === 'us' && usTab}
+        {tab === 'timeline' && onHowWeMet && <Firsts onOpen={onHowWeMet} />}
         {tab === 'timeline' && <TimelineTab engine={engine ?? null} searchable={searchable} lastDate={lastDate} askBella={askBella} />}
         {tab === 'sharing' && sharingTab}
         {tab === 'activity' && activityTab}
@@ -338,6 +342,24 @@ const Passport: React.FC<Props> = ({ userName, partnerName, hasPartner, store: s
 
       {consentFor && <MemoryConsent onClose={() => setConsentFor(null)} onAllow={() => { const f = consentFor; setConsentFor(null); f(); }} />}
       {settings && <MemorySettings engine={engine ?? null} state={state} onClose={() => setSettings(false)} onDeletePassport={async () => { const ok = await (store?.remove() ?? Promise.resolve(false)); if (ok) { setStored(null); setDraft(null); } return ok; }} />}
+    </div>
+  );
+};
+
+/** Firsts: where the story starts. Bring the day they matched and their first lines from the app they met on. */
+const Firsts: React.FC<{ onOpen: () => void }> = ({ onOpen }) => {
+  const H = useUi(howWeMetUi);
+  return (
+    <div className={`${card} p-5 sm:p-6 mb-4`} data-testid="afterglow-firsts">
+      <h3 className="flex items-center gap-2 font-serif text-lg text-slate-900"><Emoji e="✨" size={22} />{H.firsts}</h3>
+      <button type="button" onClick={onOpen} className="mt-3 w-full min-h-[64px] flex items-center gap-4 text-left">
+        <Emoji e="💞" size={40} className="shrink-0" />
+        <span className="flex-1 min-w-0">
+          <span className="block text-[15px] font-bold text-slate-900 leading-snug">{H.nudgeTitle}</span>
+          <span className="block text-[14px] text-slate-500 leading-snug">{H.nudgeBody}</span>
+        </span>
+        <span className="shrink-0 hidden sm:inline-flex items-center h-12 px-6 rounded-full bg-slate-900 text-white text-[15px] font-semibold">{H.open}</span>
+      </button>
     </div>
   );
 };

@@ -56,6 +56,9 @@ Faces: if you agree to "Group faces", faces are grouped on your device only. Thi
 Your Afterglow: Belluh stores only the words you approve and save (for example, "Ramen at Ichiran, 6 times"), never photos or their identifiers, together with your choices of which sections your partner and Bella may see. Your partner sees only the sections you share with them; Bella sees only the sections you share with her, including when you text her; and each time either of them reads your Afterglow, it is noted in your Activity; and
 Memory never answers questions or fills fields about health, religion, sexuality, ethnicity or race, politics or children, and leaves out photos it recognizes as IDs, payment cards, passwords, health information or nudity.
 
+2.5 Your Story From a Dating App (On Your Device)
+This is optional. If you met on a dating app, you can bring your "How we met" from that app's data download (the file apps such as Tinder or Hinge email you when you ask for a copy of your data) or from screenshots you pick. Belluh opens the file and reads the screenshots on your device; neither is uploaded to Belluh or to any AI provider. Every match other than the one you pick is discarded in your browser as soon as you pick it and is never stored. Belluh saves only what you tick: a journal entry with your words and dates, and the day you matched as an occasion Bella remembers. Which app you met on is saved only if you choose to name it in your story; it is off by default in discreet mode and for apps that could reveal something about your sexuality, and it is never sent to analytics. Lines that may be your partner's words are held as pending until your partner approves them; if they decline, those words are deleted, and only once they approve do the lines appear in your story.
+
 3. HOW WE USE YOUR INFORMATION
 3.1 To Provide and Improve the Service
 Deliver core features: Process journal entries, generate AI insights, create relationship summaries;

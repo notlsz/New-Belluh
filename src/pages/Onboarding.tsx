@@ -7,14 +7,17 @@ import { belluh } from '../lib/belluhPresence';
 import { useI18n, useUi } from '../i18n';
 import onboardingStrings from '../i18n/ui/onboarding';
 import photoStoryUi from '../i18n/ui/photoStory';
+import howWeMetUi from '../i18n/ui/howWeMet';
 import { Emoji } from '../lib/emoji3d';
 
 interface OnboardingProps {
-  onComplete: (partnerName: string, firstEntry: string, fromPhotos?: boolean) => void | Promise<void>;
+  /** fromPhotos: true opens Add from your photos next; 'dating' opens Bring your story from the app you met on */
+  onComplete: (partnerName: string, firstEntry: string, fromPhotos?: boolean | 'dating') => void | Promise<void>;
 }
 
 const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const P = useUi(photoStoryUi);
+  const H = useUi(howWeMetUi);
   const T = useUi(onboardingStrings);
   const { f } = useI18n();
   // Ideas for the first entry, what Bella says when tapped on the welcome screen, and the step names
@@ -136,7 +139,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     }
   };
 
-  const finish = async (fromPhotos = false) => {
+  const finish = async (fromPhotos: boolean | 'dating' = false) => {
     if (finishing) return;
     setFinishing(true);
     belluh.become('water', 'water', false);
@@ -367,6 +370,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             {/* Skip the blank page: straight into adding their places, trips and firsts from photos */}
             <button type="button" onClick={() => finish(true)} disabled={finishing} className="mt-2 h-11 px-4 inline-flex items-center justify-center gap-2 text-sm font-bold text-[#5e9db3] hover:text-slate-900 disabled:opacity-60">
               <Emoji e="📸" size={18} />{P.onboarding}
+            </button>
+            {/* Many couples met on an app: bring the day they matched and their first lines */}
+            <button type="button" onClick={() => finish('dating')} disabled={finishing} data-testid="onboarding-dating" className="h-11 px-4 inline-flex items-center justify-center gap-2 text-sm font-bold text-[#5e9db3] hover:text-slate-900 disabled:opacity-60">
+              <Emoji e="💞" size={18} />{H.onboarding}
             </button>
           </div>
         )}
