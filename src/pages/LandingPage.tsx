@@ -16,6 +16,8 @@ import DragonflyMark from '../components/DragonflyMark';
 import { belluh } from '../lib/belluhPresence';
 import { useI18n, useUi } from '../i18n';
 import science from '../i18n/ui/science';
+import clarityUi from '../i18n/ui/clarity';
+import { Emoji } from '../lib/emoji3d';
 import understood from '../i18n/ui/understood';
 import AskMoments, { PENDING_ASK } from '../components/AskMoments';
 import logoStrip from '../i18n/ui/logoStrip';
@@ -427,6 +429,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
   const [pastHero, setPastHero] = useState(false);
   const heroTap = useShapeTap();
   const SC = useUi(science);
+  const CLA = useUi(clarityUi).landing;
   const LU = useUi(understood);
   const LS = useUi(logoStrip);
   const ctaTap = useShapeTap();
@@ -864,6 +867,21 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onShow
                       </li>
                   ))}
               </ol>
+          </div>
+      </section>
+
+      {/* Clarity: the cost of years spent unsure, and a private way to see clearly sooner. Private to each partner. */}
+      <section id="clarity" className="relative z-10 px-6 py-20 md:py-28 scroll-mt-24">
+          <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_1.15fr] gap-10 lg:gap-20 items-start">
+              <div>
+                  <p className="flex items-center gap-2 text-sm font-semibold text-[#3f7486]"><Emoji e="🫧" size={20} />{CLA.kicker}</p>
+                  <h2 className="mt-4 font-serif text-[2.1rem] md:text-5xl leading-[1.1] tracking-tight text-slate-900 [text-wrap:balance]">{CLA.title}</h2>
+              </div>
+              <div>
+                  <p className="text-[17px] md:text-lg text-slate-600 leading-relaxed [text-wrap:pretty]">{CLA.body}</p>
+                  <p className="mt-6 flex items-center gap-3 rounded-2xl bg-[#fdf0f8] px-5 py-4 text-[15px] text-[#9d3f78] leading-relaxed"><Emoji e="🔒" size={22} className="shrink-0" />{CLA.private}</p>
+                  <p className="mt-4 text-xs font-semibold text-[#3f7486]">{CLA.sources}</p>
+              </div>
           </div>
       </section>
 

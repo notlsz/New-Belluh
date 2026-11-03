@@ -22,7 +22,7 @@ import { activityDetail } from './activity.ts';
 import { validateGoal, logProgress, goalLine, type Goal } from './goals.ts';
 import { validateWatch, TICKETMASTER_COUNTRIES } from './watches.ts';
 import { localDateParts } from './occasions.ts';
-import { crisisSignal, crisisInstruction, withCrisisLine, crisisLine, disclosure, needsDisclosure } from './safety.ts';
+import { crisisSignal, crisisInstruction, withCrisisLine, crisisLine, disclosure, needsDisclosure, dvSignal, dvInstruction, withDvLine, dvLine } from './safety.ts';
 import { bookingFromTool, doneLabel, memoryFor, reminderFor, whenText, type BookingDraft } from './bookings.ts';
 import { instacartCart } from './instacart.ts';
 import { DEVICE_INSTRUCTION, DEVICE_ROUNDS_MAX, DEVICE_TOOL, DEVICE_TOOL_DECLARATION, deviceCalls, deviceRoundsToContents, gapsContext, gapsIn, makeDeviceTicket, readDeviceTicket, screenshotContext, screenshotIn, takeCitations } from './devicetools.ts';
@@ -107,8 +107,11 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   const created: unknown[] = resuming ? [] : [userMsg];
   // Checked before anything else, model or no model: someone who may be in danger always gets the crisis line
   const crisis = crisisSignal(text);
+  // Signs a partner hurts, threatens or controls them: the domestic-abuse line, and never breakup or confrontation coaching.
+  // Only in their own thread with Bella; the shared thread is read by the partner, so it never gets this.
+  const unsafe = dvSignal(text);
   if (!(await underLimit(ctx.userId))) {
-    created.push(await addMessage(ctx.userId, 'belluh', crisis ? crisisLine(ctx.country) : "Let's pause for a bit. You've reached this hour's limit for Belluh. Try again soon."));
+    created.push(await addMessage(ctx.userId, 'belluh', crisis ? crisisLine(ctx.country) : unsafe ? dvLine(ctx.country) : "Let's pause for a bit. You've reached this hour's limit for Belluh. Try again soon."));
     return { messages: created };
   }
 
@@ -139,7 +142,7 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   const roundsDone = devRounds.length / 2;
   const paused: { parts: any[] | null } = { parts: null };
 
-  const system = (await buildSystem(ctx)) + (channel !== 'app' ? TEXTING : '') + (deviceOn ? DEVICE_INSTRUCTION : '') + (crisis ? crisisInstruction(ctx.country) : '');
+  const system = (await buildSystem(ctx)) + (channel !== 'app' ? TEXTING : '') + (deviceOn ? DEVICE_INSTRUCTION : '') + (crisis ? crisisInstruction(ctx.country) : '') + (unsafe ? dvInstruction(ctx.country) : '');
   // Memory changes must come from the person, not from text Belluh is reading (a shared entry, a partner's note)
   const askedToForget = /\b(forget|remove|delete|erase|don'?t remember|stop remembering)\b/i.test(text);
   const saved: string[] = [];
@@ -447,6 +450,7 @@ export async function chat(ctx: Ctx, message: string, mode: 'chat' | 'mediate', 
   // Citations of what the phone looked up ([1.2]) come off the words and go with the message, for the app to show
   const cites = roundsDone ? takeCitations(reply ?? '') : { text: reply ?? '', cited: [] as string[] };
   let final = cleanReply(cites.text) || naturalFallback(ran) || "I'm having trouble thinking right now. Try me again in a moment.";
+  if (unsafe) final = withDvLine(final, ctx.country);
   if (crisis) final = withCrisisLine(final, ctx.country);
   // By text, Bella says she is an AI when a conversation starts and again every three hours
   let disclosed = false;

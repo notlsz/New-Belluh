@@ -21,6 +21,10 @@ import { THEMES } from '../constants';
 import WhatsAppDates from '../components/WhatsAppDates';
 import CalendarSync from '../components/CalendarSync';
 import YourData from '../components/YourData';
+import ClaritySettings from '../components/ClaritySettings';
+import clarityUi from '../i18n/ui/clarity';
+import { clarityApi } from '../services/clarity';
+const ClarityPage = React.lazy(() => import('../components/ClarityPage'));
 import NotificationsToggle from '../components/NotificationsToggle';
 import { parseFactDate, ymdString } from '../../supabase/functions/_shared/facts';
 
@@ -201,6 +205,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
   const { d: L, f: fill, date: fmtDate, num, tag, textApps } = useI18n();
   const M = L.app.me;
   const T = useUi(profile);
+  const CL = useUi(clarityUi);
   /** "4 years ago", "in 12 days", "2年前", "dans 12 jours": past dates count back, birthdays count to the next one. */
   const relative = (when: Date, mode: 'past' | 'future') => {
     const target = mode === 'future' ? nextYearly(when) : when;
@@ -217,6 +222,10 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
   const [activeTab, setActiveTab] = useState<'us' | 'me'>('us');
   const [activeCircleId, setActiveCircleId] = useState(user.activeCircleId);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  // Clarity: this person's private page, off until they turn it on in Settings (never shown in the couple's views)
+  const [clarityOn, setClarityOn] = useState(false);
+  const [clarityOpen, setClarityOpen] = useState(false);
+  useEffect(() => { let live = true; clarityApi.status().then(r => { if (live && r) setClarityOn(r.on); }); return () => { live = false; }; }, [user.id]);
   // The Settings shortcut shows once the dates backend is deployed
   const [datesReady, setDatesReady] = useState(false);
   useEffect(() => { supabase.from('occasions').select('id').limit(1).then(({ error }) => setDatesReady(!error)); }, []);
@@ -755,6 +764,16 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                   </span>
                   <ChevronRight size={18} className="shrink-0 text-slate-300 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all" />
               </button>
+              {clarityOn && (
+                  <button onClick={() => setClarityOpen(true)} className="mt-3 w-full rounded-[2rem] bg-white border border-slate-100 shadow-sm px-6 py-5 flex items-center gap-4 text-left group">
+                      <Emoji e="🫧" size={22} className="shrink-0" />
+                      <span className="flex-1 min-w-0">
+                          <span className="block font-serif text-lg text-slate-900">{CL.name}</span>
+                          <span className="block text-sm text-slate-400">{CL.navSub}</span>
+                      </span>
+                      <ChevronRight size={18} className="shrink-0 text-slate-300 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all" />
+                  </button>
+              )}
           </div>
       )}
 
@@ -790,6 +809,8 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
           </div>
       )}
 
+      {clarityOpen && clarityOn && <React.Suspense fallback={null}><ClarityPage onClose={() => setClarityOpen(false)} onTurnedOff={() => { setClarityOn(false); setClarityOpen(false); }} /></React.Suspense>}
+
       {/* Settings Dialog Overlay */}
       {showSettingsModal && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-end md:items-center justify-center md:p-6" onClick={() => setShowSettingsModal(false)}>
@@ -800,6 +821,7 @@ const Profile: React.FC<ProfileProps> = ({ user, entries = [], streak = 0, onLog
                   <WhatsAppDates onShowToast={onShowToast} />
                   <NotificationsToggle onShowToast={onShowToast} />
                   <CalendarSync onShowToast={onShowToast} />
+                  <ClaritySettings on={clarityOn} onChange={v => { setClarityOn(v); if (!v) setClarityOpen(false); }} />
                   <YourData />
                   
                   {/* Theme Selector */}

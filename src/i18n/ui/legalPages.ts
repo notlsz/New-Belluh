@@ -90,6 +90,7 @@ const en: T = {
           'Voice notes and photos you add, which could reveal something about your health.',
           'Notes Bella keeps about what matters to you, when they touch on your health.',
           'Only if you turn on Belluh Memory and agree to it: groups of faces in your photos, made and kept on your device only and never sent to Belluh. Memory leaves out photos it recognizes as health information and never answers questions about health.',
+          'Only if you turn on Clarity, a private page for you alone: patterns in your own writing that may touch on your mental health or wellbeing, such as feeling lonely or unheard, worked out when you open the page and never stored; and your answers and talk with Bella on that page, kept until you delete them or turn Clarity off. Your partner never sees any of it, and it is never shared, sent by text or put in an export.',
         ] }],
       },
       {
@@ -241,6 +242,7 @@ const ja: T = {
           '追加したボイスメモや写真のうち、健康について何かがわかるもの。',
           'あなたにとって大切なことについてBellaが残すメモのうち、健康に触れるもの。',
           'Belluh Memoryをオンにして同意した場合のみ: 写真の顔のまとまり。端末内だけでつくられ保存され、Belluhに送られることはありません。Memoryは健康情報と判断した写真を除外し、健康についての質問には答えません。',
+          'クラリティをオンにした場合のみ（あなただけの非公開ページ）：あなた自身の文章に見られる、心の健康や幸福に関わりうるパターン（寂しさや聞いてもらえない気持ちなど）。ページを開いたときに算出し、保存しません。そのページでのあなたの答えとBellaとの会話は、削除するかクラリティをオフにするまで保管します。パートナーには一切見えず、共有、メッセージ送信、エクスポートもされません。',
         ] }],
       },
       {
@@ -392,6 +394,7 @@ const fr: T = {
           'Les notes vocales et photos que vous ajoutez, qui pourraient révéler quelque chose sur votre santé.',
           'Les notes que Bella garde sur ce qui compte pour vous, lorsqu’elles touchent à votre santé.',
           'Seulement si vous activez Belluh Memory et l’acceptez : des groupes de visages dans vos photos, créés et conservés uniquement sur votre appareil, jamais envoyés à Belluh. Memory écarte les photos qu’il reconnaît comme des informations de santé et ne répond jamais aux questions sur la santé.',
+          'Uniquement si vous activez Clarté, une page privée pour vous seul : des tendances dans vos propres écrits qui peuvent toucher à votre santé mentale ou à votre bien être, comme vous sentir seul ou pas écouté, calculées à l’ouverture de la page et jamais stockées ; et vos réponses et votre conversation avec Bella sur cette page, gardées jusqu’à ce que vous les supprimiez ou désactiviez Clarté. Votre partenaire n’en voit jamais rien, et rien n’est partagé, envoyé par SMS ou inclus dans un export.',
         ] }],
       },
       {
@@ -543,6 +546,7 @@ const it: T = {
           'Note vocali e foto che aggiungi, che potrebbero rivelare qualcosa sulla tua salute.',
           'Note che Bella conserva su ciò che conta per te, quando riguardano la tua salute.',
           'Solo se attivi Belluh Memory e acconsenti: gruppi di volti nelle tue foto, creati e conservati solo sul tuo dispositivo e mai inviati a Belluh. Memory esclude le foto che riconosce come informazioni sanitarie e non risponde mai a domande sulla salute.',
+          'Solo se attivi Chiarezza, una pagina privata solo per te: schemi nei tuoi scritti che possono riguardare la tua salute mentale o il tuo benessere, come sentirti solo o non ascoltato, calcolati quando apri la pagina e mai salvati; e le tue risposte e la conversazione con Bella su quella pagina, conservate finché non le elimini o disattivi Chiarezza. Il tuo partner non ne vede mai nulla, e nulla viene condiviso, inviato per messaggio o incluso in un’esportazione.',
         ] }],
       },
       {
@@ -694,6 +698,7 @@ const pt: T = {
           'Áudios e fotos que você adiciona, que podem revelar algo sobre a sua saúde.',
           'Anotações que a Bella guarda sobre o que importa para você, quando tocam na sua saúde.',
           'Só se você ativar o Belluh Memory e concordar: grupos de rostos nas suas fotos, criados e guardados apenas no seu aparelho e nunca enviados ao Belluh. O Memory deixa de fora fotos que reconhece como informação de saúde e nunca responde a perguntas sobre saúde.',
+          'Só se você ativar a Clareza, uma página privada só sua: padrões no que você mesmo escreve que podem tocar sua saúde mental ou seu bem estar, como se sentir só ou não ouvido, calculados quando você abre a página e nunca guardados; e suas respostas e sua conversa com a Bella nessa página, guardadas até você apagá-las ou desativar a Clareza. Seu par nunca vê nada disso, e nada é compartilhado, enviado por mensagem ou incluído em uma exportação.',
         ] }],
       },
       {
@@ -845,6 +850,7 @@ const zh: T = {
           '你添加的语音和照片中可能透露健康状况的内容。',
           'Bella 记下的关于你在意之事的笔记中涉及健康的部分。',
           '仅在你开启 Belluh Memory 并同意时：你照片中的人脸分组，只在你的设备上生成和保存，绝不发送给 Belluh。Memory 会排除它识别为健康信息的照片，也绝不回答有关健康的问题。',
+          '仅在你开启「看清」时（只属于你的私密页面）：你自己文字中可能涉及心理健康或身心状态的规律，例如感到孤单或没被倾听，在你打开页面时计算，从不保存；以及你在该页面上的回答和与 Bella 的对话，保存到你删除它们或关闭「看清」为止。你的伴侣永远看不到其中任何内容，也不会被分享、通过短信发送或放进任何导出。',
         ] }],
       },
       {
@@ -996,6 +1002,7 @@ const de: T = {
           'Sprachnachrichten und Fotos, die du hinzufügst und die etwas über deine Gesundheit verraten könnten.',
           'Notizen, die Bella sich zu dem macht, was dir wichtig ist, wenn sie deine Gesundheit berühren.',
           'Nur wenn du Belluh Memory einschaltest und zustimmst: Gruppen von Gesichtern in deinen Fotos, nur auf deinem Gerät erstellt und gespeichert und nie an Belluh gesendet. Memory lässt Fotos aus, die es als Gesundheitsinformationen erkennt, und beantwortet nie Fragen zur Gesundheit.',
+          'Nur wenn du Klarheit einschaltest, eine private Seite nur für dich: Muster in deinem eigenen Schreiben, die deine psychische Gesundheit oder dein Wohlbefinden berühren können, etwa sich einsam oder nicht gehört zu fühlen, berechnet, wenn du die Seite öffnest, und nie gespeichert; und deine Antworten und dein Gespräch mit Bella auf dieser Seite, aufbewahrt, bis du sie löschst oder Klarheit ausschaltest. Dein Partner sieht nichts davon, und nichts wird geteilt, per SMS gesendet oder in einen Export aufgenommen.',
         ] }],
       },
       {
@@ -1147,6 +1154,7 @@ const es: T = {
           'Notas de voz y fotos que añades, que podrían revelar algo sobre tu salud.',
           'Notas que Bella guarda sobre lo que te importa, cuando tocan tu salud.',
           'Solo si activas Belluh Memory y lo aceptas: grupos de caras en tus fotos, creados y guardados solo en tu dispositivo y nunca enviados a Belluh. Memory deja fuera las fotos que reconoce como información de salud y nunca responde preguntas sobre salud.',
+          'Solo si activas Claridad, una página privada solo para ti: patrones en lo que tú escribes que pueden tocar tu salud mental o tu bienestar, como sentirte solo o no escuchado, calculados cuando abres la página y nunca guardados; y tus respuestas y tu conversación con Bella en esa página, guardadas hasta que las borres o desactives Claridad. Tu pareja nunca ve nada de ello, y nunca se comparte, se envía por mensaje ni se incluye en una exportación.',
         ] }],
       },
       {
@@ -1382,6 +1390,7 @@ const ko: T = {
               '추가한 음성 메모와 사진 중 건강에 관한 내용을 드러낼 수 있는 것.',
               '벨라가 이용자에게 중요한 것에 대해 남긴 메모 중 건강과 관련된 것.',
               'Belluh Memory를 켜고 동의한 경우에만: 사진 속 얼굴 묶음. 내 기기에서만 만들고 보관하며 Belluh로 보내지 않아요. Memory는 건강 정보로 판단한 사진을 제외하고, 건강에 관한 질문에는 답하지 않아요.',
+              '클래리티를 켠 경우에만(나만 보는 비공개 페이지): 외로움이나 들어주지 않는다는 느낌처럼 정신 건강이나 안녕과 관련될 수 있는, 내가 쓴 글 속의 패턴. 페이지를 열 때 계산하며 저장하지 않습니다. 그리고 그 페이지에서 쓴 답과 벨라와의 대화는 삭제하거나 클래리티를 끌 때까지 보관합니다. 상대는 이 중 어떤 것도 볼 수 없고, 공유되거나 문자로 보내지거나 내보내기에 포함되지 않습니다.',
             ],
           },
         ],

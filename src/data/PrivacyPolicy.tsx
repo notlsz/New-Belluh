@@ -59,6 +59,15 @@ Memory never answers questions or fills fields about health, religion, sexuality
 2.5 Your Story From a Dating App (On Your Device)
 This is optional. If you met on a dating app, you can bring your "How we met" from that app's data download (the file apps such as Tinder or Hinge email you when you ask for a copy of your data) or from screenshots you pick. Belluh opens the file and reads the screenshots on your device; neither is uploaded to Belluh or to any AI provider. Every match other than the one you pick is discarded in your browser as soon as you pick it and is never stored. Belluh saves only what you tick: a journal entry with your words and dates, and the day you matched as an occasion Bella remembers. Which app you met on is saved only if you choose to name it in your story; it is off by default in discreet mode and for apps that could reveal something about your sexuality, and it is never sent to analytics. Lines that may be your partner's words are held as pending until your partner approves them; if they decline, those words are deleted, and only once they approve do the lines appear in your story.
 
+2.6 Clarity (A Private Page for You Alone)
+Clarity is optional and off until you turn it on in Settings, after a short explanation. It is a page that only you see, and it is never visible to your partner;
+What it reads: only what you wrote yourself, meaning your own journal entries (private or shared) and your own messages to Bella. It never reads your partner's entries, your partner's private notes or anything your partner wrote in your shared thread;
+What it works out: when you open the page, Belluh's server looks for patterns from relationship research in that writing (for example feeling unheard, loneliness, the same conflict coming back, or a disagreement about children, where to live, money, faith or work) and counts how often and when they came up. These patterns can touch on your mental health and wellbeing, so they are consumer health data under our Consumer Health Data Privacy Policy. They are worked out each time you open the page and are not stored;
+What it keeps: only your answers to Clarity's questions and your conversation with Bella on the Clarity page, readable by you alone. When you talk to Bella there, your message, the counted patterns and your answers are sent to Google's Gemini API to write her reply, as for any chat with Bella; Belluh does not use them to train AI models;
+What it never does: nothing from Clarity is shown to your partner, put in your shared story or your Afterglow, given to Bella when she talks with your partner, added to Bella's memory or your usual chat with her, sent by SMS, WhatsApp, LINE, Telegram or iMessage, sent to analytics, or included in a data export or in any other app. Everything Clarity keeps is shown in full on the Clarity page;
+Safety: if your writing shows signs that a partner may hurt, threaten or control you, Clarity shows a domestic abuse helpline for your country first and does not offer guidance on confronting or leaving, because leaving can be the most dangerous time. If you mention wanting to harm yourself, it shows a crisis line; and
+Turning it off: turning Clarity off in Settings or on the page deletes your answers and your conversation with Bella there, right away. Deleting your account deletes them too.
+
 3. HOW WE USE YOUR INFORMATION
 3.1 To Provide and Improve the Service
 Deliver core features: Process journal entries, generate AI insights, create relationship summaries;
@@ -98,6 +107,7 @@ All journal entries within that Circle;
 Relationship insights and summaries;
 Timeline events and milestones; and
 AI-generated analysis of the relationship.
+Never shared with your partner: your private entries, and everything in Clarity (section 2.6), which only you can see.
 Important: Your partner can view, download, and potentially retain this data even if you later terminate the Circle or delete your account. We cannot control what your partner does with shared data.
 
 4.2 With Service Providers
@@ -161,7 +171,10 @@ Belluh does not train AI models on your content, so nothing you wrote remains in
 5.4 Belluh Memory
 Nothing Memory sends to answer a question or fill your Afterglow is kept after the answer. On your device, in Memory settings, you can delete the index (everything Memory learned, keeping the downloaded models), reset Memory (everything Memory keeps on your device, models included), turn off AI answers from your photos (Belluh then stops sending anything for answers), and delete your saved Afterglow and its Activity from Belluh. Turning off AI answers is also in "Your privacy choices". Clearing your browser's site data deletes the index too. Deleting your account deletes your saved Afterglow and Activity.
 
-5.5 Legal Holds
+5.5 Clarity
+Clarity's patterns are never stored. Your answers and your conversation with Bella on the Clarity page are kept until you delete an answer, turn Clarity off (which deletes both at once) or delete your account.
+
+5.6 Legal Holds
 Data subject to legal holds, investigations, or disputes will be retained until the matter is resolved, regardless of account deletion.
 
 6. DATA SECURITY
