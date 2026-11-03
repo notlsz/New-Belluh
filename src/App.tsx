@@ -5,6 +5,9 @@ import DragonflyMark from './components/DragonflyMark';
 const LoveMap = React.lazy(() => import('./pages/LoveMap'));
 // Skip the blank page: photos read on this device become places, trips and firsts (with its EXIF reader, only when opened)
 const PhotoStory = React.lazy(() => import('./components/PhotoStory'));
+// Bring your story from the app you met on: a dating app's data download or screenshots, read on this device
+const HowWeMet = React.lazy(() => import('./components/HowWeMet'));
+const StoryApprovals = React.lazy(() => import('./components/StoryApprovals'));
 const PassportPage = React.lazy(() => import('./pages/Passport'));
 const GuidePage = React.lazy(() => import('./pages/GuidePage'));
 const MissionPage = React.lazy(() => import('./pages/company/Mission'));
@@ -178,6 +181,9 @@ const App: React.FC = () => {
   // Intro Guide State
   const [showIntro, setShowIntro] = useState(false);
   const [photosOpen, setPhotosOpen] = useState(false);
+  const [howWeMetOpen, setHowWeMetOpen] = useState(false);
+  const [partnerId, setPartnerId] = useState<string | null>(null);
+  const [approvalsKey, setApprovalsKey] = useState(0);
   
   // Pending Invites State
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
@@ -735,6 +741,7 @@ const App: React.FC = () => {
 
         const primaryPartner = connectedProfiles.length > 0 ? connectedProfiles[0] : null;
         if (primaryPartner) setHasPartner(true);
+        setPartnerId(primaryPartner?.id ? String(primaryPartner.id) : null);
         const displayPartnerName = myProfile?.partner_name || primaryPartner?.full_name || undefined;
 
         // Parse user settings if available in profile (assuming we store them later, for now defaults)
@@ -867,7 +874,7 @@ const App: React.FC = () => {
       }
   };
 
-  const handleOnboardingComplete = async (partnerName: string, firstEntry: string, fromPhotos = false) => {
+  const handleOnboardingComplete = async (partnerName: string, firstEntry: string, fromPhotos: boolean | 'dating' = false) => {
     // Whatever happens below, onboarding is done: it never shows again for this person
     try { if (user.id) localStorage.setItem(`belluh_onboarded:${user.id}`, '1'); } catch { /* storage blocked */ }
     try {
@@ -915,7 +922,7 @@ const App: React.FC = () => {
       console.error('Finishing onboarding', err);
     } finally {
       setIsOnboarding(false);
-      if (fromPhotos) setPhotosOpen(true); else setShowIntro(true);
+      if (fromPhotos === 'dating') setHowWeMetOpen(true); else if (fromPhotos) setPhotosOpen(true); else setShowIntro(true);
     }
   };
 
@@ -1131,6 +1138,29 @@ const App: React.FC = () => {
     }
     trackEvent('photo_story_saved', { entries: plan.entries.length, occasions: plan.occasions.length });
     return saved;
+  };
+
+  // Saves a "How we met" chapter: the entry with the person's own words, the day they matched for Bella, and any line
+  // that may be the partner's words as a pending approval. Which app it was is only in the entry's tags, and only when
+  // they chose to name it; it is never sent to analytics.
+  const saveHowWeMet = async (rows: import('./lib/datingImport').ChapterRows): Promise<boolean> => {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) return false;
+    const { data, error } = await supabase.from('journal_entries').insert([{ ...rows.entry, user_id: currentUser.id }]).select('id, created_at, date, content, is_shared, tags').single();
+    if (error || !data) { console.error('Saving how we met', error); return false; }
+    setEntries(prev => [{
+      id: data.id, userId: currentUser.id, authorName: user.name, authorAvatar: user.avatar, content: data.content || '',
+      timestamp: new Date(data.date || data.created_at), type: EntryType.Milestone, prompt: rows.entry.title, isPrivate: !data.is_shared,
+      circleId: user.activeCircleId === 'constellation' ? 'c1' : user.activeCircleId, likes: 0, isLiked: false,
+    }, ...prev]);
+    if (rows.occasion) await supabase.from('occasions').insert({ ...rows.occasion, user_id: currentUser.id });
+    if (rows.pending) {
+      const { addApproval } = await import('./services/storyApprovals');
+      await addApproval({ ...rows.pending, owner_id: currentUser.id }, partnerId);
+      setApprovalsKey(k => k + 1);
+    }
+    trackEvent('how_we_met_saved', { lines: rows.entry.content.split('\n\n').length - 1, pending: rows.pending ? rows.pending.lines.length : 0 });
+    return true;
   };
 
   const handleAddEntry = async (content: string, mood: Mood | undefined, type: EntryType, prompt?: string, isPrivate?: boolean, audioUrl?: string, mediaUrl?: string, where?: { lat: number; lng: number } | null) => {
@@ -1396,7 +1426,8 @@ const App: React.FC = () => {
       {inviteFirst && <InviteFirst partnerName={user.partnerName || null} pendingInvites={pendingInvites} onAcceptInvite={handleAcceptInvite} onDeclineInvite={handleDeclineInvite}
         onAskBella={() => { trackEvent('invite_first_bella'); setCurrentTab('ai-coach'); }}
         onLookAround={() => { trackEvent('invite_first_look_around'); try { sessionStorage.setItem('belluh_look_around', '1'); } catch { /* private mode */ } setLookAround(true); }} />}
-      {!inviteFirst && currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} partnerName={user.partnerName} avatars={hasPartner ? [user.avatar, calmAvatar(user.partnerAvatar) || avatarFor(user.partnerName || 'partner')] : [user.avatar]} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} onAskBelluh={askBelluh} onOpenBelluh={() => askBelluh('')} onPhotos={() => setPhotosOpen(true)} />}
+      {!inviteFirst && currentTab === 'timeline' && <Timeline entries={entries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} partnerName={user.partnerName} avatars={hasPartner ? [user.avatar, calmAvatar(user.partnerAvatar) || avatarFor(user.partnerName || 'partner')] : [user.avatar]} onTriggerPremium={handleTriggerPremium} activeCircleId={user.activeCircleId} circles={user.circles} onCircleChange={handleCircleChange} onLikeEntry={handleLikeEntry} onCompose={handleCompose} onDeleteEntry={handleDeleteEntry} onUpdateEntry={handleUpdateEntry} streak={streak} onAskBelluh={askBelluh} onOpenBelluh={() => askBelluh('')} onPhotos={() => setPhotosOpen(true)} onHowWeMet={() => setHowWeMetOpen(true)}
+        approvals={<React.Suspense fallback={null}><StoryApprovals key={approvalsKey} me={user.id} partnerId={partnerId} partnerName={user.partnerName} onChanged={() => { supabase.auth.getUser().then(({ data: { user: u } }) => { if (u) loadUserData(u); }); }} /></React.Suspense>} />}
       {!inviteFirst && currentTab === 'map' && <React.Suspense fallback={<div className="fixed inset-0 bg-[#fbe3f1]" />}><LoveMap entries={readableEntries.filter(e => user.activeCircleId === 'constellation' || e.circleId === user.activeCircleId)} currentUserId={user.id} myName={user.name} onPhotos={() => setPhotosOpen(true)} /></React.Suspense>}
       {currentTab === 'ai-coach' && <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => handleCompose(prompt)} initialSpace={hasPartner ? tabSpace : undefined} />}
       {belluhSheet && (
@@ -1404,7 +1435,7 @@ const App: React.FC = () => {
           <AICoach insights={MOCK_INSIGHTS} entryTexts={readableEntries.map(e => e.content)} onTriggerPremium={handleTriggerPremium} userName={user.name} initialMessage={belluhAsk} onInitialMessageSent={() => setBelluhAsk(null)} onCompose={(prompt) => { setBelluhSheet(false); handleCompose(prompt); }} initialSpace="me" inSheet onClose={() => setBelluhSheet(false)} />
         </div>
       )}
-      {!inviteFirst && currentTab === 'afterglow' && <React.Suspense fallback={null}><PassportPage userName={user.name} partnerName={user.partnerName || null} hasPartner={hasPartner} /></React.Suspense>}
+      {!inviteFirst && currentTab === 'afterglow' && <React.Suspense fallback={null}><PassportPage userName={user.name} partnerName={user.partnerName || null} hasPartner={hasPartner} onHowWeMet={() => setHowWeMetOpen(true)} /></React.Suspense>}
       {!inviteFirst && currentTab === 'profile' && <Profile user={user} entries={readableEntries} streak={streak} onCircleChange={handleCircleChange} onCreateCircle={handleCreateCircle} onArchiveCircle={handleArchiveCircle} onRenameCircle={handleRenameCircle} onLogout={handleLogout} onUpdateUser={handleUpdateUser} onShowLegal={(type) => setLegalModalOpen(type)} onViewArtifact={(type) => setArtifactModalOpen(type)} onShowToast={showNotification} pendingInvites={pendingInvites} onAcceptInvite={handleAcceptInvite} onDeclineInvite={handleDeclineInvite} />}
       
       {notification && <Toast message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
@@ -1427,6 +1458,7 @@ const App: React.FC = () => {
       {isComposeOpen && <div className="fixed inset-0 z-[60] bg-paper animate-slide-up"><button onClick={() => setIsComposeOpen(false)} aria-label={T.close} className="absolute top-5 right-4 w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 z-50 transition-colors"><X size={22} /></button><Journal onAddEntry={handleAddEntry} partnerName={user.partnerName || ''} onTriggerPremium={handleTriggerPremium} initialPrompt={composePrompt} userName={user.name} partnerHasEntry={partnerHasEntry} /></div>}
       
       {showIntro && <IntroGuide onClose={() => setShowIntro(false)} />}
+      {howWeMetOpen && <React.Suspense fallback={null}><HowWeMet userId={user.id} circleId={user.activeCircleId === 'constellation' ? 'c1' : user.activeCircleId} partnerName={user.partnerName} onClose={() => setHowWeMetOpen(false)} onSave={saveHowWeMet} /></React.Suspense>}
       {photosOpen && <React.Suspense fallback={null}><PhotoStory userId={user.id} circleId={user.activeCircleId === 'constellation' ? 'c1' : user.activeCircleId} partnerName={user.partnerName} onClose={() => setPhotosOpen(false)} onSave={savePhotoStory} onOpenMap={() => setCurrentTab('map')} /></React.Suspense>}
 
       {legalModalOpen && <LegalModal type={legalModalOpen} onClose={() => setLegalModalOpen(null)} />}

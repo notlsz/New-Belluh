@@ -1,6 +1,7 @@
 import { useI18n, useUi, localQuestion } from '../i18n';
 import storyUi from '../i18n/ui/story';
 import photoStoryUi from '../i18n/ui/photoStory';
+import howWeMetUi from '../i18n/ui/howWeMet';
 import { Emoji } from '../lib/emoji3d';
 import BelluhActions from '../components/BelluhActions';
 import React, { useMemo, useState, useEffect } from 'react';
@@ -40,10 +41,15 @@ interface TimelineProps {
   onOpenBelluh?: () => void;
   /** Opens Add from your photos (offered while the journal is still nearly empty) */
   onPhotos?: () => void;
+  /** Opens Bring your story from the app you met on (offered while the journal is nearly empty) */
+  onHowWeMet?: () => void;
+  /** The partner's yes on lines from a how-we-met import, shown at the top while any wait */
+  approvals?: React.ReactNode;
 }
 
-const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName, avatars = [], activeCircleId, circles, onCircleChange, onLikeEntry, onCompose, onSearch: _onSearch, onDeleteEntry, onUpdateEntry, streak, onAskBelluh, onOpenBelluh, onPhotos }) => {
+const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName, avatars = [], activeCircleId, circles, onCircleChange, onLikeEntry, onCompose, onSearch: _onSearch, onDeleteEntry, onUpdateEntry, streak, onAskBelluh, onOpenBelluh, onPhotos, onHowWeMet, approvals }) => {
   const P = useUi(photoStoryUi);
+  const H = useUi(howWeMetUi);
   const { d: d0, f, date } = useI18n();
   const T = useUi(storyUi);
   const a = d0.app;
@@ -582,18 +588,26 @@ const Timeline: React.FC<TimelineProps> = ({ entries, currentUserId, partnerName
               </div>
           )}
 
-          {/* Skip the blank page: while the journal is nearly empty, start it from your photos */}
-          {onPhotos && !isArchived && !isConstellation && entries.filter(e => e.userId === currentUserId).length < 3 && (
+          {approvals && !isArchived && <div className="relative pl-20 md:pl-24 pr-6 mb-8">{approvals}</div>}
+
+          {/* Skip the blank page: while the journal is nearly empty, start it from your photos, or from the app you met on */}
+          {(onPhotos || onHowWeMet) && !isArchived && !isConstellation && entries.filter(e => e.userId === currentUserId).length < 3 && (
               <div className="relative pl-20 md:pl-24 pr-6 mb-16 animate-slide-up">
                   <div className="absolute left-14 md:left-20 top-8 w-2 h-2 bg-[#9bbecb] border-[2px] border-belluh-25 rounded-full z-10 -translate-x-[3.5px]"></div>
-                  <button type="button" onClick={onPhotos} className="w-full text-left bg-white border border-slate-100 shadow-sm hover:shadow-lg rounded-[2rem] p-6 md:p-8 transition-shadow flex items-center gap-5">
-                      <Emoji e="📸" size={56} className="shrink-0" style={{ transform: 'rotate(-6deg)' }} />
-                      <span className="min-w-0">
-                          <span className="block font-serif text-xl md:text-2xl text-slate-900 leading-tight">{P.nudgeTitle}</span>
-                          <span className="mt-1.5 block text-sm text-slate-500 leading-relaxed">{P.nudgeBody}</span>
-                          <span className="mt-4 inline-flex items-center gap-2 h-10 px-5 rounded-full bg-slate-900 text-white text-sm font-bold">{P.open} <ArrowRight size={15} /></span>
-                      </span>
-                  </button>
+                  <div className="grid grid-cols-1 gap-4">
+                      {[onPhotos ? { e: '📸', title: P.nudgeTitle, body: P.nudgeBody, cta: P.open, go: onPhotos, id: 'photos' } : null,
+                        onHowWeMet ? { e: '💞', title: H.nudgeTitle, body: H.nudgeBody, cta: H.open, go: onHowWeMet, id: 'how-we-met' } : null]
+                        .filter((x): x is { e: string; title: string; body: string; cta: string; go: () => void; id: string } => !!x).map(x => (
+                          <button key={x.id} type="button" onClick={x.go} data-testid={`nudge-${x.id}`} className="h-full w-full text-left bg-white border border-slate-100 shadow-sm hover:shadow-lg rounded-[2rem] p-6 md:p-8 transition-shadow flex items-start gap-5">
+                              <Emoji e={x.e} size={56} className="shrink-0" style={{ transform: 'rotate(-6deg)' }} />
+                              <span className="min-w-0 h-full flex flex-col">
+                                  <span className="block font-serif text-xl md:text-2xl text-slate-900 leading-tight">{x.title}</span>
+                                  <span className="mt-1.5 block text-sm text-slate-500 leading-relaxed">{x.body}</span>
+                                  <span className="mt-auto pt-4"><span className="inline-flex max-w-full items-center gap-2 min-h-10 py-2 px-5 rounded-full bg-slate-900 text-white text-sm font-bold leading-tight">{x.cta} <ArrowRight size={15} /></span></span>
+                              </span>
+                          </button>
+                      ))}
+                  </div>
               </div>
           )}
 
