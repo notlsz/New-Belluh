@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The photo library, read on the device. Android 13+ asks for photos and videos; 14+ also offers "selected photos only". -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <!-- Without this, Android removes the place from every photo before Belluh can read it -->
+    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
+</manifest>

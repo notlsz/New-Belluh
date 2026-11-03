@@ -31,6 +31,7 @@ const TABLES: [string, Filter][] = [
   ['whatsapp_links', { eq: 'user_id' }],
   ['whatsapp_messages', { eq: 'user_id' }],
   ['push_subscriptions', { eq: 'user_id' }],
+  ['native_push_tokens', { eq: 'user_id' }],
   ['calendar_feeds', { eq: 'user_id' }],
   ['conflict_logs', { eq: 'user_id' }],
   ['profile_looks', { eq: 'user_id' }],

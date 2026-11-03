@@ -3,11 +3,13 @@
 //
 // On the web, the person picks what is indexed: pickFiles() opens the photo picker (photos and videos, many at once);
 // on desktop Chrome and Edge, pickFolder() reads a whole folder. Nothing reads a camera roll on its own, and indexing
-// only runs while Belluh is open.
+// only runs while Belluh is open. In the iOS and Android app (src/lib/native), the person can instead allow the photo
+// library: the same engine reads it with real dates and places, and new photos are prepared in the background.
 
 import { useEffect, useState } from 'react';
 import type { IndexingState, MemoryEngine } from './types.ts';
 import { MEMORY_ON_FLAG as FLAG } from './constants.ts';
+import { nativePlatform } from '../native/platform.ts';
 
 export * from './types.ts';
 
@@ -29,8 +31,14 @@ export function memorySupported(): boolean {
 let enginePromise: Promise<MemoryEngine> | null = null;
 /** The engine for this browser profile, loaded on first use */
 export function getMemory(): Promise<MemoryEngine> {
-  enginePromise ??= import('./engine.ts').then(m => m.getEngine());
+  enginePromise ??= nativePlatform() ? nativeEngine(nativePlatform()!) : import('./engine.ts').then(m => m.getEngine());
   return enginePromise;
+}
+
+/** In the app: the same engine, with a reader that takes dates and places from the photo library */
+async function nativeEngine(platform: string): Promise<MemoryEngine> {
+  const [{ getEngine }, { browserReader }, photos, library] = await Promise.all([import('./engine.ts'), import('./reader.ts'), import('../native/photos.ts'), import('../native/library.ts')]);
+  return getEngine({ reader: photos.nativeAwareReader(browserReader(), platform), onDeleted: () => library.forgetLibrary() });
 }
 
 /** The contract's entry point (engineRef.ts): the real engine where the browser supports it, null otherwise */
@@ -42,6 +50,7 @@ export async function getMemoryEngine(): Promise<MemoryEngine | null> {
 /** Keep adding from a kept folder (desktop Chrome and Edge) when Belluh opens and when it comes back into view */
 export function startKeepAdding(): void {
   if (!memoryEnabled() || !memorySupported()) return;
+  if (nativePlatform()) { void import('../native/library.ts').then(m => m.startLibrary()).catch(() => {}); return; }
   void import('./keepAdding.ts').then(m => m.startKeepAdding()).catch(() => {});
 }
 

@@ -86,6 +86,8 @@ export interface EngineDeps {
   uiLang?: () => string;
   /** Model caches to delete on reset() (Cache Storage names) */
   modelCaches?: string[];
+  /** Called after deleteIndex() and reset(): the native app forgets where it got to in the photo library */
+  onDeleted?: () => Promise<void> | void;
 }
 
 export const MODEL_NOTES = {
@@ -226,7 +228,7 @@ export class BrowserMemoryEngine implements MemoryEngine {
     else if (!this.run) this.settle();
   }
 
-  async addFiles(files: FileList | File[], o: { source?: 'picked' | 'folder' } = {}): Promise<void> {
+  async addFiles(files: FileList | File[], o: { source?: 'picked' | 'folder' | 'library' } = {}): Promise<void> {
     // Copy first: a FileList is live, and pickers clear their input (value = '') right after handing it over
     const list = Array.from(files);
     if (!this.run) this.trigger = o.source ?? 'picked';
@@ -820,6 +822,7 @@ export class BrowserMemoryEngine implements MemoryEngine {
     await this.db!.del('meta', 'events'); await this.db!.del('meta', 'eventLookups');
     this.firstBuilt = null;
     flagOn(false);
+    try { await this.deps.onDeleted?.(); } catch { /* the native side forgets on its own next time */ }
     this.setState({ type: 'notStarted' });
   }
 
@@ -843,6 +846,7 @@ export class BrowserMemoryEngine implements MemoryEngine {
     try { await deleteTessCache(idb); } catch { /* nothing cached */ }
     this.ready = null;
     flagOn(false);
+    try { await this.deps.onDeleted?.(); } catch { /* the native side forgets on its own next time */ }
     await this.init();
     this.setState({ type: 'notStarted' });
   }
@@ -896,6 +900,6 @@ async function defaultEventsFetcher(visits: { cell: string; venues: string[]; st
 
 let singleton: BrowserMemoryEngine | null = null;
 export function createMemoryEngine(deps?: EngineDeps): BrowserMemoryEngine { return new BrowserMemoryEngine(deps); }
-/** The engine for this browser profile */
-export function getEngine(): BrowserMemoryEngine { singleton ??= new BrowserMemoryEngine(); return singleton; }
+/** The engine for this profile; deps apply only to the first call (the native app passes its photo reader) */
+export function getEngine(deps?: EngineDeps): BrowserMemoryEngine { singleton ??= new BrowserMemoryEngine(deps); return singleton; }
 export const memory: MemoryEngine = new Proxy({} as MemoryEngine, { get: (_t, k) => { const e = getEngine() as any; const v = e[k]; return typeof v === 'function' ? v.bind(e) : v; } });

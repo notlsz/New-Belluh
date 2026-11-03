@@ -1,6 +1,8 @@
 import { supabase } from '../lib/supabaseClient';
+import { nativePlatform } from '../lib/native/platform';
 
 // Notifications in this browser: a service worker shows them; the subscription is saved to the person's account.
+// In the iOS and Android apps the same four functions use APNs and FCM instead (nativePush.ts).
 
 export type PushState = 'unsupported' | 'needs-install' | 'blocked' | 'off' | 'on';
 
@@ -18,6 +20,7 @@ async function registration() {
 }
 
 export async function pushState(): Promise<PushState> {
+  if (nativePlatform()) return (await import('./nativePush')).nativePushState();
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
     return isIOS() && !standalone() ? 'needs-install' : 'unsupported';
   }
@@ -29,6 +32,8 @@ export async function pushState(): Promise<PushState> {
 
 /** Asks permission, subscribes this browser and saves it. Returns the new state. */
 export async function enablePush(): Promise<PushState> {
+  const app = nativePlatform();
+  if (app) return (await import('./nativePush')).enableNativePush(app);
   if (await pushState() === 'unsupported') return 'unsupported';
   const perm = await Notification.requestPermission();
   if (perm !== 'granted') return perm === 'denied' ? 'blocked' : 'off';
@@ -50,6 +55,7 @@ export async function enablePush(): Promise<PushState> {
 }
 
 export async function disablePush(): Promise<PushState> {
+  if (nativePlatform()) return (await import('./nativePush')).disableNativePush();
   const reg = await navigator.serviceWorker?.getRegistration('/');
   const sub = await reg?.pushManager.getSubscription();
   if (sub) {
@@ -61,6 +67,6 @@ export async function disablePush(): Promise<PushState> {
 
 /** Whether the backend has notifications (the table exists); the switch hides until it does. */
 export async function pushAvailable(): Promise<boolean> {
-  const { error } = await supabase.from('push_subscriptions').select('id').limit(1);
+  const { error } = await supabase.from(nativePlatform() ? 'native_push_tokens' : 'push_subscriptions').select('id').limit(1);
   return !error;
 }

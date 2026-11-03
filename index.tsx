@@ -4,7 +4,10 @@ import ReactDOM from 'react-dom/client';
 import App from './src/App';
 import { I18nProvider } from './src/i18n';
 import { startTrackers } from './src/lib/trackers';
+import { isNative } from './src/lib/native/platform';
 startTrackers();
+// The iOS and Android apps only: links, Share to Belluh, notification taps (the web loads none of it)
+if (isNative()) void import('./src/lib/native/init').then(m => m.initNative()).catch(() => {});
 const PrivacyCenter = React.lazy(() => import('./src/components/PrivacyCenter'));
 const ConsentBanner = React.lazy(() => import('./src/components/ConsentBanner'));
 

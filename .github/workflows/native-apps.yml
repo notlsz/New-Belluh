@@ -1,0 +1,164 @@
+# Builds Belluh's iOS and Android apps (Capacitor wrapping the same Vite build as belluh.com).
+#
+# Every push and pull request that touches the app: a debug Android APK (ubuntu) and an unsigned iOS simulator build
+# (macOS), both kept as downloadable artifacts. Signed store builds run only on main (or by hand) and only once the
+# founder has added the secrets below (docs/native-app.md has the step-by-step). Nothing here creates or rotates a secret.
+#
+# iOS to TestFlight:  APPLE_TEAM_ID, APP_STORE_CONNECT_KEY_ID, APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_P8
+# Android to Play:    ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD,
+#                     GOOGLE_SERVICES_JSON (Firebase, for notifications), PLAY_SERVICE_ACCOUNT_JSON (optional: uploads
+#                     to the internal testing track; without it the signed .aab is an artifact to upload by hand)
+# Optional repository variables: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (the app otherwise
+# uses the same project the website does), BELLUH_VERSION (default 1.0.0).
+
+name: Native apps
+
+on:
+  push:
+    branches: [main, native-app]
+    paths: ['src/**', 'index.tsx', 'index.html', 'public/**', 'ios/**', 'android/**', 'native/**', 'capacitor.config.ts', 'package.json', 'package-lock.json', 'vite.config.ts', '.github/workflows/native-apps.yml']
+  pull_request:
+    paths: ['src/**', 'index.tsx', 'index.html', 'public/**', 'ios/**', 'android/**', 'native/**', 'capacitor.config.ts', 'package.json', 'package-lock.json', 'vite.config.ts', '.github/workflows/native-apps.yml']
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Also make signed store builds (needs the secrets)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: native-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+  BELLUH_VERSION: ${{ vars.BELLUH_VERSION || '1.0.0' }}
+  BELLUH_BUILD_NUMBER: ${{ github.run_number }}
+
+jobs:
+  android:
+    name: Android
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      RELEASE: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || inputs.release == true }}
+      HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      HAS_PLAY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21, cache: gradle }
+      - run: npm ci
+      - name: Build the web app
+        run: npx vite build
+      - name: Copy it into the Android project
+        run: npx cap sync android
+      - name: Firebase config (notifications)
+        env: { GOOGLE_SERVICES_JSON: '${{ secrets.GOOGLE_SERVICES_JSON }}' }
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json; echo "Notifications on."
+          else echo "::notice::No GOOGLE_SERVICES_JSON: the Android build works, notifications stay off until it is added."; fi
+      - name: Debug APK
+        working-directory: android
+        run: ./gradlew :app:assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with: { name: belluh-android-debug, path: android/app/build/outputs/apk/debug/*.apk, retention-days: 14 }
+
+      - name: Signed release bundle
+        if: env.RELEASE == 'true' && env.HAS_KEYSTORE == 'true'
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/belluh-upload.jks"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$ANDROID_KEYSTORE_PATH"
+          ./gradlew :app:bundleRelease --no-daemon
+          rm -f "$ANDROID_KEYSTORE_PATH"
+      - uses: actions/upload-artifact@v4
+        if: env.RELEASE == 'true' && env.HAS_KEYSTORE == 'true'
+        with: { name: belluh-android-release, path: android/app/build/outputs/bundle/release/*.aab, retention-days: 30 }
+      - name: Upload to Google Play (internal testing)
+        if: env.RELEASE == 'true' && env.HAS_KEYSTORE == 'true' && env.HAS_PLAY == 'true'
+        uses: r0adkll/upload-google-play@v1.1.3
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.belluh.app
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: draft
+      - name: Release skipped
+        if: env.RELEASE == 'true' && env.HAS_KEYSTORE != 'true'
+        run: echo "::notice::No ANDROID_KEYSTORE_BASE64 yet, so no signed Play build. See docs/native-app.md."
+
+  ios:
+    name: iOS
+    runs-on: macos-latest
+    timeout-minutes: 60
+    env:
+      RELEASE: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || inputs.release == true }}
+      HAS_ASC: ${{ secrets.APP_STORE_CONNECT_KEY_P8 != '' && secrets.APPLE_TEAM_ID != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Rollup and esbuild for macOS
+        # package-lock.json is written on Linux, and npm leaves out other platforms' optional binaries (npm/cli#4828)
+        run: |
+          arch=$(node -p process.arch)
+          npm install --no-save --no-audit --no-fund \
+            "@rollup/rollup-darwin-$arch@$(node -p "require('rollup/package.json').version")" \
+            "@esbuild/darwin-$arch@$(node -p "require('esbuild/package.json').version")"
+      - name: Build the web app
+        run: npx vite build
+      - name: Copy it into the iOS project
+        run: npx cap sync ios
+      - name: Xcode
+        run: xcodebuild -version
+      - name: Simulator build (unsigned)
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/dd" CODE_SIGNING_ALLOWED=NO build | tail -n 40
+          test "${PIPESTATUS[0]}" -eq 0
+      - name: Device build (unsigned)
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/dd-device" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build | tail -n 40
+          test "${PIPESTATUS[0]}" -eq 0
+      - name: Keep the simulator app
+        run: cd "$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator" && zip -qry "$RUNNER_TEMP/Belluh-simulator.zip" App.app
+      - uses: actions/upload-artifact@v4
+        with: { name: belluh-ios-simulator, path: '${{ runner.temp }}/Belluh-simulator.zip', retention-days: 14 }
+
+      - name: Archive and upload to TestFlight
+        if: env.RELEASE == 'true' && env.HAS_ASC == 'true'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
+        run: |
+          KEY="$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
+          printf '%s' "$ASC_KEY_P8" > "$KEY"
+          AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Belluh.xcarchive" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            CURRENT_PROJECT_VERSION="$BELLUH_BUILD_NUMBER" MARKETING_VERSION="$BELLUH_VERSION" \
+            "${AUTH[@]}" archive | tail -n 40
+          test "${PIPESTATUS[0]}" -eq 0
+          sed "s/APPLE_TEAM_ID/$APPLE_TEAM_ID/" ios/App/ExportOptions.plist > "$RUNNER_TEMP/ExportOptions.plist"
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Belluh.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" "${AUTH[@]}"
+          rm -f "$KEY"
+      - name: Release skipped
+        if: env.RELEASE == 'true' && env.HAS_ASC != 'true'
+        run: echo "::notice::No App Store Connect key yet, so no TestFlight build. See docs/native-app.md."
