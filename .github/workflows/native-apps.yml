@@ -108,6 +108,13 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
+      - name: Rollup and esbuild for macOS
+        # package-lock.json is written on Linux, and npm leaves out other platforms' optional binaries (npm/cli#4828)
+        run: |
+          arch=$(node -p process.arch)
+          npm install --no-save --no-audit --no-fund \
+            "@rollup/rollup-darwin-$arch@$(node -p "require('rollup/package.json').version")" \
+            "@esbuild/darwin-$arch@$(node -p "require('esbuild/package.json').version")"
       - name: Build the web app
         run: npx vite build
       - name: Copy it into the iOS project

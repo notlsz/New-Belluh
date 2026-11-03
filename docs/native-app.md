@@ -61,7 +61,7 @@ Nothing below is in the repo: every key goes into GitHub (Settings, Secrets and 
 
 ### 3. Supabase
 
-Merging this deploys the `native_push_tokens` table and the `register_native_push` function (migration `20261103020000_native_push.sql`). The deploy workflow copies `APNS_KEY_P8`, `APNS_KEY_ID`, `APPLE_TEAM_ID` and `FCM_SERVICE_ACCOUNT` into the functions once they exist. Add `https://belluh.com/**` to Auth, URL Configuration, Redirect URLs if it isn't there, so email links open the app. Sign-in with email works in the app; any sign-in that redirects to another site in a browser window needs a deep-link return before it is offered in the app.
+Merging this deploys the `native_push_tokens` table and the `register_native_push` function (migration `20261103030000_native_push.sql`). The deploy workflow copies `APNS_KEY_P8`, `APNS_KEY_ID`, `APPLE_TEAM_ID` and `FCM_SERVICE_ACCOUNT` into the functions once they exist. Add `https://belluh.com/**` to Auth, URL Configuration, Redirect URLs if it isn't there, so email links open the app. Sign-in with email works in the app; any sign-in that redirects to another site in a browser window needs a deep-link return before it is offered in the app.
 
 ## App Store privacy label (from what the code sends)
 
